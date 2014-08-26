@@ -2,9 +2,10 @@ package org.khelekore.parjac.batch;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
+/** Batch compiler command line arguments */
 public class CompilationArguments {
     private final List<Path> srcDirs;
     private final Path outputDir;
