@@ -9,5 +9,7 @@ Some things:
 *) Every step should be internally time logged so that it is easy to
    inspect performance.
 
-Uses antlr for parsing.
-Uses asm for bytecode handling.
+Uses ? for parsing. Antlr seemed nice, but the java grammars are very
+slow. Parboiled is messy and requires some old version of asm.
+
+Use asm for bytecode handling.
