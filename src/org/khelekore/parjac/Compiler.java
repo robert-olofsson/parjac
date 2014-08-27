@@ -1,7 +1,11 @@
 package org.khelekore.parjac;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +53,11 @@ public class Compiler {
 
     private SyntaxTree parse (Path p) {
 	try {
-	    List<String> lines = Files.readAllLines (p, UTF8);
+	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (p));
+	    CharsetDecoder decoder = UTF8.newDecoder ();
+	    decoder.onMalformedInput (CodingErrorAction.REPORT);
+	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
+	    CharBuffer charBuf = decoder.decode (buf);
 	    return new SyntaxTree (p);
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s", p));
