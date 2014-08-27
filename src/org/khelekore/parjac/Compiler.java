@@ -2,16 +2,19 @@ package org.khelekore.parjac;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler
  */
 public class Compiler {
-    private static final Charset UTF8 = Charset.forName ("UTF-8");
+    private static final Charset UTF8 = Charset.forName ("ISO-8859-1");
 
     public void compile (List<Path> srcFiles, Path destinationDir) {
 	List<SyntaxTree> trees = parse (srcFiles);
@@ -20,6 +23,7 @@ public class Compiler {
 
 	checkSemantics (trees);
 
+	createOutputDirectories (trees, destinationDir);
 	writeClasses (trees, destinationDir);
     }
 
@@ -42,6 +46,23 @@ public class Compiler {
 
     private void checkSemantics (List<SyntaxTree> trees) {
 	// TODO: implement
+    }
+
+    private void createOutputDirectories (List<SyntaxTree> trees,
+					  Path destinationDir) {
+	Set<Path> dirs = new HashSet<> ();
+	trees.stream ().
+	    forEach (t -> dirs.add (Paths.get (destinationDir.toString (),
+					       t.getRelativeClassName ().getParent ().toString ())));
+	dirs.forEach (p -> createDirectory (p));
+    }
+
+    private void createDirectory (Path p) {
+	try {
+	    Files.createDirectories (p);
+	} catch (IOException e) {
+	    throw new RuntimeException ("Failed to create output directory: " + p);
+	}
     }
 
     private void writeClasses (List<SyntaxTree> trees, Path destinationDir) {

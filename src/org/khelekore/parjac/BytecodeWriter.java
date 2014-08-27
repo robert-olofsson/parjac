@@ -18,15 +18,8 @@ public class BytecodeWriter extends ClassLoader {
 
     public void write (SyntaxTree tree, Path destinationDir) {
 	// TODO: when we know the class name we do not need this silly thing
-	Path origin = tree.getOrigin ();
-	Path srcrelative = origin.subpath (1, origin.getNameCount ());
-	String filename = srcrelative.getFileName ().toString ();
-	String classname = filename.replaceAll ("(?i).java$", "");
-	String classfile = classname + ".class";
-	Path relative =
-	    Paths.get (srcrelative.getParent ().toString (), classfile);
-	Path cn = Paths.get (srcrelative.getParent ().toString (), classname);
-	String fqn = cn.toString ();
+	Path relative = tree.getRelativeClassName ();
+	String fqn = tree.getFQN ();
 
         // creates a ClassWriter for the Example public class,
         // which inherits from Object
@@ -66,7 +59,6 @@ public class BytecodeWriter extends ClassLoader {
 	    Paths.get (destinationDir.toString (), relative.toString ());
 
 	try {
-	    Files.createDirectories (path.getParent ());
 	    Files.write (path, cw.toByteArray());
 	} catch (IOException e) {
 	    System.err.println ("Failed to create class file: " + path);
