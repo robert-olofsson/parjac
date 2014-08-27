@@ -25,6 +25,7 @@ public class Main {
 	CompilerDiagnosticCollector collector = new CompilerDiagnosticCollector ();
 
 	Main main = new Main (collector);
+
 	main.compile (args);
 	Locale locale = Locale.getDefault ();
 	collector.getDiagnostics ().
@@ -36,6 +37,7 @@ public class Main {
     }
 
     public void compile (String[] args) {
+	long startTime = System.nanoTime ();
 	CompilationArguments settings = parseArgs (args);
 	if (settings == null || diagnostics.hasError ())
 	    return;
@@ -51,6 +53,8 @@ public class Main {
 	System.out.println ("destination: " + settings.getOutputDir ());
 	Compiler c = new Compiler (diagnostics);
 	c.compile (srcFiles, settings.getOutputDir ());
+	long endTime = System.nanoTime ();
+	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
     }
 
     private CompilationArguments parseArgs (String[] args) {
