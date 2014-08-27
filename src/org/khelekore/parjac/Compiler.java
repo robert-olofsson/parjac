@@ -14,7 +14,17 @@ public class Compiler {
     private static final Charset UTF8 = Charset.forName ("UTF-8");
 
     public void compile (List<Path> srcFiles, Path destinationDir) {
-	List<SyntaxTree> trees =
+	List<SyntaxTree> trees = parse (srcFiles);
+	if (thereWasErrors ())
+	    return;
+
+	checkSemantics (trees);
+
+	writeClasses (trees, destinationDir);
+    }
+
+    private List<SyntaxTree> parse (List<Path> srcFiles) {
+	return
 	    srcFiles.parallelStream ().
 	    map (p -> parse (p)).
 	    collect (Collectors.toList ());
@@ -28,5 +38,24 @@ public class Compiler {
 	    System.err.println ("Failed to read: " + p);
 	    return null;
 	}
+    }
+
+    private void checkSemantics (List<SyntaxTree> trees) {
+	// TODO: implement
+    }
+
+    private void writeClasses (List<SyntaxTree> trees, Path destinationDir) {
+	trees.parallelStream ().
+	    forEach (t -> writeClass (t, destinationDir));
+    }
+
+    private void writeClass (SyntaxTree tree, Path destinationDir) {
+	BytecodeWriter w = new BytecodeWriter ();
+	w.write (tree, destinationDir);
+    }
+
+    private boolean thereWasErrors () {
+	// TODO: implement
+	return false;
     }
 }

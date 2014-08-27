@@ -8,4 +8,8 @@ public class SyntaxTree {
     public SyntaxTree (Path origin) {
 	this.origin = origin;
     }
+
+    public Path getOrigin () {
+	return origin;
+    }
 }

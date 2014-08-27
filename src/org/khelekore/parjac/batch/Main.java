@@ -29,6 +29,7 @@ public class Main {
 	    forEach (p -> addFiles (p, srcFiles));
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
+	System.out.println ("compiling " + srcFiles);
 	System.out.println ("destination: " + settings.getOutputDir ());
 
 	Compiler c = new Compiler ();
