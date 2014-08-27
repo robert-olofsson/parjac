@@ -8,30 +8,48 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
 import org.khelekore.parjac.Compiler;
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 
 /** Program to run a batch compilation.
  */
 public class Main {
+    private final CompilerDiagnosticCollector diagnostics;
+
     public static void main (String[] args) {
-	Main main = new Main ();
+	CompilerDiagnosticCollector collector = new CompilerDiagnosticCollector ();
+
+	Main main = new Main (collector);
 	main.compile (args);
+	Locale locale = Locale.getDefault ();
+	collector.getDiagnostics ().
+	    forEach (d -> System.err.println (d.getMessage (locale)));
+    }
+
+    public Main (CompilerDiagnosticCollector diagnostics) {
+	this.diagnostics = diagnostics;
     }
 
     public void compile (String[] args) {
 	CompilationArguments settings = parseArgs (args);
-	if (settings == null)
+	if (settings == null || diagnostics.hasError ())
 	    return;
 
 	List<Path> srcFiles = new ArrayList<> ();
 	settings.getSrcDirs ().stream ().
 	    forEach (p -> addFiles (p, srcFiles));
 
+	if (diagnostics.hasError ())
+	    return;
+
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
-
-	Compiler c = new Compiler ();
+	Compiler c = new Compiler (diagnostics);
 	c.compile (srcFiles, settings.getOutputDir ());
     }
 
@@ -42,30 +60,32 @@ public class Main {
 	    switch (args[i]) {
 	    case "-i":
 	    case "--input":
-		checkFollowingArgExists (args, i);
-		srcDirs.add (Paths.get (args[++i]));
+		if (hasFollowingArgExists (args, i))
+		    srcDirs.add (Paths.get (args[++i]));
 	        break;
 	    case "-d":
 	    case "--destination":
-		checkFollowingArgExists (args, i);
-		outputDir = Paths.get (args[++i]);
+		if (hasFollowingArgExists (args, i))
+		    outputDir = Paths.get (args[++i]);
 	        break;
 	    case "-h":
 	    case "--help":
 		usage ();
 	        return null;
 	    default:
-		throw new IllegalArgumentException ("Unknown argument: " +
-						    args[i]);
+		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: %s", args[i]));
 	    }
 	}
 	return new CompilationArguments (srcDirs, outputDir);
     }
 
-    private void checkFollowingArgExists (String[] args, int pos) {
-	if (args.length <= (pos + 1))
-	    throw new IllegalArgumentException ("Missing argument following: " +
-						args[pos] + ", pos: " + pos);
+    private boolean hasFollowingArgExists (String[] args, int pos) {
+	if (args.length <= (pos + 1)) {
+	    diagnostics.report (new NoSourceDiagnostics ("Missing argument following: %s, pos: %d",
+							 args[pos], pos));
+	    return false;
+	}
+	return true;
     }
 
     private void usage () {
@@ -75,16 +95,17 @@ public class Main {
     }
 
     private void addFiles (Path p, List<Path> srcFiles) {
-	if (!Files.isDirectory (p))
-	    throw new IllegalArgumentException ("input srcdir: " + p +
-						" is not a directory");
+	if (!Files.isDirectory (p)) {
+	    diagnostics.report (new NoSourceDiagnostics ("input srcdir: %s is not a directory", p));
+	    return;
+	}
+
 	try {
 	    srcFiles.addAll (Files.walk (p, FileVisitOption.FOLLOW_LINKS).
 			     filter (Main::isJavaFile).
 			     collect (Collectors.toList ()));
 	} catch (IOException e) {
-	    throw new IllegalArgumentException ("Failed to get files from: " +
-						p);
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to get files from: %s", p));
 	}
     }
 

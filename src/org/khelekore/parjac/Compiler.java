@@ -9,21 +9,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.tools.DiagnosticListener;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler
  */
 public class Compiler {
-    private static final Charset UTF8 = Charset.forName ("ISO-8859-1");
+    private static final Charset UTF8 = Charset.forName ("UTF-8");
+
+    private final CompilerDiagnosticCollector diagnostics;
+
+    public Compiler (CompilerDiagnosticCollector diagnostics) {
+	this.diagnostics = diagnostics;
+    }
 
     public void compile (List<Path> srcFiles, Path destinationDir) {
 	List<SyntaxTree> trees = parse (srcFiles);
-	if (thereWasErrors ())
+	if (diagnostics.hasError ())
 	    return;
 
 	checkSemantics (trees);
+	if (diagnostics.hasError ())
+	    return;
 
 	createOutputDirectories (trees, destinationDir);
+	if (diagnostics.hasError ())
+	    return;
+
 	writeClasses (trees, destinationDir);
     }
 
@@ -31,6 +43,7 @@ public class Compiler {
 	return
 	    srcFiles.parallelStream ().
 	    map (p -> parse (p)).
+	    filter (p -> p != null).
 	    collect (Collectors.toList ());
     }
 
@@ -39,7 +52,7 @@ public class Compiler {
 	    List<String> lines = Files.readAllLines (p, UTF8);
 	    return new SyntaxTree (p);
 	} catch (IOException e) {
-	    System.err.println ("Failed to read: " + p);
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s", p));
 	    return null;
 	}
     }
@@ -61,7 +74,7 @@ public class Compiler {
 	try {
 	    Files.createDirectories (p);
 	} catch (IOException e) {
-	    throw new RuntimeException ("Failed to create output directory: " + p);
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to create output directory: %s", p));
 	}
     }
 
@@ -73,10 +86,5 @@ public class Compiler {
     private void writeClass (SyntaxTree tree, Path destinationDir) {
 	BytecodeWriter w = new BytecodeWriter ();
 	w.write (tree, destinationDir);
-    }
-
-    private boolean thereWasErrors () {
-	// TODO: implement
-	return false;
     }
 }

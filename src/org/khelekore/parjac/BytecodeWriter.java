@@ -17,8 +17,6 @@ import static org.objectweb.asm.Opcodes.*;
 public class BytecodeWriter extends ClassLoader {
 
     public void write (SyntaxTree tree, Path destinationDir) {
-	// TODO: when we know the class name we do not need this silly thing
-	Path relative = tree.getRelativeClassName ();
 	String fqn = tree.getFQN ();
 
         // creates a ClassWriter for the Example public class,
@@ -55,6 +53,8 @@ public class BytecodeWriter extends ClassLoader {
         mw.visitMaxs(2, 2);
         mw.visitEnd();
 
+	// TODO: when we know the class name we do not need this silly thing
+	Path relative = tree.getRelativeClassName ();
 	Path path =
 	    Paths.get (destinationDir.toString (), relative.toString ());
 
