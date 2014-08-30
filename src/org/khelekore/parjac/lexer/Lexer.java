@@ -9,9 +9,15 @@ public class Lexer {
     private int tokenStartPosition = 0;
     private int currentLine = 0;
     private int currentColumn = 0;
+    private boolean insideTypeContext = false;
+    private String errorText;
 
     public Lexer (CharBuffer buf) {
 	this.buf = buf.duplicate ();
+    }
+
+    public void setInsideTypeContext (boolean insideTypeContext) {
+	this.insideTypeContext = insideTypeContext;
     }
 
     public Token nextToken () {
@@ -20,19 +26,23 @@ public class Lexer {
 	    char c = buf.get ();
 	    switch (c) {
 
+	    // whitespace
 	    case ' ':
 	    case '\t':
 	    case '\f':
 		return readWhitespace ();
 
+	    // newlines
 	    case '\n':
 		return handleLF ();
 	    case '\r':
 		return handleCR ();
 
+	     // sub
 	    case '\u001a':
 		return getToken (TokenType.SUB);
 
+	    // separators
 	    case '(':
 		return getToken (TokenType.LEFT_PARANTHESIS);
 	    case ')':
@@ -53,8 +63,38 @@ public class Lexer {
 		return handleDot ();
 	    case '@':
 		return getToken (TokenType.AT);
-	    case ':':
+	    case ':':  // : is an operator, :: is a separator
 		return handleColon ();
+
+	    // operators (and comments)
+	    case '=':
+		return handleEquals ();
+	    case '>':
+		return handleGT ();
+	    case '<':
+		return handleLT ();
+	    case '!':
+		return handleExtraEqual (TokenType.NOT, TokenType.NOT_EQUAL);
+	    case '~':
+		return getToken (TokenType.TILDE);
+	    case '?':
+		return getToken (TokenType.QUESTIONMARK);
+	    case '+':
+		return handleDoubleOrEqual (c, TokenType.PLUS, TokenType.INCREMENT, TokenType.PLUS_EQUAL);
+	    case '-':
+		return handleMinus ();
+	    case '*':
+		return handleExtraEqual (TokenType.MULTIPLY, TokenType.MULTIPLY_EQUAL);
+	    case '/':
+		return handleSlash ();
+	    case '%':
+		return handleExtraEqual (TokenType.REMAINDER, TokenType.REMAINDER_EQUAL);
+	    case '&':
+		return handleDoubleOrEqual (c, TokenType.BIT_AND, TokenType.LOGICAL_AND, TokenType.BIT_AND_EQUAL);
+	    case '|':
+		return handleDoubleOrEqual (c, TokenType.BIT_OR, TokenType.LOGICAL_OR, TokenType.BIT_OR_EQUAL);
+	    case '^':
+		return handleExtraEqual (TokenType.BIT_XOR, TokenType.BIT_XOR_EQUAL);
 
 	    }
 	}
@@ -70,7 +110,7 @@ public class Lexer {
 	while (buf.hasRemaining ()) {
 	    c = buf.get ();
 	    if (c != ' ' && c != '\t' && c != '\f') {
-		buf.position (buf.position () - 1);
+		pushBack ();
 		break;
 	    }
 	}
@@ -78,15 +118,13 @@ public class Lexer {
     }
 
     private Token handleLF () { // easy case
-	currentLine++;
-	currentColumn = 0;
+	nextLine ();
 	return getToken (TokenType.LF);
     }
 
     private Token handleCR () { // might be a CR or CRLF
 	TokenType tt = handleOneExtra (TokenType.CR, '\n', TokenType.CRLF);
-	currentLine++;
-	currentColumn = 0;
+	nextLine ();
 	return getToken (tt);
     }
 
@@ -109,6 +147,133 @@ public class Lexer {
 	return getToken (handleOneExtra (TokenType.COLON, ':', TokenType.DOUBLE_COLON));
     }
 
+    private Token handleEquals () {
+	return getToken (handleOneExtra (TokenType.EQUAL, '=', TokenType.DOUBLE_EQUAL));
+    }
+
+    private Token handleExtraEqual (TokenType base, TokenType extra) {
+	return getToken (handleOneExtra (base, '=', extra));
+    }
+
+    private Token handleDoubleOrEqual (char m, TokenType base, TokenType twice, TokenType baseEqual) {
+	TokenType tt = base;
+	if (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == m)
+		tt = twice;
+	    else if (c == '=')
+		tt = baseEqual;
+	    else
+		pushBack ();
+	}
+	return getToken (tt);
+    }
+
+    private Token handleMinus () {
+	// -, --, -=, ->
+	TokenType tt = TokenType.MINUS;
+	if (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == '-')
+		tt = TokenType.DECREMENT;
+	    else if (c == '=')
+		tt = TokenType.MINUS_EQUAL;
+	    else if (c == '>')
+		tt = TokenType.ARROW;
+	    else
+		pushBack ();
+	}
+	return getToken (tt);
+    }
+
+    private Token handleSlash () {
+	// /, /=, //, /* ... */
+	TokenType tt = TokenType.DIVIDE;
+	if (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == '=')
+		tt = TokenType.DIVIDE_EQUAL;
+	    else if (c == '/')
+		tt = readOffOneLineComment ();
+	    else if (c == '*')
+		tt = readOffMultiLineComment ();
+	    else
+		pushBack ();
+	}
+	return getToken (tt);
+    }
+
+    private TokenType readOffOneLineComment () {
+	while (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == '\n' || c == '\r') {
+		pushBack ();
+		break;
+	    }
+	}
+	return TokenType.ONELINE_COMMENT;
+    }
+
+    private TokenType readOffMultiLineComment () {
+	boolean previousWasStar = false;
+	while (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (previousWasStar && c == '/')
+		return TokenType.MULTILINE_COMMENT;
+	    previousWasStar = (c == '*');
+	    if (c == '\n')
+		handleLF ();
+	    else if (c == '\r')
+		handleCR ();
+	}
+	errorText = "Reached end of input while inside comment";
+	return TokenType.ERROR;
+    }
+
+    private Token handleLT () {
+	// <, <=, <<, <<=
+	TokenType tt = handleLTGT ('<', TokenType.LT, TokenType.LE,
+				   TokenType.LEFT_SHIFT, TokenType.LEFT_SHIFT_EQUAL);
+	return getToken (tt);
+    }
+
+    private Token handleGT () {
+	// >, >=, >>, >>=, >>>, >>>=
+	TokenType tt = TokenType.GT;
+
+	// generics
+	if (insideTypeContext)
+	    return getToken (tt);
+
+	if (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == '=') {
+		tt = TokenType.GE;
+	    } else if (c == '>') {
+		tt = handleLTGT ('>', TokenType.RIGHT_SHIFT, TokenType.RIGHT_SHIFT_EQUAL,
+				 TokenType.RIGHT_SHIFT_UNSIGNED, TokenType.RIGHT_SHIFT_UNSIGNED_EQUAL);
+	    } else {
+		pushBack ();
+	    }
+	}
+	return getToken (tt);
+    }
+
+    private TokenType handleLTGT (char ltgt, TokenType base, TokenType baseEqual,
+				  TokenType doubleBase, TokenType doubleBaseEqual) {
+	TokenType tt = base;
+	if (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (c == '=')
+		tt = baseEqual;
+	    else if (c == ltgt)
+		tt = handleOneExtra (doubleBase, '=', doubleBaseEqual);
+	    else
+		pushBack ();
+	}
+	return tt;
+    }
+
     private TokenType handleOneExtra (TokenType base, char match, TokenType extended) {
 	TokenType tt = base;
 	if (buf.hasRemaining ()) {
@@ -116,9 +281,18 @@ public class Lexer {
 	    if (c == match)
 		tt = extended;
 	    else // push back what we read
-		buf.position (buf.position () - 1);
+		pushBack ();
 	}
 	return tt;
+    }
+
+    private void pushBack () {
+	buf.position (buf.position () - 1);
+    }
+
+    private void nextLine () {
+	currentLine++;
+	currentColumn = 0;
     }
 
     private Token getToken (TokenType tt) {

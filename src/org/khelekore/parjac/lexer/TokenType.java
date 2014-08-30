@@ -102,28 +102,26 @@ public enum TokenType {
     DIVIDE ("/"),
     BIT_AND ("&"),
     BIT_OR ("|"),
-    BIT_XOT ("^"),
+    BIT_XOR ("^"),
     REMAINDER ("%"),
     LEFT_SHIFT ("<<"),
     RIGHT_SHIFT (">>"),
     RIGHT_SHIFT_UNSIGNED (">>>"),
-    PLUS_EQUALS ("+="),
-    MINUS_EQUALS ("-="),
-    MULTIPLY_EQUALS ("*="),
-    DIVISION_EQUALS ("/="),
-    AND_EQUALS ("&="),
-    OR_EQUALS ("|="),
-    XOR_EQUALS ("^="),
-    REMAINDER_EQUALS ("%="),
-    LEFT_SHIFT_EQUALS ("<<="),
-    RIGHT_SHIFT_EQUALS (">>="),
-    RIGHT_SHIFT_UNSIGNED_EQUALS (">>>="),
+    PLUS_EQUAL ("+="),
+    MINUS_EQUAL ("-="),
+    MULTIPLY_EQUAL ("*="),
+    DIVIDE_EQUAL ("/="),
+    BIT_AND_EQUAL ("&="),
+    BIT_OR_EQUAL ("|="),
+    BIT_XOR_EQUAL ("^="),
+    REMAINDER_EQUAL ("%="),
+    LEFT_SHIFT_EQUAL ("<<="),
+    RIGHT_SHIFT_EQUAL (">>="),
+    RIGHT_SHIFT_UNSIGNED_EQUAL (">>>="),
 
     // comments
-    TRADITIONAL_COMMENT_START ("/*"),
-    JAVADOC_COMMENT_START ("/**"),
-    MULTILINE_COMMENT_END ("*/"),
-    ONELINE_COMMENT_START ("//"),
+    MULTILINE_COMMENT ("/* ... */"),
+    ONELINE_COMMENT ("// ..."),
 
     IDENTIFIER ("identifier"),
 
@@ -134,7 +132,10 @@ public enum TokenType {
     STRING_LITERAL ("string literal"),
     NULL ("null"),
     TRUE ("true"),
-    FALSE ("false");
+    FALSE ("false"),
+
+    // Signal lexer error
+    ERROR ("error");
 
     private final String value;
 
@@ -148,11 +149,11 @@ public enum TokenType {
     private static final EnumSet<TokenType> operators =
     EnumSet.of (EQUAL, GT, LT, NOT, TILDE, QUESTIONMARK, COLON, ARROW, DOUBLE_EQUAL,
 		GE, LE, NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, INCREMENT, DECREMENT,
-		PLUS, MINUS, MULTIPLY, DIVIDE, BIT_AND, BIT_OR, BIT_XOT,
+		PLUS, MINUS, MULTIPLY, DIVIDE, BIT_AND, BIT_OR, BIT_XOR,
 		REMAINDER, LEFT_SHIFT, RIGHT_SHIFT, RIGHT_SHIFT_UNSIGNED,
-		PLUS_EQUALS, MINUS_EQUALS, MULTIPLY_EQUALS, DIVISION_EQUALS,
-		AND_EQUALS, OR_EQUALS, XOR_EQUALS, REMAINDER_EQUALS,
-		LEFT_SHIFT_EQUALS, RIGHT_SHIFT_EQUALS, RIGHT_SHIFT_UNSIGNED_EQUALS);
+		PLUS_EQUAL, MINUS_EQUAL, MULTIPLY_EQUAL, DIVIDE_EQUAL,
+		BIT_AND_EQUAL, BIT_OR_EQUAL, BIT_XOR_EQUAL, REMAINDER_EQUAL,
+		LEFT_SHIFT_EQUAL, RIGHT_SHIFT_EQUAL, RIGHT_SHIFT_UNSIGNED_EQUAL);
 
     private static final EnumSet<TokenType> keywords =
     EnumSet.of (ABSTRACT, ASSERT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST,

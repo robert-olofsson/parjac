@@ -5,38 +5,34 @@ import java.util.Arrays;
 import org.testng.annotations.Test;
 
 public class TestLexer {
+
     @Test
-    public void testLF () {
-	testInput ("\n", TokenType.LF);
+    public void testSpaceWhitespace () {
+	testInput (" ", TokenType.WHITESPACE);
+	testInput ("    ", TokenType.WHITESPACE);
+	testInput ("\t", TokenType.WHITESPACE);
+	testInput ("\f", TokenType.WHITESPACE);
+	testInput ("\t\t\t    ", TokenType.WHITESPACE);
     }
 
     @Test
-    public void testCR () {
+    public void testNewlines () {
+	testInput ("\n", TokenType.LF);
 	testInput ("\r", TokenType.CR);
 	testInput ("\r \n", TokenType.CR, TokenType.WHITESPACE, TokenType.LF);
-    }
-
-    @Test
-    public void testCRLF () {
 	testInput ("\r\n", TokenType.CRLF);
+	testInput ("\n\r", TokenType.LF, TokenType.CR);
     }
 
     @Test
-    public void testLFCR () {
-	CharBuffer cb = CharBuffer.wrap ("\n\r".toCharArray ());
-	Lexer l = new Lexer (cb);
-	assert l.nextToken ().getType () == TokenType.LF;
-	assert l.nextToken ().getType () == TokenType.CR;
+    public void testSub () {
+	testInput ("\u001a", TokenType.SUB);
     }
 
     @Test
     public void testColon () {
 	testInput (":", TokenType.COLON);
 	testInput (": :", TokenType.COLON, TokenType.WHITESPACE, TokenType.COLON);
-    }
-
-    @Test
-    public void testDoubleColon () {
 	testInput ("::", TokenType.DOUBLE_COLON);
 	testInput (":::", TokenType.DOUBLE_COLON, TokenType.COLON);
 	testInput ("::::", TokenType.DOUBLE_COLON, TokenType.DOUBLE_COLON);
@@ -44,29 +40,84 @@ public class TestLexer {
     }
 
     @Test
-    public void testSpaceWhitespace () {
-	testInput (" ", TokenType.WHITESPACE);
-	testInput ("    ", TokenType.WHITESPACE);
+    public void testDot () {
+	testInput (".", TokenType.DOT);
+	testInput ("..", TokenType.DOT, TokenType.DOT);
+	testInput ("...", TokenType.ELLIPSIS);
     }
 
     @Test
-    public void testTabSpaceWhitespace () {
-	testInput ("\t", TokenType.WHITESPACE);
+    public void testSeparators () {
+	testInput ("(", TokenType.LEFT_PARANTHESIS);
+	testInput (")", TokenType.RIGHT_PARANTHESIS);
+	testInput ("{", TokenType.LEFT_CURLY);
+	testInput ("}", TokenType.RIGHT_CURLY);
+	testInput ("[", TokenType.LEFT_BRACKET);
+	testInput ("]", TokenType.RIGHT_BRACKET);
+	testInput (";", TokenType.SEMICOLON);
+	testInput (",", TokenType.COMMA);
+	testInput ("@", TokenType.AT);
     }
 
     @Test
-    public void testFormFeedSpaceWhitespace () {
-	testInput ("\f", TokenType.WHITESPACE);
+    public void testOperators () {
+	testInput ("=", TokenType.EQUAL);
+	testInput ("= =", TokenType.EQUAL, TokenType.WHITESPACE, TokenType.EQUAL);
+	testInput (">", TokenType.GT);
+	testInput ("<", TokenType.LT);
+	testInput ("!", TokenType.NOT);
+	testInput ("~", TokenType.TILDE);
+	testInput ("?", TokenType.QUESTIONMARK);
+	testInput (":", TokenType.COLON);
+	testInput ("->", TokenType.ARROW);
+	testInput ("==", TokenType.DOUBLE_EQUAL);
+	testInput (">=", TokenType.GE);
+	testInput ("<=", TokenType.LE);
+	testInput ("!=", TokenType.NOT_EQUAL);
+	testInput ("&&", TokenType.LOGICAL_AND);
+	testInput ("||", TokenType.LOGICAL_OR);
+	testInput ("++", TokenType.INCREMENT);
+	testInput ("--", TokenType.DECREMENT);
+	testInput ("+", TokenType.PLUS);
+	testInput ("-", TokenType.MINUS);
+	testInput ("*", TokenType.MULTIPLY);
+	testInput ("/", TokenType.DIVIDE);
+	testInput ("&", TokenType.BIT_AND);
+	testInput ("|", TokenType.BIT_OR);
+	testInput ("^", TokenType.BIT_XOR);
+	testInput ("%", TokenType.REMAINDER);
+	testInput ("<<", TokenType.LEFT_SHIFT);
+	testInput (">>", TokenType.RIGHT_SHIFT);
+	testInput (">>>", TokenType.RIGHT_SHIFT_UNSIGNED);
+	testInput ("+=", TokenType.PLUS_EQUAL);
+	testInput ("-=", TokenType.MINUS_EQUAL);
+	testInput ("*=", TokenType.MULTIPLY_EQUAL);
+	testInput ("/=", TokenType.DIVIDE_EQUAL);
+	testInput ("&=", TokenType.BIT_AND_EQUAL);
+	testInput ("|=", TokenType.BIT_OR_EQUAL);
+	testInput ("^=", TokenType.BIT_XOR_EQUAL);
+	testInput ("%=", TokenType.REMAINDER_EQUAL);
+	testInput ("<<=", TokenType.LEFT_SHIFT_EQUAL);
+	testInput (">>=", TokenType.RIGHT_SHIFT_EQUAL);
+	testInput (">>>=", TokenType.RIGHT_SHIFT_UNSIGNED_EQUAL);
     }
 
     @Test
-    public void testMixedSpaceWhitespace () {
-	testInput ("\t\t\t    ", TokenType.WHITESPACE);
+    public void testGenerics () {
+	CharBuffer cb = CharBuffer.wrap (">>".toCharArray ());
+	Lexer l = new Lexer (cb);
+	l.setInsideTypeContext (true);
+	testLexing (l, TokenType.GT, TokenType.GT);
     }
 
     @Test
-    public void testSub () {
-	testInput ("\u001a", TokenType.SUB);
+    public void testComment () {
+	testInput ("// whatever", TokenType.ONELINE_COMMENT);
+	testInput ("/* whatever */", TokenType.MULTILINE_COMMENT);
+	testInput ("/* this comment /* // /** ends here: */", TokenType.MULTILINE_COMMENT);
+	testInput ("/* whatever", TokenType.ERROR);
+	testInput ("/* whatever \n whatever */", TokenType.MULTILINE_COMMENT);
+	testInput ("/* whatever \n * whatever \n *\n/*/", TokenType.MULTILINE_COMMENT);
     }
 
     /* Not working yet
@@ -107,14 +158,18 @@ public class TestLexer {
     private void testInput (String text, TokenType... expected) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
 	Lexer l = new Lexer (cb);
+	testLexing (l, expected);
+    }
+
+    private void testLexing (Lexer l, TokenType... expected) {
 	for (int i = 0; i < expected.length; i++) {
-	    assert l.hasMoreTokens () : "Too few tokens in text: " + text +
-		", expected: " + Arrays.toString (expected);
+	    assert l.hasMoreTokens () : "Too few tokens, expected: " + Arrays.toString (expected);
 	    Token t = l.nextToken ();
 	    assert t != null : "Returned token may not be null";
 	    TokenType tt = t.getType ();
 	    assert tt != null : "TokenType may not be null";
 	    assert tt == expected[i] : "Wrong TokenType: expected: " + expected[i] + ", got: " + tt;
 	}
+	assert !l.hasMoreTokens () : "More available tokens";
     }
 }
