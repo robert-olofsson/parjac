@@ -15,6 +15,8 @@ public class Lexer {
 
     // Text set when we get an lexer ERROR
     private String errorText;
+    private char currentCharValue;
+    private String currentStringValue;
 
     public Lexer (String path, CharBuffer buf) {
 	this.path = path;
@@ -23,6 +25,18 @@ public class Lexer {
 
     public String getError () {
 	return path + ":" + currentLine + ":" + currentColumn + ":" + errorText;
+    }
+
+    public char getCharValue () {
+	return currentCharValue;
+    }
+
+    public String getCurrentStringValue () {
+	return currentStringValue;
+    }
+
+    public char getCurrentCharValue () {
+	return currentCharValue;
     }
 
     public void setInsideTypeContext (boolean insideTypeContext) {
@@ -309,6 +323,7 @@ public class Lexer {
 	    errorText = "Unclosed character literal: *" + s + "*";
 	    return getToken (TokenType.ERROR);
 	}
+	currentCharValue = s.charAt (0);
 	return getToken (TokenType.CHARACTER_LITERAL);
     }
 
@@ -318,6 +333,7 @@ public class Lexer {
 	    handleString ('"', TokenType.STRING_LITERAL, "String literal not closed");
 	if (s == null)
 	    return getToken (TokenType.ERROR);
+	currentStringValue = s;
 	return getToken (TokenType.STRING_LITERAL);
     }
 

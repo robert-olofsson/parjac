@@ -122,9 +122,9 @@ public class TestLexer {
 
     @Test
     public void testCharLiteral () {
-	testInput ("'a'", TokenType.CHARACTER_LITERAL);
-	testInput ("'\\\\'", TokenType.CHARACTER_LITERAL);
-	testInput ("'\\t'", TokenType.CHARACTER_LITERAL);
+	testChar ("'a'", 'a');
+	testChar ("'\\\\'", '\\');
+	testChar ("'\\t'", '\t');
 	// Does not handle octal escapes yet, silly thing
 	// testInput ("'\\12'", TokenType.CHARACTER_LITERAL); // octal escape
 	testInput ("'\\a'", TokenType.ERROR);
@@ -132,10 +132,26 @@ public class TestLexer {
 	testInput ("'a", TokenType.ERROR);
     }
 
+    private void testChar (String toLex, char value) {
+	CharBuffer cb = CharBuffer.wrap (toLex.toCharArray ());
+	Lexer l = new Lexer ("TestLexer", cb);
+	testLexing (l, TokenType.CHARACTER_LITERAL);
+	char res = l.getCurrentCharValue ();
+	assert value == res : "Wrong string value: " + res;
+    }
+
     @Test
     public void testStringLiteral () {
-	testInput ("\"\"", TokenType.STRING_LITERAL);
-	testInput ("\"abc123\"", TokenType.STRING_LITERAL);
+	testString ("\"\"", "");
+	testString ("\"abc123\"", "abc123");
+    }
+
+    private void testString (String toLex, String value) {
+	CharBuffer cb = CharBuffer.wrap (toLex.toCharArray ());
+	Lexer l = new Lexer ("TestLexer", cb);
+	testLexing (l, TokenType.STRING_LITERAL);
+	String res = l.getCurrentStringValue ();
+	assert value.equals (res) : "Wrong string value: " + res;
     }
 
     /* Not working yet
