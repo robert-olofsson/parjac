@@ -4,6 +4,8 @@ import java.nio.CharBuffer;
 
 /** A somewhat simplified lexer for java, it skips the unicode escape handling. */
 public class Lexer {
+    // Typically the file name, used for error output
+    private final String path;
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
     private int tokenStartPosition = 0;
@@ -14,12 +16,13 @@ public class Lexer {
     // Text set when we get an lexer ERROR
     private String errorText;
 
-    public Lexer (CharBuffer buf) {
+    public Lexer (String path, CharBuffer buf) {
+	this.path = path;
 	this.buf = buf.duplicate ();
     }
 
     public String getError () {
-	return errorText;
+	return path + ":" + currentLine + ":" + currentColumn + ":" + errorText;
     }
 
     public void setInsideTypeContext (boolean insideTypeContext) {
@@ -29,7 +32,7 @@ public class Lexer {
     public Token nextToken () {
 	tokenStartPosition = buf.position ();
 	while (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    switch (c) {
 
 	    // whitespace
@@ -118,7 +121,7 @@ public class Lexer {
     private Token readWhitespace () {
 	char c = 0;
 	while (buf.hasRemaining ()) {
-	    c = buf.get ();
+	    c = nextChar ();
 	    if (c != ' ' && c != '\t' && c != '\f') {
 		pushBack ();
 		break;
@@ -142,9 +145,9 @@ public class Lexer {
 	TokenType tt = TokenType.DOT;
 	if (buf.remaining () >= 2) {
 	    buf.mark ();
-	    char c2 = buf.get ();
+	    char c2 = nextChar ();
 	    if (c2 == '.') {
-		char c3 = buf.get ();
+		char c3 = nextChar ();
 		if (c3 == '.')
 		    return getToken (TokenType.ELLIPSIS);
 	    }
@@ -168,7 +171,7 @@ public class Lexer {
     private Token handleDoubleOrEqual (char m, TokenType base, TokenType twice, TokenType baseEqual) {
 	TokenType tt = base;
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == m)
 		tt = twice;
 	    else if (c == '=')
@@ -183,7 +186,7 @@ public class Lexer {
 	// -, --, -=, ->
 	TokenType tt = TokenType.MINUS;
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == '-')
 		tt = TokenType.DECREMENT;
 	    else if (c == '=')
@@ -200,7 +203,7 @@ public class Lexer {
 	// /, /=, //, /* ... */
 	TokenType tt = TokenType.DIVIDE;
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == '=')
 		tt = TokenType.DIVIDE_EQUAL;
 	    else if (c == '/')
@@ -215,7 +218,7 @@ public class Lexer {
 
     private TokenType readOffOneLineComment () {
 	while (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == '\n' || c == '\r') {
 		pushBack ();
 		break;
@@ -227,7 +230,7 @@ public class Lexer {
     private TokenType readOffMultiLineComment () {
 	boolean previousWasStar = false;
 	while (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (previousWasStar && c == '/')
 		return TokenType.MULTILINE_COMMENT;
 	    previousWasStar = (c == '*');
@@ -256,7 +259,7 @@ public class Lexer {
 	    return getToken (tt);
 
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == '=') {
 		tt = TokenType.GE;
 	    } else if (c == '>') {
@@ -273,7 +276,7 @@ public class Lexer {
 				  TokenType doubleBase, TokenType doubleBaseEqual) {
 	TokenType tt = base;
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == '=')
 		tt = baseEqual;
 	    else if (c == ltgt)
@@ -287,7 +290,7 @@ public class Lexer {
     private TokenType handleOneExtra (TokenType base, char match, TokenType extended) {
 	TokenType tt = base;
 	if (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (c == match)
 		tt = extended;
 	    else // push back what we read
@@ -326,7 +329,7 @@ public class Lexer {
 	StringBuilder res = new StringBuilder ();
 
 	while (buf.hasRemaining ()) {
-	    char c = buf.get ();
+	    char c = nextChar ();
 	    if (previousWasBackslash) {
 		switch (c) {
 		case 'b': res.append ('\b'); break;
@@ -358,7 +361,13 @@ public class Lexer {
 	return errorText == null ? res.toString () : null;
     }
 
+    private char nextChar () {
+	currentColumn++;
+	return buf.get ();
+    }
+
     private void pushBack () {
+	currentColumn--;
 	buf.position (buf.position () - 1);
     }
 

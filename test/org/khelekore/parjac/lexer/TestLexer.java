@@ -105,7 +105,7 @@ public class TestLexer {
     @Test
     public void testGenerics () {
 	CharBuffer cb = CharBuffer.wrap (">>".toCharArray ());
-	Lexer l = new Lexer (cb);
+	Lexer l = new Lexer ("TestLexer", cb);
 	l.setInsideTypeContext (true);
 	testLexing (l, TokenType.GT, TokenType.GT);
     }
@@ -175,7 +175,7 @@ public class TestLexer {
 
     private void testInput (String text, TokenType... expected) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
-	Lexer l = new Lexer (cb);
+	Lexer l = new Lexer ("TestLexer", cb);
 	testLexing (l, expected);
     }
 
