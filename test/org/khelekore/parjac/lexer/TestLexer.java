@@ -120,6 +120,24 @@ public class TestLexer {
 	testInput ("/* whatever \n * whatever \n *\n/*/", TokenType.MULTILINE_COMMENT);
     }
 
+    @Test
+    public void testCharLiteral () {
+	testInput ("'a'", TokenType.CHARACTER_LITERAL);
+	testInput ("'\\\\'", TokenType.CHARACTER_LITERAL);
+	testInput ("'\\t'", TokenType.CHARACTER_LITERAL);
+	// Does not handle octal escapes yet, silly thing
+	// testInput ("'\\12'", TokenType.CHARACTER_LITERAL); // octal escape
+	testInput ("'\\a'", TokenType.ERROR);
+	testInput ("'ab'", TokenType.ERROR);
+	testInput ("'a", TokenType.ERROR);
+    }
+
+    @Test
+    public void testStringLiteral () {
+	testInput ("\"\"", TokenType.STRING_LITERAL);
+	testInput ("\"abc123\"", TokenType.STRING_LITERAL);
+    }
+
     /* Not working yet
     @Test
     public void testNullLiteral () {
@@ -168,7 +186,8 @@ public class TestLexer {
 	    assert t != null : "Returned token may not be null";
 	    TokenType tt = t.getType ();
 	    assert tt != null : "TokenType may not be null";
-	    assert tt == expected[i] : "Wrong TokenType: expected: " + expected[i] + ", got: " + tt;
+	    assert tt == expected[i] : "Wrong TokenType: expected: " + expected[i] + ", got: " + tt
+		+ (tt == TokenType.ERROR ? ", error code: " + l.getError () : "");
 	}
 	assert !l.hasMoreTokens () : "Lexer has more available tokens than expected";
     }

@@ -10,10 +10,16 @@ public class Lexer {
     private int currentLine = 0;
     private int currentColumn = 0;
     private boolean insideTypeContext = false;
+
+    // Text set when we get an lexer ERROR
     private String errorText;
 
     public Lexer (CharBuffer buf) {
 	this.buf = buf.duplicate ();
+    }
+
+    public String getError () {
+	return errorText;
     }
 
     public void setInsideTypeContext (boolean insideTypeContext) {
@@ -96,6 +102,10 @@ public class Lexer {
 	    case '^':
 		return handleExtraEqual (TokenType.BIT_XOR, TokenType.BIT_XOR_EQUAL);
 
+	    case '\'':
+		return readCharacterLiteral ();
+	    case '"':
+		return readStringLiteral ();
 	    }
 	}
 	return new Token (TokenType.NULL);
@@ -284,6 +294,68 @@ public class Lexer {
 		pushBack ();
 	}
 	return tt;
+    }
+
+    private Token readCharacterLiteral () {
+	int pos = buf.position ();
+	String s =
+	    handleString ('\'', TokenType.CHARACTER_LITERAL, "Character literal not closed");
+	if (s == null)
+	    return getToken (TokenType.ERROR);
+	if (s.length () > 1) {
+	    errorText = "Unclosed character literal: *" + s + "*";
+	    return getToken (TokenType.ERROR);
+	}
+	return getToken (TokenType.CHARACTER_LITERAL);
+    }
+
+    private Token readStringLiteral () {
+	int pos = buf.position ();
+	String s =
+	    handleString ('"', TokenType.STRING_LITERAL, "String literal not closed");
+	if (s == null)
+	    return getToken (TokenType.ERROR);
+	return getToken (TokenType.STRING_LITERAL);
+    }
+
+    private String handleString (char end, TokenType base, String newlineError) {
+	errorText = "End of input";
+
+	TokenType tt = base;
+	boolean previousWasBackslash = false;
+	StringBuilder res = new StringBuilder ();
+
+	while (buf.hasRemaining ()) {
+	    char c = buf.get ();
+	    if (previousWasBackslash) {
+		switch (c) {
+		case 'b': res.append ('\b'); break;
+		case 't': res.append ('\t'); break;
+		case 'n': res.append ('\n'); break;
+		case 'f': res.append ('\f'); break;
+		case 'r': res.append ('\r'); break;
+		case '"':  // fall through
+		case '\'': // fall through
+		case '\\': res.append (c); break;
+		default:
+		    res.append ('\\');
+		    res.append (c);
+		    errorText = "Illegal escape sequence";
+		}
+		previousWasBackslash = false;
+	    } else if (c == '\n' || c == '\r') {
+		errorText = newlineError;
+		pushBack ();
+	    } else if (c == end) {
+		errorText = null;
+		break;
+	    } else if (c == '\\') {
+		previousWasBackslash = true;
+	    } else {
+		res.append (c);
+	    }
+	}
+	return errorText == null ? res.toString () : null;
     }
 
     private void pushBack () {
