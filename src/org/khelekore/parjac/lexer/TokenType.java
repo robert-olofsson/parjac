@@ -1,24 +1,17 @@
 package org.khelekore.parjac.lexer;
 
+import java.util.EnumSet;
+
 public enum TokenType {
     SUB ("\u001a"),  // only allowed at end of input and should be ignored
 
     // Whitespace, note that line terminators are also whitespace
-    SPACE (" "),
-    TAB ("\t"),
-    FORM_FEED ("\f"),
+    WHITESPACE ("whitespace"), // ' ', '\t', '\f'
 
     // LineTerminator:
     LF ("\n"),
     CR ("\r"),
     CRLF ("\r\n"),
-
-    // Null Literal
-    NULL ("null"),
-
-    // Boolean literals
-    TRUE ("true"),
-    FALSE ("false"),
 
     // Separators
     LEFT_PARANTHESIS ("("),
@@ -134,10 +127,14 @@ public enum TokenType {
 
     IDENTIFIER ("identifier"),
 
+    // Literal
     INTEGER_LITERAL ("integer literal"),
     FLOATINGPOINT_LITERAL ("floatingpoint literal"),
     CHARACTER_LITERAL ("character literal"),
-    STRING_LITERAL ("string literal");
+    STRING_LITERAL ("string literal"),
+    NULL ("null"),
+    TRUE ("true"),
+    FALSE ("false");
 
     private final String value;
 
@@ -145,8 +142,56 @@ public enum TokenType {
 	this.value = value;
     }
 
+    private static final EnumSet<TokenType> whitespaces =
+    EnumSet.of (WHITESPACE, LF, CR, CRLF);
+
+    private static final EnumSet<TokenType> operators =
+    EnumSet.of (EQUAL, GT, LT, NOT, TILDE, QUESTIONMARK, COLON, ARROW, DOUBLE_EQUAL,
+		GE, LE, NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, INCREMENT, DECREMENT,
+		PLUS, MINUS, MULTIPLY, DIVIDE, BIT_AND, BIT_OR, BIT_XOT,
+		REMAINDER, LEFT_SHIFT, RIGHT_SHIFT, RIGHT_SHIFT_UNSIGNED,
+		PLUS_EQUALS, MINUS_EQUALS, MULTIPLY_EQUALS, DIVISION_EQUALS,
+		AND_EQUALS, OR_EQUALS, XOR_EQUALS, REMAINDER_EQUALS,
+		LEFT_SHIFT_EQUALS, RIGHT_SHIFT_EQUALS, RIGHT_SHIFT_UNSIGNED_EQUALS);
+
+    private static final EnumSet<TokenType> keywords =
+    EnumSet.of (ABSTRACT, ASSERT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST,
+		CONTINUE, DEFAULT, DO, DOUBLE, ELSE, ENUM, EXTENDS, FINAL, FINALLY, FLOAT,
+		FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG,
+		NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC, RETURN, SHORT, STATIC,
+		STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT,
+		TRY, VOID, VOLATILE, WHILE);
+
+    private static final EnumSet<TokenType> literals =
+    EnumSet.of (INTEGER_LITERAL, FLOATINGPOINT_LITERAL, CHARACTER_LITERAL,
+		STRING_LITERAL, NULL, TRUE, FALSE);
+
+    private static final EnumSet<TokenType> separator =
+    EnumSet.of (LEFT_PARANTHESIS, RIGHT_PARANTHESIS, LEFT_CURLY, RIGHT_CURLY,
+		LEFT_BRACKET, RIGHT_BRACKET, SEMICOLON, COMMA, DOT, ELLIPSIS,
+		AT, DOUBLE_COLON);
+
     public boolean isWhitespace () {
-	return this == SPACE || this == TAB || this == FORM_FEED ||
-	    this == LF || this == CR || this == CRLF;
+	return whitespaces.contains (this);
+    }
+
+    public boolean isIdentifier () {
+	return this == IDENTIFIER;
+    }
+
+    public boolean isKeyword () {
+	return keywords.contains (this);
+    }
+
+    public boolean isLiteral () {
+	return literals.contains (this);
+    }
+
+    public boolean isSeparator () {
+	return separator.contains (this);
+    }
+
+    public boolean isOperator () {
+	return operators.contains (this);
     }
 }
