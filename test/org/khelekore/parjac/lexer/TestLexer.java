@@ -170,6 +170,6 @@ public class TestLexer {
 	    assert tt != null : "TokenType may not be null";
 	    assert tt == expected[i] : "Wrong TokenType: expected: " + expected[i] + ", got: " + tt;
 	}
-	assert !l.hasMoreTokens () : "More available tokens";
+	assert !l.hasMoreTokens () : "Lexer has more available tokens than expected";
     }
 }
