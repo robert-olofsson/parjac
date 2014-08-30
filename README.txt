@@ -8,8 +8,11 @@ Some things:
 *) All input is supposed to be utf-8.
 *) Every step should be internally time logged so that it is easy to
    inspect performance.
+*) The lexer is hand written
+*) Tests are done with testng
 
-Uses ? for parsing. Antlr seemed nice, but the java grammars are very
-slow. Parboiled is messy and requires some old version of asm.
+Some things that are not implemented (but may be):
+1) Unicode escapes, just use utf-8 already
+2) Octal escapes in character and string literals
 
 Use asm for bytecode handling.
