@@ -154,6 +154,18 @@ public class TestLexer {
 	assert value.equals (res) : "Wrong string value: " + res;
     }
 
+    @Test
+    public void testComplex () {
+	// nonsense, but valid for tokenisation
+	testInput ("{    \n    (/*whatever*/)=[]}",
+		   TokenType.LEFT_CURLY, TokenType.WHITESPACE,
+		   TokenType.LF, TokenType.WHITESPACE,
+		   TokenType.LEFT_PARANTHESIS, TokenType.MULTILINE_COMMENT,
+		   TokenType.RIGHT_PARANTHESIS, TokenType.EQUAL,
+		   TokenType.LEFT_BRACKET, TokenType.RIGHT_BRACKET,
+		   TokenType.RIGHT_CURLY);
+    }
+
     /* Not working yet
     @Test
     public void testNullLiteral () {
