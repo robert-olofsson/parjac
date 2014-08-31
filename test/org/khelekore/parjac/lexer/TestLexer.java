@@ -147,6 +147,13 @@ public class TestLexer {
 	testString ("\"abc123\"", "abc123");
     }
 
+    @Test
+    public void testUnicodeEscape () {
+	testInput ("\u0009", Token.WHITESPACE);
+	testString ("\"\\u005cu005a\"", "\\u005a");
+	testInput ("\\u000a", Token.LF);
+    }
+
     private void testString (String toLex, String value) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.STRING_LITERAL);

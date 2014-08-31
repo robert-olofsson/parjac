@@ -686,7 +686,29 @@ public class Lexer {
 
     private char nextChar () {
 	currentColumn++;
-	return buf.get ();
+	char c = buf.get ();
+	if (c == '\\') {
+	    // check for unicode escapes
+	    if (buf.remaining () > 4) {
+		int p = buf.position ();
+		if (buf.get (p++) == 'u') {
+		    StringBuilder sb = new StringBuilder ();
+		    for (int j = 0; j < 4; j++) {
+			char h = buf.get (p++);
+			if ((h >= '0' && h <= '9') || (h >= 'a' && h <= 'f') || (h >= 'A' && h <= 'F'))
+			    sb.append (h);
+			else
+			    break;
+		    }
+		    if (sb.length () == 4) {
+			int hv = Integer.parseInt (sb.toString (), 16);
+			buf.position (p);
+			c = (char)hv;
+		    }
+		}
+	    }
+	}
+	return c;
     }
 
     private void pushBack () {

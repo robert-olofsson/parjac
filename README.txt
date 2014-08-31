@@ -11,8 +11,4 @@ Some things:
 *) The lexer is hand written
 *) Tests are done with testng
 
-Some things that are not implemented (but may be):
-1) Unicode escapes, just use utf-8 already
-2) Octal escapes in character and string literals
-
 Use asm for bytecode handling.
