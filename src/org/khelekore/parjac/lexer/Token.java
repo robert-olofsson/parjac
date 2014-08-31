@@ -1,6 +1,8 @@
 package org.khelekore.parjac.lexer;
 
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum Token {
     SUB ("\u001a"),  // only allowed at end of input and should be ignored
@@ -173,6 +175,19 @@ public enum Token {
     EnumSet.of (LEFT_PARANTHESIS, RIGHT_PARANTHESIS, LEFT_CURLY, RIGHT_CURLY,
 		LEFT_BRACKET, RIGHT_BRACKET, SEMICOLON, COMMA, DOT, ELLIPSIS,
 		AT, DOUBLE_COLON);
+
+    private static final Map<String, Token> nameToToken = new HashMap<> ();
+    static {
+	for (Token t : keywords)
+	    nameToToken.put (t.description, t);
+	nameToToken.put (NULL.description, NULL);
+	nameToToken.put (TRUE.description, TRUE);
+	nameToToken.put (FALSE.description, FALSE);
+    }
+
+    public static Token getFromIdentifier (String id) {
+	return nameToToken.get (id);
+    }
 
     public boolean isWhitespace () {
 	return whitespaces.contains (this);

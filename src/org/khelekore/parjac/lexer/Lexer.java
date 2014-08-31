@@ -22,6 +22,7 @@ public class Lexer {
     private BigInteger currentIntValue; // for int and long
     private float currentFloatValue;
     private double currentDoubleValue;
+    private String currentIdentifier;
 
     // Decimal values are always positive, hex, oct and binary may be negative
     private static final BigInteger MAX_INT_LITERAL = new BigInteger ("80000000", 16);
@@ -166,6 +167,10 @@ public class Lexer {
 	    case '8':
 	    case '9':
 		return readDecimalNumber (c);
+	    default:
+		if (Character.isJavaIdentifierStart (c))
+		    return readIdentifier (c);
+		return Token.ERROR;
 	    }
 	}
 	return Token.IDENTIFIER;
@@ -591,6 +596,26 @@ public class Lexer {
 	else
 	    currentFloatValue = Float.parseFloat (text);
 	return type;
+    }
+
+    private Token readIdentifier (char start) {
+	StringBuilder res = new StringBuilder ();
+	res.append (start);
+	while (buf.hasRemaining ()) {
+	    char c = nextChar ();
+	    if (Character.isJavaIdentifierPart (c)) {
+		res.append (c);
+	    } else {
+		pushBack ();
+		break;
+	    }
+	}
+	String identifier = res.toString ();
+	Token t = Token.getFromIdentifier (identifier);
+	if (t != null)
+	    return t;
+	currentIdentifier = identifier;
+	return Token.IDENTIFIER;
     }
 
     private char nextChar () {

@@ -152,39 +152,73 @@ public class TestLexer {
     }
 
     @Test
-    public void testComplex () {
-	// nonsense, but valid for tokenisation
-	testInput ("{    \n    (/*whatever*/)=[]}",
-		   Token.LEFT_CURLY, Token.WHITESPACE,
-		   Token.LF, Token.WHITESPACE,
-		   Token.LEFT_PARANTHESIS, Token.MULTILINE_COMMENT,
-		   Token.RIGHT_PARANTHESIS, Token.EQUAL,
-		   Token.LEFT_BRACKET, Token.RIGHT_BRACKET,
-		   Token.RIGHT_CURLY);
-    }
-
-    /* Not working yet
-    @Test
     public void testNullLiteral () {
 	testInput ("null", Token.NULL);
+	testInput ("NULL", Token.IDENTIFIER);
+	testInput ("null_a", Token.IDENTIFIER);
     }
 
     @Test
     public void testBooleanLiterals () {
 	testInput ("true", Token.TRUE);
+	testInput ("TRUE", Token.IDENTIFIER);
 	testInput ("false", Token.FALSE);
+	testInput ("FALSE", Token.IDENTIFIER);
     }
 
     @Test
     public void testKeywords () {
-        // fill in keywords
+	testInput ("abstract", Token.ABSTRACT);
+	testInput ("assert", Token.ASSERT);
+	testInput ("boolean", Token.BOOLEAN);
+	testInput ("break", Token.BREAK);
+	testInput ("byte", Token.BYTE);
+	testInput ("case", Token.CASE);
+	testInput ("catch", Token.CATCH);
+	testInput ("char", Token.CHAR);
+	testInput ("class", Token.CLASS);
+	testInput ("const", Token.CONST);
+	testInput ("continue", Token.CONTINUE);
+	testInput ("default", Token.DEFAULT);
+	testInput ("do", Token.DO);
+	testInput ("double", Token.DOUBLE);
+	testInput ("else", Token.ELSE);
+	testInput ("enum", Token.ENUM);
+	testInput ("extends", Token.EXTENDS);
+	testInput ("final", Token.FINAL);
+	testInput ("finally", Token.FINALLY);
+	testInput ("float", Token.FLOAT);
+	testInput ("for", Token.FOR);
+	testInput ("goto", Token.GOTO);
+	testInput ("if", Token.IF);
+	testInput ("implements", Token.IMPLEMENTS);
+	testInput ("import", Token.IMPORT);
+	testInput ("instanceof", Token.INSTANCEOF);
+	testInput ("int", Token.INT);
+	testInput ("interface", Token.INTERFACE);
+	testInput ("long", Token.LONG);
+	testInput ("native", Token.NATIVE);
+	testInput ("new", Token.NEW);
+	testInput ("package", Token.PACKAGE);
+	testInput ("private", Token.PRIVATE);
+	testInput ("protected", Token.PROTECTED);
+	testInput ("public", Token.PUBLIC);
+	testInput ("return", Token.RETURN);
+	testInput ("short", Token.SHORT);
+	testInput ("static", Token.STATIC);
+	testInput ("strictfp", Token.STRICTFP);
+	testInput ("super", Token.SUPER);
+	testInput ("switch", Token.SWITCH);
+	testInput ("synchronized", Token.SYNCHRONIZED);
+	testInput ("this", Token.THIS);
+	testInput ("throw", Token.THROW);
+	testInput ("throws", Token.THROWS);
+	testInput ("transient", Token.TRANSIENT);
+	testInput ("try", Token.TRY);
+	testInput ("void", Token.VOID);
+	testInput ("volatile", Token.VOLATILE);
+	testInput ("while", Token.WHILE);
     }
-
-    @Test
-    public void testNonNullLiteral () {
-	testInput ("null_a", Token.IDENTIFIER);
-    }
-    */
 
     @Test
     public void testIntLiterals () {
@@ -272,6 +306,27 @@ public class TestLexer {
 	testLexing (l, Token.FLOAT_LITERAL);
 	float val = l.getCurrentFloatValue ();
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+    }
+
+    @Test
+    public void testComplex () {
+	// nonsense, but valid for tokenisation
+	testInput ("{    \n    (/*whatever*/)=[]}",
+		   Token.LEFT_CURLY, Token.WHITESPACE,
+		   Token.LF, Token.WHITESPACE,
+		   Token.LEFT_PARANTHESIS, Token.MULTILINE_COMMENT,
+		   Token.RIGHT_PARANTHESIS, Token.EQUAL,
+		   Token.LEFT_BRACKET, Token.RIGHT_BRACKET,
+		   Token.RIGHT_CURLY);
+
+	testInput ("import foo.bar.Baz;\npublic class Foo {\n\tBaz bar = 42;\n}",
+		   Token.IMPORT, Token.WHITESPACE, Token.IDENTIFIER/*foo*/, Token.DOT,
+		   Token.IDENTIFIER/*bar*/, Token.DOT, Token.IDENTIFIER/*Baz*/, Token.SEMICOLON,
+		   Token.LF, Token.PUBLIC, Token.WHITESPACE, Token.CLASS, Token.WHITESPACE,
+		   Token.IDENTIFIER, Token.WHITESPACE, Token.LEFT_CURLY, Token.LF,
+		   Token.WHITESPACE, Token.IDENTIFIER/*Baz*/, Token.WHITESPACE,
+		   Token.IDENTIFIER/*bar*/, Token.WHITESPACE, Token.EQUAL, Token.WHITESPACE,
+		   Token.INT_LITERAL, Token.SEMICOLON, Token.LF, Token.RIGHT_CURLY);
     }
 
     private void testInput (String text, Token... expected) {
