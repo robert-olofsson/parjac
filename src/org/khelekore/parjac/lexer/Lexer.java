@@ -1,5 +1,6 @@
 package org.khelekore.parjac.lexer;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 
@@ -18,7 +19,9 @@ public class Lexer {
     private String errorText;
     private char currentCharValue;
     private String currentStringValue;
-    private BigInteger currentIntValue;
+    private BigInteger currentIntValue; // for int and long
+    private float currentFloatValue;
+    private double currentDoubleValue;
 
     // Decimal values are always positive, hex, oct and binary may be negative
     private static final BigInteger MAX_INT_LITERAL = new BigInteger ("80000000", 16);
@@ -56,6 +59,14 @@ public class Lexer {
     public long getCurrentLongValue () {
 	// similar to int handling above
 	return currentIntValue.longValue ();
+    }
+
+    public float getCurrentFloatValue () {
+	return currentFloatValue;
+    }
+
+    public double getCurrentDoubleValue () {
+	return currentDoubleValue;
     }
 
     public void setInsideTypeContext (boolean insideTypeContext) {
@@ -102,7 +113,7 @@ public class Lexer {
 	    case ',':
 		return Token.COMMA;
 	    case '.':
-		return handleDot ();  // not correct, may be start of floating point literal as well
+		return handleDot ();
 	    case '@':
 		return Token.AT;
 	    case ':':  // : is an operator, :: is a separator
@@ -157,7 +168,7 @@ public class Lexer {
 		return readDecimalNumber (c);
 	    }
 	}
-	return Token.NULL;
+	return Token.IDENTIFIER;
     }
 
     public boolean hasMoreTokens () {
@@ -189,13 +200,20 @@ public class Lexer {
 
     private Token handleDot () {
 	Token tt = Token.DOT;
-	if (buf.remaining () >= 2) {
+	if (buf.hasRemaining ()) {
 	    buf.mark ();
 	    char c2 = nextChar ();
 	    if (c2 == '.') {
-		char c3 = nextChar ();
-		if (c3 == '.')
-		    return Token.ELLIPSIS;
+		if (buf.hasRemaining ()) {
+		    char c3 = nextChar ();
+		    if (c3 == '.')
+			return Token.ELLIPSIS;
+		}
+	    } else if (c2 >= '0' && c2 <= '9') {
+		StringBuilder value = new StringBuilder ();
+		value.append ('.');
+		value.append (c2);
+		return readNumber (value, 10);
 	    }
 	    buf.reset ();
 	}
@@ -412,16 +430,20 @@ public class Lexer {
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == 'x') {
-		return readNumber (new StringBuilder (), 16, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+		return readNumber (new StringBuilder (), 16);
 	    } else if (c == 'b') {
-		return readNumber (new StringBuilder (), 2, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+		return readNumber (new StringBuilder (), 2);
 	    } else if (c == 'l' || c == 'L') {
 		currentIntValue = BigInteger.ZERO;
 		return Token.LONG_LITERAL;
 	    } else if (c == '_' || (c >= '0' && c <= '7')) {
 		StringBuilder value = new StringBuilder ();
 		value.append (c);
-		return readNumber (value, 8, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+		return readNumber (value, 8);
+	    } else if (c == '.') {
+		StringBuilder value = new StringBuilder ();
+		value.append (c);
+		return readNumber (value, 10);
 	    } else {
 		currentIntValue = BigInteger.ZERO;
 		pushBack ();
@@ -436,17 +458,18 @@ public class Lexer {
     private Token readDecimalNumber (char start) {
 	StringBuilder res = new StringBuilder ();
 	res.append (start);
-	Token t = readNumber (res, 10, MAX_INT_LITERAL, MAX_LONG_LITERAL);
+	Token t = readNumber (res, 10);
 	if (t == Token.ERROR)
 	    return t;
 
 	return t;
     }
 
-    private Token readNumber (StringBuilder value, int radix,
-			      BigInteger maxInt, BigInteger maxLong) {
+    private Token readNumber (StringBuilder value, int radix) {
 	boolean lastWasUnderscore = false;
-	boolean longLiteral = false;
+	boolean hasSeenDot = value.length () > 0 && value.charAt (0) == '.';
+	boolean hasSeenExponent = false;
+	Token type = Token.INT_LITERAL;
 	char min = '0';
 	char max = (char)(min + radix);
 	while (buf.hasRemaining ()) {
@@ -454,13 +477,27 @@ public class Lexer {
 	    char c = nextChar ();
 	    if (c >= min && c < max) {
 		value.append (c);
-	    } else if (radix == 16 && ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+	    } else if (isAllowedHexDigit (radix, hasSeenExponent, c)) {
 		value.append (c);
-	    } else if (c == '_') {
+	    } else if (c == '_') { // skip it
 		lastWasUnderscore = true;
-	    } else if (c == 'l' || c == 'L') {
-		longLiteral = true;
+	    } else if (c == 'd' || c == 'D') {
+		type = Token.DOUBLE_LITERAL;
 		break;
+	    } else if (c == 'f' || c == 'F') {
+		type = Token.FLOAT_LITERAL;
+		break;
+	    } else if (c == 'l' || c == 'L') {
+		type = Token.LONG_LITERAL;
+		break;
+	    } else if (c == '.' && !hasSeenDot && (radix == 10 || radix == 16)) {
+		hasSeenDot = true;
+		value.append (c);
+	    } else if (validExponent (radix, hasSeenExponent, c)) {
+		hasSeenExponent = true;
+		value.append (c);
+		if (!readSignedInteger (value))
+		    return Token.ERROR;
 	    } else {
 		pushBack ();
 		break;
@@ -474,18 +511,86 @@ public class Lexer {
 	    errorText = "Number may not be empty";
 	    return Token.ERROR;
 	}
-	return intValue (value.toString (), radix, longLiteral, maxInt, maxLong);
+
+	if ((hasSeenDot || hasSeenExponent) && type != Token.FLOAT_LITERAL)
+	    type = Token.DOUBLE_LITERAL;
+	if (type == Token.INT_LITERAL || type == Token.LONG_LITERAL)
+	    return intValue (value.toString (), radix, type);
+	return doubleValue (value.toString (), radix, type);
     }
 
-    private Token intValue (String text, int radix, boolean longLiteral,
-			    BigInteger maxInt, BigInteger maxLong) {
+    private boolean isAllowedHexDigit (int radix, boolean hasSeenExponent, char c) {
+	if (radix != 16)
+	    return false;
+	// Exponents are decimal only
+	if (hasSeenExponent)
+	    return false;
+	return (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    }
+
+    private boolean validExponent (int radix, boolean hasSeenExponent, char c) {
+	if (hasSeenExponent)
+	    return false;
+	if (radix == 10 && (c == 'e' || c == 'E'))
+	    return true;
+	if (radix == 16 && (c == 'p' || c == 'P'))
+	    return true;
+	return false;
+    }
+
+    private boolean readSignedInteger (StringBuilder value) {
+	boolean lastWasUnderscore = false;
+	boolean first = true;
+	boolean foundDigits = false;
+	while (buf.hasRemaining ()) {
+	    lastWasUnderscore = false;
+	    char c = nextChar ();
+	    if (c >= '0' && c <= '9') {
+		value.append (c);
+		foundDigits = true;
+	    } else if (c == '_') {
+		lastWasUnderscore = true;
+	    } else if (first && (c == '+' || c == '-')) {
+		value.append (c);
+	    } else {
+		pushBack ();
+		break;
+	    }
+	}
+	if (lastWasUnderscore) {
+	    errorText = "Number may not end with underscore";
+	    return false;
+	}
+	if (!foundDigits) {
+	    errorText = "Exponent not found";
+	    return false;
+	}
+	return true;
+    }
+
+    private Token intValue (String text, int radix, Token type) {
 	currentIntValue = new BigInteger (text, radix);
-	BigInteger maxAllowed = longLiteral ? maxLong : maxInt;
+	BigInteger maxAllowed;
+	if (type == Token.INT_LITERAL)
+	    maxAllowed = radix == 10 ? MAX_INT_LITERAL : MAX_UINT_LITERAL;
+	else
+	    maxAllowed = radix == 10 ? MAX_LONG_LITERAL : MAX_ULONG_LITERAL;
+
 	if (currentIntValue.compareTo (maxAllowed) > 0) {
 	    errorText = "Integer literal too large";
 	    return Token.ERROR;
 	}
-	return longLiteral ? Token.LONG_LITERAL : Token.INT_LITERAL;
+	return type;
+    }
+
+    private Token doubleValue (String text, double radix, Token type) {
+	if (radix == 16)
+	    text = "0x" + text;
+	if (type == Token.DOUBLE_LITERAL)
+	    currentDoubleValue = Double.parseDouble (text);
+	else
+	    currentFloatValue = Float.parseFloat (text);
+	return type;
     }
 
     private char nextChar () {

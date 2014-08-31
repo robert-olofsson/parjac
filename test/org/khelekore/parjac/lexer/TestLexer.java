@@ -231,22 +231,48 @@ public class TestLexer {
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
-    /*
-    @Test
-    public void testLongLiterals () {
-        // fill in
+    @Test public void testDoubleLiterals () {
+	testDouble ("1d", 1d);
+	testDouble ("2.", 2.);
+	testDouble ("3.14", 3.14);
+	testDouble ("0.0", 0.0);
+	testDouble (".3", .3);
+	testDouble ("1e1", 1e1);
+	testDouble ("1e1_0", 1e1_0);
+	testInput ("1ee", Token.ERROR, Token.IDENTIFIER);
+	testDouble ("1e-9d", 1e-9d);
+	testDouble ("1e137", 1e137);
+	testDouble ("1_0.3_2e4_7",1_0.3_2e4_7);
+	testDouble ("0xa.p2", 0xa.p2);
+	testDouble ("0x1.8p1", 0x1.8p1);
+	testDouble ("0x1.fffffffffffffp1023", 0x1.fffffffffffffp1023);
+	testDouble ("0x1.0p-2", 0x1.0p-2);
+	testInput ("1 2.0 3.14 4e5 6", Token.INT_LITERAL, Token.WHITESPACE, Token.DOUBLE_LITERAL,
+		   Token.WHITESPACE, Token.DOUBLE_LITERAL, Token.WHITESPACE, Token.DOUBLE_LITERAL,
+		   Token.WHITESPACE, Token.INT_LITERAL);
     }
 
-    @Test
-    public void testDoubleLiterals () {
-        // fill in
+    private void testDouble (String toLex, double expected) {
+	Lexer l = getLexer (toLex);
+	testLexing (l, Token.DOUBLE_LITERAL);
+	double val = l.getCurrentDoubleValue ();
+	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
     @Test
     public void testFloatLiterals () {
-        // fill in
+	testFloat ("1f", 1f);
+	testFloat ("2.f", 2.f);
+	testFloat ("3.14f", 3.14f);
+	testFloat ("0xa.p2f", 0xa.p2f);
     }
-    */
+
+    private void testFloat (String toLex, float expected) {
+	Lexer l = getLexer (toLex);
+	testLexing (l, Token.FLOAT_LITERAL);
+	float val = l.getCurrentFloatValue ();
+	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+    }
 
     private void testInput (String text, Token... expected) {
 	Lexer l = getLexer (text);
