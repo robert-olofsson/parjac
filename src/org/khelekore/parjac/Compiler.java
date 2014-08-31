@@ -6,6 +6,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,16 +22,14 @@ import org.khelekore.parjac.tree.SyntaxTree;
 /** The actual compiler
  */
 public class Compiler {
-    private static final Charset UTF8 = Charset.forName ("UTF-8");
-
     private final CompilerDiagnosticCollector diagnostics;
 
     public Compiler (CompilerDiagnosticCollector diagnostics) {
 	this.diagnostics = diagnostics;
     }
 
-    public void compile (List<Path> srcFiles, Path destinationDir) {
-	List<SyntaxTree> trees = parse (srcFiles);
+    public void compile (List<Path> srcFiles, Path destinationDir, Charset encoding) {
+	List<SyntaxTree> trees = parse (srcFiles, encoding);
 	if (diagnostics.hasError ())
 	    return;
 
@@ -45,18 +44,18 @@ public class Compiler {
 	writeClasses (trees, destinationDir);
     }
 
-    private List<SyntaxTree> parse (List<Path> srcFiles) {
+    private List<SyntaxTree> parse (List<Path> srcFiles, Charset encoding) {
 	return
 	    srcFiles.parallelStream ().
-	    map (p -> parse (p)).
+	    map (p -> parse (p, encoding)).
 	    filter (p -> p != null).
 	    collect (Collectors.toList ());
     }
 
-    private SyntaxTree parse (Path p) {
+    private SyntaxTree parse (Path p, Charset encoding) {
 	try {
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (p));
-	    CharsetDecoder decoder = UTF8.newDecoder ();
+	    CharsetDecoder decoder = encoding.newDecoder ();
 	    decoder.onMalformedInput (CodingErrorAction.REPORT);
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
@@ -70,8 +69,12 @@ public class Compiler {
 							       l.getError ()));
 	    }
 	    return new SyntaxTree (p);
+	} catch (MalformedInputException e) {
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
+							 p, encoding));
+	    return null;
 	} catch (IOException e) {
-	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s", p));
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s: %s", p, e));
 	    return null;
 	}
     }

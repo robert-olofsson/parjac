@@ -1,6 +1,7 @@
 package org.khelekore.parjac.batch;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +53,7 @@ public class Main {
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
 	Compiler c = new Compiler (diagnostics);
-	c.compile (srcFiles, settings.getOutputDir ());
+	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
     }
@@ -60,6 +61,7 @@ public class Main {
     private CompilationArguments parseArgs (String[] args) {
 	List<Path> srcDirs = new ArrayList<> ();
 	Path outputDir = null;
+	Charset encoding = Charset.forName ("UTF-8");
 	for (int i = 0; i < args.length; i++) {
 	    switch (args[i]) {
 	    case "-i":
@@ -72,6 +74,16 @@ public class Main {
 		if (hasFollowingArgExists (args, i))
 		    outputDir = Paths.get (args[++i]);
 	        break;
+	    case "--encoding":
+		if (hasFollowingArgExists (args, i)) {
+		    String e = args[++i];
+		    if (!Charset.isSupported (e)) {
+			diagnostics.report (new NoSourceDiagnostics ("Unkonwn encoding: %s", e));
+			return null;
+		    }
+		    encoding = Charset.forName (e);
+		}
+		break;
 	    case "-h":
 	    case "--help":
 		usage ();
@@ -80,7 +92,7 @@ public class Main {
 		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: %s", args[i]));
 	    }
 	}
-	return new CompilationArguments (srcDirs, outputDir);
+	return new CompilationArguments (srcDirs, outputDir, encoding);
     }
 
     private boolean hasFollowingArgExists (String[] args, int pos) {

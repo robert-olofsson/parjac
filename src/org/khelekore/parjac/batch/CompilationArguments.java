@@ -1,5 +1,6 @@
 package org.khelekore.parjac.batch;
 
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,8 +10,9 @@ import java.util.List;
 public class CompilationArguments {
     private final List<Path> srcDirs;
     private final Path outputDir;
+    private final Charset encoding;
 
-    public CompilationArguments (List<Path> srcDirs, Path outputDir) {
+    public CompilationArguments (List<Path> srcDirs, Path outputDir, Charset encoding) {
 	if (srcDirs == null)
 	    throw new NullPointerException ("srcDirs may not be null");
 	if (srcDirs.isEmpty ())
@@ -19,6 +21,7 @@ public class CompilationArguments {
 	    throw new NullPointerException ("outputDir may not be null");
 	this.srcDirs = new ArrayList<> (srcDirs);
 	this.outputDir = outputDir;
+	this.encoding = encoding;
     }
 
     public List<Path> getSrcDirs () {
@@ -27,5 +30,9 @@ public class CompilationArguments {
 
     public Path getOutputDir () {
 	return outputDir;
+    }
+
+    public Charset getEncoding () {
+	return encoding;
     }
 }
