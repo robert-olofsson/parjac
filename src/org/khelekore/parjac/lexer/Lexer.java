@@ -10,13 +10,15 @@ public class Lexer {
     private final String path;
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
-    private int tokenStartPosition = 0;
-    private int currentLine = 1;
-    private int currentColumn = 0;
+    private long tokenStartPosition = 0;
+    private long currentLine = 1;
+    private long currentColumn = 0;
     private boolean insideTypeContext = false;
 
     // Text set when we get an lexer ERROR
     private String errorText;
+
+    // The different values we can have
     private char currentCharValue;
     private String currentStringValue;
     private BigInteger currentIntValue; // for int and long
@@ -36,7 +38,7 @@ public class Lexer {
     }
 
     public String getError () {
-	return path + ":" + currentLine + ":" + currentColumn + ":" + errorText;
+	return errorText;
     }
 
     public char getCharValue () {
@@ -72,6 +74,22 @@ public class Lexer {
 
     public void setInsideTypeContext (boolean insideTypeContext) {
 	this.insideTypeContext = insideTypeContext;
+    }
+
+    public long getLine () {
+	return currentLine;
+    }
+
+    public long getTokenStartPos () {
+	return tokenStartPosition;
+    }
+
+    public long getTokenEndPos () {
+	return buf.position ();
+    }
+
+    public long getTokenColumn () {
+	return currentColumn;
     }
 
     public Token nextToken () {

@@ -64,7 +64,10 @@ public class Compiler {
 	    while (l.hasMoreTokens ()) {
 		Token t = l.nextToken ();
 		if (t == Token.ERROR)
-		    diagnostics.report (new NoSourceDiagnostics (l.getError ()));
+		    diagnostics.report (new SourceDiagnostics (p, l.getTokenStartPos (),
+							       l.getTokenEndPos (),
+							       l.getLine (), l.getTokenColumn (),
+							       l.getError ()));
 	    }
 	    return new SyntaxTree (p);
 	} catch (IOException e) {
