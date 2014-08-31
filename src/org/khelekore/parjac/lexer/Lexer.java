@@ -1,5 +1,6 @@
 package org.khelekore.parjac.lexer;
 
+import java.math.BigInteger;
 import java.nio.CharBuffer;
 
 /** A somewhat simplified lexer for java, it skips the unicode escape handling. */
@@ -17,6 +18,13 @@ public class Lexer {
     private String errorText;
     private char currentCharValue;
     private String currentStringValue;
+    private BigInteger currentIntValue;
+
+    // Decimal values are always positive, hex, oct and binary may be negative
+    private static final BigInteger MAX_INT_LITERAL = new BigInteger ("80000000", 16);
+    private static final BigInteger MAX_LONG_LITERAL = new BigInteger ("8000000000000000", 16);
+    private static final BigInteger MAX_UINT_LITERAL = new BigInteger  ("FFFFFFFF", 16);
+    private static final BigInteger MAX_ULONG_LITERAL = new BigInteger ("FFFFFFFFFFFFFFFF", 16);
 
     public Lexer (String path, CharBuffer buf) {
 	this.path = path;
@@ -37,6 +45,17 @@ public class Lexer {
 
     public char getCurrentCharValue () {
 	return currentCharValue;
+    }
+
+    public int getCurrentIntValue () {
+	// for 2^31 which is the max allowed int literal we get -2^31.
+	// note however that (int)2^31 == (int)(-2^31)
+	return currentIntValue.intValue ();
+    }
+
+    public long getCurrentLongValue () {
+	// similar to int handling above
+	return currentIntValue.longValue ();
     }
 
     public void setInsideTypeContext (boolean insideTypeContext) {
@@ -123,6 +142,19 @@ public class Lexer {
 		return readCharacterLiteral ();
 	    case '"':
 		return readStringLiteral ();
+
+	    case '0':
+		return readZero ();
+	    case '1':
+	    case '2':
+	    case '3':
+	    case '4':
+	    case '5':
+	    case '6':
+	    case '7':
+	    case '8':
+	    case '9':
+		return readDecimalNumber (c);
 	    }
 	}
 	return Token.NULL;
@@ -374,6 +406,86 @@ public class Lexer {
 	    }
 	}
 	return errorText == null ? res.toString () : null;
+    }
+
+    private Token readZero () {
+	if (buf.hasRemaining ()) {
+	    char c = nextChar ();
+	    if (c == 'x') {
+		return readNumber (new StringBuilder (), 16, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+	    } else if (c == 'b') {
+		return readNumber (new StringBuilder (), 2, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+	    } else if (c == 'l' || c == 'L') {
+		currentIntValue = BigInteger.ZERO;
+		return Token.LONG_LITERAL;
+	    } else if (c == '_' || (c >= '0' && c <= '7')) {
+		StringBuilder value = new StringBuilder ();
+		value.append (c);
+		return readNumber (value, 8, MAX_UINT_LITERAL, MAX_ULONG_LITERAL);
+	    } else {
+		currentIntValue = BigInteger.ZERO;
+		pushBack ();
+		return Token.INT_LITERAL;
+	    }
+	} else {
+	    currentIntValue = BigInteger.ZERO;
+	}
+	return Token.INT_LITERAL;
+    }
+
+    private Token readDecimalNumber (char start) {
+	StringBuilder res = new StringBuilder ();
+	res.append (start);
+	Token t = readNumber (res, 10, MAX_INT_LITERAL, MAX_LONG_LITERAL);
+	if (t == Token.ERROR)
+	    return t;
+
+	return t;
+    }
+
+    private Token readNumber (StringBuilder value, int radix,
+			      BigInteger maxInt, BigInteger maxLong) {
+	boolean lastWasUnderscore = false;
+	boolean longLiteral = false;
+	char min = '0';
+	char max = (char)(min + radix);
+	while (buf.hasRemaining ()) {
+	    lastWasUnderscore = false;
+	    char c = nextChar ();
+	    if (c >= min && c < max) {
+		value.append (c);
+	    } else if (radix == 16 && ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+		value.append (c);
+	    } else if (c == '_') {
+		lastWasUnderscore = true;
+	    } else if (c == 'l' || c == 'L') {
+		longLiteral = true;
+		break;
+	    } else {
+		pushBack ();
+		break;
+	    }
+	}
+	if (lastWasUnderscore) {
+	    errorText = "Number may not end with underscore";
+	    return Token.ERROR;
+	}
+	if (value.length () == 0) {
+	    errorText = "Number may not be empty";
+	    return Token.ERROR;
+	}
+	return intValue (value.toString (), radix, longLiteral, maxInt, maxLong);
+    }
+
+    private Token intValue (String text, int radix, boolean longLiteral,
+			    BigInteger maxInt, BigInteger maxLong) {
+	currentIntValue = new BigInteger (text, radix);
+	BigInteger maxAllowed = longLiteral ? maxLong : maxInt;
+	if (currentIntValue.compareTo (maxAllowed) > 0) {
+	    errorText = "Integer literal too large";
+	    return Token.ERROR;
+	}
+	return longLiteral ? Token.LONG_LITERAL : Token.INT_LITERAL;
     }
 
     private char nextChar () {

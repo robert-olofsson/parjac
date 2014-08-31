@@ -104,8 +104,7 @@ public class TestLexer {
 
     @Test
     public void testGenerics () {
-	CharBuffer cb = CharBuffer.wrap (">>".toCharArray ());
-	Lexer l = new Lexer ("TestLexer", cb);
+	Lexer l = getLexer (">>");
 	l.setInsideTypeContext (true);
 	testLexing (l, Token.GT, Token.GT);
     }
@@ -133,8 +132,7 @@ public class TestLexer {
     }
 
     private void testChar (String toLex, char value) {
-	CharBuffer cb = CharBuffer.wrap (toLex.toCharArray ());
-	Lexer l = new Lexer ("TestLexer", cb);
+	Lexer l = getLexer (toLex);
 	testLexing (l, Token.CHARACTER_LITERAL);
 	char res = l.getCurrentCharValue ();
 	assert value == res : "Wrong string value: " + res;
@@ -147,8 +145,7 @@ public class TestLexer {
     }
 
     private void testString (String toLex, String value) {
-	CharBuffer cb = CharBuffer.wrap (toLex.toCharArray ());
-	Lexer l = new Lexer ("TestLexer", cb);
+	Lexer l = getLexer (toLex);
 	testLexing (l, Token.STRING_LITERAL);
 	String res = l.getCurrentStringValue ();
 	assert value.equals (res) : "Wrong string value: " + res;
@@ -189,32 +186,50 @@ public class TestLexer {
     }
     */
 
-    /*
     @Test
     public void testIntLiterals () {
-	System.err.println ("testing int literals");
-	testInput ("0 2 0372 0xDada_Cafe 1996 0x00_FF__00_FF",
-		   Token.INT_LITERAL, Token.WHITESPACE,
-		   Token.INT_LITERAL, Token.WHITESPACE,
-		   Token.INT_LITERAL, Token.WHITESPACE,
-		   Token.INT_LITERAL, Token.WHITESPACE,
-		   Token.INT_LITERAL, Token.WHITESPACE,
-		   Token.INT_LITERAL);
-	System.err.println ("done testing int literals");
+	testInt ("0", 0);
+	testInt ("2", 2);
+	testInt ("1996", 1996);
+	testInput ("1_", Token.ERROR);
+	testInt ("2147483648", -2147483648); // may seem a bit odd
+	testInput ("2147483649", Token.ERROR);
+	testInt ("0372", 0372);
+	testInt ("0xDada_Cafe", 0xDada_Cafe);
+	testInt ("0x00_FF__00_FF", 0x00_FF__00_FF);
+	testInt ("0b1111", 0b1111);
+	testInput ("0x", Token.ERROR);
+
+	// javac is a bit iffy with octal handling compared to binary
+	// lets handle individual characters out of range the same here
+	testInput ("08", Token.INT_LITERAL, Token.INT_LITERAL);
+	testInput ("0b12", Token.INT_LITERAL, Token.INT_LITERAL);
+	testInput ("1 2", Token.INT_LITERAL, Token.WHITESPACE, Token.INT_LITERAL);
+    }
+
+    private void testInt (String toLex, int expected) {
+	Lexer l = getLexer (toLex);
+	testLexing (l, Token.INT_LITERAL);
+	int val = l.getCurrentIntValue ();
+	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
     @Test
     public void testLongLiterals () {
-	System.err.println ("testing long literals");
-	testInput ("0l 0777L 0x100000000L 2_147_483_648L 0xC0B0L",
-		   Token.LONG_LITERAL, Token.WHITESPACE,
-		   Token.LONG_LITERAL, Token.WHITESPACE,
-		   Token.LONG_LITERAL, Token.WHITESPACE,
-		   Token.LONG_LITERAL, Token.WHITESPACE,
-		   Token.LONG_LITERAL);
-	System.err.println ("done testing long literals");
+	testLong ("0l", 0);
+	testLong ("0777L", 0777);
+	testLong ("0x100000000L", 0x100000000L);
+	testLong ("2_147_483_648L", 2_147_483_648L);
+	testLong ("2147483649L", 2147483649L);
+	testLong ("0xC0B0L", 0xC0B0L);
     }
-    */
+
+    private void testLong (String toLex, long expected) {
+	Lexer l = getLexer (toLex);
+	testLexing (l, Token.LONG_LITERAL);
+	long val = l.getCurrentLongValue ();
+	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+    }
 
     /*
     @Test
@@ -234,9 +249,13 @@ public class TestLexer {
     */
 
     private void testInput (String text, Token... expected) {
-	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
-	Lexer l = new Lexer ("TestLexer", cb);
+	Lexer l = getLexer (text);
 	testLexing (l, expected);
+    }
+
+    private Lexer getLexer (String text) {
+	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
+	return new Lexer ("TestLexer", cb);
     }
 
     private void testLexing (Lexer l, Token... expected) {
