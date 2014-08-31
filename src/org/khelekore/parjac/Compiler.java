@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.tools.DiagnosticListener;
+import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler
@@ -58,6 +60,12 @@ public class Compiler {
 	    decoder.onMalformedInput (CodingErrorAction.REPORT);
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
+	    Lexer l = new Lexer (p.toString (), charBuf);
+	    while (l.hasMoreTokens ()) {
+		Token t = l.nextToken ();
+		if (t == Token.ERROR)
+		    diagnostics.report (new NoSourceDiagnostics (l.getError ()));
+	    }
 	    return new SyntaxTree (p);
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s", p));

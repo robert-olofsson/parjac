@@ -11,7 +11,7 @@ public class Lexer {
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
     private int tokenStartPosition = 0;
-    private int currentLine = 0;
+    private int currentLine = 1;
     private int currentColumn = 0;
     private boolean insideTypeContext = false;
 
@@ -218,7 +218,7 @@ public class Lexer {
 		StringBuilder value = new StringBuilder ();
 		value.append ('.');
 		value.append (c2);
-		return readNumber (value, 10);
+		return readNumber (value, 10, true);
 	    }
 	    buf.reset ();
 	}
@@ -373,7 +373,10 @@ public class Lexer {
 	    handleString ('\'', Token.CHARACTER_LITERAL, "Character literal not closed");
 	if (s == null)
 	    return Token.ERROR;
-	if (s.length () > 1) {
+	int len = s.length ();
+	if (len == 0)
+	    return Token.ERROR;
+	if (len > 1) {
 	    errorText = "Unclosed character literal: *" + s + "*";
 	    return Token.ERROR;
 	}
@@ -410,6 +413,22 @@ public class Lexer {
 		case '"':  // fall through
 		case '\'': // fall through
 		case '\\': res.append (c); break;
+
+		// octal escape, Unicode \u0000 to \u00ff
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		    int i = getOctalEscape (c);
+		    if (i >= 0 && i < 256)
+			res.append ((char)i);
+		    else
+			errorText = "Invalid octal escape";
+		    break;
 		default:
 		    res.append ('\\');
 		    res.append (c);
@@ -431,24 +450,44 @@ public class Lexer {
 	return errorText == null ? res.toString () : null;
     }
 
+    private int getOctalEscape (char start) {
+	StringBuilder sb = new StringBuilder ();
+	sb.append (start);
+	while (buf.hasRemaining ()) {
+	    char c = nextChar ();
+	    if (c >= '0' && c <= '7') {
+		sb.append (c);
+	    } else {
+		pushBack ();
+		break;
+	    }
+	}
+	try {
+	    return Integer.parseInt (sb.toString (), 8);
+	} catch (NumberFormatException n) {
+	    return -1;
+	}
+    }
+
     private Token readZero () {
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == 'x') {
-		return readNumber (new StringBuilder (), 16);
+		return readNumber (new StringBuilder (), 16, false);
 	    } else if (c == 'b') {
-		return readNumber (new StringBuilder (), 2);
+		return readNumber (new StringBuilder (), 2, false);
 	    } else if (c == 'l' || c == 'L') {
 		currentIntValue = BigInteger.ZERO;
 		return Token.LONG_LITERAL;
 	    } else if (c == '_' || (c >= '0' && c <= '7')) {
 		StringBuilder value = new StringBuilder ();
 		value.append (c);
-		return readNumber (value, 8);
+		return readNumber (value, 8, false);
 	    } else if (c == '.') {
 		StringBuilder value = new StringBuilder ();
+		value.append ('0');
 		value.append (c);
-		return readNumber (value, 10);
+		return readNumber (value, 10, true);
 	    } else {
 		currentIntValue = BigInteger.ZERO;
 		pushBack ();
@@ -463,24 +502,23 @@ public class Lexer {
     private Token readDecimalNumber (char start) {
 	StringBuilder res = new StringBuilder ();
 	res.append (start);
-	Token t = readNumber (res, 10);
+	Token t = readNumber (res, 10, false);
 	if (t == Token.ERROR)
 	    return t;
 
 	return t;
     }
 
-    private Token readNumber (StringBuilder value, int radix) {
+    private Token readNumber (StringBuilder value, int radix, boolean hasSeenDot) {
 	boolean lastWasUnderscore = false;
-	boolean hasSeenDot = value.length () > 0 && value.charAt (0) == '.';
 	boolean hasSeenExponent = false;
 	Token type = Token.INT_LITERAL;
-	char min = '0';
-	char max = (char)(min + radix);
+	char minChar = '0';
+	char maxChar = (char)(minChar + Math.min (10, radix));
 	while (buf.hasRemaining ()) {
 	    lastWasUnderscore = false;
 	    char c = nextChar ();
-	    if (c >= min && c < max) {
+	    if (c >= minChar && c < maxChar) {
 		value.append (c);
 	    } else if (isAllowedHexDigit (radix, hasSeenExponent, c)) {
 		value.append (c);
@@ -574,28 +612,38 @@ public class Lexer {
     }
 
     private Token intValue (String text, int radix, Token type) {
-	currentIntValue = new BigInteger (text, radix);
-	BigInteger maxAllowed;
-	if (type == Token.INT_LITERAL)
-	    maxAllowed = radix == 10 ? MAX_INT_LITERAL : MAX_UINT_LITERAL;
-	else
-	    maxAllowed = radix == 10 ? MAX_LONG_LITERAL : MAX_ULONG_LITERAL;
+	try {
+	    currentIntValue = new BigInteger (text, radix);
+	    BigInteger maxAllowed;
+	    if (type == Token.INT_LITERAL)
+		maxAllowed = radix == 10 ? MAX_INT_LITERAL : MAX_UINT_LITERAL;
+	    else
+		maxAllowed = radix == 10 ? MAX_LONG_LITERAL : MAX_ULONG_LITERAL;
 
-	if (currentIntValue.compareTo (maxAllowed) > 0) {
-	    errorText = "Integer literal too large";
+	    if (currentIntValue.compareTo (maxAllowed) > 0) {
+		errorText = "Integer literal too large";
+		return Token.ERROR;
+	    }
+	    return type;
+	} catch (NumberFormatException n) {
+	    errorText = "Failed to parse int value: " + text;
 	    return Token.ERROR;
 	}
-	return type;
     }
 
     private Token doubleValue (String text, double radix, Token type) {
 	if (radix == 16)
 	    text = "0x" + text;
-	if (type == Token.DOUBLE_LITERAL)
-	    currentDoubleValue = Double.parseDouble (text);
-	else
-	    currentFloatValue = Float.parseFloat (text);
-	return type;
+	try {
+	    if (type == Token.DOUBLE_LITERAL)
+		currentDoubleValue = Double.parseDouble (text);
+	    else
+		currentFloatValue = Float.parseFloat (text);
+	    return type;
+	} catch (NumberFormatException n) {
+	    errorText = "Failed to parse floating point: " + text;
+	    return Token.ERROR;
+	}
     }
 
     private Token readIdentifier (char start) {

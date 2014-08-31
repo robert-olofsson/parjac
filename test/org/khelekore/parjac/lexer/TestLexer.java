@@ -125,7 +125,10 @@ public class TestLexer {
 	testChar ("'\\\\'", '\\');
 	testChar ("'\\t'", '\t');
 	// Does not handle octal escapes yet, silly thing
-	// testInput ("'\\12'", Token.CHARACTER_LITERAL); // octal escape
+	testInput ("'\\1'", Token.CHARACTER_LITERAL);
+	testInput ("'\\12'", Token.CHARACTER_LITERAL);
+	testInput ("'\\123'", Token.CHARACTER_LITERAL);
+	testInput ("'\\456'", Token.ERROR);
 	testInput ("'\\a'", Token.ERROR);
 	testInput ("'ab'", Token.ERROR);
 	testInput ("'a", Token.ERROR);
@@ -233,6 +236,7 @@ public class TestLexer {
 	testInt ("0x00_FF__00_FF", 0x00_FF__00_FF);
 	testInt ("0b1111", 0b1111);
 	testInput ("0x", Token.ERROR);
+	testInput ("0xffffff;", Token.INT_LITERAL, Token.SEMICOLON);
 
 	// javac is a bit iffy with octal handling compared to binary
 	// lets handle individual characters out of range the same here
