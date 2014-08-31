@@ -63,29 +63,29 @@ public class Lexer {
 
 	     // sub
 	    case '\u001a':
-		return getToken (TokenType.SUB);
+		return Token.SUB;
 
 	    // separators
 	    case '(':
-		return getToken (TokenType.LEFT_PARANTHESIS);
+		return Token.LEFT_PARANTHESIS;
 	    case ')':
-		return getToken (TokenType.RIGHT_PARANTHESIS);
+		return Token.RIGHT_PARANTHESIS;
 	    case '{':
-		return getToken (TokenType.LEFT_CURLY);
+		return Token.LEFT_CURLY;
 	    case '}':
-		return getToken (TokenType.RIGHT_CURLY);
+		return Token.RIGHT_CURLY;
 	    case '[':
-		return getToken (TokenType.LEFT_BRACKET);
+		return Token.LEFT_BRACKET;
 	    case ']':
-		return getToken (TokenType.RIGHT_BRACKET);
+		return Token.RIGHT_BRACKET;
 	    case ';':
-		return getToken (TokenType.SEMICOLON);
+		return Token.SEMICOLON;
 	    case ',':
-		return getToken (TokenType.COMMA);
+		return Token.COMMA;
 	    case '.':
-		return handleDot ();
+		return handleDot ();  // not correct, may be start of floating point literal as well
 	    case '@':
-		return getToken (TokenType.AT);
+		return Token.AT;
 	    case ':':  // : is an operator, :: is a separator
 		return handleColon ();
 
@@ -97,27 +97,27 @@ public class Lexer {
 	    case '<':
 		return handleLT ();
 	    case '!':
-		return handleExtraEqual (TokenType.NOT, TokenType.NOT_EQUAL);
+		return handleExtraEqual (Token.NOT, Token.NOT_EQUAL);
 	    case '~':
-		return getToken (TokenType.TILDE);
+		return Token.TILDE;
 	    case '?':
-		return getToken (TokenType.QUESTIONMARK);
+		return Token.QUESTIONMARK;
 	    case '+':
-		return handleDoubleOrEqual (c, TokenType.PLUS, TokenType.INCREMENT, TokenType.PLUS_EQUAL);
+		return handleDoubleOrEqual (c, Token.PLUS, Token.INCREMENT, Token.PLUS_EQUAL);
 	    case '-':
 		return handleMinus ();
 	    case '*':
-		return handleExtraEqual (TokenType.MULTIPLY, TokenType.MULTIPLY_EQUAL);
+		return handleExtraEqual (Token.MULTIPLY, Token.MULTIPLY_EQUAL);
 	    case '/':
 		return handleSlash ();
 	    case '%':
-		return handleExtraEqual (TokenType.REMAINDER, TokenType.REMAINDER_EQUAL);
+		return handleExtraEqual (Token.REMAINDER, Token.REMAINDER_EQUAL);
 	    case '&':
-		return handleDoubleOrEqual (c, TokenType.BIT_AND, TokenType.LOGICAL_AND, TokenType.BIT_AND_EQUAL);
+		return handleDoubleOrEqual (c, Token.BIT_AND, Token.LOGICAL_AND, Token.BIT_AND_EQUAL);
 	    case '|':
-		return handleDoubleOrEqual (c, TokenType.BIT_OR, TokenType.LOGICAL_OR, TokenType.BIT_OR_EQUAL);
+		return handleDoubleOrEqual (c, Token.BIT_OR, Token.LOGICAL_OR, Token.BIT_OR_EQUAL);
 	    case '^':
-		return handleExtraEqual (TokenType.BIT_XOR, TokenType.BIT_XOR_EQUAL);
+		return handleExtraEqual (Token.BIT_XOR, Token.BIT_XOR_EQUAL);
 
 	    case '\'':
 		return readCharacterLiteral ();
@@ -125,7 +125,7 @@ public class Lexer {
 		return readStringLiteral ();
 	    }
 	}
-	return new Token (TokenType.NULL);
+	return Token.NULL;
     }
 
     public boolean hasMoreTokens () {
@@ -141,49 +141,49 @@ public class Lexer {
 		break;
 	    }
 	}
-	return getToken (TokenType.WHITESPACE);
+	return Token.WHITESPACE;
     }
 
     private Token handleLF () { // easy case
 	nextLine ();
-	return getToken (TokenType.LF);
+	return Token.LF;
     }
 
     private Token handleCR () { // might be a CR or CRLF
-	TokenType tt = handleOneExtra (TokenType.CR, '\n', TokenType.CRLF);
+	Token tt = handleOneExtra (Token.CR, '\n', Token.CRLF);
 	nextLine ();
-	return getToken (tt);
+	return tt;
     }
 
     private Token handleDot () {
-	TokenType tt = TokenType.DOT;
+	Token tt = Token.DOT;
 	if (buf.remaining () >= 2) {
 	    buf.mark ();
 	    char c2 = nextChar ();
 	    if (c2 == '.') {
 		char c3 = nextChar ();
 		if (c3 == '.')
-		    return getToken (TokenType.ELLIPSIS);
+		    return Token.ELLIPSIS;
 	    }
 	    buf.reset ();
 	}
-	return getToken (tt);
+	return tt;
     }
 
     private Token handleColon () {
-	return getToken (handleOneExtra (TokenType.COLON, ':', TokenType.DOUBLE_COLON));
+	return handleOneExtra (Token.COLON, ':', Token.DOUBLE_COLON);
     }
 
     private Token handleEquals () {
-	return getToken (handleOneExtra (TokenType.EQUAL, '=', TokenType.DOUBLE_EQUAL));
+	return handleOneExtra (Token.EQUAL, '=', Token.DOUBLE_EQUAL);
     }
 
-    private Token handleExtraEqual (TokenType base, TokenType extra) {
-	return getToken (handleOneExtra (base, '=', extra));
+    private Token handleExtraEqual (Token base, Token extra) {
+	return handleOneExtra (base, '=', extra);
     }
 
-    private Token handleDoubleOrEqual (char m, TokenType base, TokenType twice, TokenType baseEqual) {
-	TokenType tt = base;
+    private Token handleDoubleOrEqual (char m, Token base, Token twice, Token baseEqual) {
+	Token tt = base;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == m)
@@ -193,33 +193,33 @@ public class Lexer {
 	    else
 		pushBack ();
 	}
-	return getToken (tt);
+	return tt;
     }
 
     private Token handleMinus () {
 	// -, --, -=, ->
-	TokenType tt = TokenType.MINUS;
+	Token tt = Token.MINUS;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '-')
-		tt = TokenType.DECREMENT;
+		tt = Token.DECREMENT;
 	    else if (c == '=')
-		tt = TokenType.MINUS_EQUAL;
+		tt = Token.MINUS_EQUAL;
 	    else if (c == '>')
-		tt = TokenType.ARROW;
+		tt = Token.ARROW;
 	    else
 		pushBack ();
 	}
-	return getToken (tt);
+	return tt;
     }
 
     private Token handleSlash () {
 	// /, /=, //, /* ... */
-	TokenType tt = TokenType.DIVIDE;
+	Token tt = Token.DIVIDE;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '=')
-		tt = TokenType.DIVIDE_EQUAL;
+		tt = Token.DIVIDE_EQUAL;
 	    else if (c == '/')
 		tt = readOffOneLineComment ();
 	    else if (c == '*')
@@ -227,10 +227,10 @@ public class Lexer {
 	    else
 		pushBack ();
 	}
-	return getToken (tt);
+	return tt;
     }
 
-    private TokenType readOffOneLineComment () {
+    private Token readOffOneLineComment () {
 	while (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '\n' || c == '\r') {
@@ -238,15 +238,15 @@ public class Lexer {
 		break;
 	    }
 	}
-	return TokenType.ONELINE_COMMENT;
+	return Token.ONELINE_COMMENT;
     }
 
-    private TokenType readOffMultiLineComment () {
+    private Token readOffMultiLineComment () {
 	boolean previousWasStar = false;
 	while (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (previousWasStar && c == '/')
-		return TokenType.MULTILINE_COMMENT;
+		return Token.MULTILINE_COMMENT;
 	    previousWasStar = (c == '*');
 	    if (c == '\n')
 		handleLF ();
@@ -254,41 +254,40 @@ public class Lexer {
 		handleCR ();
 	}
 	errorText = "Reached end of input while inside comment";
-	return TokenType.ERROR;
+	return Token.ERROR;
     }
 
     private Token handleLT () {
 	// <, <=, <<, <<=
-	TokenType tt = handleLTGT ('<', TokenType.LT, TokenType.LE,
-				   TokenType.LEFT_SHIFT, TokenType.LEFT_SHIFT_EQUAL);
-	return getToken (tt);
+	return handleLTGT ('<', Token.LT, Token.LE,
+			   Token.LEFT_SHIFT, Token.LEFT_SHIFT_EQUAL);
     }
 
     private Token handleGT () {
 	// >, >=, >>, >>=, >>>, >>>=
-	TokenType tt = TokenType.GT;
+	Token tt = Token.GT;
 
 	// generics
 	if (insideTypeContext)
-	    return getToken (tt);
+	    return tt;
 
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '=') {
-		tt = TokenType.GE;
+		tt = Token.GE;
 	    } else if (c == '>') {
-		tt = handleLTGT ('>', TokenType.RIGHT_SHIFT, TokenType.RIGHT_SHIFT_EQUAL,
-				 TokenType.RIGHT_SHIFT_UNSIGNED, TokenType.RIGHT_SHIFT_UNSIGNED_EQUAL);
+		tt = handleLTGT ('>', Token.RIGHT_SHIFT, Token.RIGHT_SHIFT_EQUAL,
+				 Token.RIGHT_SHIFT_UNSIGNED, Token.RIGHT_SHIFT_UNSIGNED_EQUAL);
 	    } else {
 		pushBack ();
 	    }
 	}
-	return getToken (tt);
+	return tt;
     }
 
-    private TokenType handleLTGT (char ltgt, TokenType base, TokenType baseEqual,
-				  TokenType doubleBase, TokenType doubleBaseEqual) {
-	TokenType tt = base;
+    private Token handleLTGT (char ltgt, Token base, Token baseEqual,
+				  Token doubleBase, Token doubleBaseEqual) {
+	Token tt = base;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '=')
@@ -301,8 +300,8 @@ public class Lexer {
 	return tt;
     }
 
-    private TokenType handleOneExtra (TokenType base, char match, TokenType extended) {
-	TokenType tt = base;
+    private Token handleOneExtra (Token base, char match, Token extended) {
+	Token tt = base;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == match)
@@ -316,31 +315,31 @@ public class Lexer {
     private Token readCharacterLiteral () {
 	int pos = buf.position ();
 	String s =
-	    handleString ('\'', TokenType.CHARACTER_LITERAL, "Character literal not closed");
+	    handleString ('\'', Token.CHARACTER_LITERAL, "Character literal not closed");
 	if (s == null)
-	    return getToken (TokenType.ERROR);
+	    return Token.ERROR;
 	if (s.length () > 1) {
 	    errorText = "Unclosed character literal: *" + s + "*";
-	    return getToken (TokenType.ERROR);
+	    return Token.ERROR;
 	}
 	currentCharValue = s.charAt (0);
-	return getToken (TokenType.CHARACTER_LITERAL);
+	return Token.CHARACTER_LITERAL;
     }
 
     private Token readStringLiteral () {
 	int pos = buf.position ();
 	String s =
-	    handleString ('"', TokenType.STRING_LITERAL, "String literal not closed");
+	    handleString ('"', Token.STRING_LITERAL, "String literal not closed");
 	if (s == null)
-	    return getToken (TokenType.ERROR);
+	    return Token.ERROR;
 	currentStringValue = s;
-	return getToken (TokenType.STRING_LITERAL);
+	return Token.STRING_LITERAL;
     }
 
-    private String handleString (char end, TokenType base, String newlineError) {
+    private String handleString (char end, Token base, String newlineError) {
 	errorText = "End of input";
 
-	TokenType tt = base;
+	Token tt = base;
 	boolean previousWasBackslash = false;
 	StringBuilder res = new StringBuilder ();
 
@@ -390,9 +389,5 @@ public class Lexer {
     private void nextLine () {
 	currentLine++;
 	currentColumn = 0;
-    }
-
-    private Token getToken (TokenType tt) {
-	return new Token (tt); // fill in value?
     }
 }
