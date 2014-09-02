@@ -1,6 +1,7 @@
 package org.khelekore.parjac.lexer;
 
 import java.nio.CharBuffer;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import org.testng.annotations.Test;
 
@@ -340,6 +341,28 @@ public class TestLexer {
 		   Token.INT_LITERAL, Token.SEMICOLON, Token.LF, Token.RIGHT_CURLY);
     }
 
+    @Test
+    public void testBadInput () {
+	testInput ("\\", Token.ERROR);
+	testInput ("§§", Token.ERROR, Token.ERROR);
+    }
+
+    @Test
+    public void testNextNonWhitespaceToken () {
+	testNextNonWhitespace ("", Token.END_OF_INPUT);
+	testNextNonWhitespace ("package   ", Token.PACKAGE, Token.END_OF_INPUT);
+	testNextNonWhitespace ("  \t  <  >", Token.LT, Token.GT, Token.END_OF_INPUT);
+    }
+
+    private void testNextNonWhitespace (String text, Token... expected) {
+	Lexer l = getLexer (text);
+	for (int i = 0; i < expected.length; i++) {
+	    Token t = l.nextNonWhitespaceToken ();
+	    assert t == expected[i] : "Wrong Token: expected: " + expected[i] + ", got: " + t
+		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
+	}
+    }
+
     private void testInput (String text, Token... expected) {
 	Lexer l = getLexer (text);
 	testLexing (l, expected);
@@ -347,7 +370,7 @@ public class TestLexer {
 
     private Lexer getLexer (String text) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
-	return new Lexer ("TestLexer", cb);
+	return new Lexer (Paths.get ("TestLexer"), cb);
     }
 
     private void testLexing (Lexer l, Token... expected) {

@@ -4,6 +4,7 @@
   <test name="Lexer">
     <packages>
       <package name="org.khelekore.parjac.lexer" />
+      <package name="org.khelekore.parjac.parser" />
    </packages>
  </test>
 </suite>

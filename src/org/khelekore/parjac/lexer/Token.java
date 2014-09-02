@@ -139,7 +139,10 @@ public enum Token {
     FALSE ("false"),
 
     // Signal lexer error
-    ERROR ("error");
+    ERROR ("error"),
+
+    // Signal end of input
+    END_OF_INPUT ("end of input");
 
     private final String description;
 
@@ -148,7 +151,7 @@ public enum Token {
     }
 
     private static final EnumSet<Token> whitespaces =
-    EnumSet.of (WHITESPACE, LF, CR, CRLF);
+    EnumSet.of (WHITESPACE, LF, CR, CRLF, ONELINE_COMMENT, MULTILINE_COMMENT);
 
     private static final EnumSet<Token> operators =
     EnumSet.of (EQUAL, GT, LT, NOT, TILDE, QUESTIONMARK, COLON, ARROW, DOUBLE_EQUAL,

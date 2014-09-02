@@ -3,14 +3,16 @@ package org.khelekore.parjac.lexer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
+import java.nio.file.Path;
 
 /** A somewhat simplified lexer for java, it skips the unicode escape handling. */
 public class Lexer {
     // Typically the file name, used for error output
-    private final String path;
+    private final Path path;
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
     private long tokenStartPosition = 0;
+    private long tokenStartColumn = 0;
     private long currentLine = 1;
     private long currentColumn = 0;
     private boolean insideTypeContext = false;
@@ -32,7 +34,7 @@ public class Lexer {
     private static final BigInteger MAX_UINT_LITERAL = new BigInteger  ("FFFFFFFF", 16);
     private static final BigInteger MAX_ULONG_LITERAL = new BigInteger ("FFFFFFFFFFFFFFFF", 16);
 
-    public Lexer (String path, CharBuffer buf) {
+    public Lexer (Path path, CharBuffer buf) {
 	this.path = path;
 	this.buf = buf.duplicate ();
     }
@@ -89,12 +91,22 @@ public class Lexer {
     }
 
     public long getTokenColumn () {
-	return currentColumn;
+	return tokenStartColumn;
+    }
+
+    public Token nextNonWhitespaceToken () {
+	while (hasMoreTokens ()) {
+	    Token t = nextToken ();
+	    if (!t.isWhitespace ())
+		return t;
+	}
+	return Token.END_OF_INPUT;
     }
 
     public Token nextToken () {
 	tokenStartPosition = buf.position ();
-	while (buf.hasRemaining ()) {
+	tokenStartColumn = currentColumn;
+	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    switch (c) {
 
@@ -188,10 +200,12 @@ public class Lexer {
 	    default:
 		if (Character.isJavaIdentifierStart (c))
 		    return readIdentifier (c);
+
+		errorText = "Illegal character: " + c + "(0x" + Integer.toHexString (c) + ")";
 		return Token.ERROR;
 	    }
 	}
-	return Token.IDENTIFIER;
+	return Token.END_OF_INPUT;
     }
 
     public boolean hasMoreTokens () {

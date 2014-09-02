@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.tools.DiagnosticListener;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.parser.Parser;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler
@@ -52,29 +53,23 @@ public class Compiler {
 	    collect (Collectors.toList ());
     }
 
-    private SyntaxTree parse (Path p, Charset encoding) {
+    private SyntaxTree parse (Path path, Charset encoding) {
 	try {
-	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (p));
+	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
 	    CharsetDecoder decoder = encoding.newDecoder ();
 	    decoder.onMalformedInput (CodingErrorAction.REPORT);
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
-	    Lexer l = new Lexer (p.toString (), charBuf);
-	    while (l.hasMoreTokens ()) {
-		Token t = l.nextToken ();
-		if (t == Token.ERROR)
-		    diagnostics.report (new SourceDiagnostics (p, l.getTokenStartPos (),
-							       l.getTokenEndPos (),
-							       l.getLine (), l.getTokenColumn (),
-							       l.getError ()));
-	    }
-	    return new SyntaxTree (p);
+	    Lexer lexer = new Lexer (path, charBuf);
+	    Parser parser = new Parser (path, lexer, diagnostics);
+	    SyntaxTree tree = parser.parse ();
+	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
-							 p, encoding));
+							 path, encoding));
 	    return null;
 	} catch (IOException e) {
-	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s: %s", p, e));
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s: %s", path, e));
 	    return null;
 	}
     }
