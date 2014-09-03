@@ -66,6 +66,34 @@ public class TestParser {
 		   Token.DOT, Token.IDENTIFIER, Token.DOT, Token.MULTIPLY, Token.SEMICOLON);
     }
 
+    @Test
+    public void testClass () {
+	testParse (Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.PUBLIC, Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.ABSTRACT, Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+    }
+
+    @Test
+    public void testEnum () {
+	testParse (Token.ENUM, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.PUBLIC, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+    }
+
+    @Test
+    public void testInterface () {
+	testParse (Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.PUBLIC, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+    }
+
+    @Test
+    public void testAnnotation () {
+	/* TODO: currently broken, match the anotations before package
+	testParse (Token.AT, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.PACKAGE, Token.IDENTIFIER, Token.SEMICOLON,
+		   Token.AT, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	*/
+    }
+
     private void testParse (Token... tokens) {
 	Parser p = getParser (tokens);
 	p.parse ();

@@ -15,7 +15,6 @@ public class Parser {
     private final CompilerDiagnosticCollector diagnostics;
 
     private Token nextToken;
-    private Token currentToken;
 
     public Parser (Path path, Lexer lexer, CompilerDiagnosticCollector diagnostics) {
 	this.path = path;
@@ -38,11 +37,20 @@ public class Parser {
 	return diagnostics;
     }
 
+    /*
+      CompilationUnit:
+          [PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+
+      PackageDeclaration:
+          {PackageModifier} package Identifier {. Identifier} ;
+
+      PackageModifier:
+          Annotation
+     */
     private void compilationUnit () {
 	Token next;
-	while (nextToken () == Token.AT) {
-	    annotation ();
-	}
+
+	annotations ();
 	if (nextToken () == Token.PACKAGE) {
 	    packageDeclaration ();
 	}
@@ -64,19 +72,10 @@ public class Parser {
 	*/
     }
 
-    private void annotation () {
-	match (Token.AT);
-	typeName ();
-	if (nextToken () == Token.LEFT_PARENTHESIS) {
-	    match (Token.LEFT_PARENTHESIS);
-	    // TODO: correct parsing
-	    while (nextToken () != Token.RIGHT_PARENTHESIS) {
-		match (nextToken ());
-	    }
-	    match (Token.RIGHT_PARENTHESIS);
-	}
-    }
-
+    /*
+      PackageDeclaration:
+          {PackageModifier} package Identifier {. Identifier} ;
+    */
     private void packageDeclaration () {
 	match (Token.PACKAGE);
 	match (Token.IDENTIFIER);
@@ -87,6 +86,13 @@ public class Parser {
 	match (Token.SEMICOLON);
     }
 
+    /*
+      ImportDeclaration:
+          SingleTypeImportDeclaration
+	  TypeImportOnDemandDeclaration
+	  SingleStaticImportDeclaration
+	  StaticImportOnDemandDeclaration
+    */
     private void importDeclaration () {
 	match (Token.IMPORT);
 	if (nextToken == Token.STATIC)
@@ -106,7 +112,7 @@ public class Parser {
 
     private static final EnumSet<Token> typeDeclarationFirsts = EnumSet.of (
 	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT, Token.STATIC, Token.FINAL,
-	Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE, Token.SEMICOLON);
+	Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE, Token.AT, Token.SEMICOLON);
 
     /*
       TypeDeclaration:
@@ -135,7 +141,200 @@ public class Parser {
           {InterfaceModifier} @ interface Identifier AnnotationTypeBody
     */
     private void typeDeclaration () {
-	// TODO: fill in
+	if (nextToken () == Token.SEMICOLON)
+	    return;
+
+	modifiers ();
+	switch (nextToken ()) {
+	case CLASS:
+	    normalClassDeclaration ();
+	    break;
+	case ENUM:
+	    enumDeclaration ();
+	    break;
+	case INTERFACE:
+	    normalInterfaceDeclaration ();
+	    break;
+	case AT:
+	    annotationTypeDeclaration ();
+	    break;
+	}
+    }
+
+    private void modifiers () {
+	do {
+	    if (nextToken () == Token.AT)
+		annotation ();
+	    else if (modifiers.contains (nextToken ()))
+		match (nextToken ());
+	} while (nextToken () == Token.AT || modifiers.contains (nextToken ()));
+    }
+
+    // TODO: FINAL may not be used for interfaces
+    private static final EnumSet<Token> modifiers = EnumSet.of (
+	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT,
+	Token.STATIC, Token.FINAL, Token.STRICTFP);
+
+    private void normalClassDeclaration () {
+	match (Token.CLASS);
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.LT)
+	    typeParameters ();
+	if (nextToken () == Token.SUPER)
+	    superClass ();
+	if (nextToken () == Token.IMPLEMENTS)
+	    superInterfaces ();
+	classBody ();
+    }
+
+    private void enumDeclaration () {
+	match (Token.ENUM);
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.IMPLEMENTS)
+	    superInterfaces ();
+	enumBody ();
+    }
+
+    private void normalInterfaceDeclaration () {
+	match (Token.INTERFACE);
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.LT)
+	    typeParameters ();
+	if (nextToken () == Token.EXTENDS)
+	    extendsInterfaces ();
+	interfaceBody ();
+    }
+
+    private void annotationTypeDeclaration () {
+	match (Token.AT);
+	match (Token.INTERFACE);
+	match (Token.IDENTIFIER);
+	annotationTypeBody ();
+    }
+
+    private void typeParameters () {
+	match (Token.LT);
+	typeParameterList ();
+	match (Token.GT);
+    }
+
+    private void typeParameterList () {
+	typeParameter ();
+	while (nextToken () == Token.COMMA) {
+	    match (Token.COMMA);
+	    typeParameter ();
+	}
+    }
+
+    private void typeParameter () {
+	annotations ();
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.EXTENDS)
+	    typeBound ();
+    }
+
+    private void typeBound () {
+	match (Token.EXTENDS);
+	annotations ();
+	// TODO: this is not complete
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.LT)
+	    typeArguments ();
+	while (nextToken () == Token.BIT_AND) {
+	    match (Token.BIT_AND);
+	    interfaceType ();
+	}
+    }
+
+    private void interfaceType () {
+	classType ();
+    }
+
+    private void classType () {
+    }
+
+    private void typeArguments () {
+	match (Token.LT);
+	typeArgumentList ();
+	match (Token.GT);
+    }
+
+    private void typeArgumentList () {
+	typeArgument ();
+	while (nextToken () == Token.COMMA) {
+	    match (Token.COMMA);
+	    typeArgument ();
+	}
+    }
+
+    private void typeArgument () {
+	// ReferenceType
+	// Wildcard
+    }
+
+    private void superClass () {
+	match (Token.EXTENDS);
+	classType ();
+    }
+
+    private void superInterfaces () {
+	match (Token.IMPLEMENTS);
+	interfaceTypeList ();
+    }
+
+    private void interfaceTypeList () {
+	interfaceType ();
+	while (nextToken () == Token.COMMA) {
+	    match (Token.COMMA);
+	    interfaceType ();
+	}
+    }
+
+    private void classBody () {
+	match (Token.LEFT_CURLY);
+	// TODO
+	match (Token.RIGHT_CURLY);
+    }
+
+    private void enumBody () {
+	match (Token.LEFT_CURLY);
+	// TODO
+	match (Token.RIGHT_CURLY);
+    }
+
+    private void extendsInterfaces () {
+	match (Token.EXTENDS);
+	interfaceTypeList ();
+    }
+
+    private void interfaceBody () {
+	match (Token.LEFT_CURLY);
+	// TODO
+	match (Token.RIGHT_CURLY);
+    }
+
+    private void annotationTypeBody () {
+	match (Token.LEFT_CURLY);
+	// TODO
+	match (Token.RIGHT_CURLY);
+    }
+
+    private void annotations () {
+	while (nextToken () == Token.AT)
+	    annotation ();
+    }
+
+    private void annotation () {
+	match (Token.AT);
+	typeName ();
+	if (nextToken () == Token.LEFT_PARENTHESIS) {
+	    match (Token.LEFT_PARENTHESIS);
+	    // TODO: correct parsing
+	    while (nextToken () != Token.RIGHT_PARENTHESIS) {
+		match (nextToken ());
+	    }
+	    match (Token.RIGHT_PARENTHESIS);
+	}
     }
 
     private void typeName () {
@@ -148,7 +347,7 @@ public class Parser {
 
     private void match (Token t) {
 	if (t != nextToken) {
-	    addParserError ("Got: " + currentToken + ", expected: " + t);
+	    addParserError ("nextToken: " + nextToken + ", expected: " + t);
 	    // TODO: better error handling
 	}
 	nextToken = lexer.nextNonWhitespaceToken ();
