@@ -138,7 +138,7 @@ public class TestLexer {
     private void testChar (String toLex, char value) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.CHARACTER_LITERAL);
-	char res = l.getCurrentCharValue ();
+	char res = l.getCharValue ();
 	assert value == res : "Wrong string value: " + res;
     }
 
@@ -158,7 +158,7 @@ public class TestLexer {
     private void testString (String toLex, String value) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.STRING_LITERAL);
-	String res = l.getCurrentStringValue ();
+	String res = l.getStringValue ();
 	assert value.equals (res) : "Wrong string value: " + res;
     }
 
@@ -256,7 +256,7 @@ public class TestLexer {
     private void testInt (String toLex, int expected) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.INT_LITERAL);
-	int val = l.getCurrentIntValue ();
+	int val = l.getIntValue ();
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
@@ -273,7 +273,7 @@ public class TestLexer {
     private void testLong (String toLex, long expected) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.LONG_LITERAL);
-	long val = l.getCurrentLongValue ();
+	long val = l.getLongValue ();
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
@@ -301,7 +301,7 @@ public class TestLexer {
     private void testDouble (String toLex, double expected) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.DOUBLE_LITERAL);
-	double val = l.getCurrentDoubleValue ();
+	double val = l.getDoubleValue ();
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
@@ -316,7 +316,7 @@ public class TestLexer {
     private void testFloat (String toLex, float expected) {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.FLOAT_LITERAL);
-	float val = l.getCurrentFloatValue ();
+	float val = l.getFloatValue ();
 	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
     }
 
@@ -370,7 +370,7 @@ public class TestLexer {
 
     private Lexer getLexer (String text) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
-	return new Lexer (Paths.get ("TestLexer"), cb);
+	return new CharBufferLexer (Paths.get ("TestLexer"), cb);
     }
 
     private void testLexing (Lexer l, Token... expected) {

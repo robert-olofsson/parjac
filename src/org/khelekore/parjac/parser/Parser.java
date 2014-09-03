@@ -164,7 +164,7 @@ public class Parser {
 	diagnostics.report (new SourceDiagnostics (path,
 						   lexer.getTokenStartPos (),
 						   lexer.getTokenEndPos (),
-						   lexer.getLine (),
+						   lexer.getLineNumber (),
 						   lexer.getTokenColumn (),
 						   error));
     }

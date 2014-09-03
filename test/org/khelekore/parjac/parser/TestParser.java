@@ -1,11 +1,12 @@
 package org.khelekore.parjac.parser;
 
 import java.nio.CharBuffer;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,7 +56,7 @@ public class TestParser {
     private Parser getParser (String text) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
 	Path path = Paths.get ("TestParser");
-	Lexer lexer = new Lexer (path, cb);
+	Lexer lexer = new CharBufferLexer (path, cb);
 	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
 	return new Parser (path, lexer, diagnostics);
     }
