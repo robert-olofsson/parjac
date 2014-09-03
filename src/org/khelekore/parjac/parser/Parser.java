@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import java.nio.file.Path;
+import java.util.EnumSet;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.Lexer;
@@ -38,24 +39,21 @@ public class Parser {
     }
 
     private void compilationUnit () {
-	Token next = nextToken ();
-	while (next == Token.AT) {
+	Token next;
+	while (nextToken () == Token.AT) {
 	    annotation ();
-	    next = nextToken ();
 	}
-	if (next == Token.PACKAGE) {
+	if (nextToken () == Token.PACKAGE) {
 	    packageDeclaration ();
-	    next = nextToken ();
 	}
 
-	while (next == Token.IMPORT) {
+	while (nextToken () == Token.IMPORT) {
+	    // TODO: if we have annotations we need to error
 	    importDeclaration ();
-	    next = nextToken ();
 	}
 
-	while (isTypeDeclrationFirst (next)) {
+	while (typeDeclarationFirsts.contains (nextToken ())) {
 	    typeDeclaration ();
-	    next = nextToken ();
 	}
 
 	/*
@@ -106,23 +104,9 @@ public class Parser {
 	match (Token.SEMICOLON);
     }
 
-    private boolean isTypeDeclrationFirst (Token t) {
-	switch (t) {
-	case PUBLIC:
-	case PROTECTED:
-	case PRIVATE:
-	case ABSTRACT:
-	case STATIC:
-	case FINAL:
-	case STRICTFP:
-	case CLASS:
-	case ENUM:
-	case INTERFACE:
-	    return true;
-	default:
-	    return false;
-	}
-    }
+    private static final EnumSet<Token> typeDeclarationFirsts = EnumSet.of (
+	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT, Token.STATIC,
+	Token.FINAL, Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE);
 
     private void typeDeclaration () {
 	// TODO: fill in
