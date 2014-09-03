@@ -16,8 +16,8 @@ public enum Token {
     CRLF ("carrige return, line feed"),
 
     // Separators
-    LEFT_PARANTHESIS ("("),
-    RIGHT_PARANTHESIS (")"),
+    LEFT_PARENTHESIS ("("),
+    RIGHT_PARENTHESIS (")"),
     LEFT_CURLY ("{"),
     RIGHT_CURLY ("}"),
     LEFT_BRACKET ("["),
@@ -175,7 +175,7 @@ public enum Token {
 		CHARACTER_LITERAL, STRING_LITERAL, NULL, TRUE, FALSE);
 
     private static final EnumSet<Token> separator =
-    EnumSet.of (LEFT_PARANTHESIS, RIGHT_PARANTHESIS, LEFT_CURLY, RIGHT_CURLY,
+    EnumSet.of (LEFT_PARENTHESIS, RIGHT_PARENTHESIS, LEFT_CURLY, RIGHT_CURLY,
 		LEFT_BRACKET, RIGHT_BRACKET, SEMICOLON, COMMA, DOT, ELLIPSIS,
 		AT, DOUBLE_COLON);
 

@@ -67,13 +67,13 @@ public class Parser {
     private void annotation () {
 	match (Token.AT);
 	typeName ();
-	if (nextToken () == Token.LEFT_PARANTHESIS) {
-	    match (Token.LEFT_PARANTHESIS);
+	if (nextToken () == Token.LEFT_PARENTHESIS) {
+	    match (Token.LEFT_PARENTHESIS);
 	    // TODO: correct parsing
-	    while (nextToken () != Token.RIGHT_PARANTHESIS) {
+	    while (nextToken () != Token.RIGHT_PARENTHESIS) {
 		match (nextToken ());
 	    }
-	    match (Token.RIGHT_PARANTHESIS);
+	    match (Token.RIGHT_PARENTHESIS);
 	}
     }
 
@@ -105,9 +105,35 @@ public class Parser {
     }
 
     private static final EnumSet<Token> typeDeclarationFirsts = EnumSet.of (
-	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT, Token.STATIC,
-	Token.FINAL, Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE);
+	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT, Token.STATIC, Token.FINAL,
+	Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE, Token.SEMICOLON);
 
+    /*
+      TypeDeclaration:
+          ClassDeclaration
+	  InterfaceDeclaration
+	  ;
+
+      ClassDeclaration:
+          NormalClassDeclaration
+	  EnumDeclaration
+
+      NormalClassDeclaration:
+          {ClassModifier} class Identifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+
+      EnumDeclaration:
+          {ClassModifier} enum Identifier [Superinterfaces] EnumBody
+
+      InterfaceDeclaration:
+          NormalInterfaceDeclaration
+	  AnnotationTypeDeclaration
+
+      NormalInterfaceDeclaration:
+          {InterfaceModifier} interface Identifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+
+      AnnotationTypeDeclaration:
+          {InterfaceModifier} @ interface Identifier AnnotationTypeBody
+    */
     private void typeDeclaration () {
 	// TODO: fill in
     }

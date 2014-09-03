@@ -115,9 +115,9 @@ public class CharBufferLexer implements Lexer {
 
 	    // separators
 	    case '(':
-		return Token.LEFT_PARANTHESIS;
+		return Token.LEFT_PARENTHESIS;
 	    case ')':
-		return Token.RIGHT_PARANTHESIS;
+		return Token.RIGHT_PARENTHESIS;
 	    case '{':
 		return Token.LEFT_CURLY;
 	    case '}':

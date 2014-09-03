@@ -32,8 +32,8 @@ public class TestParser {
 	testParse (Token.AT, Token.IDENTIFIER, Token.PACKAGE,
 		   Token.IDENTIFIER, Token.DOT, Token.IDENTIFIER, Token.SEMICOLON);
 	// @Foo(a = "hello") package foo;
-	testParse (Token.AT, Token.IDENTIFIER, Token.LEFT_PARANTHESIS, Token.IDENTIFIER,
-		   Token.EQUAL, Token.STRING_LITERAL, Token.RIGHT_PARANTHESIS,
+	testParse (Token.AT, Token.IDENTIFIER, Token.LEFT_PARENTHESIS, Token.IDENTIFIER,
+		   Token.EQUAL, Token.STRING_LITERAL, Token.RIGHT_PARENTHESIS,
 		   Token.PACKAGE, Token.IDENTIFIER, Token.SEMICOLON);
     }
 

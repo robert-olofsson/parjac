@@ -49,8 +49,8 @@ public class TestLexer {
 
     @Test
     public void testSeparators () {
-	testInput ("(", Token.LEFT_PARANTHESIS);
-	testInput (")", Token.RIGHT_PARANTHESIS);
+	testInput ("(", Token.LEFT_PARENTHESIS);
+	testInput (")", Token.RIGHT_PARENTHESIS);
 	testInput ("{", Token.LEFT_CURLY);
 	testInput ("}", Token.RIGHT_CURLY);
 	testInput ("[", Token.LEFT_BRACKET);
@@ -326,8 +326,8 @@ public class TestLexer {
 	testInput ("{    \n    (/*whatever*/)=[]}",
 		   Token.LEFT_CURLY, Token.WHITESPACE,
 		   Token.LF, Token.WHITESPACE,
-		   Token.LEFT_PARANTHESIS, Token.MULTILINE_COMMENT,
-		   Token.RIGHT_PARANTHESIS, Token.EQUAL,
+		   Token.LEFT_PARENTHESIS, Token.MULTILINE_COMMENT,
+		   Token.RIGHT_PARENTHESIS, Token.EQUAL,
 		   Token.LEFT_BRACKET, Token.RIGHT_BRACKET,
 		   Token.RIGHT_CURLY);
 
