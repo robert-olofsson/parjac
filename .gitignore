@@ -1,3 +1,5 @@
 libs/*
 bin/*
 test-output/*
+.classpath
+.project
