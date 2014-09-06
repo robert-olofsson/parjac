@@ -40,12 +40,6 @@ public class Parser {
     /*
       CompilationUnit:
           [PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
-
-      PackageDeclaration:
-          {PackageModifier} package Identifier {. Identifier} ;
-
-      PackageModifier:
-          Annotation
      */
     private void compilationUnit () {
 	packageDeclaration ();
@@ -63,6 +57,9 @@ public class Parser {
     /*
       PackageDeclaration:
           {PackageModifier} package Identifier {. Identifier} ;
+
+      PackageModifier:
+          Annotation
     */
     private void packageDeclaration () {
 	annotations ();
@@ -232,50 +229,8 @@ public class Parser {
 	}
     }
 
-    private void typeParameter () {
-	annotations ();
-	match (Token.IDENTIFIER);
-	if (nextToken () == Token.EXTENDS)
-	    typeBound ();
-    }
-
-    private void typeBound () {
-	match (Token.EXTENDS);
-	annotations ();
-	// TODO: this is not complete
-	match (Token.IDENTIFIER);
-	if (nextToken () == Token.LT)
-	    typeArguments ();
-	while (nextToken () == Token.BIT_AND) {
-	    match (Token.BIT_AND);
-	    interfaceType ();
-	}
-    }
-
     private void interfaceType () {
 	classType ();
-    }
-
-    private void classType () {
-    }
-
-    private void typeArguments () {
-	match (Token.LT);
-	typeArgumentList ();
-	match (Token.GT);
-    }
-
-    private void typeArgumentList () {
-	typeArgument ();
-	while (nextToken () == Token.COMMA) {
-	    match (Token.COMMA);
-	    typeArgument ();
-	}
-    }
-
-    private void typeArgument () {
-	// ReferenceType
-	// Wildcard
     }
 
     private void superClass () {
@@ -325,6 +280,205 @@ public class Parser {
 	match (Token.RIGHT_CURLY);
     }
 
+    private void typeName () {
+	match (Token.IDENTIFIER);
+	while (nextToken () == Token.DOT) {
+	    match (Token.DOT);
+	    match (Token.IDENTIFIER);
+	}
+    }
+
+    /* Productions from §4 (Types, Values, and Variables), in same order */
+    private static final EnumSet<Token> primitiveTypes = EnumSet.of (
+	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR, Token.FLOAT, Token.DOUBLE);
+
+    private void type () {
+	if (primitiveTypes.contains (nextToken ()))
+	    primitiveType ();
+	else
+	    referenceType ();
+    }
+
+    private void primitiveType () {
+	annotations ();
+	if (nextToken() == Token.BOOLEAN)
+	    match (Token.BOOLEAN);
+	else
+	    NumericType ();
+    }
+
+    private static final EnumSet<Token> integralTypes = EnumSet.of (
+	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR);
+
+    private void NumericType () {
+	if (integralTypes.contains (nextToken ()))
+	    integralType ();
+	else
+	    floatingPointType ();
+    }
+
+    private void integralType () {
+	switch (nextToken ()) {
+	case BYTE:
+	case SHORT:
+	case INT:
+	case LONG:
+	case CHAR:
+	    match (nextToken ());
+	    break;
+	default:
+	    addParserError ("Expected integral type, found: " + nextToken ());
+	}
+    }
+
+    private void floatingPointType () {
+	switch (nextToken ()) {
+	case FLOAT:
+	case DOUBLE:
+	    match (nextToken ());
+	    break;
+	default:
+	    addParserError ("Expected floating point type, found: " + nextToken ());
+	}
+    }
+
+    private void referenceType () {
+	// TODO: one of
+	{
+	    classOrInterfaceType ();
+	}
+	{
+	    typeVariable ();
+	}
+	{
+	    arrayType ();
+	}
+    }
+
+    private void classOrInterfaceType () {
+	classType ();
+	interfaceType ();
+    }
+
+    private void classType () {
+	// TODO: one of
+	{
+	    annotations ();
+	    match (Token.IDENTIFIER);
+	    if (nextToken () == Token.LT)
+		typeArgument ();
+	}
+	{
+	    classOrInterfaceType ();
+	    match (Token.DOT);
+	    annotations ();
+	    match (Token.IDENTIFIER);
+	    if (nextToken () == Token.LT)
+		typeArgument ();
+	}
+    }
+
+    private void typeVariable () {
+	annotations ();
+	match (Token.IDENTIFIER);
+    }
+
+    private void arrayType () {
+	// TODO: one of
+	{
+	    primitiveType ();
+	    dims ();
+	}
+	{
+	    classOrInterfaceType ();
+	    dims ();
+	}
+	{
+	    typeVariable ();
+	    dims ();
+	}
+    }
+
+    private void dims () {
+	annotations ();
+	match (Token.LEFT_BRACKET);
+	match (Token.RIGHT_BRACKET);
+	// TODO: one or more: {Annotation} [ ]
+    }
+
+    private void typeParameter () {
+	annotations ();
+	match (Token.IDENTIFIER);
+	if (nextToken () == Token.EXTENDS)
+	    typeBound ();
+    }
+
+    private void typeBound () {
+	match (Token.EXTENDS);
+	// TODO: one of
+	{
+	    typeVariable ();
+	}
+	{
+	    classOrInterfaceType ();
+	    while (nextToken () == Token.BIT_AND) {
+		additionalBound ();
+	    }
+	}
+    }
+
+    private void additionalBound () {
+	match (Token.BIT_AND);
+	interfaceType ();
+    }
+
+    private void typeArguments () {
+	match (Token.LT);
+	typeArgumentList ();
+	match (Token.GT);
+    }
+
+    private void typeArgumentList () {
+	typeArgument ();
+	while (nextToken () == Token.COMMA) {
+	    match (Token.COMMA);
+	    typeArgument ();
+	}
+    }
+
+    private void typeArgument () {
+	// TODO: one of
+	{
+	    referenceType ();
+	}
+	{
+	    wildcard ();
+	}
+    }
+
+    private void wildcard () {
+	annotations();
+	match (Token.QUESTIONMARK);
+	if (nextToken() == Token.EXTENDS || nextToken() == Token.SUPER)
+	    wildcardBounds ();
+    }
+
+    private void wildcardBounds () {
+	switch (nextToken ()) {
+	case EXTENDS:
+	    match (Token.EXTENDS);
+	    referenceType ();
+	    break;
+	case SUPER:
+	    match (Token.SUPER);
+	    referenceType ();
+	    break;
+	default:
+	    addParserError ("Expected super or extends, found: " + nextToken ());
+	}
+    }
+    /* End of §4 */
+
     private void annotations () {
 	while (nextToken () == Token.AT)
 	    annotation ();
@@ -340,14 +494,6 @@ public class Parser {
 		match (nextToken ());
 	    }
 	    match (Token.RIGHT_PARENTHESIS);
-	}
-    }
-
-    private void typeName () {
-	match (Token.IDENTIFIER);
-	while (nextToken () == Token.DOT) {
-	    match (Token.DOT);
-	    match (Token.IDENTIFIER);
 	}
     }
 
