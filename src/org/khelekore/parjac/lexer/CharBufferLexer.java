@@ -1,6 +1,5 @@
 package org.khelekore.parjac.lexer;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
@@ -387,7 +386,6 @@ public class CharBufferLexer implements Lexer {
     }
 
     private Token readCharacterLiteral () {
-	int pos = buf.position ();
 	String s =
 	    handleString ('\'', Token.CHARACTER_LITERAL, "Character literal not closed");
 	if (s == null)
@@ -404,7 +402,6 @@ public class CharBufferLexer implements Lexer {
     }
 
     private Token readStringLiteral () {
-	int pos = buf.position ();
 	String s =
 	    handleString ('"', Token.STRING_LITERAL, "String literal not closed");
 	if (s == null)
@@ -416,7 +413,6 @@ public class CharBufferLexer implements Lexer {
     private String handleString (char end, Token base, String newlineError) {
 	errorText = "End of input";
 
-	Token tt = base;
 	boolean previousWasBackslash = false;
 	StringBuilder res = new StringBuilder ();
 

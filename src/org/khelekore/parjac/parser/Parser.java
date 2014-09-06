@@ -48,21 +48,9 @@ public class Parser {
           Annotation
      */
     private void compilationUnit () {
-	Token next;
-
-	annotations ();
-	if (nextToken () == Token.PACKAGE) {
-	    packageDeclaration ();
-	}
-
-	while (nextToken () == Token.IMPORT) {
-	    // TODO: if we have annotations we need to error
-	    importDeclaration ();
-	}
-
-	while (typeDeclarationFirsts.contains (nextToken ())) {
-	    typeDeclaration ();
-	}
+	packageDeclaration ();
+	importDeclarations ();
+	typeDeclarations ();
 
 	/*
 	default:
@@ -77,13 +65,16 @@ public class Parser {
           {PackageModifier} package Identifier {. Identifier} ;
     */
     private void packageDeclaration () {
-	match (Token.PACKAGE);
-	match (Token.IDENTIFIER);
-	while (nextToken () == Token.DOT) {
-	    match (Token.DOT);
+	annotations ();
+	if (nextToken () == Token.PACKAGE) {
+	    match (Token.PACKAGE);
 	    match (Token.IDENTIFIER);
+	    while (nextToken () == Token.DOT) {
+		match (Token.DOT);
+		match (Token.IDENTIFIER);
+	    }
+	    match (Token.SEMICOLON);
 	}
-	match (Token.SEMICOLON);
     }
 
     /*
@@ -93,6 +84,12 @@ public class Parser {
 	  SingleStaticImportDeclaration
 	  StaticImportOnDemandDeclaration
     */
+    private void importDeclarations () {
+	while (nextToken () == Token.IMPORT) {
+	    importDeclaration ();
+	}
+    }
+
     private void importDeclaration () {
 	match (Token.IMPORT);
 	if (nextToken == Token.STATIC)
@@ -113,6 +110,12 @@ public class Parser {
     private static final EnumSet<Token> typeDeclarationFirsts = EnumSet.of (
 	Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT, Token.STATIC, Token.FINAL,
 	Token.STRICTFP, Token.CLASS, Token.ENUM, Token.INTERFACE, Token.AT, Token.SEMICOLON);
+
+    private void typeDeclarations () {
+	while (typeDeclarationFirsts.contains (nextToken ())) {
+	    typeDeclaration ();
+	}
+    }
 
     /*
       TypeDeclaration:
@@ -157,6 +160,9 @@ public class Parser {
 	    break;
 	case AT:
 	    annotationTypeDeclaration ();
+	    break;
+	default:
+	    addParserError ("Expected typeDeclaration, got: " + nextToken ());
 	    break;
 	}
     }
@@ -357,6 +363,7 @@ public class Parser {
 	return nextToken;
     }
 
+    /*
     private void checkAllTokens () {
 	while (lexer.hasMoreTokens ()) {
 	    Token t = lexer.nextToken ();
@@ -368,6 +375,7 @@ public class Parser {
     private void addLexerError () {
 	addParserError (lexer.getError ());
     }
+    */
 
     private void addParserError (String error) {
 	diagnostics.report (new SourceDiagnostics (path,

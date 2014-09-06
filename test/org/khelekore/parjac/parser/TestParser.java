@@ -1,6 +1,5 @@
 package org.khelekore.parjac.parser;
 
-import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -9,7 +8,6 @@ import java.util.Locale;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestParser {
