@@ -162,6 +162,11 @@ public enum Token {
 		BIT_AND_EQUAL, BIT_OR_EQUAL, BIT_XOR_EQUAL, REMAINDER_EQUAL,
 		LEFT_SHIFT_EQUAL, RIGHT_SHIFT_EQUAL, RIGHT_SHIFT_UNSIGNED_EQUAL);
 
+    private static final EnumSet<Token> assignmentOperators =
+    EnumSet.of (EQUAL, MULTIPLY_EQUAL, DIVIDE_EQUAL, REMAINDER_EQUAL, PLUS_EQUAL, MINUS_EQUAL,
+		LEFT_SHIFT_EQUAL, RIGHT_SHIFT_EQUAL, RIGHT_SHIFT_UNSIGNED_EQUAL,
+		BIT_AND_EQUAL, BIT_XOR_EQUAL, BIT_OR_EQUAL);
+
     private static final EnumSet<Token> keywords =
     EnumSet.of (ABSTRACT, ASSERT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST,
 		CONTINUE, DEFAULT, DO, DOUBLE, ELSE, ENUM, EXTENDS, FINAL, FINALLY, FLOAT,
@@ -214,5 +219,9 @@ public enum Token {
 
     public boolean isOperator () {
 	return operators.contains (this);
+    }
+
+    public boolean isAssignmentOperator () {
+	return assignmentOperators.contains (this);
     }
 }
