@@ -154,6 +154,14 @@ public class Parser {
 	dims ();
     }
 
+    private void zeroOrOneDims () {
+	if (dimsFirst.contains (nextToken ()))
+	    dims ();
+    }
+
+    private static final EnumSet<Token> dimsFirst = EnumSet.of (
+	Token.AT, Token.LEFT_BRACKET);
+
     private void dims () {
 	annotations ();
 	match (Token.LEFT_BRACKET);
@@ -592,8 +600,7 @@ public class Parser {
 
     private void variableDeclaratorId () {
 	match (Token.IDENTIFIER);
-	// TODO: 0-1
-	dims ();
+	zeroOrOneDims ();
     }
 
     private void variableInitializer () {
@@ -748,7 +755,7 @@ public class Parser {
 	match (Token.LEFT_PARENTHESIS);
 	formalParameterList (); // TODO: 0-1
 	match (Token.RIGHT_PARENTHESIS);
-	dims (); // TODO; 0-1
+	zeroOrOneDims ();
     }
 
     private void formalParameterList () {
@@ -1200,8 +1207,7 @@ public class Parser {
 	match (Token.IDENTIFIER);
 	match (Token.LEFT_PARENTHESIS);
 	match (Token.RIGHT_PARENTHESIS);
-	// TODO: 0-1
-	dims ();
+	zeroOrOneDims ();
 	// TODO: 0-1
 	defaultValue ();
 	match (Token.SEMICOLON);
@@ -2039,12 +2045,12 @@ public class Parser {
 	{
 	    primitiveType ();
 	    dimExprs ();
-	    dims (); // TODO: 0-1
+	    zeroOrOneDims ();
 	}
 	{
 	    classOrInterfaceType ();
 	    dimExprs ();
-	    dims (); // TODO: 0-1
+	    zeroOrOneDims ();
 	}
 	{
 	    primitiveType ();
