@@ -268,9 +268,11 @@ public class Parser {
 	identifiersConnectedByDots();
     }
 
+    /* not used
     private void packageOrTypeName () {
 	identifiersConnectedByDots();
     }
+    */
 
     private void expressionName () {
 	identifiersConnectedByDots();
@@ -1943,7 +1945,7 @@ public class Parser {
     private void arrayAccess () {
 	// TODO: one of
 	{
-	    expressionName ();;
+	    expressionName ();
 	}
 	{
 	    primaryNoNewArray ();
