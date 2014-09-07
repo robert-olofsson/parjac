@@ -753,9 +753,14 @@ public class Parser {
     private void methodDeclarator () {
 	match (Token.IDENTIFIER);
 	match (Token.LEFT_PARENTHESIS);
-	formalParameterList (); // TODO: 0-1
+	zeroOrOneFormalParmeterList ();
 	match (Token.RIGHT_PARENTHESIS);
 	zeroOrOneDims ();
+    }
+
+    private void zeroOrOneFormalParmeterList () {
+	if (nextToken () != Token.RIGHT_PARENTHESIS)
+	    formalParameterList ();
     }
 
     private void formalParameterList () {
@@ -913,7 +918,7 @@ public class Parser {
 	zeroOrOneTypeParameters ();
 	simpleTypeName ();
 	match (Token.LEFT_PARENTHESIS);
-	formalParameterList (); // TODO: 0-1
+	zeroOrOneFormalParmeterList ();
 	match (Token.RIGHT_PARENTHESIS);
     }
 
@@ -998,7 +1003,8 @@ public class Parser {
 		argumentList ();
 	    match (Token.RIGHT_PARENTHESIS);
 	}
-	classBody (); // TODO: 0-1
+	if (nextToken() == Token.LEFT_CURLY)
+	    classBody ();
     }
 
     private void enumConstantModifiers () {
@@ -1208,8 +1214,8 @@ public class Parser {
 	match (Token.LEFT_PARENTHESIS);
 	match (Token.RIGHT_PARENTHESIS);
 	zeroOrOneDims ();
-	// TODO: 0-1
-	defaultValue ();
+	if (nextToken () == Token.DEFAULT)
+	    defaultValue ();
 	match (Token.SEMICOLON);
     }
 
@@ -1312,8 +1318,8 @@ public class Parser {
 
     private void arrayInitializer () {
 	match (Token.LEFT_CURLY);
-	// TODO: 0-1
-	variableInitializerList ();
+	if (nextToken () != Token.RIGHT_CURLY)
+	    variableInitializerList ();
 	match (Token.RIGHT_CURLY);
     }
 
