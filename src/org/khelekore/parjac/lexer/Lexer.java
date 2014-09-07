@@ -23,6 +23,9 @@ public interface Lexer {
     /** Get the value of the current double token */
     double getDoubleValue ();
 
+    /** Get the current identifier */
+    String getIdentifier ();
+
     /** Get the start position of the current token */
     long getTokenStartPos ();
 

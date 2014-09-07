@@ -69,6 +69,10 @@ public class CharBufferLexer implements Lexer {
 	return currentDoubleValue;
     }
 
+    public String getIdentifier () {
+	return currentIdentifier;
+    }
+
     public void setInsideTypeContext (boolean insideTypeContext) {
 	this.insideTypeContext = insideTypeContext;
     }
