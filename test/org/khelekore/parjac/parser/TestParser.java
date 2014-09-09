@@ -71,6 +71,11 @@ public class TestParser {
 	testParse (Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	testParse (Token.PUBLIC, Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	testParse (Token.ABSTRACT, Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	/*
+	testParse (Token.ABSTRACT, Token.CLASS, Token.IDENTIFIER, Token.LEFT_CURLY,
+		   Token.INT, Token.IDENTIFIER, Token.EQUAL, Token.INT_LITERAL, Token.SEMICOLON,
+		   Token.RIGHT_CURLY);
+	*/
     }
 
     @Test

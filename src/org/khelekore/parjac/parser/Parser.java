@@ -46,51 +46,33 @@ public class Parser {
 	else
 	    referenceType ();
     }
+    */
 
     private static final EnumSet<Token> primitiveTypes = EnumSet.of (
-	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR, Token.FLOAT, Token.DOUBLE);
-    */
+	Token.BOOLEAN,
+	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR,
+	Token.FLOAT, Token.DOUBLE);
 
     private void primitiveType () {
 	annotations ();
-	if (nextToken() == Token.BOOLEAN)
-	    match (Token.BOOLEAN);
-	else
-	    numericType ();
+	unannPrimitiveType ();
     }
 
     private void numericType () {
-	if (integralTypes.contains (nextToken ()))
-	    integralType ();
-	else
-	    floatingPointType ();
-    }
-
-    private static final EnumSet<Token> integralTypes = EnumSet.of (
-	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR);
-
-    private void integralType () {
 	switch (nextToken ()) {
 	case BYTE:
 	case SHORT:
 	case INT:
 	case LONG:
 	case CHAR:
+ 	    match (nextToken ());
+	    break;
+	case DOUBLE:
+	case FLOAT:
 	    match (nextToken ());
 	    break;
 	default:
 	    addParserError ("Expected integral type, found: " + nextToken ());
-	}
-    }
-
-    private void floatingPointType () {
-	switch (nextToken ()) {
-	case FLOAT:
-	case DOUBLE:
-	    match (nextToken ());
-	    break;
-	default:
-	    addParserError ("Expected floating point type, found: " + nextToken ());
 	}
     }
 
@@ -108,13 +90,8 @@ public class Parser {
     }
 
     private void classOrInterfaceType () {
-	// TODO: one of
-	{
-	    classType ();
-	}
-	{
-	    interfaceType ();
-	}
+	// classType and interfaceType are the same
+	classType ();
     }
 
     private void classType () {
@@ -183,10 +160,10 @@ public class Parser {
     private void typeBound () {
 	match (Token.EXTENDS);
 	// TODO: one of
-	{
+	{   // annotations, IDENTIFIER
 	    typeVariable ();
 	}
-	{
+	{   // annotations, IDENTIFIER[typearguments]{.IDENTIFIER[typearguments]}
 	    classOrInterfaceType ();
 	    additionalBounds ();
 	}
@@ -519,13 +496,13 @@ public class Parser {
 	{
 	    classMemberDeclaration ();
 	}
-	{
+	{ // {
 	    instanceInitializer ();
 	}
-	{
+	{ // static { however static may also be used for field, method, class
 	    staticInitializer ();
 	}
-	{
+	{ // constructorModifiersFirst or IDENTIFIER
 	    constructorDeclaration ();
 	}
     }
@@ -616,21 +593,17 @@ public class Parser {
     }
 
     private void unannType () {
-	// TODO: one of
-	{
+	if (primitiveTypes.contains (nextToken ()))
 	    unannPrimitiveType ();
-	}
-	{
+	else
 	    unannReferenceType ();
-	}
     }
 
     private void unannPrimitiveType () {
-	if (nextToken () == Token.BOOLEAN) {
+	if (nextToken () == Token.BOOLEAN)
 	    match (Token.BOOLEAN);
-	} else {
+	else
 	    numericType ();
-	}
     }
 
     private void unannReferenceType () {
@@ -647,33 +620,19 @@ public class Parser {
     }
 
     private void unannClassOrInterfaceType () {
-	Thread.dumpStack(); System.exit (-1);
-	// TODO: one of
-	{
-	    unannClassType ();
-	}
-	{
-	    unannInterfaceType ();
-	}
+	// unannClassType or unannInterfaceType, but they are the same
+	unannClassType ();
     }
 
     private void unannClassType () {
-	// TODO: one of
-	{
-	    // empty
-	}
-	{
-	    unannClassOrInterfaceType ();
+	match (Token.IDENTIFIER);
+	while (nextToken () == Token.DOT) {
 	    match (Token.DOT);
 	    annotations ();
+	    match (Token.IDENTIFIER);
 	}
-	match (Token.IDENTIFIER);
 	if (nextToken () == Token.LT)
 	    typeArgument ();
-    }
-
-    private void unannInterfaceType () {
-	unannClassType ();
     }
 
     private void unannTypeVariable () {
@@ -931,7 +890,7 @@ public class Parser {
     private void constructorBody () {
 	match (Token.LEFT_CURLY);
 	explicitConstructorInvocation (); // TODO: 0-1
-	blockStatements (); // TODO: 0-1
+	blockStatements ();
 	match (Token.RIGHT_CURLY);
     }
 
@@ -1341,15 +1300,11 @@ public class Parser {
 
     private void block () {
 	match (Token.LEFT_CURLY);
-	if (nextToken () != Token.RIGHT_CURLY)
-	    blockStatements ();
+	blockStatements ();
 	match (Token.RIGHT_CURLY);
     }
 
     private void blockStatements () {
-	blockStatement ();
-
-	// TODO: verify this
 	while (nextToken () != Token.RIGHT_CURLY)
 	    blockStatement ();
     }
@@ -1384,18 +1339,23 @@ public class Parser {
 	    statementWithoutTrailingSubstatement ();
 	}
 	{
+	    // IDENTIFIER
 	    labeledStatement ();
 	}
 	{
+	    // IF
 	    ifThenStatement ();
 	}
 	{
+	    // IF
 	    ifThenElseStatement ();
 	}
 	{
+	    // WHILE
 	    whileStatement ();
 	}
 	{
+	    // FOR
 	    forStatement ();
 	}
     }
@@ -1420,42 +1380,42 @@ public class Parser {
     }
 
     private void statementWithoutTrailingSubstatement () {
-	// TODO: one of
-	{
+	switch (nextToken ()) {
+	case LEFT_CURLY:
 	    block ();
-	}
-	{
+	    break;
+	case SEMICOLON:
 	    emptyStatement ();
-	}
-	{
-	    expressionStatement ();
-	}
-	{
+	    break;
+	case ASSERT:
 	    assertStatement ();
-	}
-	{
+	    break;
+	case SWITCH:
 	    switchStatement ();
-	}
-	{
+	    break;
+	case DO:
 	    doStatement ();
-	}
-	{
+	    break;
+	case BREAK:
 	    breakStatement ();
-	}
-	{
+	    break;
+	case CONTINUE:
 	    continueStatement ();
-	}
-	{
+	    break;
+	case RETURN:
 	    returnStatement ();
-	}
-	{
+	    break;
+	case SYNCHRONIZED:
 	    synchronizedStatement ();
-	}
-	{
+	    break;
+	case THROW:
 	    throwStatement ();
-	}
-	{
+	    break;
+	case TRY:
 	    tryStatement ();
+	    break;
+	default:
+	    expressionStatement ();
 	}
     }
 
@@ -1485,10 +1445,10 @@ public class Parser {
 	{
 	    assignment ();
 	}
-	{
+	{ // ++
 	    preIncrementExpression ();
 	}
-	{
+	{ // --
 	    preDecrementExpression ();
 	}
 	{
@@ -1562,19 +1522,6 @@ public class Parser {
 	}
 	match (Token.RIGHT_CURLY);
     }
-
-    /* not used
-    private void switchBlockStatementGroup () {
-	switchLabels ();
-	blockStatements ();
-    }
-
-    private void switchLabels () {
-	switchLabel ();
-	while (switchLabelsFirsts.contains (nextToken()))
-	    switchLabel ();
-    }
-    */
 
     private static final EnumSet<Token> switchLabelsFirsts = EnumSet.of (
 	Token.CASE, Token.DEFAULT);
@@ -2110,20 +2057,19 @@ public class Parser {
     }
 
     private void lambdaParameters () {
-	// TODO: one of
-	{
+	if (nextToken () == Token.IDENTIFIER) {
 	    match (Token.IDENTIFIER);
-	}
-	{
+	} else {
 	    match (Token.LEFT_PARENTHESIS);
-	    if (nextToken() != Token.RIGHT_PARENTHESIS)
-		formalParameterList ();
-	    match (Token.RIGHT_PARENTHESIS);
-	}
-	{
-	    match (Token.LEFT_PARENTHESIS);
-	    if (nextToken() != Token.RIGHT_PARENTHESIS)
-		inferredFormalParameterList ();
+	    if (nextToken() != Token.RIGHT_PARENTHESIS) {
+		// TODO: one of
+		{
+		    formalParameterList ();
+		}
+		{
+		    inferredFormalParameterList ();
+		}
+	    }
 	    match (Token.RIGHT_PARENTHESIS);
 	}
     }
