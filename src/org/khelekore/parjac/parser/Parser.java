@@ -39,15 +39,6 @@ public class Parser {
 
     /* Productions from §4 (Types, Values, and Variables), in same order */
 
-    /* not used
-    private void type () {
-	if (primitiveTypes.contains (nextToken ()))
-	    primitiveType ();
-	else
-	    referenceType ();
-    }
-    */
-
     private static final EnumSet<Token> primitiveTypes = EnumSet.of (
 	Token.BOOLEAN,
 	Token.BYTE, Token.SHORT, Token.INT, Token.LONG, Token.CHAR,
@@ -95,17 +86,8 @@ public class Parser {
     }
 
     private void classType () {
-	// TODO: one of
-	{
-	    // empty
-	}
-	{
-	    classOrInterfaceType ();
-	    match (Token.DOT);
-	}
 	annotations ();
-	match (Token.IDENTIFIER);
-	zeroOrOneTypeArguments ();
+	unannClassType ();
     }
 
     private void interfaceType () {
@@ -118,16 +100,8 @@ public class Parser {
     }
 
     private void arrayType () {
-	// TODO: one of
-	{
-	    primitiveType ();
-	}
-	{
-	    classOrInterfaceType ();
-	}
-	{
-	    typeVariable ();
-	}
+	annotations ();
+	unannArrayType ();
 	dims ();
     }
 
@@ -159,12 +133,13 @@ public class Parser {
 
     private void typeBound () {
 	match (Token.EXTENDS);
+	annotations ();
 	// TODO: one of
-	{   // annotations, IDENTIFIER
-	    typeVariable ();
+	{   // IDENTIFIER
+	    unannTypeVariable ();
 	}
-	{   // annotations, IDENTIFIER[typearguments]{.IDENTIFIER[typearguments]}
-	    classOrInterfaceType ();
+	{   // IDENTIFIER[typearguments]{.IDENTIFIER[typearguments]}
+	    unannClassOrInterfaceType ();
 	    additionalBounds ();
 	}
     }
@@ -202,17 +177,14 @@ public class Parser {
     }
 
     private void typeArgument () {
-	// TODO: one of
-	{
-	    referenceType ();
-	}
-	{
+	annotations ();
+	if (nextToken () == Token.QUESTIONMARK)
 	    wildcard ();
-	}
+	else
+	    unannReferenceType ();
     }
 
     private void wildcard () {
-	annotations();
 	match (Token.QUESTIONMARK);
 	if (nextToken() == Token.EXTENDS || nextToken() == Token.SUPER)
 	    wildcardBounds ();
@@ -235,21 +207,10 @@ public class Parser {
     /* End of §4 */
 
     /* Productions from §6 Names*/
-    /* not used
-    private void packageName () {
-	identifiersConnectedByDots ();
-    }
-    */
 
     private void typeName () {
 	identifiersConnectedByDots();
     }
-
-    /* not used
-    private void packageOrTypeName () {
-	identifiersConnectedByDots();
-    }
-    */
 
     private void expressionName () {
 	identifiersConnectedByDots();
@@ -258,12 +219,6 @@ public class Parser {
     private void methodName () {
 	match (Token.IDENTIFIER);
     }
-
-    /* not used
-    private void ambiguousName () {
-	identifiersConnectedByDots ();
-    }
-    */
 
     private void identifiersConnectedByDots () {
 	match (Token.IDENTIFIER);
@@ -508,21 +463,22 @@ public class Parser {
     }
 
     private void classMemberDeclaration () {
-	// TODO: one of
-	{
-	    fieldDeclaration ();
-	}
-	{
-	    methodDeclaration ();
-	}
-	{
-	    classDeclaration ();
-	}
-	{
-	    interfaceDeclaration ();
-	}
-	{
+	if (nextToken () == Token.SEMICOLON) {
 	    match (Token.SEMICOLON);
+	} else {
+	    // TODO: one of
+	    {
+		fieldDeclaration ();
+	    }
+	    {
+		methodDeclaration ();
+	    }
+	    {
+		classDeclaration ();
+	    }
+	    {
+		interfaceDeclaration ();
+	    }
 	}
     }
 
@@ -626,13 +582,13 @@ public class Parser {
 
     private void unannClassType () {
 	match (Token.IDENTIFIER);
+	zeroOrOneTypeArguments ();
 	while (nextToken () == Token.DOT) {
 	    match (Token.DOT);
 	    annotations ();
 	    match (Token.IDENTIFIER);
+	    zeroOrOneTypeArguments ();
 	}
-	if (nextToken () == Token.LT)
-	    typeArgument ();
     }
 
     private void unannTypeVariable () {
@@ -640,15 +596,12 @@ public class Parser {
     }
 
     private void unannArrayType () {
-	// TODO: one of
-	{
+	if (primitiveTypes.contains (nextToken ())) {
 	    unannPrimitiveType ();
-	}
-	{
-	    unannClassOrInterfaceType ();
-	}
-	{
-	    unannTypeVariable ();
+	} else {
+	    // unannClassOrInterfaceType () or unannTypeVariable
+	    // if it has DOT in it it is a classType, otherwise we are not sure
+	    unannClassType ();
 	}
 	dims ();
     }
@@ -1365,16 +1318,16 @@ public class Parser {
 	{
 	    statementWithoutTrailingSubstatement ();
 	}
-	{
+	{  // IDENTIFIER
 	    labeledStatementNoShortIf ();
 	}
-	{
+	{  // IF
 	    ifThenElseStatementNoShortIf ();
 	}
-	{
+	{  // WHILE
 	    whileStatementNoShortIf ();
 	}
-	{
+	{  // FOR
 	    forStatementNoShortIf ();
 	}
     }
@@ -1776,7 +1729,7 @@ public class Parser {
 	{
 	    primaryNoNewArray ();
 	}
-	{
+	{ // new
 	    arrayCreationExpression ();
 	}
     }
@@ -1787,7 +1740,7 @@ public class Parser {
 	    if (nextToken ().isLiteral ())
 		match (nextToken ());
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    typeName ();
 	    while (nextToken() == Token.LEFT_BRACKET) {
 		match (Token.LEFT_BRACKET);
@@ -1796,28 +1749,28 @@ public class Parser {
 	    match (Token.DOT);
 	    match (Token.CLASS);
 	}
-	{
+	{ // VOID
 	    match (Token.VOID);
 	    match (Token.DOT);
 	    match (Token.CLASS);
 	}
-	{
+	{ // THIS
 	    match (Token.THIS);
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    typeName ();
 	    match (Token.DOT);
 	    match (Token.THIS);
 	}
-	{
+	{ // (
 	    match (Token.LEFT_PARENTHESIS);
 	    expression ();
 	    match (Token.RIGHT_PARENTHESIS);
 	}
-	{
+	{ // .... new
 	    classInstanceCreationExpression ();
 	}
-	{
+	{ // primary or super or typename
 	    fieldAccess ();
 	}
 	{
@@ -1860,16 +1813,12 @@ public class Parser {
     }
 
     private void typeArgumentsOrDiamond () {
-	// TODO: one of
-	{
-	    typeArguments ();
-	}
-	{
-	    match (Token.LT);
-	    lexer.setInsideTypeContext (true);
-	    match (Token.GT);
-	    lexer.setInsideTypeContext (false);
-	}
+	match (Token.LT);
+	lexer.setInsideTypeContext (true);
+	if (nextToken () != Token.GT)
+	    typeArgumentList ();
+	match (Token.GT);
+	lexer.setInsideTypeContext (false);
     }
 
     private void fieldAccess () {
@@ -1902,14 +1851,14 @@ public class Parser {
 
     private void methodInvocation () {
 	// TODO: one of
-	{
+	{ // IDENTIFIER
 	    methodName ();
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    typeName ();
 	    dotMethod ();
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    expressionName ();
 	    dotMethod ();
 	}
@@ -1917,11 +1866,11 @@ public class Parser {
 	    primary ();
 	    dotMethod ();
 	}
-	{
+	{ // SUPER
 	    match (Token.SUPER);
 	    dotMethod ();
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    typeName ();
 	    match (Token.DOT);
 	    match (Token.SUPER);
@@ -1949,7 +1898,7 @@ public class Parser {
 
     private void methodReference () {
 	// TODO: one of
-	{
+	{  // IDENTIFIER{.IDENTIFIER}
 	    expressionName ();
 	    match (Token.DOUBLE_COLON);
 	    zeroOrOneTypeArguments ();
@@ -1967,13 +1916,13 @@ public class Parser {
 	    zeroOrOneTypeArguments ();
 	    match (Token.IDENTIFIER);
 	}
-	{
+	{  // super
 	    match (Token.SUPER);
 	    match (Token.DOUBLE_COLON);
 	    zeroOrOneTypeArguments ();
 	    match (Token.IDENTIFIER);
 	}
-	{
+	{ // IDENTIFIER{.IDENTIFIER}
 	    typeName ();
 	    match (Token.DOT);
 	    match (Token.SUPER);
@@ -1981,13 +1930,13 @@ public class Parser {
 	    zeroOrOneTypeArguments ();
 	    match (Token.IDENTIFIER);
 	}
-	{
+	{ // annotations IDENTIFIER
 	    classType ();
 	    match (Token.DOUBLE_COLON);
 	    zeroOrOneTypeArguments ();
 	    match (Token.NEW);
 	}
-	{
+	{ // annotations ...
 	    arrayType ();
 	    match (Token.DOUBLE_COLON);
 	    match (Token.NEW);
@@ -2107,10 +2056,10 @@ public class Parser {
 
     private void leftHandSide () {
 	// TODO: one of
-	{
+	{  // identifiersConnectedByDots
 	    expressionName ();
 	}
-	{
+	{  // primary or super or typename 
 	    fieldAccess ();
 	}
 	{
@@ -2337,20 +2286,16 @@ public class Parser {
     }
 
     private void unaryExpressionNotPlusMinus () {
-	// TODO: one of
-	{
+	switch (nextToken ()) {
+	case TILDE:
+	case NOT:
+	    unaryExpression ();
+	    break;
+	case LEFT_PARENTHESIS: // TODO: may be (expression) as well
+	    castExpression();
+	    break;
+	default:
 	    postfixExpression ();
-	}
-	{
-	    match (Token.TILDE);
-	    unaryExpression ();
-	}
-	{
-	    match (Token.NOT);
-	    unaryExpression ();
-	}
-	{
-	    castExpression ();
 	}
     }
 
@@ -2359,7 +2304,7 @@ public class Parser {
 	{
 	    primary ();
 	}
-	{
+	{  // identifiersConnectedByDots
 	    expressionName ();
 	}
 	{
@@ -2382,23 +2327,22 @@ public class Parser {
 
     private void castExpression () {
 	match (Token.LEFT_PARENTHESIS);
-	// TODO: one of
-	{
-	    primitiveType ();
+	annotations ();
+	if (primitiveTypes.contains (nextToken ())) {
+	    unannPrimitiveType ();
 	    match (Token.RIGHT_PARENTHESIS);
 	    unaryExpression();
-	}
-	{
-	    referenceType ();
+	} else {
+	    unannReferenceType ();
 	    additionalBounds ();
 	    match (Token.RIGHT_PARENTHESIS);
-	    unaryExpressionNotPlusMinus ();
-	}
-	{
-	    referenceType ();
-	    additionalBounds ();
-	    match (Token.RIGHT_PARENTHESIS);
-	    lambdaExpression ();
+	    // TODO: one of
+	    {
+		unaryExpressionNotPlusMinus ();
+	    }
+	    {
+		lambdaExpression ();
+	    }
 	}
     }
 
@@ -2415,20 +2359,6 @@ public class Parser {
     private Token nextToken () {
 	return nextToken;
     }
-
-    /*
-    private void checkAllTokens () {
-	while (lexer.hasMoreTokens ()) {
-	    Token t = lexer.nextToken ();
-	    if (t == Token.ERROR)
-		addLexerError ();
-	}
-    }
-
-    private void addLexerError () {
-	addParserError (lexer.getError ());
-    }
-    */
 
     private void addParserError (String error) {
 	diagnostics.report (new SourceDiagnostics (path,
