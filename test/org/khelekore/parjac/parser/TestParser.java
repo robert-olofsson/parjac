@@ -90,14 +90,14 @@ public class TestParser {
 	testParse (Token.PUBLIC, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
     }
 
-    /* TODO: currently broken, match the anotations before package
     @Test
     public void testAnnotation () {
 	testParse (Token.AT, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	testParse (Token.PACKAGE, Token.IDENTIFIER, Token.SEMICOLON,
 		   Token.AT, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
+	testParse (Token.AT, Token.IDENTIFIER,
+		   Token.AT, Token.INTERFACE, Token.IDENTIFIER, Token.LEFT_CURLY, Token.RIGHT_CURLY);
     }
-    */
 
     private void testParse (Token... tokens) {
 	Parser p = getParser (tokens);

@@ -2,11 +2,15 @@ package org.khelekore.parjac.parser;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
+
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
+import org.khelekore.parjac.tree.AnnotationUsage;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 
 /** A recursive descent parser for java */
 public class Parser {
@@ -68,16 +72,8 @@ public class Parser {
     }
 
     private void referenceType () {
-	// TODO: one of
-	{
-	    classOrInterfaceType ();
-	}
-	{
-	    typeVariable ();
-	}
-	{
-	    arrayType ();
-	}
+	annotations ();
+	unannReferenceType ();
     }
 
     private void classOrInterfaceType () {
@@ -92,11 +88,6 @@ public class Parser {
 
     private void interfaceType () {
 	classType ();
-    }
-
-    private void typeVariable () {
-	annotations ();
-	match (Token.IDENTIFIER);
     }
 
     private void arrayType () {
@@ -208,24 +199,29 @@ public class Parser {
 
     /* Productions from §6 Names*/
 
-    private void typeName () {
-	identifiersConnectedByDots();
+    private String typeName () {
+	return identifiersConnectedByDots();
     }
 
-    private void expressionName () {
-	identifiersConnectedByDots();
+    private String expressionName () {
+	return identifiersConnectedByDots();
     }
 
-    private void methodName () {
+    private String methodName () {
 	match (Token.IDENTIFIER);
+	return lexer.getIdentifier ();
     }
 
-    private void identifiersConnectedByDots () {
+    private String identifiersConnectedByDots () {
+	StringBuilder sb = new StringBuilder ();
 	match (Token.IDENTIFIER);
+	sb.append (lexer.getIdentifier ());
 	while (nextToken () == Token.DOT) {
 	    match (Token.DOT);
 	    match (Token.IDENTIFIER);
+	    sb.append (',').append (lexer.getIdentifier ());
 	}
+	return sb.toString ();
     }
 
     /* End of §6 */
@@ -251,7 +247,10 @@ public class Parser {
     }
 
     private void packageModifiers () {
-	annotations ();
+	while (nextToken () == Token.AT) {
+	    match (Token.AT);
+	    annotationOrAnnotationTypeDecl ();
+	}
     }
 
     /*
@@ -300,7 +299,9 @@ public class Parser {
 	    return;
 	}
 
-	classModifiers ();
+	TreeNode tn = classModifiers ();
+	if (tn instanceof AnnotationTypeDeclaration)
+	    return;
 	switch (nextToken ()) {
 	case CLASS:
 	    normalClassDeclaration ();
@@ -311,10 +312,6 @@ public class Parser {
 	case INTERFACE:
 	    // TODO: check final modifier
 	    normalInterfaceDeclaration ();
-	    break;
-	case AT:
-	    // TODO: check final modifier
-	    annotationTypeDeclaration ();
 	    break;
 	default:
 	    addParserError ("Expected typeDeclaration, got: " + nextToken ());
@@ -347,21 +344,24 @@ public class Parser {
 	classBody ();
     }
 
-    private void classModifiers () {
+    private TreeNode classModifiers () {
 	while (classModifersFirst.contains (nextToken ())) {
-	    classModifier ();
+	    TreeNode tn = classModifier ();
+	    if (tn instanceof AnnotationTypeDeclaration)
+		return tn;
 	}
+	return null;
     }
 
     private static final EnumSet<Token> classModifersFirst = EnumSet.of (
 	Token.AT, Token.PUBLIC, Token.PROTECTED, Token.PRIVATE, Token.ABSTRACT,
 	Token.STATIC, Token.FINAL, Token.STRICTFP);
 
-    private void classModifier () {
+    private TreeNode classModifier () {
 	switch (nextToken ()) {
 	case AT:
-	    annotation ();
-	    break;
+	    match (Token.AT);
+	    return annotationOrAnnotationTypeDecl ();
 	case PUBLIC:
 	case PROTECTED:
 	case PRIVATE:
@@ -370,9 +370,19 @@ public class Parser {
 	case FINAL:
 	case STRICTFP:
 	    match (nextToken ());
-	    break;
+	    return null;
 	default:
 	    addParserError ("Expected class modifier, found: " + nextToken ());
+	    return null;
+	}
+    }
+
+    private TreeNode annotationOrAnnotationTypeDecl () {
+	if (nextToken () == Token.INTERFACE) {
+	    match (Token.INTERFACE);
+	    return annotationTypeRest ();
+	} else {
+	    return annotationRest ();
 	}
     }
 
@@ -563,15 +573,13 @@ public class Parser {
     }
 
     private void unannReferenceType () {
-	// TODO: one of
-	{
-	    unannClassOrInterfaceType ();
-	}
-	{
-	    unannTypeVariable ();
-	}
-	{
-	    unannArrayType ();
+	if (primitiveTypes.contains (nextToken ())) {
+	    unannPrimitiveType ();
+	    dims ();
+	} else {
+	    // unannClassOrInterfaceType () or unannTypeVariable
+	    // if it has DOT in it it is a classType, otherwise we are not sure
+	    unannClassType ();
 	}
     }
 
@@ -643,11 +651,7 @@ public class Parser {
     }
 
     private void methodHeader () {
-	// TODO: one of
-	{
-	    // empty
-	}
-	{
+	if (nextToken () == Token.LT) {
 	    typeParameters ();
 	    annotations ();
 	}
@@ -731,17 +735,15 @@ public class Parser {
     }
 
     private void lastFormalParameter () {
-	// TODO: one of
-	{
-	    variableModifiers ();
-	    unannType ();
-	    annotations ();
+	// {VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
+	// {VariableModifier} UnannType VariableDeclaratorId
+	variableModifiers ();
+	unannType ();
+	// TODO: annotations here are only allowed for ...
+	annotations ();
+	if (nextToken() == Token.ELLIPSIS)
 	    match (Token.ELLIPSIS);
-	    variableDeclaratorId ();
-	}
-	{
-	    formalParameter ();
-	}
+	variableDeclaratorId ();
     }
 
     private void receiverParameter () {
@@ -773,13 +775,10 @@ public class Parser {
     }
 
     private void exceptionType () {
-	// TODO: one of
-	{
-	    classType ();
-	}
-	{
-	    typeVariable ();
-	}
+	annotations ();
+	// unannClassOrInterfaceType () or unannTypeVariable
+	// if it has DOT in it it is a classType, otherwise we are not sure
+	unannClassType ();
     }
 
     private void methodBody () {
@@ -849,15 +848,15 @@ public class Parser {
 
     private void explicitConstructorInvocation () {
 	// TODO: one of
-	{
+	{   // <R> this
 	    zeroOrOneTypeArguments ();
 	    match (Token.THIS);
 	}
-	{
+	{   // <T> super
 	    zeroOrOneTypeArguments ();
 	    match (Token.SUPER);
 	}
-	{
+	{   // IDENTIFIER{.IDENTIFIER}
 	    expressionName ();
 	    match (Token.DOT);
 	    zeroOrOneTypeArguments ();
@@ -1092,14 +1091,19 @@ public class Parser {
 	interfaceModifiers ();
 	match (Token.AT);
 	match (Token.INTERFACE);
-	match (Token.IDENTIFIER);
-	annotationTypeBody ();
     }
 
-    private void annotationTypeBody () {
+    private AnnotationTypeDeclaration annotationTypeRest () {
+	match (Token.IDENTIFIER);
+	return annotationTypeBody ();
+    }
+
+    private AnnotationTypeDeclaration annotationTypeBody () {
 	match (Token.LEFT_CURLY);
-	annotationTypeMemberDeclarations ();
+	if (nextToken () != Token.RIGHT_CURLY)
+	    annotationTypeMemberDeclarations ();
 	match (Token.RIGHT_CURLY);
+	return new AnnotationTypeDeclaration ();
     }
 
     private void annotationTypeMemberDeclarations () {
@@ -1166,7 +1170,11 @@ public class Parser {
 
     private void annotation () {
 	match (Token.AT);
-	typeName ();
+	annotationRest ();
+    }
+
+    private AnnotationUsage annotationRest () {
+	String typeName = typeName ();
 	if (nextToken() == Token.LEFT_PARENTHESIS) {
 	    // normal annotation or single element annotation
 	    match (Token.LEFT_PARENTHESIS);
@@ -1180,6 +1188,7 @@ public class Parser {
 
 	    match (Token.RIGHT_PARENTHESIS);
 	}
+	return new AnnotationUsage (typeName);
     }
 
     private void elementValuePairList () {
@@ -1945,24 +1954,17 @@ public class Parser {
 
     private void arrayCreationExpression () {
 	match (Token.NEW);
+	if (primitiveTypes.contains (nextToken ())) {
+	    primitiveType ();
+	} else {
+	    classOrInterfaceType ();
+	}
 	// TODO: one of
 	{
-	    primitiveType ();
 	    dimExprs ();
 	    zeroOrOneDims ();
 	}
 	{
-	    classOrInterfaceType ();
-	    dimExprs ();
-	    zeroOrOneDims ();
-	}
-	{
-	    primitiveType ();
-	    dims ();
-	    arrayInitializer ();
-	}
-	{
-	    classOrInterfaceType ();
 	    dims ();
 	    arrayInitializer ();
 	}
