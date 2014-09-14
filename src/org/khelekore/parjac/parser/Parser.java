@@ -136,13 +136,13 @@ public class Parser {
     }
 
     private void additionalBounds () {
-	while (nextToken () == Token.BIT_AND) {
+	while (nextToken () == Token.AND) {
 	    additionalBound ();
 	}
     }
 
     private void additionalBound () {
-	match (Token.BIT_AND);
+	match (Token.AND);
 	interfaceType ();
     }
 
@@ -1694,7 +1694,7 @@ public class Parser {
 
     private void catchType () {
 	unannClassType ();
-	while (nextToken() == Token.BIT_OR) {
+	while (nextToken() == Token.OR) {
 	    match (nextToken ());
 	    classType ();
 	}
@@ -2117,7 +2117,7 @@ public class Parser {
 	}
 	{
 	    inclusiveOrExpression ();
-	    match (Token.BIT_OR);
+	    match (Token.OR);
 	    exclusiveOrExpression ();
 	}
     }
@@ -2129,7 +2129,7 @@ public class Parser {
 	}
 	{
 	    exclusiveOrExpression ();
-	    match (Token.BIT_XOR);
+	    match (Token.XOR);
 	    andExpression ();
 	}
     }
@@ -2141,7 +2141,7 @@ public class Parser {
 	}
 	{
 	    andExpression ();
-	    match (Token.BIT_AND);
+	    match (Token.AND);
 	    equalityExpression ();
 	}
     }

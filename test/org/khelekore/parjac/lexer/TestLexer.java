@@ -83,9 +83,9 @@ public class TestLexer {
 	testInput ("-", Token.MINUS);
 	testInput ("*", Token.MULTIPLY);
 	testInput ("/", Token.DIVIDE);
-	testInput ("&", Token.BIT_AND);
-	testInput ("|", Token.BIT_OR);
-	testInput ("^", Token.BIT_XOR);
+	testInput ("&", Token.AND);
+	testInput ("|", Token.OR);
+	testInput ("^", Token.XOR);
 	testInput ("%", Token.REMAINDER);
 	testInput ("<<", Token.LEFT_SHIFT);
 	testInput (">>", Token.RIGHT_SHIFT);
