@@ -2309,10 +2309,10 @@ public class Parser {
 	{  // identifiersConnectedByDots
 	    expressionName ();
 	}
-	{
+	{   // postfixExpression ++
 	    postIncrementExpression ();
 	}
-	{
+	{   // postfixExpression --
 	    postDecrementExpression ();
 	}
     }
@@ -2339,10 +2339,10 @@ public class Parser {
 	    additionalBounds ();
 	    match (Token.RIGHT_PARENTHESIS);
 	    // TODO: one of
-	    {
+	    {   // ~, !, (, postfixExpression
 		unaryExpressionNotPlusMinus ();
 	    }
-	    {
+	    {   // IDENTIFIER or (IDENTIFIER{,IDENTIFIER}) or (int foo, Bar baz)
 		lambdaExpression ();
 	    }
 	}
