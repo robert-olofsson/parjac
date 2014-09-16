@@ -15,7 +15,7 @@ import org.khelekore.parjac.lexer.Token;
 
 import static org.khelekore.parjac.lexer.Token.*;
 
-public class LALRParser {
+public class LRParser {
     private static final List<Rule> rules = new ArrayList<> ();
     private static final Map<String, Rule> nameToRule = new HashMap<> ();
     private static final String startRule = "CompilationUnit";
