@@ -1,5 +1,7 @@
 package org.khelekore.parjac.parser;
 
+import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.SourceDiagnostics;
+import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 
 import static org.khelekore.parjac.lexer.Token.*;
@@ -18,9 +23,20 @@ import static org.khelekore.parjac.lexer.Token.*;
 public class LRParser {
     private static final List<Rule> rules = new ArrayList<> ();
     private static final Map<String, Rule> nameToRule = new HashMap<> ();
+    private static final Map<String, Collection<Token>> nameToFirsts = new HashMap<> ();
     private static final String startRule = "CompilationUnit";
+    private static final StateTable table = new StateTable ();
+
+    // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
+    // TODO: but can be reduced to only state ids.
+    private final ArrayDeque<Object> stack = new ArrayDeque<> ();
+    private final Path path;
+    private final Lexer lexer;
+    private final CompilerDiagnosticCollector diagnostics;
 
     static {
+
+	addRule ("Goal", "CompilationUnit");
 
 	/* Productions from §3 (Lexical Structure) */
 	addRule ("Literal",
@@ -203,9 +219,12 @@ public class LRParser {
     }
 
     private static void addRule (String name, Object... os) {
-	Rule r = new Rule (name, getParts (os));
+	addRule (new Rule (name, getParts (os)));
+    }
+
+    private static void addRule (Rule r) {
 	rules.add (r);
-	nameToRule.put (name, r);
+	nameToRule.put (r.name, r);
     }
 
     private static Part zeroOrOne (String rule) {
@@ -220,12 +239,8 @@ public class LRParser {
 	return new ZeroOrMoreRulePart (new RulePart (rule));
     }
 
-    private static Part zeroOrMore (Token... tokens) {
-	return new ZeroOrMoreRulePart (new TokenPart (tokens));
-    }
-
     private static Part zeroOrMore (Object... parts) {
-	return new ZeroOrOneRulePart (sequence (parts));
+	return new ZeroOrMoreRulePart (sequence (parts));
     }
 
     private static Part sequence (Object... os) {
@@ -289,9 +304,9 @@ public class LRParser {
     }
 
     private static class TokenPart implements Part {
-	private final Token[] tokens;
-	public TokenPart (Token... tokens) {
-	    this.tokens = tokens;
+	private final Token token;
+	public TokenPart (Token token) {
+	    this.token = token;
 	}
 
  	public Collection<String> getSubrules () {
@@ -299,19 +314,15 @@ public class LRParser {
 	}
 
 	public boolean canBeEmpty () {
-	    return tokens.length == 0;
+	    return false;
 	}
 
 	@Override public String toString () {
-	    return Arrays.asList (tokens).stream ().
-		map(i -> i.toString()).
-		collect (Collectors.joining(" "));
+	    return token.toString ();
 	}
 
 	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    if (tokens.length == 0)
-		return Collections.emptySet ();
-	    return Collections.singleton (tokens[0]);
+	    return Collections.singleton (token);
 	}
     }
 
@@ -442,7 +453,8 @@ public class LRParser {
 	}
 
 	public boolean canBeEmpty () {
-	    return nameToRule.get (rule).canBeEmpty ();
+	    Rule r = nameToRule.get (rule);
+	    return r.canBeEmpty ();
 	}
 
 	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
@@ -458,11 +470,16 @@ public class LRParser {
     }
 
     public static void main (String[] args) {
+	System.out.println ("rules has: " + rules.size () + " rules");
 	validateRules ();
+	memorizeFirsts ();
+	Item startItem = new Item (nameToRule.get ("Goal"), 0,
+				   Collections.singleton (Token.END_OF_INPUT));
+	System.out.println ("closure1(" + startItem + "): " + 
+			    closure1 (Collections.singleton (startItem)));
     }
 
     private static void validateRules () {
-	System.out.println ("rules has: " + rules.size () + " rules");
 	Set<String> validRules =
 	    rules.stream ().map (r -> r.name).collect (Collectors.toSet ());
 
@@ -471,8 +488,102 @@ public class LRParser {
 		    if (!validRules.contains (subrule))
 			System.err.println ("*" + rule + "* missing subrule: " + subrule);
 	    });
+    }
 
-	rules.forEach (rule ->
-		       System.err.println (rule.name + " has first: " + rule.getFirsts ()));
+    private static void memorizeFirsts () {
+	rules.forEach (rule -> nameToFirsts.put (rule.name, rule.getFirsts ()));
+    }
+
+    private static Set<Item> closure1 (Set<Item> s) {
+	Set<Item> res = new HashSet<Item> (s);
+	for (Item i : s) {
+	    /* TODO:
+	    Part symbolRightOfDot = r.getRulePart (i.dotPos + 1);
+	    Set<Token> lookAhead = new HashSet<> ();
+	    boolean empty = true;
+	    for (Part p : i.r.partsAfter (i.dotPos + 1)) {
+		lookAhead.addAll (p.getFirsts (new HashSet<> ()));
+		if (!p.canBeEmpty ()) {
+		    empty = false;
+		    break;
+		}
+	    }
+	    if (empty)
+		lookAhead.addAll (i.lookAhead);
+	    if (symbolRightOfDot instanceof RulePart) {
+		RulePart rp = (RulePart)symbolRightOfDot;
+		Rule nr = nameToRule.get (rp.rule);
+		Item ni = new Item (nr, 0, lookAhead);
+		res.add (ni);
+	    }
+	    */
+	}
+	return res;
+    }
+
+    private static class Item {
+	private final Rule r;
+	private final int dotPos;
+	private final Set<Token> lookAhead;
+
+	public Item (Rule r, int dotPos, Set<Token> lookAhead) {
+	    this.r = r;
+	    this.dotPos = dotPos;
+	    this.lookAhead = lookAhead;
+	}
+
+	@Override public String toString () {
+	    return "[" + r + ", dotPos: " + dotPos + "; " + lookAhead + "]";
+	}
+    }
+
+    public LRParser (Path path, Lexer lexer, CompilerDiagnosticCollector diagnostics) {
+	this.path = path;
+	this.lexer = lexer;
+	this.diagnostics = diagnostics;
+    }
+
+    public void parse () {
+	stack.push (0);
+	while (true) {
+	    int currentState = (Integer)stack.peekLast ();
+	    Token nextToken = lexer.nextNonWhitespaceToken ();
+	    Action a = table.getAction (currentState, nextToken);
+	    if (a == null) {
+		addParserError ("No action for nextToken: " + nextToken);
+	    } else {
+		switch (a.getType ()) {
+		case SHIFT:
+		    stack.push (nextToken);
+		    stack.push (a.getN ());
+		    break;
+		case REDUCE:
+		    stack.pop (); // TODO: pop k things.
+		    int topState = (Integer)stack.peekLast ();
+		    String leftSide = "someRule";
+		    Integer goTo = table.getGoTo (topState, leftSide);
+		    stack.push (leftSide);
+		    stack.push (goTo);
+		    break;
+		case ACCEPT:
+		    return;
+		case ERROR:
+		    addParserError ("ERROR: for nextToken: " + nextToken);
+		}
+	    }
+	}
+    }
+
+    public CompilerDiagnosticCollector getDiagnostics () {
+	return diagnostics;
+    }
+
+    private void addParserError (String error) {
+	diagnostics.report (new SourceDiagnostics (path,
+						   lexer.getTokenStartPos (),
+						   lexer.getTokenEndPos (),
+						   lexer.getLineNumber (),
+						   lexer.getTokenColumn (),
+						   error));
     }
 }
