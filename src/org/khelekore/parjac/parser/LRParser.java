@@ -22,9 +22,8 @@ import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
     private static final List<Rule> rules = new ArrayList<> ();
-    private static final Map<String, Rule> nameToRule = new HashMap<> ();
+    private static final Map<String, List<Rule>> nameToRules = new HashMap<> ();
     private static final Map<String, Collection<Token>> nameToFirsts = new HashMap<> ();
-    private static final String startRule = "CompilationUnit";
     private static final StateTable table = new StateTable ();
 
     // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
@@ -36,7 +35,7 @@ public class LRParser {
 
     static {
 
-	addRule ("Goal", "CompilationUnit");
+	addRule ("Goal", "CompilationUnit", END_OF_INPUT);
 
 	/* Productions from §3 (Lexical Structure) */
 	addRule ("Literal",
@@ -75,7 +74,7 @@ public class LRParser {
 			sequence ("ClassOrInterfaceType", "Dims"),
 			sequence ("TypeVariable", "Dims")));
 	addRule ("Dims",
-		 zeroOrMore("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
+		 zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
 		 zeroOrMore (zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
 	addRule ("TypeParameter",
 		 zeroOrMore ("TypeParameterModifier"), IDENTIFIER, zeroOrOne ("TypeBound"));
@@ -98,16 +97,21 @@ public class LRParser {
 
 	/* Productions from §6 Names*/
 	addRule ("PackageName",
-		 oneOf (IDENTIFIER, sequence ("PackageName", DOT, IDENTIFIER)));
+		 oneOf (IDENTIFIER,
+			sequence ("PackageName", DOT, IDENTIFIER)));
 	addRule ("TypeName",
-		 oneOf (IDENTIFIER, sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+		 oneOf (IDENTIFIER,
+			sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
 	addRule ("PackageOrTypeName",
-		 oneOf (IDENTIFIER, sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+		 oneOf (IDENTIFIER,
+			sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
 	addRule ("ExpressionName",
-		 oneOf (IDENTIFIER, sequence ("AmbiguousName", DOT, IDENTIFIER)));
+		 oneOf (IDENTIFIER,
+			sequence ("AmbiguousName", DOT, IDENTIFIER)));
 	addRule ("MethodName", IDENTIFIER);
 	addRule ("AmbiguousName",
-		 oneOf (IDENTIFIER, sequence ("AmbiguousName", DOT, IDENTIFIER)));
+		 oneOf (IDENTIFIER,
+			sequence ("AmbiguousName", DOT, IDENTIFIER)));
 
 	/* End of §6 */
 
@@ -115,8 +119,7 @@ public class LRParser {
 	addRule ("CompilationUnit",
 		 zeroOrOne ("PackageDeclaration"),
 		 zeroOrMore ("ImportDeclaration"),
-		 zeroOrMore ("TypeDeclaration"),
-		 END_OF_INPUT);
+		 zeroOrMore ("TypeDeclaration"));
 	addRule ("PackageDeclaration",
 		 zeroOrMore ("PackageModifier"), PACKAGE, IDENTIFIER, zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
 	addRule ("PackageModifier", "Annotation");
@@ -219,12 +222,74 @@ public class LRParser {
     }
 
     private static void addRule (String name, Object... os) {
-	addRule (new Rule (name, getParts (os)));
+	Part[] parts = getParts (os);
+	List<List<Part>> simpleRules = split (parts);
+	simpleRules.forEach (ls -> addRule (name, ls));
     }
 
-    private static void addRule (Rule r) {
+    private static List<List<Part>> split (Part[] parts) {
+	List<List<Part>> ret = new ArrayList<> ();
+	ret.add (new ArrayList<> ());
+	for (Part p : parts)
+	    split (p, ret);
+	return ret;
+    }
+
+    private static int zomCounter = 0;
+
+    private static void split (Part p, List<List<Part>> ret) {
+	if (p instanceof RulePart || p instanceof TokenPart) {
+	    ret.forEach (ls -> ls.add (p));
+	} else if (p instanceof OneOfPart) {
+	    OneOfPart oo = (OneOfPart)p;
+	    ret.clear (); // TODO: currently only handled at beginning
+	    for (Part oop : oo.parts) {
+		List<List<Part>> subRules = new ArrayList<> ();
+		subRules.add (new ArrayList<> ());
+		split (oop, subRules);
+		ret.addAll (subRules);
+	    }
+	} else if (p instanceof ZeroOrMoreRulePart) {
+	    ZeroOrMoreRulePart zom = (ZeroOrMoreRulePart)p;
+	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
+	    List<List<Part>> newRules = new ArrayList<> ();
+	    for (List<Part> ls : ret) {
+		List<Part> ls2 = new ArrayList<> (ls);
+		ls2.add (newRule);
+		newRules.add (ls2);
+	    }
+	    ret.addAll (newRules);
+	    addRule (newRule.rule, zom.part);
+	    addRule (newRule.rule, new RulePart (newRule.rule), zom.part);
+	} else if (p instanceof ZeroOrOneRulePart) {
+	    ZeroOrOneRulePart zoo = (ZeroOrOneRulePart)p;
+	    List<List<Part>> newRules = new ArrayList<> ();
+	    for (List<Part> ls : ret) {
+		List<Part> ls2 = new ArrayList<> (ls);
+		ls2.add (zoo.part);
+		newRules.add (ls2);
+	    }
+	    ret.addAll (newRules);
+	} else if (p instanceof SequencePart) {
+	    SequencePart sp = (SequencePart)p;
+	    for (Part spp : sp.parts)
+		split (spp, ret);
+	} else {
+	    throw new IllegalArgumentException ("unknown type: " +
+						p.getClass ().getSimpleName ());
+	}
+    }
+
+    private static void addRule (String name, List<Part> parts) {
+	Rule r = new Rule (name, parts);
+	System.err.println (r);
 	rules.add (r);
-	nameToRule.put (r.name, r);
+	List<Rule> ls = nameToRules.get (name);
+	if (ls == null) {
+	    ls = new ArrayList<> ();
+	    nameToRules.put (name, ls);
+	}
+	ls.add (r);
     }
 
     private static Part zeroOrOne (String rule) {
@@ -268,23 +333,28 @@ public class LRParser {
 
     private static class Rule {
 	private final String name;
-	private final SequencePart seq;
+	private final List<Part> parts;
 
-	public Rule (String name, Part... parts) {
+	public Rule (String name, List<Part> parts) {
 	    this.name = name;
-	    this.seq = new SequencePart (parts);
+	    this.parts = parts;
 	}
 
 	@Override public String toString () {
-	    return name + " -> " + seq;
+	    return name + " -> " + parts;
 	}
 
 	public Collection<String> getSubrules () {
-	    return seq.getSubrules ();
+	    return parts.stream ().
+		flatMap (p -> p.getSubrules ().stream ()).
+		collect (Collectors.toSet ());
 	}
 
 	public boolean canBeEmpty () {
-	    return seq.canBeEmpty ();
+	    for (Part p : parts)
+		if (!p.canBeEmpty ())
+		    return false;
+	    return true;
 	}
 
 	public Collection<Token> getFirsts () {
@@ -293,7 +363,14 @@ public class LRParser {
 
 	public Collection<Token> getFirsts (Set<String> visitedRules) {
 	    visitedRules.add (name);
-	    return seq.getFirsts (visitedRules);
+	    Set<Token> ret = new HashSet<> ();
+	    for (Part p : parts) {
+		Collection<Token> firsts = p.getFirsts (visitedRules);
+		ret.addAll (firsts);
+		if (!p.canBeEmpty ())
+		    break;
+	    }
+	    return ret;
 	}
     }
 
@@ -453,15 +530,20 @@ public class LRParser {
 	}
 
 	public boolean canBeEmpty () {
-	    Rule r = nameToRule.get (rule);
-	    return r.canBeEmpty ();
+	    for (Rule r : nameToRules.get (rule))
+		if (!r.canBeEmpty())
+		    return false;
+	    return true;
 	}
 
 	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
 	    if (visitedRules.contains (rule))
 		return Collections.emptySet ();
 	    visitedRules.add (rule);
-	    return nameToRule.get (rule).getFirsts (visitedRules);
+	    Set<Token> ret = new HashSet<> ();
+	    for (Rule r : nameToRules.get (rule))
+		ret.addAll (r.getFirsts (visitedRules));
+	    return ret;
 	}
 
 	@Override public String toString () {
@@ -473,7 +555,7 @@ public class LRParser {
 	System.out.println ("rules has: " + rules.size () + " rules");
 	validateRules ();
 	memorizeFirsts ();
-	Item startItem = new Item (nameToRule.get ("Goal"), 0,
+	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
 				   Collections.singleton (Token.END_OF_INPUT));
 	System.out.println ("closure1(" + startItem + "): " + 
 			    closure1 (Collections.singleton (startItem)));
@@ -488,6 +570,11 @@ public class LRParser {
 		    if (!validRules.contains (subrule))
 			System.err.println ("*" + rule + "* missing subrule: " + subrule);
 	    });
+	List<Rule> ls = nameToRules.get ("Goal");
+	if (ls == null || ls.isEmpty())
+	    System.err.println ("no Goal rule defined");
+	if (ls.size () > 1)
+	    System.err.println ("Multiple Goal rules defined");
     }
 
     private static void memorizeFirsts () {
