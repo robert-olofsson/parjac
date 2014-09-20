@@ -22,6 +22,7 @@ import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
     private static final List<Rule> rules = new ArrayList<> ();
+    private static final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
     private static final Map<String, List<Rule>> nameToRules = new HashMap<> ();
     private static final Map<String, Collection<Token>> nameToFirsts = new HashMap<> ();
     private static final StateTable table = new StateTable ();
@@ -34,7 +35,7 @@ public class LRParser {
     private final CompilerDiagnosticCollector diagnostics;
 
     static {
-
+	// First rule should be the goal rule
 	addRule ("Goal", "CompilationUnit", END_OF_INPUT);
 
 	/* Productions from §3 (Lexical Structure) */
@@ -239,7 +240,7 @@ public class LRParser {
 
     private static void addRule (String name, List<SimplePart> parts) {
 	Rule r = new Rule (name, parts);
-	System.err.println (r);
+	System.out.println (r);
 	rules.add (r);
 	List<Rule> ls = nameToRules.get (name);
 	if (ls == null) {
@@ -352,6 +353,20 @@ public class LRParser {
 	    return token.toString ();
 	}
 
+	@Override public int hashCode () {
+	    return token.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return token.equals (((TokenPart)o).token);
+	    return false;
+	}
+
  	@Override public Collection<String> getSubrules () {
 	    return Collections.emptySet ();
 	}
@@ -377,6 +392,20 @@ public class LRParser {
 
 	@Override public String toString () {
 	    return rule;
+	}
+
+	@Override public int hashCode () {
+	    return rule.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return rule.equals (((RulePart)o).rule);
+	    return false;
 	}
 
 	@Override public Collection<String> getSubrules () {
@@ -416,6 +445,20 @@ public class LRParser {
 	    return "[" + part + "]";
 	}
 
+	@Override public int hashCode () {
+	    return part.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return part.equals (((ZeroOrOneRulePart)o).part);
+	    return false;
+	}
+
 	@Override public void split (List<List<SimplePart>> parts) {
 	    List<List<SimplePart>> newRules = new ArrayList<> ();
 	    for (List<SimplePart> ls : parts)
@@ -435,15 +478,38 @@ public class LRParser {
 	    return "{" + part + "}";
 	}
 
+	@Override public int hashCode () {
+	    return part.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return part.equals (((ZeroOrMoreRulePart)o).part);
+	    return false;
+	}
+
 	@Override public void split (List<List<SimplePart>> parts) {
-	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
 	    List<List<SimplePart>> newRules = new ArrayList<> ();
 	    for (List<SimplePart> ls : parts)
 		newRules.add (new ArrayList<> (ls));
+	    RulePart newRule = findOrCreateRule ();
 	    newRule.split (newRules);
 	    parts.addAll (newRules);
+	}
+
+	private RulePart findOrCreateRule () {
+	    RulePart rp = zomRules.get (part);
+	    if (rp != null)
+		return rp;
+	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
+	    zomRules.put (part, newRule);
 	    addRule (newRule.rule, part);
 	    addRule (newRule.rule, new RulePart (newRule.rule), part);
+	    return newRule;
 	}
     }
 
@@ -457,6 +523,20 @@ public class LRParser {
 	    return Arrays.asList (parts).stream ().
 		map(i -> i.toString()).
 		collect (Collectors.joining(" "));
+	}
+
+	@Override public int hashCode () {
+	    return Arrays.hashCode (parts);
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return Arrays.equals (parts, ((SequencePart)o).parts);
+	    return false;
 	}
 
 	@Override public void split (List<List<SimplePart>> parts) {
