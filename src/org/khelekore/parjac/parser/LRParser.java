@@ -222,65 +222,22 @@ public class LRParser {
     }
 
     private static void addRule (String name, Object... os) {
-	Part[] parts = getParts (os);
-	List<List<Part>> simpleRules = split (parts);
+	ComplexPart[] parts = getParts (os);
+	List<List<SimplePart>> simpleRules = split (parts);
 	simpleRules.forEach (ls -> addRule (name, ls));
     }
 
-    private static List<List<Part>> split (Part[] parts) {
-	List<List<Part>> ret = new ArrayList<> ();
+    private static List<List<SimplePart>> split (ComplexPart[] parts) {
+	List<List<SimplePart>> ret = new ArrayList<> ();
 	ret.add (new ArrayList<> ());
-	for (Part p : parts)
-	    split (p, ret);
+	for (ComplexPart p : parts)
+	    p.split (ret);
 	return ret;
     }
 
     private static int zomCounter = 0;
 
-    private static void split (Part p, List<List<Part>> ret) {
-	if (p instanceof RulePart || p instanceof TokenPart) {
-	    ret.forEach (ls -> ls.add (p));
-	} else if (p instanceof OneOfPart) {
-	    OneOfPart oo = (OneOfPart)p;
-	    ret.clear (); // TODO: currently only handled at beginning
-	    for (Part oop : oo.parts) {
-		List<List<Part>> subRules = new ArrayList<> ();
-		subRules.add (new ArrayList<> ());
-		split (oop, subRules);
-		ret.addAll (subRules);
-	    }
-	} else if (p instanceof ZeroOrMoreRulePart) {
-	    ZeroOrMoreRulePart zom = (ZeroOrMoreRulePart)p;
-	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
-	    List<List<Part>> newRules = new ArrayList<> ();
-	    for (List<Part> ls : ret) {
-		List<Part> ls2 = new ArrayList<> (ls);
-		ls2.add (newRule);
-		newRules.add (ls2);
-	    }
-	    ret.addAll (newRules);
-	    addRule (newRule.rule, zom.part);
-	    addRule (newRule.rule, new RulePart (newRule.rule), zom.part);
-	} else if (p instanceof ZeroOrOneRulePart) {
-	    ZeroOrOneRulePart zoo = (ZeroOrOneRulePart)p;
-	    List<List<Part>> newRules = new ArrayList<> ();
-	    for (List<Part> ls : ret) {
-		List<Part> ls2 = new ArrayList<> (ls);
-		ls2.add (zoo.part);
-		newRules.add (ls2);
-	    }
-	    ret.addAll (newRules);
-	} else if (p instanceof SequencePart) {
-	    SequencePart sp = (SequencePart)p;
-	    for (Part spp : sp.parts)
-		split (spp, ret);
-	} else {
-	    throw new IllegalArgumentException ("unknown type: " +
-						p.getClass ().getSimpleName ());
-	}
-    }
-
-    private static void addRule (String name, List<Part> parts) {
+    private static void addRule (String name, List<SimplePart> parts) {
 	Rule r = new Rule (name, parts);
 	System.err.println (r);
 	rules.add (r);
@@ -292,35 +249,35 @@ public class LRParser {
 	ls.add (r);
     }
 
-    private static Part zeroOrOne (String rule) {
+    private static ComplexPart zeroOrOne (String rule) {
 	return new ZeroOrOneRulePart (new RulePart (rule));
     }
 
-    private static Part zeroOrOne (Token token) {
+    private static ComplexPart zeroOrOne (Token token) {
 	return new ZeroOrOneRulePart (new TokenPart (token));
     }
 
-    private static Part zeroOrMore (String rule) {
+    private static ComplexPart zeroOrMore (String rule) {
 	return new ZeroOrMoreRulePart (new RulePart (rule));
     }
 
-    private static Part zeroOrMore (Object... parts) {
+    private static ComplexPart zeroOrMore (Object... parts) {
 	return new ZeroOrMoreRulePart (sequence (parts));
     }
 
-    private static Part sequence (Object... os) {
+    private static ComplexPart sequence (Object... os) {
 	return new SequencePart (getParts (os));
     }
 
-    private static Part oneOf (Object... os) {
+    private static ComplexPart oneOf (Object... os) {
 	return new OneOfPart (getParts (os));
     }
 
-    private static Part[] getParts (Object... os) {
-	Part[] parts = new Part[os.length];
+    private static ComplexPart[] getParts (Object... os) {
+	ComplexPart[] parts = new ComplexPart[os.length];
 	for (int i = 0; i < os.length; i++) {
-	    if (os[i] instanceof Part)
-		parts[i] = (Part)os[i];
+	    if (os[i] instanceof ComplexPart)
+		parts[i] = (ComplexPart)os[i];
 	    else if (os[i] instanceof Token)
 		parts[i] = new TokenPart ((Token)os[i]);
 	    else if (os[i] instanceof String)
@@ -333,9 +290,9 @@ public class LRParser {
 
     private static class Rule {
 	private final String name;
-	private final List<Part> parts;
+	private final List<SimplePart> parts;
 
-	public Rule (String name, List<Part> parts) {
+	public Rule (String name, List<SimplePart> parts) {
 	    this.name = name;
 	    this.parts = parts;
 	}
@@ -351,7 +308,7 @@ public class LRParser {
 	}
 
 	public boolean canBeEmpty () {
-	    for (Part p : parts)
+	    for (SimplePart p : parts)
 		if (!p.canBeEmpty ())
 		    return false;
 	    return true;
@@ -364,7 +321,7 @@ public class LRParser {
 	public Collection<Token> getFirsts (Set<String> visitedRules) {
 	    visitedRules.add (name);
 	    Set<Token> ret = new HashSet<> ();
-	    for (Part p : parts) {
+	    for (SimplePart p : parts) {
 		Collection<Token> firsts = p.getFirsts (visitedRules);
 		ret.addAll (firsts);
 		if (!p.canBeEmpty ())
@@ -374,162 +331,59 @@ public class LRParser {
 	}
     }
 
-    private interface Part {
+    private interface SimplePart {
 	Collection<String> getSubrules ();
 	boolean canBeEmpty ();
 	Collection<Token> getFirsts (Set<String> visitedRules);
     }
 
-    private static class TokenPart implements Part {
+    private interface ComplexPart {
+	void split (List<List<SimplePart>> parts);
+    }
+
+    private static class TokenPart implements SimplePart, ComplexPart {
 	private final Token token;
+
 	public TokenPart (Token token) {
 	    this.token = token;
-	}
-
- 	public Collection<String> getSubrules () {
-	    return Collections.emptySet ();
-	}
-
-	public boolean canBeEmpty () {
-	    return false;
 	}
 
 	@Override public String toString () {
 	    return token.toString ();
 	}
 
+ 	@Override public Collection<String> getSubrules () {
+	    return Collections.emptySet ();
+	}
+
+	@Override public boolean canBeEmpty () {
+	    return false;
+	}
+
 	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
 	    return Collections.singleton (token);
 	}
-    }
 
-    private static class ZeroOrOneRulePart implements Part {
-	private final Part part;
-	public ZeroOrOneRulePart (Part part) {
-	    this.part = part;
-	}
-
- 	public Collection<String> getSubrules () {
-	    return part.getSubrules ();
-	}
-
-	public boolean canBeEmpty () {
-	    return true;
-	}
-
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    return part.getFirsts (visitedRules);
-	}
-
-	@Override public String toString () {
-	    return "[" + part + "]";
+	@Override public void split (List<List<SimplePart>> parts) {
+	    parts.forEach (ls -> ls.add (this));
 	}
     }
 
-    private static class ZeroOrMoreRulePart implements Part {
-	private final Part part;
-	public ZeroOrMoreRulePart (Part part) {
-	    this.part = part;
-	}
-
-	public Collection<String> getSubrules () {
-	    return part.getSubrules ();
-	}
-
-	public boolean canBeEmpty () {
-	    return true;
-	}
-
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    return part.getFirsts (visitedRules);
-	}
-
-	@Override public String toString () {
-	    return "{" + part + "}";
-	}
-    }
-
-    private static class SequencePart implements Part {
-	private final Part[] parts;
-	public SequencePart (Part... parts) {
-	    this.parts = parts;
-	}
-
-	public Collection<String> getSubrules () {
-	    return Arrays.asList (parts).stream ().
-		flatMap (p -> p.getSubrules ().stream ()).
-		collect (Collectors.toSet ());
-	}
-
-	public boolean canBeEmpty () {
-	    for (Part p : parts)
-		if (!p.canBeEmpty ())
-		    return false;
-	    return true;
-	}
-
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    Set<Token> ret = new HashSet<> ();
-	    for (Part p : parts) {
-		Collection<Token> firsts = p.getFirsts (visitedRules);
-		ret.addAll (firsts);
-		if (!p.canBeEmpty ())
-		    break;
-	    }
-	    return ret;
-	}
-
-	@Override public String toString () {
-	    return Arrays.asList (parts).stream ().
-		map(i -> i.toString()).
-		collect (Collectors.joining(" "));
-	}
-    }
-
-    private static class OneOfPart implements Part {
-	private final Part[] parts;
-	public OneOfPart (Part... parts) {
-	    this.parts = parts;
-	}
-
-	public Collection<String> getSubrules () {
-	    return Arrays.asList (parts).stream ().
-		flatMap (p -> p.getSubrules ().stream ()).
-		collect (Collectors.toSet ());
-	}
-
-	public boolean canBeEmpty () {
-	    for (Part p : parts)
-		if (!p.canBeEmpty ())
-		    return false;
-	    return true;
-	}
-
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    Set<Token> ret = new HashSet<> ();
-	    for (Part p : parts)
-		ret.addAll (p.getFirsts (visitedRules));
-	    return ret;
-	}
-
-	@Override public String toString () {
-	    return Arrays.asList (parts).stream ().
-		map(i -> i.toString()).
-		collect (Collectors.joining(" | "));
-	}
-    }
-
-    private static class RulePart implements Part {
+    private static class RulePart implements SimplePart, ComplexPart {
 	private final String rule;
 	public RulePart (String rule) {
 	    this.rule = rule;
 	}
 
-	public Collection<String> getSubrules () {
+	@Override public String toString () {
+	    return rule;
+	}
+
+	@Override public Collection<String> getSubrules () {
 	    return Collections.singleton (rule);
 	}
 
-	public boolean canBeEmpty () {
+	@Override public boolean canBeEmpty () {
 	    for (Rule r : nameToRules.get (rule))
 		if (!r.canBeEmpty())
 		    return false;
@@ -546,8 +400,91 @@ public class LRParser {
 	    return ret;
 	}
 
+	@Override public void split (List<List<SimplePart>> parts) {
+	    parts.forEach (ls -> ls.add (this));
+	}
+    }
+
+
+    private static class ZeroOrOneRulePart implements ComplexPart {
+	private final ComplexPart part;
+	public ZeroOrOneRulePart (ComplexPart part) {
+	    this.part = part;
+	}
+
 	@Override public String toString () {
-	    return rule;
+	    return "[" + part + "]";
+	}
+
+	@Override public void split (List<List<SimplePart>> parts) {
+	    List<List<SimplePart>> newRules = new ArrayList<> ();
+	    for (List<SimplePart> ls : parts)
+		newRules.add (new ArrayList<> (ls));
+	    part.split (newRules);
+	    parts.addAll (newRules);
+	}
+    }
+
+    private static class ZeroOrMoreRulePart implements ComplexPart {
+	private final ComplexPart part;
+	public ZeroOrMoreRulePart (ComplexPart part) {
+	    this.part = part;
+	}
+
+	@Override public String toString () {
+	    return "{" + part + "}";
+	}
+
+	@Override public void split (List<List<SimplePart>> parts) {
+	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
+	    List<List<SimplePart>> newRules = new ArrayList<> ();
+	    for (List<SimplePart> ls : parts)
+		newRules.add (new ArrayList<> (ls));
+	    newRule.split (newRules);
+	    parts.addAll (newRules);
+	    addRule (newRule.rule, part);
+	    addRule (newRule.rule, new RulePart (newRule.rule), part);
+	}
+    }
+
+    private static class SequencePart implements ComplexPart {
+	private final ComplexPart[] parts;
+	public SequencePart (ComplexPart... parts) {
+	    this.parts = parts;
+	}
+
+	@Override public String toString () {
+	    return Arrays.asList (parts).stream ().
+		map(i -> i.toString()).
+		collect (Collectors.joining(" "));
+	}
+
+	@Override public void split (List<List<SimplePart>> parts) {
+	    for (ComplexPart spp : this.parts)
+		spp.split (parts);
+	}
+    }
+
+    private static class OneOfPart implements ComplexPart {
+	private final ComplexPart[] parts;
+	public OneOfPart (ComplexPart... parts) {
+	    this.parts = parts;
+	}
+
+	@Override public String toString () {
+	    return Arrays.asList (parts).stream ().
+		map(i -> i.toString()).
+		collect (Collectors.joining(" | "));
+	}
+
+	@Override public void split (List<List<SimplePart>> parts) {
+	    parts.clear (); // TODO: currently only handled at beginning
+	    for (ComplexPart oop : this.parts) {
+		List<List<SimplePart>> subRules = new ArrayList<> ();
+		subRules.add (new ArrayList<> ());
+		oop.split (subRules);
+		parts.addAll (subRules);
+	    }
 	}
     }
 
