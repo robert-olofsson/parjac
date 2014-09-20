@@ -24,7 +24,7 @@ public class LRParser {
     private static final List<Rule> rules = new ArrayList<> ();
     private static final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
     private static final Map<String, List<Rule>> nameToRules = new HashMap<> ();
-    private static final Map<String, Collection<Token>> nameToFirsts = new HashMap<> ();
+    private static final Map<Rule, Collection<Token>> nameToFirsts = new HashMap<> ();
     private static final StateTable table = new StateTable ();
 
     // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
@@ -307,95 +307,76 @@ public class LRParser {
 		flatMap (p -> p.getSubrules ().stream ()).
 		collect (Collectors.toSet ());
 	}
-
-	public boolean canBeEmpty () {
-	    for (SimplePart p : parts)
-		if (!p.canBeEmpty ())
-		    return false;
-	    return true;
-	}
-
-	public Collection<Token> getFirsts () {
-	    return getFirsts (new HashSet<> ());
-	}
-
-	public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    visitedRules.add (name);
-	    Set<Token> ret = new HashSet<> ();
-	    for (SimplePart p : parts) {
-		Collection<Token> firsts = p.getFirsts (visitedRules);
-		ret.addAll (firsts);
-		if (!p.canBeEmpty ())
-		    break;
-	    }
-	    return ret;
-	}
     }
 
     private interface SimplePart {
 	Collection<String> getSubrules ();
-	boolean canBeEmpty ();
-	Collection<Token> getFirsts (Set<String> visitedRules);
     }
 
     private interface ComplexPart {
 	void split (List<List<SimplePart>> parts);
     }
 
-    private static class TokenPart implements SimplePart, ComplexPart {
-	private final Token token;
+    private static abstract class PartBase<T> implements SimplePart, ComplexPart {
+	protected final T data;
 
-	public TokenPart (Token token) {
-	    this.token = token;
+	public PartBase (T data) {
+	    this.data = data;
 	}
 
 	@Override public String toString () {
-	    return token.toString ();
+	    return data.toString ();
 	}
 
 	@Override public int hashCode () {
-	    return token.hashCode ();
+	    return data.hashCode ();
 	}
 
-	@Override public boolean equals (Object o) {
+	@SuppressWarnings ("unchecked") @Override public boolean equals (Object o) {
 	    if (o == this)
 		return true;
 	    if (o == null)
 		return false;
 	    if (o.getClass () == getClass ())
-		return token.equals (((TokenPart)o).token);
+		return data.equals (((PartBase<T>)o).data);
 	    return false;
+	}
+
+	@Override public void split (List<List<SimplePart>> parts) {
+	    parts.forEach (ls -> ls.add (this));
+	}
+    }
+
+    private static class TokenPart extends PartBase<Token> {
+
+	public TokenPart (Token token) {
+	    super (token);
 	}
 
  	@Override public Collection<String> getSubrules () {
 	    return Collections.emptySet ();
 	}
+    }
 
-	@Override public boolean canBeEmpty () {
-	    return false;
+    private static class RulePart extends PartBase<String> {
+	public RulePart (String rule) {
+	    super (rule);
 	}
 
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    return Collections.singleton (token);
-	}
-
-	@Override public void split (List<List<SimplePart>> parts) {
-	    parts.forEach (ls -> ls.add (this));
+	@Override public Collection<String> getSubrules () {
+	    return Collections.singleton (data);
 	}
     }
 
-    private static class RulePart implements SimplePart, ComplexPart {
-	private final String rule;
-	public RulePart (String rule) {
-	    this.rule = rule;
-	}
+    private static abstract class ComplexBase implements ComplexPart {
+	protected final ComplexPart part;
 
-	@Override public String toString () {
-	    return rule;
+	public ComplexBase (ComplexPart part) {
+	    this.part = part;
 	}
 
 	@Override public int hashCode () {
-	    return rule.hashCode ();
+	    return part.hashCode ();
 	}
 
 	@Override public boolean equals (Object o) {
@@ -404,111 +385,53 @@ public class LRParser {
 	    if (o == null)
 		return false;
 	    if (o.getClass () == getClass ())
-		return rule.equals (((RulePart)o).rule);
+		return part.equals (((ComplexBase)o).part);
 	    return false;
 	}
 
-	@Override public Collection<String> getSubrules () {
-	    return Collections.singleton (rule);
-	}
-
-	@Override public boolean canBeEmpty () {
-	    for (Rule r : nameToRules.get (rule))
-		if (!r.canBeEmpty())
-		    return false;
-	    return true;
-	}
-
-	@Override public Collection<Token> getFirsts (Set<String> visitedRules) {
-	    if (visitedRules.contains (rule))
-		return Collections.emptySet ();
-	    visitedRules.add (rule);
-	    Set<Token> ret = new HashSet<> ();
-	    for (Rule r : nameToRules.get (rule))
-		ret.addAll (r.getFirsts (visitedRules));
-	    return ret;
-	}
-
 	@Override public void split (List<List<SimplePart>> parts) {
-	    parts.forEach (ls -> ls.add (this));
+	    List<List<SimplePart>> newRules = new ArrayList<> ();
+	    for (List<SimplePart> ls : parts)
+		newRules.add (new ArrayList<> (ls));
+	    ComplexPart newRule = getNewRule ();
+	    newRule.split (newRules);
+	    parts.addAll (newRules);
 	}
+
+	public abstract ComplexPart getNewRule ();
     }
 
-
-    private static class ZeroOrOneRulePart implements ComplexPart {
-	private final ComplexPart part;
+    private static class ZeroOrOneRulePart extends ComplexBase {
 	public ZeroOrOneRulePart (ComplexPart part) {
-	    this.part = part;
+	    super (part);
 	}
 
 	@Override public String toString () {
 	    return "[" + part + "]";
 	}
 
-	@Override public int hashCode () {
-	    return part.hashCode ();
-	}
-
-	@Override public boolean equals (Object o) {
-	    if (o == this)
-		return true;
-	    if (o == null)
-		return false;
-	    if (o.getClass () == getClass ())
-		return part.equals (((ZeroOrOneRulePart)o).part);
-	    return false;
-	}
-
-	@Override public void split (List<List<SimplePart>> parts) {
-	    List<List<SimplePart>> newRules = new ArrayList<> ();
-	    for (List<SimplePart> ls : parts)
-		newRules.add (new ArrayList<> (ls));
-	    part.split (newRules);
-	    parts.addAll (newRules);
+	public ComplexPart getNewRule () {
+	    return part;
 	}
     }
 
-    private static class ZeroOrMoreRulePart implements ComplexPart {
-	private final ComplexPart part;
+    private static class ZeroOrMoreRulePart extends ComplexBase {
 	public ZeroOrMoreRulePart (ComplexPart part) {
-	    this.part = part;
+	    super (part);
 	}
 
 	@Override public String toString () {
 	    return "{" + part + "}";
 	}
 
-	@Override public int hashCode () {
-	    return part.hashCode ();
-	}
-
-	@Override public boolean equals (Object o) {
-	    if (o == this)
-		return true;
-	    if (o == null)
-		return false;
-	    if (o.getClass () == getClass ())
-		return part.equals (((ZeroOrMoreRulePart)o).part);
-	    return false;
-	}
-
-	@Override public void split (List<List<SimplePart>> parts) {
-	    List<List<SimplePart>> newRules = new ArrayList<> ();
-	    for (List<SimplePart> ls : parts)
-		newRules.add (new ArrayList<> (ls));
-	    RulePart newRule = findOrCreateRule ();
-	    newRule.split (newRules);
-	    parts.addAll (newRules);
-	}
-
-	private RulePart findOrCreateRule () {
+	public ComplexPart getNewRule () {
 	    RulePart rp = zomRules.get (part);
 	    if (rp != null)
 		return rp;
 	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
 	    zomRules.put (part, newRule);
-	    addRule (newRule.rule, part);
-	    addRule (newRule.rule, new RulePart (newRule.rule), part);
+	    addRule (newRule.data, part);
+	    addRule (newRule.data, new RulePart (newRule.data), part);
 	    return newRule;
 	}
     }
@@ -571,6 +494,7 @@ public class LRParser {
     public static void main (String[] args) {
 	System.out.println ("rules has: " + rules.size () + " rules");
 	validateRules ();
+	memorizeEmpty ();
 	memorizeFirsts ();
 	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
 				   Collections.singleton (Token.END_OF_INPUT));
@@ -594,8 +518,12 @@ public class LRParser {
 	    System.err.println ("Multiple Goal rules defined");
     }
 
+    private static void memorizeEmpty () {
+	// TODO: rules.forEach (rule -> nameToFirsts.put (rule, rule.getFirsts ()));
+    }
+
     private static void memorizeFirsts () {
-	rules.forEach (rule -> nameToFirsts.put (rule.name, rule.getFirsts ()));
+	//TODO: rules.forEach (rule -> nameToFirsts.put (rule, rule.getFirsts ()));
     }
 
     private static Set<Item> closure1 (Set<Item> s) {

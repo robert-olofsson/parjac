@@ -3,4 +3,5 @@ javac \
  -d bin \
  -sourcepath src \
  -Xdiags:verbose \
+ -Xlint:unchecked \
  $(find src/ -name \*.java)
