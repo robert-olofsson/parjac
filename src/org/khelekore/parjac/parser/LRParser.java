@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,17 +23,27 @@ import org.khelekore.parjac.lexer.Token;
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
+    // All the generated rules
     private static final List<Rule> rules = new ArrayList<> ();
+
+    // All the zero or more rules, so that we can merge such rules
     private static final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
+
+    // Index from name to all the generated rules
     private static final Map<String, List<Rule>> nameToRules = new HashMap<> ();
-    private static final Map<Rule, Collection<Token>> nameToFirsts = new HashMap<> ();
     private static final StateTable table = new StateTable ();
 
     // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
     // TODO: but can be reduced to only state ids.
     private final ArrayDeque<Object> stack = new ArrayDeque<> ();
+
+    // The file we are parsing
     private final Path path;
+
+    // The lexer we are using to get tokens
     private final Lexer lexer;
+
+    // Compiler output
     private final CompilerDiagnosticCollector diagnostics;
 
     static {
@@ -69,7 +81,7 @@ public class LRParser {
 			sequence ("ClassOrInterfaceType", DOT, zeroOrMore ("Annotation"),
 				  IDENTIFIER, zeroOrOne ("TypeArguments"))));
 	addRule ("InterfaceType", "ClassType");
-	addRule ("TypeVariable", zeroOrMore ("Annotation", IDENTIFIER));
+	addRule ("TypeVariable", zeroOrMore ("Annotation"), IDENTIFIER);
 	addRule ("ArrayType",
 		 oneOf (sequence ("PrimitiveType", "Dims"),
 			sequence ("ClassOrInterfaceType", "Dims"),
@@ -160,8 +172,8 @@ public class LRParser {
 		 LEFT_CURLY, /* TODO: oneOrMore ("ClassBodyDeclaration"), */RIGHT_CURLY);
 
 	addRule ("EnumDeclaration",
-		 zeroOrMore ("ClassModifier",
-			     ENUM, IDENTIFIER, zeroOrOne ("Superinterfaces"), "EnumBody"));
+		 zeroOrMore ("ClassModifier"),
+		 ENUM, IDENTIFIER, zeroOrOne ("Superinterfaces"), "EnumBody");
 	addRule ("EnumBody",
 		 LEFT_CURLY,
 		 /* zeroOrOne ("EnumConstantList"), zeroOrOne (COMMA),
@@ -292,6 +304,8 @@ public class LRParser {
     private static class Rule {
 	private final String name;
 	private final List<SimplePart> parts;
+	private boolean canBeEmpty = true;
+	private EnumSet<Token> firsts;
 
 	public Rule (String name, List<SimplePart> parts) {
 	    this.name = name;
@@ -498,7 +512,7 @@ public class LRParser {
 	memorizeFirsts ();
 	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
 				   Collections.singleton (Token.END_OF_INPUT));
-	System.out.println ("closure1(" + startItem + "): " + 
+	System.out.println ("closure1(" + startItem + "): " +
 			    closure1 (Collections.singleton (startItem)));
     }
 
@@ -519,11 +533,63 @@ public class LRParser {
     }
 
     private static void memorizeEmpty () {
-	// TODO: rules.forEach (rule -> nameToFirsts.put (rule, rule.getFirsts ()));
+	Queue<Rule> unhandledRules = new ArrayDeque<> (rules);
+	Set<Rule> nonEmpty = new HashSet<> ();
+	Set<Rule> empty = new HashSet<> ();
+    outer:
+	while (!unhandledRules.isEmpty ()) {
+	    Rule r = unhandledRules.remove ();
+	    if (r.parts.isEmpty ()) {
+		empty.add (r);
+		continue outer;
+	    }
+	    for (SimplePart p : r.parts) {
+		if (p instanceof TokenPart) {
+		    nonEmpty.add (r);
+		    continue outer;
+		} else {
+		    RulePart rp = (RulePart)p;
+		    List<Rule> rules = nameToRules.get (rp.data);
+		    if (nonEmpty.containsAll (rules)) {
+			nonEmpty.add (r);
+			continue outer;
+		    }
+		}
+	    }
+	    unhandledRules.add (r);
+	}
+	empty.forEach (r -> r.canBeEmpty = true);
+	nonEmpty.forEach (r -> r.canBeEmpty = false);
     }
 
     private static void memorizeFirsts () {
-	//TODO: rules.forEach (rule -> nameToFirsts.put (rule, rule.getFirsts ()));
+	rules.forEach (r -> r.firsts = EnumSet.noneOf (Token.class));
+	boolean thereWasChanges;
+	do {
+	    thereWasChanges = false;
+	    for (Rule r : rules)
+		thereWasChanges |= r.firsts.addAll (getFirsts (r));
+	} while (thereWasChanges);
+    }
+
+    private static EnumSet<Token> getFirsts (Rule r) {
+	EnumSet<Token> firsts = EnumSet.noneOf (Token.class);
+	if (r.parts.isEmpty ())
+	    return firsts;
+	for (SimplePart sp : r.parts) {
+	    if (sp instanceof TokenPart) {
+		firsts.add (((TokenPart)sp).data);
+		return firsts;
+	    }
+
+	    RulePart rp = (RulePart)sp;
+	    List<Rule> rules = nameToRules.get (rp.data);
+	    rules.forEach (nr -> firsts.addAll (nr.firsts));
+	    boolean mayBeEmpty = rules.stream ().anyMatch (nr -> nr.canBeEmpty);
+	    if (!mayBeEmpty)
+		break;
+	}
+	return firsts;
     }
 
     private static Set<Item> closure1 (Set<Item> s) {
