@@ -25,12 +25,13 @@ import static org.khelekore.parjac.lexer.Token.*;
 public class LRParser {
     // All the generated rules
     private static final List<Rule> rules = new ArrayList<> ();
+    private static final List<RuleCollection> ruleCollections = new ArrayList<> ();
+    // Index from name to all the generated rules
+    private static final Map<String, RuleCollection> nameToRules = new HashMap<> ();
 
     // All the zero or more rules, so that we can merge such rules
     private static final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
 
-    // Index from name to all the generated rules
-    private static final Map<String, List<Rule>> nameToRules = new HashMap<> ();
     private static final StateTable table = new StateTable ();
 
     // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
@@ -47,22 +48,25 @@ public class LRParser {
     private final CompilerDiagnosticCollector diagnostics;
 
     static {
+	/* test grammars
+	addRule ("Goal", "S", END_OF_INPUT);
+	addRule ("S",
+		 oneOf (sequence (AT, "S", LEFT_CURLY),
+			"B"));
+	addRule ("B",
+		 oneOf (sequence (LEFT_BRACKET, "B", LEFT_CURLY),
+			"C"));
+	addRule ("C",
+		 oneOf (sequence (LEFT_PARENTHESIS, "C", LEFT_CURLY),
+			RIGHT_BRACKET));
+	addRule ("S", "A", "B", LEFT_PARENTHESIS);
+	addRule ("A", zeroOrOne (AT));
+	addRule ("B", zeroOrOne (LEFT_BRACKET));
+	*/
 	// First rule should be the goal rule
 	addRule ("Goal", "CompilationUnit", END_OF_INPUT);
 
-	/* example grammar
-	addRule ("Goal", "S", END_OF_INPUT);
-
-	addRule ("S",
-		 oneOf (sequence("L", EQUAL, "R"),
-			"R"));
-	addRule ("L",
-		 oneOf (sequence(MULTIPLY, "R"),
-			IDENTIFIER));
-	addRule ("R", "L");
-	*/
-
-	/* Productions from §3 (Lexical Structure) */
+	// Productions from §3 (Lexical Structure)
 	addRule ("Literal",
 		 oneOf (INT_LITERAL, LONG_LITERAL,
 			FLOAT_LITERAL, DOUBLE_LITERAL,
@@ -70,9 +74,9 @@ public class LRParser {
 			CHARACTER_LITERAL,
 			STRING_LITERAL,
 			NULL));
-	/* End of §3 */
+	// End of §3
 
-	/* Productions from §4 (Types, Values, and Variables) */
+	// Productions from §4 (Types, Values, and Variables)
 	addRule ("Type",
 		 oneOf ("PrimitiveType", "ReferenceType"));
 	addRule ("PrimitiveType",
@@ -118,9 +122,9 @@ public class LRParser {
 	addRule ("WildcardBounds",
 		 oneOf (sequence (EXTENDS, "ReferenceType"),
 			sequence (SUPER, "ReferenceType")));
-	/* End of §4 */
+	// End of §4
 
-	/* Productions from §6 Names*/
+	// Productions from §6 Names
 	addRule ("PackageName",
 		 oneOf (IDENTIFIER,
 			sequence ("PackageName", DOT, IDENTIFIER)));
@@ -138,9 +142,9 @@ public class LRParser {
 		 oneOf (IDENTIFIER,
 			sequence ("AmbiguousName", DOT, IDENTIFIER)));
 
-	/* End of §6 */
+	// End of §6
 
-	/* Productions from §7 (Packages) */
+	// Productions from §7 (Packages)
 	addRule ("CompilationUnit",
 		 zeroOrOne ("PackageDeclaration"),
 		 zeroOrMore ("ImportDeclaration"),
@@ -161,9 +165,9 @@ public class LRParser {
 		 IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
 	addRule ("TypeDeclaration",
 		 oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
-	/* End of §7 */
+	// End of §7
 
-	/* Productions from §8 (Classes) */
+	// Productions from §8 (Classes)
 	addRule ("ClassDeclaration",
 		 oneOf ("NormalClassDeclaration", "EnumDeclaration"));
 	addRule ("NormalClassDeclaration",
@@ -181,21 +185,21 @@ public class LRParser {
 	addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
 	addRule ("InterfaceTypeList", "InterfaceType", zeroOrMore (COMMA, "InterfaceType"));
 	addRule ("ClassBody",
-		 LEFT_CURLY, /* TODO: oneOrMore ("ClassBodyDeclaration"), */RIGHT_CURLY);
+		 LEFT_CURLY,
+		 // TODO: oneOrMore ("ClassBodyDeclaration"),
+		 RIGHT_CURLY);
 
 	addRule ("EnumDeclaration",
 		 zeroOrMore ("ClassModifier"),
 		 ENUM, IDENTIFIER, zeroOrOne ("Superinterfaces"), "EnumBody");
 	addRule ("EnumBody",
 		 LEFT_CURLY,
-		 /* zeroOrOne ("EnumConstantList"), zeroOrOne (COMMA),
-		    zerOrOne ("EnumBodyDeclarations"), */
+		 // zeroOrOne ("EnumConstantList"), zeroOrOne (COMMA),
+		 // zerOrOne ("EnumBodyDeclarations"),
 		 RIGHT_CURLY);
+	// End of §8
 
-
-	/* End of §8 */
-
-	/* Productions from §9 (Interfaces) */
+	// Productions from §9 (Interfaces)
 	addRule ("InterfaceDeclaration",
 		 oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
 	addRule ("NormalInterfaceDeclaration",
@@ -207,13 +211,17 @@ public class LRParser {
 	addRule ("ExtendsInterfaces",
 		 EXTENDS, "InterfaceTypeList");
 	addRule ("InterfaceBody",
-		 LEFT_CURLY, /* zeroOrMore ("InterfaceMemberDeclaration"), */RIGHT_CURLY);
+		 LEFT_CURLY,
+		 // zeroOrMore ("InterfaceMemberDeclaration"),
+		 RIGHT_CURLY);
 
 	addRule ("AnnotationTypeDeclaration",
 		 zeroOrMore ("InterfaceModifier"),
 		 AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
 	addRule ("AnnotationTypeBody",
-		 LEFT_CURLY, /* zeroOrMore ("AnnotationTypeMemberDeclaration"), */RIGHT_CURLY);
+		 LEFT_CURLY,
+		 // zeroOrMore ("AnnotationTypeMemberDeclaration"),
+		 RIGHT_CURLY);
 
 	addRule ("Annotation",
 		 oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
@@ -224,7 +232,10 @@ public class LRParser {
 	addRule ("ElementValuePair",
 		 IDENTIFIER, EQUAL, "ElementValue");
 	addRule ("ElementValue",
-		 oneOf (/*"ConditionalExpression", */"ElementValueArrayInitializer", "Annotation"));
+		 oneOf (
+		 //"ConditionalExpression",
+		 "ElementValueArrayInitializer",
+		 "Annotation"));
 	addRule ("ElementValueArrayInitializer",
 		 LEFT_CURLY, zeroOrOne ("ElementValueList"), zeroOrOne (COMMA));
 	addRule ("ElementValueList",
@@ -234,16 +245,16 @@ public class LRParser {
 	addRule ("SingleElementAnnotation",
 		 AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
 
-	/* End of §9 */
+	// End of §9
 
-	/* Productions from §10 (Arrays) */
-	/* End of §10 */
+	// Productions from §10 (Arrays)
+	// End of §10
 
-	/* Productions from §14 (Blocks and Statements) */
-	/* End of §14 */
+	// Productions from §14 (Blocks and Statements)
+	// End of §14
 
-	/* Productions from §15 (Expressions) */
-	/* End of §15 */
+	// Productions from §15 (Expressions)
+	// End of §15
     }
 
     private static void addRule (String name, Object... os) {
@@ -266,12 +277,13 @@ public class LRParser {
 	Rule r = new Rule (name, parts);
 	System.out.println (r);
 	rules.add (r);
-	List<Rule> ls = nameToRules.get (name);
-	if (ls == null) {
-	    ls = new ArrayList<> ();
-	    nameToRules.put (name, ls);
+	RuleCollection rc = nameToRules.get (name);
+	if (rc == null) {
+	    rc = new RuleCollection (name);
+	    ruleCollections.add (rc);
+	    nameToRules.put (name, rc);
 	}
-	ls.add (r);
+	rc.rules.add (r);
     }
 
     private static ComplexPart zeroOrOne (String rule) {
@@ -313,11 +325,22 @@ public class LRParser {
 	return parts;
     }
 
+    private static class RuleCollection {
+	private final String name;
+	private final List<Rule> rules;
+	private boolean canBeEmpty = true;
+	private EnumSet<Token> firsts;
+	private EnumSet<Token> follow;
+
+	public RuleCollection (String name) {
+	    this.name = name;
+	    rules = new ArrayList<> ();
+	}
+    }
+
     private static class Rule {
 	private final String name;
 	private final List<SimplePart> parts;
-	private boolean canBeEmpty = true;
-	private EnumSet<Token> firsts;
 
 	public Rule (String name, List<SimplePart> parts) {
 	    this.name = name;
@@ -345,6 +368,8 @@ public class LRParser {
 
     private interface SimplePart {
 	Collection<String> getSubrules ();
+	boolean canBeEmpty ();
+	EnumSet<Token> getFirsts ();
     }
 
     private interface ComplexPart {
@@ -390,6 +415,14 @@ public class LRParser {
  	@Override public Collection<String> getSubrules () {
 	    return Collections.emptySet ();
 	}
+
+	@Override public boolean canBeEmpty () {
+	    return false;
+	}
+
+	@Override public EnumSet<Token> getFirsts () {
+	    return EnumSet.of (data);
+	}
     }
 
     private static class RulePart extends PartBase<String> {
@@ -399,6 +432,14 @@ public class LRParser {
 
 	@Override public Collection<String> getSubrules () {
 	    return Collections.singleton (data);
+	}
+
+	@Override public boolean canBeEmpty () {
+	    return nameToRules.get (data).canBeEmpty;
+	}
+
+	@Override public EnumSet<Token> getFirsts () {
+	    return nameToRules.get (data).firsts;
 	}
     }
 
@@ -531,10 +572,12 @@ public class LRParser {
 	memorizeEmpty ();
 	memorizeFirsts ();
 	memorizeFollows ();
+	/*
 	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
-				   Collections.singleton (Token.END_OF_INPUT));
+				   Collections.singleton (END_OF_INPUT));
 	System.out.println ("closure1(" + startItem + "): " +
 			    closure1 (Collections.singleton (startItem)));
+	*/
     }
 
     private static void validateRules () {
@@ -546,7 +589,7 @@ public class LRParser {
 		    if (!validRules.contains (subrule))
 			System.err.println ("*" + rule + "* missing subrule: " + subrule);
 	    });
-	List<Rule> ls = nameToRules.get ("Goal");
+	List<Rule> ls = nameToRules.get ("Goal").rules;
 	if (ls == null || ls.isEmpty())
 	    System.err.println ("no Goal rule defined");
 	if (ls.size () > 1)
@@ -554,67 +597,97 @@ public class LRParser {
     }
 
     private static void memorizeEmpty () {
-	Queue<Rule> unhandledRules = new ArrayDeque<> (rules);
-	Set<Rule> nonEmpty = new HashSet<> ();
-	Set<Rule> empty = new HashSet<> ();
-    outer:
-	while (!unhandledRules.isEmpty ()) {
-	    Rule r = unhandledRules.remove ();
-	    if (r.parts.isEmpty ()) {
-		empty.add (r);
-		continue outer;
-	    }
-	    for (SimplePart p : r.parts) {
-		if (p instanceof TokenPart) {
-		    nonEmpty.add (r);
-		    continue outer;
-		} else {
-		    RulePart rp = (RulePart)p;
-		    List<Rule> rules = nameToRules.get (rp.data);
-		    if (nonEmpty.containsAll (rules)) {
-			nonEmpty.add (r);
-			continue outer;
-		    }
-		}
-	    }
-	    unhandledRules.add (r);
-	}
-	empty.forEach (r -> r.canBeEmpty = true);
-	nonEmpty.forEach (r -> r.canBeEmpty = false);
-    }
-
-    private static void memorizeFirsts () {
-	rules.forEach (r -> r.firsts = EnumSet.noneOf (Token.class));
+	ruleCollections.forEach (rc -> rc.canBeEmpty = false);
 	boolean thereWasChanges;
 	do {
 	    thereWasChanges = false;
-	    for (Rule r : rules)
-		thereWasChanges |= r.firsts.addAll (getFirsts (r));
+	    for (RuleCollection rc : ruleCollections) {
+		if (!rc.canBeEmpty) {
+		    if (canBeEmpty (rc)) {
+			rc.canBeEmpty = true;
+			thereWasChanges = true;
+		    }
+		}
+	    }
 	} while (thereWasChanges);
     }
 
-    private static EnumSet<Token> getFirsts (Rule r) {
-	EnumSet<Token> firsts = EnumSet.noneOf (Token.class);
-	if (r.parts.isEmpty ())
-	    return firsts;
-	for (SimplePart sp : r.parts) {
-	    if (sp instanceof TokenPart) {
-		firsts.add (((TokenPart)sp).data);
-		return firsts;
-	    }
+    private static boolean canBeEmpty (RuleCollection rc) {
+	boolean ret = false;
+	for (Rule r : rules) {
+	    if (r.parts.isEmpty ())
+		return true;
+	    if (r.parts.stream ().allMatch (sp -> sp.canBeEmpty ()))
+		return true;
+	}
+	return false;
+    }
 
-	    RulePart rp = (RulePart)sp;
-	    List<Rule> rules = nameToRules.get (rp.data);
-	    rules.forEach (nr -> firsts.addAll (nr.firsts));
-	    boolean mayBeEmpty = rules.stream ().anyMatch (nr -> nr.canBeEmpty);
-	    if (!mayBeEmpty)
-		break;
+    private static void memorizeFirsts () {
+	ruleCollections.forEach (rc -> rc.firsts = EnumSet.noneOf (Token.class));
+	boolean thereWasChanges;
+	do {
+	    thereWasChanges = false;
+	    for (RuleCollection rc : ruleCollections)
+		thereWasChanges |= rc.firsts.addAll (getFirsts (rc));
+	} while (thereWasChanges);
+	ruleCollections.forEach (rc -> System.out.println (rc.name + " has firsts: " + rc.firsts));
+    }
+
+    private static EnumSet<Token> getFirsts (RuleCollection rc) {
+	EnumSet<Token> firsts = EnumSet.noneOf (Token.class);
+	if (rc.rules.isEmpty ())
+	    return firsts;
+	for (Rule r : rc.rules) {
+	    for (SimplePart sp : r.parts) {
+		firsts.addAll (sp.getFirsts ());
+		if (!sp.canBeEmpty ())
+		    break;
+	    }
 	}
 	return firsts;
     }
 
     private static void memorizeFollows () {
-	// TODO: implement
+	ruleCollections.forEach (rc -> rc.follow = EnumSet.noneOf (Token.class));
+	boolean thereWasChanges;
+	do {
+	    thereWasChanges = false;
+	    for (Rule r : rules) {
+		int s = r.parts.size ();
+		for (int i = 0; i < s; i++) {
+		    SimplePart sp1 = r.parts.get (i);
+		    if (sp1 instanceof TokenPart)
+			continue;
+		    RulePart rp1 = (RulePart)sp1;
+		    boolean restCanBeEmpty = true;
+		    for (int j = i + 1; j < s; j++) {
+			SimplePart sp2 = r.parts.get (j);
+			thereWasChanges |= addFollow (rp1.data, sp2);
+			if (!sp2.canBeEmpty ()) {
+			    restCanBeEmpty = false;
+			    break;
+			}
+		    }
+		    if (restCanBeEmpty)
+			thereWasChanges |= addFollow (rp1.data, nameToRules.get (r.name).follow);
+		}
+	    }
+	} while (thereWasChanges);
+	ruleCollections.forEach (r -> System.out.println (r.name + " has follow: " + r.follow));
+    }
+
+    private static boolean addFollow (String rule, SimplePart sp) {
+	if (sp instanceof TokenPart) {
+	    EnumSet<Token> ts = EnumSet.of (((TokenPart)sp).data);
+	    return addFollow (rule, ts);
+	}
+	RulePart rp = (RulePart)sp;
+	return addFollow (rule, nameToRules.get (rp.data).firsts);
+    }
+
+    private static boolean addFollow (String rule, EnumSet<Token> ts) {
+	return nameToRules.get (rule).follow.addAll (ts);
     }
 
     private static Set<Item> closure1 (Set<Item> s) {
@@ -624,7 +697,6 @@ public class LRParser {
 	    res = new HashSet<Item> (s);
 	    thereWasChanges = false;
 	    for (Item i : s) {
-		System.out.println ("i:"  + i);
 		if (i.r.parts.size () <= i.dotPos)
 		    continue;
 		SimplePart symbolRightOfDot = i.r.getRulePart (i.dotPos);
@@ -632,7 +704,7 @@ public class LRParser {
 		boolean empty = true;
 		for (SimplePart p : i.r.getPartsAfter (i.dotPos + 1)) {
 		    addLookahead (lookAhead, p);
-		    if (!canBeEmpty (p)) {
+		    if (!p.canBeEmpty ()) {
 			empty = false;
 			break;
 		    }
@@ -641,7 +713,7 @@ public class LRParser {
 		    lookAhead.addAll (i.lookAhead);
 		if (symbolRightOfDot instanceof RulePart) {
 		    RulePart rp = (RulePart)symbolRightOfDot;
-		    List<Rule> nrs = nameToRules.get (rp.data);
+		    List<Rule> nrs = nameToRules.get (rp.data).rules;
 		    for (Rule nr : nrs) {
 			Item ni = new Item (nr, 0, lookAhead);
 			if (!res.contains (ni)) {
@@ -662,17 +734,8 @@ public class LRParser {
 	    lookAhead.add (tp.data);
 	} else {
 	    RulePart rp = (RulePart)sp;
-	    List<Rule> rules = nameToRules.get (rp.data);
-	    rules.forEach (r -> lookAhead.addAll (r.firsts));
+	    lookAhead.addAll (nameToRules.get (rp.data).firsts);
 	}
-    }
-
-    private static boolean canBeEmpty (SimplePart sp) {
-	if (sp instanceof TokenPart)
-	    return false;
-	RulePart rp = (RulePart)sp;
-	List<Rule> rules = nameToRules.get (rp.data);
-	return rules.stream ().anyMatch (r -> r.canBeEmpty);
     }
 
     private static class Item {
