@@ -5,7 +5,9 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
+
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.Test;
@@ -115,7 +117,8 @@ public class TestParser {
 	Lexer lexer = new ListLexer (tokens);
 	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
 	Path path = Paths.get ("TestParser");
-	return new Parser (path, lexer, diagnostics);
+	Java8Grammar g = new Java8Grammar ();
+	return new Parser (g.getLRParser (), path, lexer, diagnostics);
     }
 
     private void checkNoErrors (Parser p) {

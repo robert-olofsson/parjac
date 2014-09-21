@@ -16,10 +16,6 @@ public class Java8Grammar {
 	return lr;
     }
 
-    public static void main (String[] args) {
-	Java8Grammar g = new Java8Grammar ();
-    }
-
     private void addRules () {
 	// First rule should be the goal rule
 	lr.addRule ("Goal", "CompilationUnit", END_OF_INPUT);

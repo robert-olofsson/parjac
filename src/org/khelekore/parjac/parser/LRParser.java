@@ -1,7 +1,5 @@
 package org.khelekore.parjac.parser;
 
-import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,9 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.SourceDiagnostics;
-import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 
 import static org.khelekore.parjac.lexer.Token.*;
@@ -338,6 +333,18 @@ public class LRParser {
 	}
     }
 
+    public void build () {
+	validateRules ();
+	memorizeEmpty ();
+	memorizeFirsts ();
+	memorizeFollows ();
+	Item startItem = new Item (rules.get (0), 0);
+	Map<Item, EnumSet<Token>> configSet =
+	    Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT));
+	System.out.println ("closure1(" + startItem + "): " +
+			    closure1 (configSet));
+    }
+
     private void validateRules () {
 	Set<String> validRules =
 	    rules.stream ().map (r -> r.name).collect (Collectors.toSet ());
@@ -491,18 +498,6 @@ public class LRParser {
 
     private static void addLookahead (EnumSet<Token> lookAhead, SimplePart sp) {
 	lookAhead.addAll (sp.getFirsts ());
-    }
-
-    public void build () {
-	validateRules ();
-	memorizeEmpty ();
-	memorizeFirsts ();
-	memorizeFollows ();
-	Item startItem = new Item (rules.get (0), 0);
-	Map<Item, EnumSet<Token>> configSet =
-	    Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT));
-	System.out.println ("closure1(" + startItem + "): " +
-			    closure1 (configSet));
     }
 
     private static class Item {

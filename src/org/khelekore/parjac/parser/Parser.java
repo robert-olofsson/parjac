@@ -2,7 +2,6 @@ package org.khelekore.parjac.parser;
 
 import java.nio.file.Path;
 import java.util.ArrayDeque;
-import java.util.EnumSet;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
