@@ -41,8 +41,10 @@ public class Trivial {
 	lr.addRule ("Goal", "E", END_OF_INPUT);
 	lr.addRule ("E", "E", PLUS, "T");
 	lr.addRule ("E", "T");
-	lr.addRule ("T", IDENTIFIER);
-	lr.addRule ("T", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+	lr.addRule ("T", "T", MULTIPLY, "P");
+	lr.addRule ("T", "P");
+	lr.addRule ("P", IDENTIFIER);
+	lr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
 
 	/*
 	//

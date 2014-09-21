@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
+
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
@@ -26,7 +28,9 @@ public class LRParser {
 
     // All the zero or more rules, so that we can merge such rules
     private final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
-    private static int zomCounter = 0; // used when generating zomRules
+    private int zomCounter = 0; // used when generating zomRules
+
+    private final Set<ItemSet> itemSets = new HashSet<> ();
 
     // The state table with action and goto parts
     private final StateTable table = new StateTable ();
@@ -47,7 +51,6 @@ public class LRParser {
 
     private void addRule (String name, List<SimplePart> parts) {
 	Rule r = new Rule (name, parts);
-	System.out.println (r);
 	rules.add (r);
 	RuleCollection rc = nameToRules.get (name);
 	if (rc == null) {
@@ -343,26 +346,44 @@ public class LRParser {
 	Item startItem = new Item (rules.get (0), 0);
 	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
 	ItemSet s0 = closure1 (is);
-	System.out.println ("s0: " + s0);
+	itemSets.add (s0);
 
 	Queue<ItemSet> queue = new ArrayDeque<> ();
 	queue.add (s0);
 
-	/* TODO: working on this
 	while (!queue.isEmpty ()) {
 	    ItemSet s = queue.remove ();
-	    for (Token t : Token.values ()) {
-		ItemSet nextState = goTo (s, t);
-		if (nextState != null) {
-		    if (newState (nextState)) {
+	    for (Token t : Token.values ())
+		tryNextState (queue, s, new TokenPart (t));
+	    for (RuleCollection rc : ruleCollections)
+		tryNextState (queue, s, new RulePart (rc.rules.get (0).name));
+	}
+	System.out.println ("found: " + itemSets.size () + " states");
+    }
 
-		    }
-		}
-	    }
-	    for (RuleCollection rc : ruleCollections) {
+    private void tryNextState (Queue<ItemSet> queue, ItemSet s, SimplePart sp) {
+	ItemSet nextState = goTo (s, sp);
+	if (nextState != null) {
+	    if (!itemSets.contains (nextState)) {
+		itemSets.add (nextState);
+		queue.add (nextState);
 	    }
 	}
-	*/
+    }
+
+    private ItemSet goTo (ItemSet s, SimplePart sp) {
+	Map<Item, EnumSet<Token>> sb = new HashMap<> ();
+	for (Map.Entry<Item, EnumSet<Token>> me : s) {
+	    Item i = me.getKey ();
+	    if (i.hasNext (sp)) {
+		Item next = i.advance ();
+		sb.put (next, me.getValue ());
+	    }
+	}
+	if (sb.isEmpty ())
+	    return null;
+	ItemSet isb = new ItemSet (sb);
+	return closure1 (isb);
     }
 
     private void validateRules () {
@@ -488,7 +509,7 @@ public class LRParser {
 		EnumSet<Token> lookAhead = EnumSet.noneOf (Token.class);
 		boolean empty = true;
 		for (SimplePart p : i.r.getPartsAfter (i.dotPos + 1)) {
-		    addLookahead (lookAhead, p);
+		    lookAhead.addAll (p.getFirsts ());
 		    if (!p.canBeEmpty ()) {
 			empty = false;
 			break;
@@ -508,10 +529,6 @@ public class LRParser {
 	    s = res;
 	} while (thereWasChanges);
 	return new ItemSet (res);
-    }
-
-    private static void addLookahead (EnumSet<Token> lookAhead, SimplePart sp) {
-	lookAhead.addAll (sp.getFirsts ());
     }
 
     private static class ItemSet implements Iterable<Map.Entry<Item, EnumSet<Token>>> {
@@ -541,6 +558,20 @@ public class LRParser {
 	@Override public String toString () {
 	    return "ItemSet" + itemToLookAhead;
 	}
+
+	@Override public int hashCode () {
+	    return itemToLookAhead.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () == getClass ())
+		return itemToLookAhead.equals (((ItemSet)o).itemToLookAhead);
+	    return false;
+	}
     }
 
     private static class Item {
@@ -569,6 +600,16 @@ public class LRParser {
 		return false;
 	    Item i = (Item)o;
 	    return dotPos == i.dotPos && r.equals (i.r);
+	}
+
+	public boolean hasNext (SimplePart sp) {
+	    if (r.parts.size () <= dotPos)
+		return false;
+	    return r.parts.get (dotPos).equals (sp);
+	}
+
+	public Item advance () {
+	    return new Item (r, dotPos + 1);
 	}
     }
 
