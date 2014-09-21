@@ -23,9 +23,8 @@ public class Parser {
     // Compiler output
     private final CompilerDiagnosticCollector diagnostics;
 
-    // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
-    // TODO: but can be reduced to only state ids.
-    private ArrayDeque<Object> stack = new ArrayDeque<> ();
+    // Stack of state item
+    private ArrayDeque<Integer> stack = new ArrayDeque<> ();
 
     public Parser (LRParser lr, Path path, Lexer lexer,
 		   CompilerDiagnosticCollector diagnostics) {
@@ -46,7 +45,6 @@ public class Parser {
 	    } else {
 		switch (a.getType ()) {
 		case SHIFT:
-		    stack.push (nextToken);
 		    stack.push (a.getN ());
 		    break;
 		case REDUCE:
@@ -54,7 +52,6 @@ public class Parser {
 		    int topState = (Integer)stack.peekLast ();
 		    String leftSide = "someRule";
 		    Integer goTo = lr.getGoTo (topState, leftSide);
-		    stack.push (leftSide);
 		    stack.push (goTo);
 		    break;
 		case ACCEPT:

@@ -1,18 +1,20 @@
 package org.khelekore.parjac.parser;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
-
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
@@ -339,10 +341,28 @@ public class LRParser {
 	memorizeFirsts ();
 	memorizeFollows ();
 	Item startItem = new Item (rules.get (0), 0);
-	Map<Item, EnumSet<Token>> configSet =
-	    Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT));
-	System.out.println ("closure1(" + startItem + "): " +
-			    closure1 (configSet));
+	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
+	ItemSet s0 = closure1 (is);
+	System.out.println ("s0: " + s0);
+
+	Queue<ItemSet> queue = new ArrayDeque<> ();
+	queue.add (s0);
+
+	/* TODO: working on this
+	while (!queue.isEmpty ()) {
+	    ItemSet s = queue.remove ();
+	    for (Token t : Token.values ()) {
+		ItemSet nextState = goTo (s, t);
+		if (nextState != null) {
+		    if (newState (nextState)) {
+
+		    }
+		}
+	    }
+	    for (RuleCollection rc : ruleCollections) {
+	    }
+	}
+	*/
     }
 
     private void validateRules () {
@@ -452,13 +472,13 @@ public class LRParser {
 	return nameToRules.get (rule).follow.addAll (ts);
     }
 
-    public Map<Item, EnumSet<Token>> closure1 (Map<Item, EnumSet<Token>> s) {
+    public ItemSet closure1 (ItemSet s) {
 	boolean thereWasChanges;
-	Map<Item, EnumSet<Token>> res;
+	ItemSet res;
 	do {
-	    res = new HashMap<> (s);
+	    res = new ItemSet (s);
 	    thereWasChanges = false;
-	    for (Map.Entry<Item, EnumSet<Token>> me : s.entrySet ()) {
+	    for (Map.Entry<Item, EnumSet<Token>> me : s) {
 		Item i = me.getKey ();
 		EnumSet<Token> mlookAhead = me.getValue ();
 
@@ -481,23 +501,46 @@ public class LRParser {
 		    List<Rule> nrs = nameToRules.get (rp.data).rules;
 		    for (Rule nr : nrs) {
 			Item ni = new Item (nr, 0);
-			EnumSet<Token> la = res.get (ni);
-			if (la == null) {
-			    res.put (ni, lookAhead);
-			    thereWasChanges = true;
-			} else {
-			    thereWasChanges |= la.addAll (lookAhead);
-			}
+			thereWasChanges |= res.add (ni, lookAhead);
 		    }
 		}
 	    }
 	    s = res;
 	} while (thereWasChanges);
-	return res;
+	return new ItemSet (res);
     }
 
     private static void addLookahead (EnumSet<Token> lookAhead, SimplePart sp) {
 	lookAhead.addAll (sp.getFirsts ());
+    }
+
+    private static class ItemSet implements Iterable<Map.Entry<Item, EnumSet<Token>>> {
+	private final Map<Item, EnumSet<Token>> itemToLookAhead;
+
+	public ItemSet (Map<Item, EnumSet<Token>> itemToLookAhead) {
+	    this.itemToLookAhead = itemToLookAhead;
+	}
+
+	public ItemSet (ItemSet s) {
+	    itemToLookAhead = new HashMap<> (s.itemToLookAhead);
+	}
+
+	public Iterator<Map.Entry<Item, EnumSet<Token>>> iterator () {
+	    return itemToLookAhead.entrySet ().iterator ();
+	}
+
+	public boolean add (Item ni, EnumSet<Token> lookAhead) {
+	    EnumSet<Token> la = itemToLookAhead.get (ni);
+	    if (la == null) {
+		itemToLookAhead.put (ni, lookAhead);
+		return true;
+	    }
+	    return la.addAll (lookAhead);
+	}
+
+	@Override public String toString () {
+	    return "ItemSet" + itemToLookAhead;
+	}
     }
 
     private static class Item {
