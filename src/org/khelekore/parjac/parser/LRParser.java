@@ -50,6 +50,18 @@ public class LRParser {
 	// First rule should be the goal rule
 	addRule ("Goal", "CompilationUnit", END_OF_INPUT);
 
+	/* example grammar
+	addRule ("Goal", "S", END_OF_INPUT);
+
+	addRule ("S",
+		 oneOf (sequence("L", EQUAL, "R"),
+			"R"));
+	addRule ("L",
+		 oneOf (sequence(MULTIPLY, "R"),
+			IDENTIFIER));
+	addRule ("R", "L");
+	*/
+
 	/* Productions from §3 (Lexical Structure) */
 	addRule ("Literal",
 		 oneOf (INT_LITERAL, LONG_LITERAL,
@@ -321,6 +333,14 @@ public class LRParser {
 		flatMap (p -> p.getSubrules ().stream ()).
 		collect (Collectors.toSet ());
 	}
+
+	public SimplePart getRulePart (int pos) {
+	    return parts.get (pos);
+	}
+
+	public List<SimplePart> getPartsAfter (int pos) {
+	    return parts.subList (pos, parts.size ());
+	}
     }
 
     private interface SimplePart {
@@ -510,6 +530,7 @@ public class LRParser {
 	validateRules ();
 	memorizeEmpty ();
 	memorizeFirsts ();
+	memorizeFollows ();
 	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
 				   Collections.singleton (Token.END_OF_INPUT));
 	System.out.println ("closure1(" + startItem + "): " +
@@ -592,31 +613,66 @@ public class LRParser {
 	return firsts;
     }
 
+    private static void memorizeFollows () {
+	// TODO: implement
+    }
+
     private static Set<Item> closure1 (Set<Item> s) {
-	Set<Item> res = new HashSet<Item> (s);
-	for (Item i : s) {
-	    /* TODO:
-	    Part symbolRightOfDot = r.getRulePart (i.dotPos + 1);
-	    Set<Token> lookAhead = new HashSet<> ();
-	    boolean empty = true;
-	    for (Part p : i.r.partsAfter (i.dotPos + 1)) {
-		lookAhead.addAll (p.getFirsts (new HashSet<> ()));
-		if (!p.canBeEmpty ()) {
-		    empty = false;
-		    break;
+	boolean thereWasChanges;
+	Set<Item> res;
+	do {
+	    res = new HashSet<Item> (s);
+	    thereWasChanges = false;
+	    for (Item i : s) {
+		System.out.println ("i:"  + i);
+		if (i.r.parts.size () <= i.dotPos)
+		    continue;
+		SimplePart symbolRightOfDot = i.r.getRulePart (i.dotPos);
+		EnumSet<Token> lookAhead = EnumSet.noneOf (Token.class);
+		boolean empty = true;
+		for (SimplePart p : i.r.getPartsAfter (i.dotPos + 1)) {
+		    addLookahead (lookAhead, p);
+		    if (!canBeEmpty (p)) {
+			empty = false;
+			break;
+		    }
+		}
+		if (empty)
+		    lookAhead.addAll (i.lookAhead);
+		if (symbolRightOfDot instanceof RulePart) {
+		    RulePart rp = (RulePart)symbolRightOfDot;
+		    List<Rule> nrs = nameToRules.get (rp.data);
+		    for (Rule nr : nrs) {
+			Item ni = new Item (nr, 0, lookAhead);
+			if (!res.contains (ni)) {
+			    res.add (ni);
+			    thereWasChanges = true;
+			}
+		    }
 		}
 	    }
-	    if (empty)
-		lookAhead.addAll (i.lookAhead);
-	    if (symbolRightOfDot instanceof RulePart) {
-		RulePart rp = (RulePart)symbolRightOfDot;
-		Rule nr = nameToRule.get (rp.rule);
-		Item ni = new Item (nr, 0, lookAhead);
-		res.add (ni);
-	    }
-	    */
-	}
+	    s = res;
+	} while (thereWasChanges);
 	return res;
+    }
+
+    private static void addLookahead (EnumSet<Token> lookAhead, SimplePart sp) {
+	if (sp instanceof TokenPart) {
+	    TokenPart tp = (TokenPart)sp;
+	    lookAhead.add (tp.data);
+	} else {
+	    RulePart rp = (RulePart)sp;
+	    List<Rule> rules = nameToRules.get (rp.data);
+	    rules.forEach (r -> lookAhead.addAll (r.firsts));
+	}
+    }
+
+    private static boolean canBeEmpty (SimplePart sp) {
+	if (sp instanceof TokenPart)
+	    return false;
+	RulePart rp = (RulePart)sp;
+	List<Rule> rules = nameToRules.get (rp.data);
+	return rules.stream ().anyMatch (r -> r.canBeEmpty);
     }
 
     private static class Item {
@@ -632,6 +688,21 @@ public class LRParser {
 
 	@Override public String toString () {
 	    return "[" + r + ", dotPos: " + dotPos + "; " + lookAhead + "]";
+	}
+
+	@Override public int hashCode () {
+	    return r.hashCode () + dotPos + lookAhead.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    Item i = (Item)o;
+	    return dotPos == i.dotPos && r.equals (i.r) && lookAhead.equals (i.lookAhead);
 	}
     }
 
