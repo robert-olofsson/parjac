@@ -368,6 +368,7 @@ public class LRParser {
 		itemSets.add (nextState);
 		queue.add (nextState);
 	    }
+	    // TODO: add state transition from s to nextState for sp
 	}
     }
 
