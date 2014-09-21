@@ -8,10 +8,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,240 +22,19 @@ import static org.khelekore.parjac.lexer.Token.*;
 
 public class LRParser {
     // All the generated rules
-    private static final List<Rule> rules = new ArrayList<> ();
-    private static final List<RuleCollection> ruleCollections = new ArrayList<> ();
+    private final List<Rule> rules = new ArrayList<> ();
+    private final List<RuleCollection> ruleCollections = new ArrayList<> ();
     // Index from name to all the generated rules
-    private static final Map<String, RuleCollection> nameToRules = new HashMap<> ();
+    private final Map<String, RuleCollection> nameToRules = new HashMap<> ();
 
     // All the zero or more rules, so that we can merge such rules
-    private static final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
+    private final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
+    private static int zomCounter = 0; // used when generating zomRules
 
-    private static final StateTable table = new StateTable ();
+    // The state table with action and goto parts
+    private final StateTable table = new StateTable ();
 
-    // TODO: currently <state id> <grammar symbol> <state id> <grammar symbol> ...
-    // TODO: but can be reduced to only state ids.
-    private final ArrayDeque<Object> stack = new ArrayDeque<> ();
-
-    // The file we are parsing
-    private final Path path;
-
-    // The lexer we are using to get tokens
-    private final Lexer lexer;
-
-    // Compiler output
-    private final CompilerDiagnosticCollector diagnostics;
-
-    static {
-	/* test grammars
-	addRule ("Goal", "S", END_OF_INPUT);
-	addRule ("S",
-		 oneOf (sequence (AT, "S", LEFT_CURLY),
-			"B"));
-	addRule ("B",
-		 oneOf (sequence (LEFT_BRACKET, "B", LEFT_CURLY),
-			"C"));
-	addRule ("C",
-		 oneOf (sequence (LEFT_PARENTHESIS, "C", LEFT_CURLY),
-			RIGHT_BRACKET));
-	addRule ("S", "A", "B", LEFT_PARENTHESIS);
-	addRule ("A", zeroOrOne (AT));
-	addRule ("B", zeroOrOne (LEFT_BRACKET));
-	*/
-	// First rule should be the goal rule
-	addRule ("Goal", "CompilationUnit", END_OF_INPUT);
-
-	// Productions from §3 (Lexical Structure)
-	addRule ("Literal",
-		 oneOf (INT_LITERAL, LONG_LITERAL,
-			FLOAT_LITERAL, DOUBLE_LITERAL,
-			TRUE, FALSE,
-			CHARACTER_LITERAL,
-			STRING_LITERAL,
-			NULL));
-	// End of §3
-
-	// Productions from §4 (Types, Values, and Variables)
-	addRule ("Type",
-		 oneOf ("PrimitiveType", "ReferenceType"));
-	addRule ("PrimitiveType",
-		 oneOf (sequence (zeroOrMore ("Annotation"), "NumericType"),
-			sequence (zeroOrMore ("Annotation"), BOOLEAN)));
-	addRule ("NumericType",
-		 oneOf ("IntegralType", "FloatingPointType"));
-	addRule ("IntegralType",
-		 oneOf (BYTE, SHORT, INT, LONG, CHAR));
-	addRule ("FloatingPointType",
-		 oneOf (FLOAT, DOUBLE));
-	addRule("ReferenceType",
-		oneOf ("ClassOrInterfaceType", "TypeVariable", "ArrayType"));
-	addRule ("ClassOrInterfaceType",
-		 oneOf ("ClassType", "InterfaceType"));
-	addRule ("ClassType",
-		 oneOf (sequence (zeroOrMore ("Annotation"), IDENTIFIER, zeroOrOne ("TypeArguments")),
-			sequence ("ClassOrInterfaceType", DOT, zeroOrMore ("Annotation"),
-				  IDENTIFIER, zeroOrOne ("TypeArguments"))));
-	addRule ("InterfaceType", "ClassType");
-	addRule ("TypeVariable", zeroOrMore ("Annotation"), IDENTIFIER);
-	addRule ("ArrayType",
-		 oneOf (sequence ("PrimitiveType", "Dims"),
-			sequence ("ClassOrInterfaceType", "Dims"),
-			sequence ("TypeVariable", "Dims")));
-	addRule ("Dims",
-		 zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
-		 zeroOrMore (zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
-	addRule ("TypeParameter",
-		 zeroOrMore ("TypeParameterModifier"), IDENTIFIER, zeroOrOne ("TypeBound"));
-	addRule ("TypeParameterModifier", "Annotation");
-	addRule ("TypeBound",
-		 oneOf (sequence (EXTENDS, "TypeVariable"),
-			sequence (EXTENDS, "ClassOrInterfaceType", zeroOrMore ("AdditionalBound"))));
-	addRule ("AdditionalBound", AND, "InterfaceType");
-	addRule ("TypeArguments", LT, "TypeArgumentList", GT);
-	addRule ("TypeArgumentList",
-		 "TypeArgument", zeroOrMore (sequence(COMMA, "TypeArgument")));
-	addRule ("TypeArgument",
-		 oneOf ("ReferenceType", "Wildcard"));
-	addRule ("Wildcard",
-		 zeroOrMore ("Annotation"), QUESTIONMARK, zeroOrOne ("WildcardBounds"));
-	addRule ("WildcardBounds",
-		 oneOf (sequence (EXTENDS, "ReferenceType"),
-			sequence (SUPER, "ReferenceType")));
-	// End of §4
-
-	// Productions from §6 Names
-	addRule ("PackageName",
-		 oneOf (IDENTIFIER,
-			sequence ("PackageName", DOT, IDENTIFIER)));
-	addRule ("TypeName",
-		 oneOf (IDENTIFIER,
-			sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
-	addRule ("PackageOrTypeName",
-		 oneOf (IDENTIFIER,
-			sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
-	addRule ("ExpressionName",
-		 oneOf (IDENTIFIER,
-			sequence ("AmbiguousName", DOT, IDENTIFIER)));
-	addRule ("MethodName", IDENTIFIER);
-	addRule ("AmbiguousName",
-		 oneOf (IDENTIFIER,
-			sequence ("AmbiguousName", DOT, IDENTIFIER)));
-
-	// End of §6
-
-	// Productions from §7 (Packages)
-	addRule ("CompilationUnit",
-		 zeroOrOne ("PackageDeclaration"),
-		 zeroOrMore ("ImportDeclaration"),
-		 zeroOrMore ("TypeDeclaration"));
-	addRule ("PackageDeclaration",
-		 zeroOrMore ("PackageModifier"), PACKAGE, IDENTIFIER, zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
-	addRule ("PackageModifier", "Annotation");
-	addRule ("ImportDeclaration",
-		 oneOf ("SingleTypeImportDeclaration", "TypeImportOnDemandDeclaration",
-			"SingleStaticImportDeclaration", "StaticImportOnDemandDeclaration"));
-	addRule ("SingleTypeImportDeclaration",
-		 IMPORT, "TypeName", SEMICOLON);
-	addRule ("TypeImportOnDemandDeclaration",
-		 IMPORT, "PackageOrTypeName", DOT, MULTIPLY, SEMICOLON);
-	addRule ("SingleStaticImportDeclaration",
-		 IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
-	addRule ("StaticImportOnDemandDeclaration",
-		 IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
-	addRule ("TypeDeclaration",
-		 oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
-	// End of §7
-
-	// Productions from §8 (Classes)
-	addRule ("ClassDeclaration",
-		 oneOf ("NormalClassDeclaration", "EnumDeclaration"));
-	addRule ("NormalClassDeclaration",
-		 zeroOrMore ("ClassModifier"), CLASS, IDENTIFIER,
-		 zeroOrOne ("TypeParameters"), zeroOrOne ("Superclass"),
-		 zeroOrOne ("Superinterfaces"), "ClassBody");
-	addRule ("ClassModifier",
-		 oneOf ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-			ABSTRACT, STATIC, FINAL, STRICTFP));
-	addRule ("TypeParameters",
-		 LT, "TypeParameterList", GT);
-	addRule ("TypeParameterList",
-		 "TypeParameter", zeroOrMore (COMMA, "TypeParameter"));
-	addRule ("Superclass", EXTENDS, "ClassType");
-	addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
-	addRule ("InterfaceTypeList", "InterfaceType", zeroOrMore (COMMA, "InterfaceType"));
-	addRule ("ClassBody",
-		 LEFT_CURLY,
-		 // TODO: oneOrMore ("ClassBodyDeclaration"),
-		 RIGHT_CURLY);
-
-	addRule ("EnumDeclaration",
-		 zeroOrMore ("ClassModifier"),
-		 ENUM, IDENTIFIER, zeroOrOne ("Superinterfaces"), "EnumBody");
-	addRule ("EnumBody",
-		 LEFT_CURLY,
-		 // zeroOrOne ("EnumConstantList"), zeroOrOne (COMMA),
-		 // zerOrOne ("EnumBodyDeclarations"),
-		 RIGHT_CURLY);
-	// End of §8
-
-	// Productions from §9 (Interfaces)
-	addRule ("InterfaceDeclaration",
-		 oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
-	addRule ("NormalInterfaceDeclaration",
-		 zeroOrMore ("InterfaceModifier"), INTERFACE, IDENTIFIER,
-		 zeroOrOne ("TypeParameters"), zeroOrOne ("ExtendsInterfaces"), "InterfaceBody");
-	addRule ("InterfaceModifier",
-		 oneOf ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-			ABSTRACT, STATIC, STRICTFP));
-	addRule ("ExtendsInterfaces",
-		 EXTENDS, "InterfaceTypeList");
-	addRule ("InterfaceBody",
-		 LEFT_CURLY,
-		 // zeroOrMore ("InterfaceMemberDeclaration"),
-		 RIGHT_CURLY);
-
-	addRule ("AnnotationTypeDeclaration",
-		 zeroOrMore ("InterfaceModifier"),
-		 AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
-	addRule ("AnnotationTypeBody",
-		 LEFT_CURLY,
-		 // zeroOrMore ("AnnotationTypeMemberDeclaration"),
-		 RIGHT_CURLY);
-
-	addRule ("Annotation",
-		 oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
-	addRule ("NormalAnnotation",
-		 AT, "TypeName", LEFT_PARENTHESIS, zeroOrOne ("ElementValuePairList"));
-	addRule ("ElementValuePairList",
-		 "ElementValuePair", zeroOrMore (COMMA, "ElementValuePair"));
-	addRule ("ElementValuePair",
-		 IDENTIFIER, EQUAL, "ElementValue");
-	addRule ("ElementValue",
-		 oneOf (
-		 //"ConditionalExpression",
-		 "ElementValueArrayInitializer",
-		 "Annotation"));
-	addRule ("ElementValueArrayInitializer",
-		 LEFT_CURLY, zeroOrOne ("ElementValueList"), zeroOrOne (COMMA));
-	addRule ("ElementValueList",
-		 "ElementValue", zeroOrMore (COMMA, "ElementValue"));
-	addRule ("MarkerAnnotation",
-		 AT, "TypeName");
-	addRule ("SingleElementAnnotation",
-		 AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
-
-	// End of §9
-
-	// Productions from §10 (Arrays)
-	// End of §10
-
-	// Productions from §14 (Blocks and Statements)
-	// End of §14
-
-	// Productions from §15 (Expressions)
-	// End of §15
-    }
-
-    private static void addRule (String name, Object... os) {
+    public void addRule (String name, Object... os) {
 	ComplexPart[] parts = getParts (os);
 	List<List<SimplePart>> simpleRules = split (parts);
 	simpleRules.forEach (ls -> addRule (name, ls));
@@ -271,46 +48,44 @@ public class LRParser {
 	return ret;
     }
 
-    private static int zomCounter = 0;
-
-    private static void addRule (String name, List<SimplePart> parts) {
+    private void addRule (String name, List<SimplePart> parts) {
 	Rule r = new Rule (name, parts);
 	System.out.println (r);
 	rules.add (r);
 	RuleCollection rc = nameToRules.get (name);
 	if (rc == null) {
-	    rc = new RuleCollection (name);
+	    rc = new RuleCollection ();
 	    ruleCollections.add (rc);
 	    nameToRules.put (name, rc);
 	}
 	rc.rules.add (r);
     }
 
-    private static ComplexPart zeroOrOne (String rule) {
+    public ComplexPart zeroOrOne (String rule) {
 	return new ZeroOrOneRulePart (new RulePart (rule));
     }
 
-    private static ComplexPart zeroOrOne (Token token) {
+    public ComplexPart zeroOrOne (Token token) {
 	return new ZeroOrOneRulePart (new TokenPart (token));
     }
 
-    private static ComplexPart zeroOrMore (String rule) {
+    public ComplexPart zeroOrMore (String rule) {
 	return new ZeroOrMoreRulePart (new RulePart (rule));
     }
 
-    private static ComplexPart zeroOrMore (Object... parts) {
+    public ComplexPart zeroOrMore (Object... parts) {
 	return new ZeroOrMoreRulePart (sequence (parts));
     }
 
-    private static ComplexPart sequence (Object... os) {
+    public ComplexPart sequence (Object... os) {
 	return new SequencePart (getParts (os));
     }
 
-    private static ComplexPart oneOf (Object... os) {
+    public ComplexPart oneOf (Object... os) {
 	return new OneOfPart (getParts (os));
     }
 
-    private static ComplexPart[] getParts (Object... os) {
+    private ComplexPart[] getParts (Object... os) {
 	ComplexPart[] parts = new ComplexPart[os.length];
 	for (int i = 0; i < os.length; i++) {
 	    if (os[i] instanceof ComplexPart)
@@ -326,14 +101,12 @@ public class LRParser {
     }
 
     private static class RuleCollection {
-	private final String name;
 	private final List<Rule> rules;
 	private boolean canBeEmpty = true;
 	private EnumSet<Token> firsts;
 	private EnumSet<Token> follow;
 
-	public RuleCollection (String name) {
-	    this.name = name;
+	public RuleCollection () {
 	    rules = new ArrayList<> ();
 	}
     }
@@ -407,7 +180,6 @@ public class LRParser {
     }
 
     private static class TokenPart extends PartBase<Token> {
-
 	public TokenPart (Token token) {
 	    super (token);
 	}
@@ -425,7 +197,7 @@ public class LRParser {
 	}
     }
 
-    private static class RulePart extends PartBase<String> {
+    private class RulePart extends PartBase<String> {
 	public RulePart (String rule) {
 	    super (rule);
 	}
@@ -490,7 +262,7 @@ public class LRParser {
 	}
     }
 
-    private static class ZeroOrMoreRulePart extends ComplexBase {
+    private class ZeroOrMoreRulePart extends ComplexBase {
 	public ZeroOrMoreRulePart (ComplexPart part) {
 	    super (part);
 	}
@@ -511,7 +283,7 @@ public class LRParser {
 	}
     }
 
-    private static class SequencePart implements ComplexPart {
+    private class SequencePart implements ComplexPart {
 	private final ComplexPart[] parts;
 	public SequencePart (ComplexPart... parts) {
 	    this.parts = parts;
@@ -566,21 +338,7 @@ public class LRParser {
 	}
     }
 
-    public static void main (String[] args) {
-	System.out.println ("rules has: " + rules.size () + " rules");
-	validateRules ();
-	memorizeEmpty ();
-	memorizeFirsts ();
-	memorizeFollows ();
-	/*
-	Item startItem = new Item (nameToRules.get ("Goal").get (0), 0,
-				   Collections.singleton (END_OF_INPUT));
-	System.out.println ("closure1(" + startItem + "): " +
-			    closure1 (Collections.singleton (startItem)));
-	*/
-    }
-
-    private static void validateRules () {
+    private void validateRules () {
 	Set<String> validRules =
 	    rules.stream ().map (r -> r.name).collect (Collectors.toSet ());
 
@@ -596,7 +354,7 @@ public class LRParser {
 	    System.err.println ("Multiple Goal rules defined");
     }
 
-    private static void memorizeEmpty () {
+    private void memorizeEmpty () {
 	ruleCollections.forEach (rc -> rc.canBeEmpty = false);
 	boolean thereWasChanges;
 	do {
@@ -612,8 +370,7 @@ public class LRParser {
 	} while (thereWasChanges);
     }
 
-    private static boolean canBeEmpty (RuleCollection rc) {
-	boolean ret = false;
+    private boolean canBeEmpty (RuleCollection rc) {
 	for (Rule r : rules) {
 	    if (r.parts.isEmpty ())
 		return true;
@@ -623,7 +380,7 @@ public class LRParser {
 	return false;
     }
 
-    private static void memorizeFirsts () {
+    private void memorizeFirsts () {
 	ruleCollections.forEach (rc -> rc.firsts = EnumSet.noneOf (Token.class));
 	boolean thereWasChanges;
 	do {
@@ -631,7 +388,6 @@ public class LRParser {
 	    for (RuleCollection rc : ruleCollections)
 		thereWasChanges |= rc.firsts.addAll (getFirsts (rc));
 	} while (thereWasChanges);
-	ruleCollections.forEach (rc -> System.out.println (rc.name + " has firsts: " + rc.firsts));
     }
 
     private static EnumSet<Token> getFirsts (RuleCollection rc) {
@@ -648,7 +404,7 @@ public class LRParser {
 	return firsts;
     }
 
-    private static void memorizeFollows () {
+    private void memorizeFollows () {
 	ruleCollections.forEach (rc -> rc.follow = EnumSet.noneOf (Token.class));
 	boolean thereWasChanges;
 	do {
@@ -674,10 +430,9 @@ public class LRParser {
 		}
 	    }
 	} while (thereWasChanges);
-	ruleCollections.forEach (r -> System.out.println (r.name + " has follow: " + r.follow));
     }
 
-    private static boolean addFollow (String rule, SimplePart sp) {
+    private boolean addFollow (String rule, SimplePart sp) {
 	if (sp instanceof TokenPart) {
 	    EnumSet<Token> ts = EnumSet.of (((TokenPart)sp).data);
 	    return addFollow (rule, ts);
@@ -686,17 +441,20 @@ public class LRParser {
 	return addFollow (rule, nameToRules.get (rp.data).firsts);
     }
 
-    private static boolean addFollow (String rule, EnumSet<Token> ts) {
+    private boolean addFollow (String rule, EnumSet<Token> ts) {
 	return nameToRules.get (rule).follow.addAll (ts);
     }
 
-    private static Set<Item> closure1 (Set<Item> s) {
+    public Map<Item, EnumSet<Token>> closure1 (Map<Item, EnumSet<Token>> s) {
 	boolean thereWasChanges;
-	Set<Item> res;
+	Map<Item, EnumSet<Token>> res;
 	do {
-	    res = new HashSet<Item> (s);
+	    res = new HashMap<> (s);
 	    thereWasChanges = false;
-	    for (Item i : s) {
+	    for (Map.Entry<Item, EnumSet<Token>> me : s.entrySet ()) {
+		Item i = me.getKey ();
+		EnumSet<Token> mlookAhead = me.getValue ();
+
 		if (i.r.parts.size () <= i.dotPos)
 		    continue;
 		SimplePart symbolRightOfDot = i.r.getRulePart (i.dotPos);
@@ -710,15 +468,18 @@ public class LRParser {
 		    }
 		}
 		if (empty)
-		    lookAhead.addAll (i.lookAhead);
+		    lookAhead.addAll (mlookAhead);
 		if (symbolRightOfDot instanceof RulePart) {
 		    RulePart rp = (RulePart)symbolRightOfDot;
 		    List<Rule> nrs = nameToRules.get (rp.data).rules;
 		    for (Rule nr : nrs) {
-			Item ni = new Item (nr, 0, lookAhead);
-			if (!res.contains (ni)) {
-			    res.add (ni);
+			Item ni = new Item (nr, 0);
+			EnumSet<Token> la = res.get (ni);
+			if (la == null) {
+			    res.put (ni, lookAhead);
 			    thereWasChanges = true;
+			} else {
+			    thereWasChanges |= la.addAll (lookAhead);
 			}
 		    }
 		}
@@ -729,32 +490,36 @@ public class LRParser {
     }
 
     private static void addLookahead (EnumSet<Token> lookAhead, SimplePart sp) {
-	if (sp instanceof TokenPart) {
-	    TokenPart tp = (TokenPart)sp;
-	    lookAhead.add (tp.data);
-	} else {
-	    RulePart rp = (RulePart)sp;
-	    lookAhead.addAll (nameToRules.get (rp.data).firsts);
-	}
+	lookAhead.addAll (sp.getFirsts ());
+    }
+
+    public void build () {
+	validateRules ();
+	memorizeEmpty ();
+	memorizeFirsts ();
+	memorizeFollows ();
+	Item startItem = new Item (rules.get (0), 0);
+	Map<Item, EnumSet<Token>> configSet =
+	    Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT));
+	System.out.println ("closure1(" + startItem + "): " +
+			    closure1 (configSet));
     }
 
     private static class Item {
 	private final Rule r;
 	private final int dotPos;
-	private final Set<Token> lookAhead;
 
-	public Item (Rule r, int dotPos, Set<Token> lookAhead) {
+	public Item (Rule r, int dotPos) {
 	    this.r = r;
 	    this.dotPos = dotPos;
-	    this.lookAhead = lookAhead;
 	}
 
 	@Override public String toString () {
-	    return "[" + r + ", dotPos: " + dotPos + "; " + lookAhead + "]";
+	    return "[" + r + ", dotPos: " + dotPos + "]";
 	}
 
 	@Override public int hashCode () {
-	    return r.hashCode () + dotPos + lookAhead.hashCode ();
+	    return r.hashCode () + dotPos;
 	}
 
 	@Override public boolean equals (Object o) {
@@ -765,57 +530,15 @@ public class LRParser {
 	    if (o.getClass () != getClass ())
 		return false;
 	    Item i = (Item)o;
-	    return dotPos == i.dotPos && r.equals (i.r) && lookAhead.equals (i.lookAhead);
+	    return dotPos == i.dotPos && r.equals (i.r);
 	}
     }
 
-    public LRParser (Path path, Lexer lexer, CompilerDiagnosticCollector diagnostics) {
-	this.path = path;
-	this.lexer = lexer;
-	this.diagnostics = diagnostics;
+    public Action getAction (int currentState, Token nextToken) {
+	return table.getAction (currentState, nextToken);
     }
 
-    public void parse () {
-	stack.push (0);
-	while (true) {
-	    int currentState = (Integer)stack.peekLast ();
-	    Token nextToken = lexer.nextNonWhitespaceToken ();
-	    Action a = table.getAction (currentState, nextToken);
-	    if (a == null) {
-		addParserError ("No action for nextToken: " + nextToken);
-	    } else {
-		switch (a.getType ()) {
-		case SHIFT:
-		    stack.push (nextToken);
-		    stack.push (a.getN ());
-		    break;
-		case REDUCE:
-		    stack.pop (); // TODO: pop k things.
-		    int topState = (Integer)stack.peekLast ();
-		    String leftSide = "someRule";
-		    Integer goTo = table.getGoTo (topState, leftSide);
-		    stack.push (leftSide);
-		    stack.push (goTo);
-		    break;
-		case ACCEPT:
-		    return;
-		case ERROR:
-		    addParserError ("ERROR: for nextToken: " + nextToken);
-		}
-	    }
-	}
-    }
-
-    public CompilerDiagnosticCollector getDiagnostics () {
-	return diagnostics;
-    }
-
-    private void addParserError (String error) {
-	diagnostics.report (new SourceDiagnostics (path,
-						   lexer.getTokenStartPos (),
-						   lexer.getTokenEndPos (),
-						   lexer.getLineNumber (),
-						   lexer.getTokenColumn (),
-						   error));
+    public Integer getGoTo (int state, String rule) {
+	return table.getGoTo (state, rule);
     }
 }

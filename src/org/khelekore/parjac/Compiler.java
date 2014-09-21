@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.Parser;
@@ -61,7 +62,8 @@ public class Compiler {
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (path, charBuf);
-	    Parser parser = new Parser (path, lexer, diagnostics);
+	    Java8Grammar grammar = new Java8Grammar ();
+	    Parser parser = new Parser (grammar.getLRParser (), path, lexer, diagnostics);
 	    SyntaxTree tree = parser.parse ();
 	    return tree;
 	} catch (MalformedInputException e) {
