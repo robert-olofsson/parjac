@@ -38,6 +38,28 @@ public class Trivial {
     }
 
     private void addRules () {
+	lr.addRule ("Goal", "S");
+	lr.addRule ("S", "E", EQUAL, "E");
+	lr.addRule ("S", IDENTIFIER);
+	lr.addRule ("E", "E", PLUS, IDENTIFIER);
+	lr.addRule ("E", IDENTIFIER);
+
+	/*
+	lr.addRule ("Goal", "E");
+	lr.addRule ("E", "T", PLUS, "E");
+	lr.addRule ("E", "T");
+	lr.addRule ("T", IDENTIFIER);
+
+	lr.addRule ("Goal", "E");
+	lr.addRule ("E", "E", PLUS, "T");
+	lr.addRule ("E", "E", MINUS, "T");
+	lr.addRule ("E", "T");
+	lr.addRule ("T", "T", MULTIPLY, "F");
+	lr.addRule ("T", "T", DIVIDE, "F");
+	lr.addRule ("T", "F");
+	lr.addRule ("F", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+	lr.addRule ("F", IDENTIFIER);
+
 	lr.addRule ("Goal", "E", END_OF_INPUT);
 	lr.addRule ("E", "E", PLUS, "T");
 	lr.addRule ("E", "T");
@@ -46,7 +68,6 @@ public class Trivial {
 	lr.addRule ("P", IDENTIFIER);
 	lr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
 
-	/*
 	//
 	addRule ("Goal", "S", END_OF_INPUT);
 	addRule ("S", "L", EQUAL, "R");

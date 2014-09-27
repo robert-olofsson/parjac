@@ -11,6 +11,12 @@ public class Action {
 	this.n = n;
     }
 
+    @Override public String toString () {
+	if (t == Type.SHIFT || t == Type.REDUCE)
+	    return t.toString () + n;
+	return t.toString ();
+    }
+
     public Type getType () {
 	return t;
     }
@@ -19,19 +25,19 @@ public class Action {
 	return n;
     }
 
-    public Action createShift (int n) {
+    public static Action createShift (int n) {
 	return new Action (Type.SHIFT, n);
     }
 
-    public Action createReduce (int n) {
+    public static Action createReduce (int n) {
 	return new Action (Type.REDUCE, n);
     }
 
-    public Action createAccept () {
+    public static Action createAccept () {
 	return new Action (Type.ACCEPT, -1);
     }
 
-    public Action createError () {
+    public static Action createError () {
 	return new Action (Type.ERROR, -1);
     }
 }
