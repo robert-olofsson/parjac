@@ -65,7 +65,7 @@ public class Parser {
 		    stack.push (goTo);
 		    break;
 		case ACCEPT:
-		    return null; // TODO:
+		    return new SyntaxTree (path); // TODO: not really correct
 		case ERROR:
 		    addParserError ("ERROR: for nextToken: " + nextToken);
 		    break;
