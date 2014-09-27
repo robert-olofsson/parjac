@@ -108,7 +108,7 @@ public class LRParser {
 	}
     }
 
-    private static class Rule {
+    protected static class Rule {
 	private final String name;
 	private final int id;
 	private final List<SimplePart> parts;
@@ -123,6 +123,10 @@ public class LRParser {
 	    return name + " -> " + parts;
 	}
 
+	public String getName () {
+	    return name;
+	}
+
 	public Collection<String> getSubrules () {
 	    return parts.stream ().
 		flatMap (p -> p.getSubrules ().stream ()).
@@ -135,6 +139,10 @@ public class LRParser {
 
 	public List<SimplePart> getPartsAfter (int pos) {
 	    return parts.subList (pos, parts.size ());
+	}
+
+	public int size () {
+	    return parts.size ();
 	}
     }
 
@@ -381,6 +389,7 @@ public class LRParser {
 		}
 	    }
 	}
+	rules.forEach (r -> System.out.println (r));
 	System.out.println ("found: " + itemSets.size () + " states");
 	System.out.println ("state table:\n" + table.toTableString ());
     }
@@ -523,7 +532,7 @@ public class LRParser {
 	return nameToRules.get (rule).follow.addAll (ts);
     }
 
-    public ItemSet closure1 (ItemSet s) {
+    private ItemSet closure1 (ItemSet s) {
 	boolean thereWasChanges;
 	ItemSet res;
 	do {
@@ -653,5 +662,9 @@ public class LRParser {
 
     public Integer getGoTo (int state, String rule) {
 	return table.getGoTo (state, rule);
+    }
+
+    public List<Rule> getRules () {
+	return rules;
     }
 }

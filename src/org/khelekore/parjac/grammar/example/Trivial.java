@@ -3,6 +3,8 @@ package org.khelekore.parjac.grammar.example;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,7 +32,8 @@ public class Trivial {
 	for (String s : args) {
 	    Path path = Paths.get (s);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
-	    CharBuffer charBuf = buf.asCharBuffer ();
+	    CharsetDecoder decoder = Charset.forName ("UTF-8").newDecoder ();
+	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (path, charBuf);
 	    Parser p = new Parser (g.lr, path, lexer, diagnostics);
 	    p.parse ();
