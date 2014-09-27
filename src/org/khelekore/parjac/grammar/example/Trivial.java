@@ -8,6 +8,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.lexer.CharBufferLexer;
@@ -28,8 +29,9 @@ public class Trivial {
 
     public static void main (String[] args) throws IOException {
 	Trivial g = new Trivial ();
-	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
+	Locale locale = Locale.getDefault ();
 	for (String s : args) {
+	    CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
 	    Path path = Paths.get (s);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
 	    CharsetDecoder decoder = Charset.forName ("UTF-8").newDecoder ();
@@ -37,6 +39,8 @@ public class Trivial {
 	    Lexer lexer = new CharBufferLexer (path, charBuf);
 	    Parser p = new Parser (g.lr, path, lexer, diagnostics);
 	    p.parse ();
+	    diagnostics.getDiagnostics ().
+		forEach (d -> System.err.println (d.getMessage (locale)));
 	}
     }
 
