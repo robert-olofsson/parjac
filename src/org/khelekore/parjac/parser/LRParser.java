@@ -389,9 +389,6 @@ public class LRParser {
 		}
 	    }
 	}
-	rules.forEach (r -> System.out.println (r));
-	System.out.println ("found: " + itemSets.size () + " states");
-	System.out.println ("state table:\n" + table.toTableString ());
     }
 
     private void tryNextState (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue,
