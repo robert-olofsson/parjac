@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.parser.LRParser;
 import org.khelekore.parjac.parser.Parser;
 import org.khelekore.parjac.tree.SyntaxTree;
 
@@ -25,9 +26,11 @@ import org.khelekore.parjac.tree.SyntaxTree;
  */
 public class Compiler {
     private final CompilerDiagnosticCollector diagnostics;
+    private final LRParser lr;
 
-    public Compiler (CompilerDiagnosticCollector diagnostics) {
+    public Compiler (CompilerDiagnosticCollector diagnostics, LRParser lr) {
 	this.diagnostics = diagnostics;
+	this.lr = lr;
     }
 
     public void compile (List<Path> srcFiles, Path destinationDir, Charset encoding) {
@@ -62,8 +65,7 @@ public class Compiler {
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (path, charBuf);
-	    Java8Grammar grammar = new Java8Grammar ();
-	    Parser parser = new Parser (grammar.getLRParser (), path, lexer, diagnostics);
+	    Parser parser = new Parser (lr, path, lexer, diagnostics);
 	    SyntaxTree tree = parser.parse ();
 	    return tree;
 	} catch (MalformedInputException e) {
