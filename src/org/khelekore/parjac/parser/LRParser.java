@@ -376,10 +376,7 @@ public class LRParser {
 
 	while (!queue.isEmpty ()) {
 	    ItemSet s = queue.remove ();
-	    for (RuleCollection rc : ruleCollections)
-		tryNextState (itemSets, queue, s, new RulePart (rc.rules.get (0).name));
-	    for (Token t : Token.values ())
-		tryNextState (itemSets, queue, s, new TokenPart (t));
+	    addGoTo (itemSets, queue, s);
 	}
 	System.out.println ("Adding reducde and accept");
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
@@ -399,14 +396,27 @@ public class LRParser {
 		}
 	    }
 	}
-	// TODO: remove System.out.println ("table:\n" + table.toTableString ());
+	System.out.println ("Got: " + itemSets.size () + " states");
+	// TODO: remove System.out.println ("Table:\n" + table.toTableString ());
     }
 
-    private void tryNextState (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue,
-			       ItemSet s, SimplePart sp) {
-	ItemSet nextState = goTo (s, sp);
-	if (nextState != null) {
-	    StateRow sr = table.get (itemSets.get (s));
+    private void addGoTo (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue, ItemSet s) {
+	Map<SimplePart, Map<Item, EnumSet<Token>>> sp2sb = new HashMap<> ();
+	for (Map.Entry<Item, EnumSet<Token>> me : s) {
+	    Item i = me.getKey ();
+	    if (i.dotIsLast ())
+		continue;
+	    SimplePart sp = i.getPartAfterDot ();
+	    Map<Item, EnumSet<Token>> sb = sp2sb.get (sp);
+	    if (sb == null)
+		sp2sb.put (sp, sb = new HashMap<> ());
+	    sb.put (i.advance (), me.getValue ());
+	}
+	StateRow sr = table.get (itemSets.get (s));
+	for (Map.Entry<SimplePart, Map<Item, EnumSet<Token>>> me : sp2sb.entrySet ()) {
+	    SimplePart sp = me.getKey ();
+	    ItemSet isb = new ItemSet (me.getValue ());
+	    ItemSet nextState = closure1 (isb);
 	    Integer i = itemSets.get (nextState);
 	    if (i == null) {
 		i = itemSets.size ();
@@ -416,23 +426,6 @@ public class LRParser {
 	    }
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
-    }
-
-    private ItemSet goTo (ItemSet s, SimplePart sp) {
-	Map<Item, EnumSet<Token>> sb = null;
-	for (Map.Entry<Item, EnumSet<Token>> me : s) {
-	    Item i = me.getKey ();
-	    if (i.hasNext (sp)) {
-		Item next = i.advance ();
-		if (sb == null)
-		    sb = new HashMap<> ();
-		sb.put (next, me.getValue ());
-	    }
-	}
-	if (sb == null || sb.isEmpty ())
-	    return null;
-	ItemSet isb = new ItemSet (sb);
-	return closure1 (isb);
     }
 
     private void validateRules () {
@@ -655,10 +648,8 @@ public class LRParser {
 	    return dotPos == i.dotPos && r.equals (i.r);
 	}
 
-	public boolean hasNext (SimplePart sp) {
-	    if (r.parts.size () <= dotPos)
-		return false;
-	    return r.parts.get (dotPos).equals (sp);
+	public SimplePart getPartAfterDot () {
+	    return r.parts.get (dotPos);
 	}
 
 	public Item advance () {
