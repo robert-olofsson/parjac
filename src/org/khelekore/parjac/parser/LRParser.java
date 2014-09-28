@@ -66,6 +66,10 @@ public class LRParser {
 	return new ZeroOrOneRulePart (new TokenPart (token));
     }
 
+    public ComplexPart zeroOrOne (Object... parts) {
+	return new ZeroOrOneRulePart (sequence (parts));
+    }
+
     public ComplexPart zeroOrMore (String rule) {
 	return new ZeroOrMoreRulePart (new RulePart (rule));
     }
@@ -351,10 +355,15 @@ public class LRParser {
     }
 
     public void build () {
+	System.out.println ("Validating rules; " + rules.size () + " / " + ruleCollections.size ());
 	validateRules ();
+	System.out.println ("Memorizing empty");
 	memorizeEmpty ();
+	System.out.println ("Memorizing firsts");
 	memorizeFirsts ();
+	System.out.println ("Memorizing follows");
 	memorizeFollows ();
+	System.out.println ("Building shift/goto");
 	Map<ItemSet, Integer> itemSets = new HashMap<> ();
 	Item startItem = new Item (rules.get (0), 0);
 	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
@@ -372,6 +381,7 @@ public class LRParser {
 	    for (Token t : Token.values ())
 		tryNextState (itemSets, queue, s, new TokenPart (t));
 	}
+	System.out.println ("Adding reducde and accept");
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
 	    ItemSet s = me.getKey ();
 	    Integer sr = me.getValue ();
@@ -389,6 +399,7 @@ public class LRParser {
 		}
 	    }
 	}
+	System.out.println ("table:\n" + table.toTableString ());
     }
 
     private void tryNextState (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue,
