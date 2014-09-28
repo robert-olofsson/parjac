@@ -22,30 +22,40 @@ public class Java8Grammar {
 
 	// Productions from §3 (Lexical Structure)
 	lr.addRule ("Literal",
-		    lr.oneOf (INT_LITERAL, LONG_LITERAL,
-			      FLOAT_LITERAL, DOUBLE_LITERAL,
-			      TRUE, FALSE,
+		    lr.oneOf ("IntegerLiteral",
+			      "FloatingPointLiteral",
+			      "BooleanLiteral",
 			      CHARACTER_LITERAL,
 			      STRING_LITERAL,
 			      NULL));
+	lr.addRule ("IntegerLiteral", INT_LITERAL);
+	lr.addRule ("IntegerLiteral", LONG_LITERAL);
+	lr.addRule ("FloatingPointLiteral", FLOAT_LITERAL);
+	lr.addRule ("FloatingPointLiteral", DOUBLE_LITERAL);
+	lr.addRule ("BooleanLiteral", TRUE);
+	lr.addRule ("BooleanLiteral", FALSE);
 	// End of §3
 
 	// Productions from §4 (Types, Values, and Variables)
-	lr.addRule ("Type",
-		    lr.oneOf ("PrimitiveType", "ReferenceType"));
+	lr.addRule ("Type", "PrimitiveType");
+	lr.addRule ("Type", "ReferenceType");
 	lr.addRule ("PrimitiveType",
 		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"), "NumericType"),
 			      lr.sequence (lr.zeroOrMore ("Annotation"), BOOLEAN)));
 	lr.addRule ("NumericType",
-		    lr.oneOf ("IntegralType", "FloatingPointType"));
+		    lr.oneOf ("IntegralType",
+			      "FloatingPointType"));
 	lr.addRule ("IntegralType",
 		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR));
 	lr.addRule ("FloatingPointType",
 		    lr.oneOf (FLOAT, DOUBLE));
 	lr.addRule("ReferenceType",
-		   lr.oneOf ("ClassOrInterfaceType", "TypeVariable", "ArrayType"));
+		   lr.oneOf ("ClassOrInterfaceType",
+			     "TypeVariable",
+			     "ArrayType"));
 	lr.addRule ("ClassOrInterfaceType",
-		    lr.oneOf ("ClassType", "InterfaceType"));
+		    lr.oneOf ("ClassType",
+			      "InterfaceType"));
 	lr.addRule ("ClassType",
 		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
 					   IDENTIFIER,
@@ -66,14 +76,14 @@ public class Java8Grammar {
 	lr.addRule ("TypeParameterModifier", "Annotation");
 	lr.addRule ("TypeBound",
 		    lr.oneOf (lr.sequence (EXTENDS, "TypeVariable"),
-			      lr.sequence (EXTENDS, "ClassOrInterfaceType",
-					   lr.zeroOrMore ("AdditionalBound"))));
+			      lr.sequence (EXTENDS, "ClassOrInterfaceType", lr.zeroOrMore ("AdditionalBound"))));
 	lr.addRule ("AdditionalBound", AND, "InterfaceType");
 	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
 	lr.addRule ("TypeArgumentList",
-		    "TypeArgument", lr.zeroOrMore (lr.sequence(COMMA, "TypeArgument")));
+		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
 	lr.addRule ("TypeArgument",
-		    lr.oneOf ("ReferenceType", "Wildcard"));
+		    lr.oneOf ("ReferenceType",
+			      "Wildcard"));
 	lr.addRule ("Wildcard",
 		    lr.zeroOrMore ("Annotation"), QUESTIONMARK, lr.zeroOrOne ("WildcardBounds"));
 	lr.addRule ("WildcardBounds",
@@ -98,7 +108,6 @@ public class Java8Grammar {
 	lr.addRule ("AmbiguousName",
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
-
 	// End of §6
 
 	// Productions from §7 (Packages)
