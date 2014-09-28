@@ -92,9 +92,6 @@ public class Java8Grammar {
 	// End of §4
 
 	// Productions from §6 Names
-	lr.addRule ("PackageName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("PackageName", DOT, IDENTIFIER)));
 	lr.addRule ("TypeName",
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
