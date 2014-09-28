@@ -399,7 +399,7 @@ public class LRParser {
 		}
 	    }
 	}
-	System.out.println ("table:\n" + table.toTableString ());
+	// TODO: remove System.out.println ("table:\n" + table.toTableString ());
     }
 
     private void tryNextState (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue,
@@ -419,15 +419,17 @@ public class LRParser {
     }
 
     private ItemSet goTo (ItemSet s, SimplePart sp) {
-	Map<Item, EnumSet<Token>> sb = new HashMap<> ();
+	Map<Item, EnumSet<Token>> sb = null;
 	for (Map.Entry<Item, EnumSet<Token>> me : s) {
 	    Item i = me.getKey ();
 	    if (i.hasNext (sp)) {
 		Item next = i.advance ();
+		if (sb == null)
+		    sb = new HashMap<> ();
 		sb.put (next, me.getValue ());
 	    }
 	}
-	if (sb.isEmpty ())
+	if (sb == null || sb.isEmpty ())
 	    return null;
 	ItemSet isb = new ItemSet (sb);
 	return closure1 (isb);
@@ -575,11 +577,12 @@ public class LRParser {
 	    }
 	    s = res;
 	} while (thereWasChanges);
-	return new ItemSet (res);
+	return res;
     }
 
     private static class ItemSet implements Iterable<Map.Entry<Item, EnumSet<Token>>> {
 	private final Map<Item, EnumSet<Token>> itemToLookAhead;
+	private int hc = 0;
 
 	public ItemSet (Map<Item, EnumSet<Token>> itemToLookAhead) {
 	    this.itemToLookAhead = itemToLookAhead;
@@ -597,6 +600,7 @@ public class LRParser {
 	    EnumSet<Token> la = itemToLookAhead.get (ni);
 	    if (la == null) {
 		itemToLookAhead.put (ni, lookAhead);
+		hc = 0;
 		return true;
 	    }
 	    return la.addAll (lookAhead);
@@ -607,7 +611,9 @@ public class LRParser {
 	}
 
 	@Override public int hashCode () {
-	    return itemToLookAhead.hashCode ();
+	    if (hc != 0)
+		return hc;
+	    return hc = itemToLookAhead.hashCode ();
 	}
 
 	@Override public boolean equals (Object o) {
