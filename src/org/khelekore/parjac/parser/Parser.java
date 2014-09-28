@@ -43,6 +43,8 @@ public class Parser {
 	while (true) {
 	    int currentState = stack.peek ();
 	    Action a = lr.getAction (currentState, nextToken);
+	    System.out.println ("stack:"  + stack + ", currentState: " + currentState +
+				", a: " +a + ", nextToken: " + nextToken);
 	    if (nextToken == Token.ERROR) {
 		addParserError (lexer.getError ());
 		break;
@@ -58,6 +60,7 @@ public class Parser {
 		    break;
 		case REDUCE:
 		    LRParser.Rule r = lr.getRules ().get (a.getN ());
+		    System.out.println ("reduce using: " + r);
 		    for (int i = 0, s = r.size (); i < s; i ++) // pop the parts
 			stack.pop ();
 		    int topState = (Integer)stack.peek ();

@@ -45,13 +45,44 @@ public class Trivial {
     }
 
     private void addRules () {
+	lr.addRule ("Goal", "CompilationUnit");
+	lr.addRule ("CompilationUnit",
+		    lr.zeroOrMore ("ImportDeclaration"));
+	lr.addRule ("ImportDeclaration",
+		    lr.oneOf ("SingleTypeImportDeclaration",
+			      "TypeImportOnDemandDeclaration",
+			      "SingleStaticImportDeclaration",
+			      "StaticImportOnDemandDeclaration"));
+	lr.addRule ("SingleTypeImportDeclaration",
+		    IMPORT, "TypeName", SEMICOLON);
+	lr.addRule ("TypeImportOnDemandDeclaration",
+		    IMPORT, "PackageOrTypeName", DOT, MULTIPLY, SEMICOLON);
+	lr.addRule ("SingleStaticImportDeclaration",
+		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
+	lr.addRule ("StaticImportOnDemandDeclaration",
+		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
+	lr.addRule ("TypeName",
+		    lr.oneOf (IDENTIFIER,
+			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+	lr.addRule ("PackageOrTypeName",
+		    lr.oneOf (IDENTIFIER,
+			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+
+	/*
+	lr.addRule ("Goal", "E");
+	lr.addRule ("E", "E", PLUS, "T");
+	lr.addRule ("E", "T");
+	lr.addRule ("T", "T", MULTIPLY, "P");
+	lr.addRule ("T", "P");
+	lr.addRule ("P", IDENTIFIER);
+	lr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+
 	lr.addRule ("Goal", "S");
 	lr.addRule ("S", "E", EQUAL, "E");
 	lr.addRule ("S", IDENTIFIER);
 	lr.addRule ("E", "E", PLUS, IDENTIFIER);
 	lr.addRule ("E", IDENTIFIER);
 
-	/*
 	lr.addRule ("Goal", "E");
 	lr.addRule ("E", "T", PLUS, "E");
 	lr.addRule ("E", "T");

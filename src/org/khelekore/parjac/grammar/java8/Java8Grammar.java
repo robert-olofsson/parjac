@@ -18,7 +18,7 @@ public class Java8Grammar {
 
     private void addRules () {
 	// First rule should be the goal rule
-	lr.addRule ("Goal", "CompilationUnit", END_OF_INPUT);
+	lr.addRule ("Goal", "CompilationUnit");
 
 	// Productions from §3 (Lexical Structure)
 	lr.addRule ("Literal",
@@ -117,8 +117,10 @@ public class Java8Grammar {
 		    lr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
 	lr.addRule ("PackageModifier", "Annotation");
 	lr.addRule ("ImportDeclaration",
-		    lr.oneOf ("SingleTypeImportDeclaration", "TypeImportOnDemandDeclaration",
-			      "SingleStaticImportDeclaration", "StaticImportOnDemandDeclaration"));
+		    lr.oneOf ("SingleTypeImportDeclaration",
+			      "TypeImportOnDemandDeclaration",
+			      "SingleStaticImportDeclaration",
+			      "StaticImportOnDemandDeclaration"));
 	lr.addRule ("SingleTypeImportDeclaration",
 		    IMPORT, "TypeName", SEMICOLON);
 	lr.addRule ("TypeImportOnDemandDeclaration",
@@ -128,7 +130,9 @@ public class Java8Grammar {
 	lr.addRule ("StaticImportOnDemandDeclaration",
 		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
 	lr.addRule ("TypeDeclaration",
-		    lr.oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
+		    lr.oneOf ("ClassDeclaration",
+			      "InterfaceDeclaration",
+			      SEMICOLON));
 	// End of §7
 
 	// Productions from §8 (Classes)

@@ -355,6 +355,7 @@ public class LRParser {
     }
 
     public void build () {
+	rules.forEach (r -> System.out.println (r));
 	System.out.println ("Validating rules; " + rules.size () + " / " + ruleCollections.size ());
 	validateRules ();
 	System.out.println ("Memorizing empty");
@@ -397,7 +398,7 @@ public class LRParser {
 	    }
 	}
 	System.out.println ("Got: " + itemSets.size () + " states");
-	// TODO: remove System.out.println ("Table:\n" + table.toTableString ());
+	System.out.println ("Table:\n" + table.toTableString ());
     }
 
     private void addGoTo (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue, ItemSet s) {
@@ -413,6 +414,7 @@ public class LRParser {
 	    sb.put (i.advance (), me.getValue ());
 	}
 	StateRow sr = table.get (itemSets.get (s));
+	System.out.println (itemSets.get (s) + ": s:"  + s);
 	for (Map.Entry<SimplePart, Map<Item, EnumSet<Token>>> me : sp2sb.entrySet ()) {
 	    SimplePart sp = me.getKey ();
 	    ItemSet isb = new ItemSet (me.getValue ());
@@ -424,6 +426,7 @@ public class LRParser {
 		table.addState (new StateRow (i));
 		queue.add (nextState);
 	    }
+	    System.out.println (sr.getId () + ": adding shift for: " + sp.getId () + " -> " + i);
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
     }
