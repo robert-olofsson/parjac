@@ -42,6 +42,11 @@ public class TestImports {
     }
 
     @Test
+    public void testEmpty () {
+	testSuccessfulParse ("");
+    }
+
+    @Test
     public void testSingleTypeImportDeclarationClass () {
 	testSuccessfulParse ("import Random;");
     }
