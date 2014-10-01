@@ -32,6 +32,13 @@ public class LRParser {
     // The state table with action and goto parts
     private final StateTable table = new StateTable ();
 
+    // Useful to turn on or off debuggin for now, maybe we want to log instead?
+    private final boolean debug;
+
+    public LRParser (boolean debug) {
+	this.debug = debug;
+    }
+
     public void addRule (String name, Object... os) {
 	ComplexPart[] parts = getParts (os);
 	List<List<SimplePart>> simpleRules = split (parts);
@@ -355,16 +362,17 @@ public class LRParser {
     }
 
     public void build () {
-	rules.forEach (r -> System.out.println (r));
-	System.out.println ("Validating rules; " + rules.size () + " / " + ruleCollections.size ());
+	if (debug)
+	    rules.forEach (r -> debug (r.toString ()));
+	debug ("Validating rules: %d/%d", rules.size (), ruleCollections.size ());
 	validateRules ();
-	System.out.println ("Memorizing empty");
+	debug ("Memorizing empty");
 	memorizeEmpty ();
-	System.out.println ("Memorizing firsts");
+	debug ("Memorizing firsts");
 	memorizeFirsts ();
-	System.out.println ("Memorizing follows");
+	debug ("Memorizing follows");
 	memorizeFollows ();
-	System.out.println ("Building shift/goto");
+	debug ("Building shift/goto");
 	Map<ItemSet, Integer> itemSets = new HashMap<> ();
 	Item startItem = new Item (rules.get (0), 0);
 	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
@@ -379,7 +387,7 @@ public class LRParser {
 	    ItemSet s = queue.remove ();
 	    addGoTo (itemSets, queue, s);
 	}
-	System.out.println ("Adding reducde and accept");
+	debug ("Adding reducde and accept");
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
 	    ItemSet s = me.getKey ();
 	    Integer sr = me.getValue ();
@@ -397,8 +405,8 @@ public class LRParser {
 		}
 	    }
 	}
-	System.out.println ("Got: " + itemSets.size () + " states");
-	System.out.println ("Table:\n" + table.toTableString ());
+	debug ("Got: " + itemSets.size () + " states");
+	debug ("Table:\n" + table.toTableString ());
     }
 
     private void addGoTo (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue, ItemSet s) {
@@ -414,7 +422,7 @@ public class LRParser {
 	    sb.put (i.advance (), me.getValue ());
 	}
 	StateRow sr = table.get (itemSets.get (s));
-	System.out.println (itemSets.get (s) + ": s:"  + s);
+	debug (itemSets.get (s) + ": s:"  + s);
 	for (Map.Entry<SimplePart, Map<Item, EnumSet<Token>>> me : sp2sb.entrySet ()) {
 	    SimplePart sp = me.getKey ();
 	    ItemSet isb = new ItemSet (me.getValue ());
@@ -426,7 +434,7 @@ public class LRParser {
 		table.addState (new StateRow (i));
 		queue.add (nextState);
 	    }
-	    System.out.println (sr.getId () + ": adding shift for: " + sp.getId () + " -> " + i);
+	    debug ("%d: adding shift for: %d -> %d", sr.getId (), sp.getId (), i);
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
     }
@@ -438,13 +446,13 @@ public class LRParser {
 	rules.forEach (rule -> {
 		for (String subrule : rule.getSubrules ())
 		    if (!validRules.contains (subrule))
-			System.err.println ("*" + rule + "* missing subrule: " + subrule);
+			throw new IllegalStateException ("*" + rule + "* missing subrule: " + subrule);
 	    });
 	List<Rule> ls = nameToRules.get ("Goal").rules;
 	if (ls == null || ls.isEmpty())
-	    System.err.println ("no Goal rule defined");
+	    throw new IllegalStateException ("no Goal rule defined");
 	if (ls.size () > 1)
-	    System.err.println ("Multiple Goal rules defined");
+	    throw new IllegalStateException ("Multiple Goal rules defined");
     }
 
     private void memorizeEmpty () {
@@ -674,5 +682,12 @@ public class LRParser {
 
     public List<Rule> getRules () {
 	return rules;
+    }
+
+    private void debug (String format, Object... params) {
+	if (debug) {
+	    System.out.format (format, params);
+	    System.out.println ();
+	}
     }
 }

@@ -22,7 +22,7 @@ public class Trivial {
     private final LRParser lr;
 
     public Trivial () {
-	lr = new LRParser ();
+	lr = new LRParser (false);
 	addRules ();
 	lr.build ();
     }
@@ -37,7 +37,7 @@ public class Trivial {
 	    CharsetDecoder decoder = Charset.forName ("UTF-8").newDecoder ();
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (path, charBuf);
-	    Parser p = new Parser (g.lr, path, lexer, diagnostics);
+	    Parser p = new Parser (g.lr, path, lexer, diagnostics, false);
 	    p.parse ();
 	    diagnostics.getDiagnostics ().
 		forEach (d -> System.err.println (d.getMessage (locale)));
@@ -56,17 +56,14 @@ public class Trivial {
 	lr.addRule ("SingleTypeImportDeclaration",
 		    IMPORT, "TypeName", SEMICOLON);
 	lr.addRule ("TypeImportOnDemandDeclaration",
-		    IMPORT, "PackageOrTypeName", DOT, MULTIPLY, SEMICOLON);
+		    IMPORT, "TypeName", DOT, MULTIPLY, SEMICOLON);
 	lr.addRule ("SingleStaticImportDeclaration",
 		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
 	lr.addRule ("StaticImportOnDemandDeclaration",
 		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
 	lr.addRule ("TypeName",
 		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
-	lr.addRule ("PackageOrTypeName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
 
 	/*
 	lr.addRule ("Goal", "E");

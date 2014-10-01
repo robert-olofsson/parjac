@@ -7,7 +7,7 @@ public class Java8Grammar {
     private final LRParser lr;
 
     public Java8Grammar () {
-	lr = new LRParser ();
+	lr = new LRParser (false);
 	addRules ();
 	lr.build ();
     }
@@ -94,10 +94,7 @@ public class Java8Grammar {
 	// Productions from §6 Names
 	lr.addRule ("TypeName",
 		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
-	lr.addRule ("PackageOrTypeName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("PackageOrTypeName", DOT, IDENTIFIER)));
+			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
 	lr.addRule ("ExpressionName",
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));

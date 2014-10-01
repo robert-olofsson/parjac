@@ -16,9 +16,10 @@ public class StateRow {
     }
 
     public void addAction (Object t, Action a) {
-	Object previous = actionPart.put (t, a);
-	if (previous != null)
+	Action previous = actionPart.put (t, a);
+	if (previous != null) {
 	    System.out.println (stateId + ": overwrote: " + t + " -> " + previous + ", with: "  + a);
+	}
     }
 
     public Action getAction (Object t) {

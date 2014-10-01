@@ -29,13 +29,17 @@ public class Parser {
     // Next token in the lexer
     private Token nextToken;
 
+    private final boolean debug;
+
     public Parser (LRParser lr, Path path, Lexer lexer,
-		   CompilerDiagnosticCollector diagnostics) {
+		   CompilerDiagnosticCollector diagnostics,
+		   boolean debug) {
 	this.lr = lr;
 	this.path = path;
 	this.lexer = lexer;
 	nextToken = lexer.nextToken ();
 	this.diagnostics = diagnostics;
+	this.debug = debug;
     }
 
     public SyntaxTree parse () {
@@ -43,8 +47,8 @@ public class Parser {
 	while (true) {
 	    int currentState = stack.peek ();
 	    Action a = lr.getAction (currentState, nextToken);
-	    System.out.println ("stack:"  + stack + ", currentState: " + currentState +
-				", a: " +a + ", nextToken: " + nextToken);
+	    debug ("Stack: %s, currentState: %d, action: %s, nextToken: %s",
+		   stack, currentState, a, nextToken);
 	    if (nextToken == Token.ERROR) {
 		addParserError (lexer.getError ());
 		break;
@@ -60,7 +64,7 @@ public class Parser {
 		    break;
 		case REDUCE:
 		    LRParser.Rule r = lr.getRules ().get (a.getN ());
-		    System.out.println ("reduce using: " + r);
+		    debug ("reduce using %s", r);
 		    for (int i = 0, s = r.size (); i < s; i ++) // pop the parts
 			stack.pop ();
 		    int topState = (Integer)stack.peek ();
@@ -89,5 +93,12 @@ public class Parser {
 						   lexer.getLineNumber (),
 						   lexer.getTokenColumn (),
 						   error));
+    }
+
+    private void debug (String format, Object... params) {
+	if (debug) {
+	    System.out.format (format, params);
+	    System.out.println ();
+	}
     }
 }
