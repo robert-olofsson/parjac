@@ -22,7 +22,7 @@ public class TestPackage {
 	grammar.addNameRules ();
 	grammar.addPackageRules ();
 	grammar.addAnnotationRules ();
-	// Just make it something
+	// Just make it something, CE will be tested in its own test
 	lr.addRule ("ConditionalExpression",
 		    Token.IDENTIFIER);
 	lr.build ();
