@@ -397,10 +397,14 @@ public class LRParser {
 		if (i.dotIsLast ()) {
 		    int ruleId = i.r.id;
 		    for (Token t : i2la.getValue ()) {
-			if (t == Token.END_OF_INPUT && ruleId == 0)
-			    table.get (sr).addAction (t, Action.createAccept ());
-			else
-			    table.get (sr).addAction (t, Action.createReduce (ruleId));
+			StateRow row = table.get (sr);
+			if (t == Token.END_OF_INPUT && ruleId == 0) {
+			    row.addAction (t, Action.createAccept ());
+			} else {
+			    // Do not overwrite shifts
+			    if (row.getAction (t) == null)
+				row.addAction (t, Action.createReduce (ruleId));
+			}
 		    }
 		}
 	    }
@@ -434,7 +438,7 @@ public class LRParser {
 		table.addState (new StateRow (i));
 		queue.add (nextState);
 	    }
-	    debug ("%d: adding shift for: %d -> %d", sr.getId (), sp.getId (), i);
+	    debug ("%d: adding shift for: %s -> %d", sr.getId (), sp.getId (), i);
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
     }

@@ -18,7 +18,7 @@ public class TestParseHelper {
 
     private static Parser getParser (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
-	Path path = Paths.get ("TestImports");
+	Path path = Paths.get ("TestParseHelper.getParser");
 	Lexer lexer = new CharBufferLexer (path, charBuf);
 	Parser p = new Parser (lr, path, lexer, diagnostics, false);
 	return p;

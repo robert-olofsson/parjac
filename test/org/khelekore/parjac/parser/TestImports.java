@@ -1,11 +1,10 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.khelekore.parjac.lexer.Token.*;
 
 public class TestImports {
     private LRParser lr;
@@ -13,26 +12,13 @@ public class TestImports {
 
     @BeforeClass
     public void createLRParser () {
-	lr = new LRParser (false);
+	Java8Grammar grammar = new Java8Grammar (false);
+	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "CompilationUnit");
 	lr.addRule ("CompilationUnit",
 		    lr.zeroOrMore ("ImportDeclaration"));
-	lr.addRule ("ImportDeclaration",
-		    lr.oneOf ("SingleTypeImportDeclaration",
-			      "TypeImportOnDemandDeclaration",
-			      "SingleStaticImportDeclaration",
-			      "StaticImportOnDemandDeclaration"));
-	lr.addRule ("SingleTypeImportDeclaration",
-		    IMPORT, "TypeName", SEMICOLON);
-	lr.addRule ("TypeImportOnDemandDeclaration",
-		    IMPORT, "TypeName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("SingleStaticImportDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
-	lr.addRule ("StaticImportOnDemandDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("TypeName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
+	grammar.addNameRules ();
+	grammar.addImportRules ();
 	lr.build ();
     }
 

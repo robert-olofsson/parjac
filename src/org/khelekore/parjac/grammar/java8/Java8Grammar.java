@@ -6,8 +6,11 @@ import static org.khelekore.parjac.lexer.Token.*;
 public class Java8Grammar {
     private final LRParser lr;
 
-    public Java8Grammar () {
-	lr = new LRParser (false);
+    public Java8Grammar (boolean debug) {
+	lr = new LRParser (debug);
+    }
+
+    public void buildFullGrammar () {
 	addRules ();
 	lr.build ();
     }
@@ -20,21 +23,7 @@ public class Java8Grammar {
 	// First rule should be the goal rule
 	lr.addRule ("Goal", "CompilationUnit");
 
-	// Productions from §3 (Lexical Structure)
-	lr.addRule ("Literal",
-		    lr.oneOf ("IntegerLiteral",
-			      "FloatingPointLiteral",
-			      "BooleanLiteral",
-			      CHARACTER_LITERAL,
-			      STRING_LITERAL,
-			      NULL));
-	lr.addRule ("IntegerLiteral", INT_LITERAL);
-	lr.addRule ("IntegerLiteral", LONG_LITERAL);
-	lr.addRule ("FloatingPointLiteral", FLOAT_LITERAL);
-	lr.addRule ("FloatingPointLiteral", DOUBLE_LITERAL);
-	lr.addRule ("BooleanLiteral", TRUE);
-	lr.addRule ("BooleanLiteral", FALSE);
-	// End of §3
+	addLiteralRules ();
 
 	// Productions from §4 (Types, Values, and Variables)
 	lr.addRule ("Type", "PrimitiveType");
@@ -92,16 +81,7 @@ public class Java8Grammar {
 	// End of §4
 
 	// Productions from §6 Names
-	lr.addRule ("TypeName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
-	lr.addRule ("ExpressionName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
-	lr.addRule ("MethodName", IDENTIFIER);
-	lr.addRule ("AmbiguousName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
+	addNameRules ();
 	// End of §6
 
 	// Productions from §7 (Packages)
@@ -109,23 +89,8 @@ public class Java8Grammar {
 		    lr.zeroOrOne ("PackageDeclaration"),
 		    lr.zeroOrMore ("ImportDeclaration"),
 		    lr.zeroOrMore ("TypeDeclaration"));
-	lr.addRule ("PackageDeclaration",
-		    lr.zeroOrMore ("PackageModifier"), PACKAGE, IDENTIFIER,
-		    lr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
-	lr.addRule ("PackageModifier", "Annotation");
-	lr.addRule ("ImportDeclaration",
-		    lr.oneOf ("SingleTypeImportDeclaration",
-			      "TypeImportOnDemandDeclaration",
-			      "SingleStaticImportDeclaration",
-			      "StaticImportOnDemandDeclaration"));
-	lr.addRule ("SingleTypeImportDeclaration",
-		    IMPORT, "TypeName", SEMICOLON);
-	lr.addRule ("TypeImportOnDemandDeclaration",
-		    IMPORT, "PackageOrTypeName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("SingleStaticImportDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
-	lr.addRule ("StaticImportOnDemandDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
+	addPackageRules ();
+	addImportRules ();
 	lr.addRule ("TypeDeclaration",
 		    lr.oneOf ("ClassDeclaration",
 			      "InterfaceDeclaration",
@@ -374,27 +339,7 @@ public class Java8Grammar {
 			      ABSTRACT));
 	lr.addRule ("DefaultValue",
 		    DEFAULT, "ElementValue");
-	lr.addRule ("Annotation",
-		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
-	lr.addRule ("NormalAnnotation",
-		    AT, "TypeName", LEFT_PARENTHESIS, lr.zeroOrOne ("ElementValuePairList"));
-	lr.addRule ("ElementValuePairList",
-		    "ElementValuePair", lr.zeroOrMore (COMMA, "ElementValuePair"));
-	lr.addRule ("ElementValuePair",
-		    IDENTIFIER, EQUAL, "ElementValue");
-	lr.addRule ("ElementValue",
-		    lr.oneOf (
-			"ConditionalExpression",
-			"ElementValueArrayInitializer",
-			"Annotation"));
-	lr.addRule ("ElementValueArrayInitializer",
-		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA));
-	lr.addRule ("ElementValueList",
-		    "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
-	lr.addRule ("MarkerAnnotation",
-		    AT, "TypeName");
-	lr.addRule ("SingleElementAnnotation",
-		    AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
+	addAnnotationRules ();
 
 	// End of §9
 
@@ -754,5 +699,84 @@ public class Java8Grammar {
 					   "ReferenceType", lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS, "LambdaExpression")));
 	// End of §15
+    }
+
+    private void addLiteralRules () {
+	// Productions from §3 (Lexical Structure)
+	lr.addRule ("Literal",
+		    lr.oneOf ("IntegerLiteral",
+			      "FloatingPointLiteral",
+			      "BooleanLiteral",
+			      CHARACTER_LITERAL,
+			      STRING_LITERAL,
+			      NULL));
+	lr.addRule ("IntegerLiteral", INT_LITERAL);
+	lr.addRule ("IntegerLiteral", LONG_LITERAL);
+	lr.addRule ("FloatingPointLiteral", FLOAT_LITERAL);
+	lr.addRule ("FloatingPointLiteral", DOUBLE_LITERAL);
+	lr.addRule ("BooleanLiteral", TRUE);
+	lr.addRule ("BooleanLiteral", FALSE);
+	// End of §3
+    }
+
+    public void addNameRules () {
+	lr.addRule ("TypeName",
+		    lr.oneOf (IDENTIFIER,
+			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
+	lr.addRule ("ExpressionName",
+		    lr.oneOf (IDENTIFIER,
+			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
+	lr.addRule ("MethodName", IDENTIFIER);
+	lr.addRule ("AmbiguousName",
+		    lr.oneOf (IDENTIFIER,
+			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
+    }
+
+    public void addPackageRules () {
+	lr.addRule ("PackageDeclaration",
+		    lr.zeroOrMore ("PackageModifier"), PACKAGE, IDENTIFIER,
+		    lr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
+	lr.addRule ("PackageModifier", "Annotation");
+    }
+
+    public void addImportRules () {
+	lr.addRule ("ImportDeclaration",
+		    lr.oneOf ("SingleTypeImportDeclaration",
+			      "TypeImportOnDemandDeclaration",
+			      "SingleStaticImportDeclaration",
+			      "StaticImportOnDemandDeclaration"));
+	lr.addRule ("SingleTypeImportDeclaration",
+		    IMPORT, "TypeName", SEMICOLON);
+	// This one should really be IMPORT, PackageOrTypeName, but then we need more lookahead
+	lr.addRule ("TypeImportOnDemandDeclaration",
+		    IMPORT, "TypeName", DOT, MULTIPLY, SEMICOLON);
+	lr.addRule ("SingleStaticImportDeclaration",
+		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
+	lr.addRule ("StaticImportOnDemandDeclaration",
+		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
+    }
+
+    public void addAnnotationRules () {
+	lr.addRule ("Annotation",
+		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
+	lr.addRule ("NormalAnnotation",
+		    AT, "TypeName", LEFT_PARENTHESIS, lr.zeroOrOne ("ElementValuePairList"), RIGHT_PARENTHESIS);
+	lr.addRule ("ElementValuePairList",
+		    "ElementValuePair", lr.zeroOrMore (COMMA, "ElementValuePair"));
+	lr.addRule ("ElementValuePair",
+		    IDENTIFIER, EQUAL, "ElementValue");
+	lr.addRule ("ElementValue",
+		    lr.oneOf (
+			"ConditionalExpression",
+			"ElementValueArrayInitializer",
+			"Annotation"));
+	lr.addRule ("ElementValueArrayInitializer",
+		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA));
+	lr.addRule ("ElementValueList",
+		    "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
+	lr.addRule ("MarkerAnnotation",
+		    AT, "TypeName");
+	lr.addRule ("SingleElementAnnotation",
+		    AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
     }
 }

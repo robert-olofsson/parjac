@@ -52,7 +52,7 @@ public class Main {
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
-	Java8Grammar grammar = new Java8Grammar ();
+	Java8Grammar grammar = new Java8Grammar (false);
 	LRParser lr = grammar.getLRParser ();
 	Compiler c = new Compiler (diagnostics, lr);
 	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
