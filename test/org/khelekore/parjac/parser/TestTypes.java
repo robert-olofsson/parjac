@@ -7,24 +7,24 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class TestPackage {
+public class TestTypes {
     private LRParser lr;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (false);
+	Java8Grammar grammar = new Java8Grammar (true);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "CompilationUnit");
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrOne ("PackageDeclaration"));
+	lr.addRule ("Goal", "Types");
+	lr.addRule ("Types",
+		    lr.zeroOrMore ("Type"));
+	grammar.addTypeRules ();
 	grammar.addNameRules ();
-	grammar.addPackageRules ();
 	grammar.addAnnotationRules ();
 	// Just make it something, CE will be tested in its own test
 	lr.addRule ("ConditionalExpression",
 		    Token.IDENTIFIER);
-	try {
+	try  {
 	    lr.build ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
@@ -42,42 +42,47 @@ public class TestPackage {
     }
 
     @Test
-    public void testSinglePackage () {
-	testSuccessfulParse ("package foo;");
+    public void testSimpleBasic () {
+	testSuccessfulParse ("byte");
+	testSuccessfulParse ("short");
+	testSuccessfulParse ("int");
+	testSuccessfulParse ("long");
+	testSuccessfulParse ("float");
+	testSuccessfulParse ("double");
+	testSuccessfulParse ("boolean");
+	testSuccessfulParse ("Foo");
     }
 
     @Test
-    public void testSinglePackageMissingSemiColon () {
-	testFailedParse ("package foo");
+    public void testLongName () {
+	testSuccessfulParse ("foo.Bar");
+	testSuccessfulParse ("foo.bar.Baz");
+	testSuccessfulParse ("foo.bar.baz.Quod");
     }
 
     @Test
-    public void testMultiPackage () {
-	testSuccessfulParse ("package foo.bar.baz;");
+    public void testAnnotated () {
+	testSuccessfulParse ("@foo byte");
+	testSuccessfulParse ("@foo(bar) byte");
+	testSuccessfulParse ("@foo(bar={a, b, c}) byte");
+	testSuccessfulParse ("@foo(@bar) byte");
     }
 
     @Test
-    public void testMarkerAnnotatedPackage () {
-	testSuccessfulParse ("@foo package foo;");
+    public void testArrays () {
+	testSuccessfulParse ("int[]");
+	testSuccessfulParse ("int[][]");
+	testSuccessfulParse ("int[][][]");
     }
 
     @Test
-    public void testSingleElementAnnotatedPackage () {
-	testSuccessfulParse ("@foo(bar) package foo;");
-    }
-
-    @Test
-    public void testNormalAnnotatedPackage () {
-	testSuccessfulParse ("@foo() package foo;");
+    public void testTyped () {
+	testSuccessfulParse ("Foo<T>");
+	testSuccessfulParse ("Foo<K, V>");
     }
 
     private void testSuccessfulParse (String s) {
 	TestParseHelper.parse (lr, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
-    }
-
-    private void testFailedParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
-	assert diagnostics.hasError () : "Failed to detect errors";
     }
 }

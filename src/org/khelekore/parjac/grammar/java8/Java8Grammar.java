@@ -24,61 +24,7 @@ public class Java8Grammar {
 	lr.addRule ("Goal", "CompilationUnit");
 
 	addLiteralRules ();
-
-	// Productions from §4 (Types, Values, and Variables)
-	lr.addRule ("Type", "PrimitiveType");
-	lr.addRule ("Type", "ReferenceType");
-	lr.addRule ("PrimitiveType",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"), "NumericType"),
-			      lr.sequence (lr.zeroOrMore ("Annotation"), BOOLEAN)));
-	lr.addRule ("NumericType",
-		    lr.oneOf ("IntegralType",
-			      "FloatingPointType"));
-	lr.addRule ("IntegralType",
-		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR));
-	lr.addRule ("FloatingPointType",
-		    lr.oneOf (FLOAT, DOUBLE));
-	lr.addRule("ReferenceType",
-		   lr.oneOf ("ClassOrInterfaceType",
-			     "TypeVariable",
-			     "ArrayType"));
-	lr.addRule ("ClassOrInterfaceType",
-		    lr.oneOf ("ClassType",
-			      "InterfaceType"));
-	lr.addRule ("ClassType",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
-					   IDENTIFIER,
-					   lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("ClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
-					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
-	lr.addRule ("InterfaceType", "ClassType");
-	lr.addRule ("TypeVariable", lr.zeroOrMore ("Annotation"), IDENTIFIER);
-	lr.addRule ("ArrayType",
-		    lr.oneOf (lr.sequence ("PrimitiveType", "Dims"),
-			      lr.sequence ("ClassOrInterfaceType", "Dims"),
-			      lr.sequence ("TypeVariable", "Dims")));
-	lr.addRule ("Dims",
-		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
-		    lr.zeroOrMore (lr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
-	lr.addRule ("TypeParameter",
-		    lr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, lr.zeroOrOne ("TypeBound"));
-	lr.addRule ("TypeParameterModifier", "Annotation");
-	lr.addRule ("TypeBound",
-		    lr.oneOf (lr.sequence (EXTENDS, "TypeVariable"),
-			      lr.sequence (EXTENDS, "ClassOrInterfaceType", lr.zeroOrMore ("AdditionalBound"))));
-	lr.addRule ("AdditionalBound", AND, "InterfaceType");
-	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
-	lr.addRule ("TypeArgumentList",
-		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
-	lr.addRule ("TypeArgument",
-		    lr.oneOf ("ReferenceType",
-			      "Wildcard"));
-	lr.addRule ("Wildcard",
-		    lr.zeroOrMore ("Annotation"), QUESTIONMARK, lr.zeroOrOne ("WildcardBounds"));
-	lr.addRule ("WildcardBounds",
-		    lr.oneOf (lr.sequence (EXTENDS, "ReferenceType"),
-			      lr.sequence (SUPER, "ReferenceType")));
-	// End of §4
+	addTypeRules ();
 
 	// Productions from §6 Names
 	addNameRules ();
@@ -568,7 +514,7 @@ public class Java8Grammar {
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("TypeName", DOT, SUPER, DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("ClassType", DOUBLE_COLON, 
+			      lr.sequence ("ClassType", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), NEW),
 			      lr.sequence ("ArrayType", DOUBLE_COLON, NEW)));
 	lr.addRule ("ArrayCreationExpression",
@@ -719,6 +665,63 @@ public class Java8Grammar {
 	// End of §3
     }
 
+    public void addTypeRules () {
+	// Productions from §4 (Types, Values, and Variables)
+	lr.addRule ("Type", "PrimitiveType");
+	lr.addRule ("Type", "ReferenceType");
+	lr.addRule ("PrimitiveType",
+		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"), "NumericType"),
+			      lr.sequence (lr.zeroOrMore ("Annotation"), BOOLEAN)));
+	lr.addRule ("NumericType",
+		    lr.oneOf ("IntegralType",
+			      "FloatingPointType"));
+	lr.addRule ("IntegralType",
+		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR));
+	lr.addRule ("FloatingPointType",
+		    lr.oneOf (FLOAT, DOUBLE));
+	lr.addRule("ReferenceType",
+		   lr.oneOf ("ClassOrInterfaceType",
+			     "TypeVariable",
+			     "ArrayType"));
+	lr.addRule ("ClassOrInterfaceType",
+		    lr.oneOf ("ClassType",
+			      "InterfaceType"));
+	lr.addRule ("ClassType",
+		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
+					   IDENTIFIER,
+					   lr.zeroOrOne ("TypeArguments")),
+			      lr.sequence ("ClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
+					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
+	lr.addRule ("InterfaceType", "ClassType");
+	lr.addRule ("TypeVariable", lr.zeroOrMore ("Annotation"), IDENTIFIER);
+	lr.addRule ("ArrayType",
+		    lr.oneOf (lr.sequence ("PrimitiveType", "Dims"),
+			      lr.sequence ("ClassOrInterfaceType", "Dims"),
+			      lr.sequence ("TypeVariable", "Dims")));
+	lr.addRule ("Dims",
+		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
+		    lr.zeroOrMore (lr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
+	lr.addRule ("TypeParameter",
+		    lr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, lr.zeroOrOne ("TypeBound"));
+	lr.addRule ("TypeParameterModifier", "Annotation");
+	lr.addRule ("TypeBound",
+		    lr.oneOf (lr.sequence (EXTENDS, "TypeVariable"),
+			      lr.sequence (EXTENDS, "ClassOrInterfaceType", lr.zeroOrMore ("AdditionalBound"))));
+	lr.addRule ("AdditionalBound", AND, "InterfaceType");
+	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
+	lr.addRule ("TypeArgumentList",
+		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
+	lr.addRule ("TypeArgument",
+		    lr.oneOf ("ReferenceType",
+			      "Wildcard"));
+	lr.addRule ("Wildcard",
+		    lr.zeroOrMore ("Annotation"), QUESTIONMARK, lr.zeroOrOne ("WildcardBounds"));
+	lr.addRule ("WildcardBounds",
+		    lr.oneOf (lr.sequence (EXTENDS, "ReferenceType"),
+			      lr.sequence (SUPER, "ReferenceType")));
+	// End of §4
+    }
+
     public void addNameRules () {
 	lr.addRule ("TypeName",
 		    lr.oneOf (IDENTIFIER,
@@ -771,7 +774,7 @@ public class Java8Grammar {
 			"ElementValueArrayInitializer",
 			"Annotation"));
 	lr.addRule ("ElementValueArrayInitializer",
-		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA));
+		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA), RIGHT_CURLY);
 	lr.addRule ("ElementValueList",
 		    "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
 	lr.addRule ("MarkerAnnotation",
