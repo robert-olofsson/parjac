@@ -164,11 +164,11 @@ public class CharBufferLexer implements Lexer {
 	    case '%':
 		return handleExtraEqual (Token.REMAINDER, Token.REMAINDER_EQUAL);
 	    case '&':
-		return handleDoubleOrEqual (c, Token.BIT_AND, Token.LOGICAL_AND, Token.BIT_AND_EQUAL);
+		return handleDoubleOrEqual (c, Token.AND, Token.LOGICAL_AND, Token.BIT_AND_EQUAL);
 	    case '|':
-		return handleDoubleOrEqual (c, Token.BIT_OR, Token.LOGICAL_OR, Token.BIT_OR_EQUAL);
+		return handleDoubleOrEqual (c, Token.OR, Token.LOGICAL_OR, Token.BIT_OR_EQUAL);
 	    case '^':
-		return handleExtraEqual (Token.BIT_XOR, Token.BIT_XOR_EQUAL);
+		return handleExtraEqual (Token.XOR, Token.BIT_XOR_EQUAL);
 
 	    case '\'':
 		return readCharacterLiteral ();

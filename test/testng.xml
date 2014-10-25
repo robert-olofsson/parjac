@@ -4,6 +4,10 @@
   <test name="Lexer">
     <packages>
       <package name="org.khelekore.parjac.lexer" />
+   </packages>
+ </test>
+ <test name="Parser">
+   <packages>
       <package name="org.khelekore.parjac.parser" />
    </packages>
  </test>

@@ -7,7 +7,7 @@ Some things:
    fileset that can be any number of files).
 *) Every step should be internally time logged so that it is easy to
    inspect performance.
-*) The lexer is hand written
-*) Tests are done with testng
+*) The lexer is hand written.
+*) Tests are done with testng.
 
 Use asm for bytecode handling.

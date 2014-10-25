@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.grammar.java8.Java8Grammar;
+import org.khelekore.parjac.parser.LRParser;
 
 /** Program to run a batch compilation.
  */
@@ -49,7 +52,9 @@ public class Main {
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
-	Compiler c = new Compiler (diagnostics);
+	Java8Grammar grammar = new Java8Grammar (false);
+	LRParser lr = grammar.getLRParser ();
+	Compiler c = new Compiler (diagnostics, lr);
 	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
