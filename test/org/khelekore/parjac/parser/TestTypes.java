@@ -13,7 +13,7 @@ public class TestTypes {
 
     @BeforeClass
     public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (true);
+	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "Types");
 	lr.addRule ("Types",
