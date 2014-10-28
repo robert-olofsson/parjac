@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
@@ -37,6 +38,10 @@ public class LRParser {
 
     public LRParser (boolean debug) {
 	this.debug = debug;
+    }
+
+    @Override public String toString () {
+	return getClass ().getSimpleName () + "{#rules: " + rules.size () + ", debug: " + debug + "}";
     }
 
     public void addRule (String name, Object... os) {
@@ -589,6 +594,7 @@ public class LRParser {
     }
 
     private static class ItemSet implements Iterable<Map.Entry<Item, EnumSet<Token>>> {
+
 	private final Map<Item, EnumSet<Token>> itemToLookAhead;
 	private int hc = 0;
 
@@ -597,7 +603,7 @@ public class LRParser {
 	}
 
 	public ItemSet (ItemSet s) {
-	    itemToLookAhead = new HashMap<> (s.itemToLookAhead);
+	    itemToLookAhead = new TreeMap<> (s.itemToLookAhead);
 	}
 
 	public Iterator<Map.Entry<Item, EnumSet<Token>>> iterator () {
@@ -635,7 +641,7 @@ public class LRParser {
 	}
     }
 
-    private static class Item {
+    private static class Item implements Comparable<Item> {
 	private final Rule r;
 	private final int dotPos;
 
@@ -646,6 +652,13 @@ public class LRParser {
 
 	@Override public String toString () {
 	    return "[" + r + ", dotPos: " + dotPos + "]";
+	}
+
+	public int compareTo (Item i2) {
+	    int dr = r.id - i2.r.id;
+	    if (dr != 0)
+		return dr;
+	    return dotPos - i2.dotPos;
 	}
 
 	@Override public int hashCode () {
