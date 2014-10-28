@@ -75,50 +75,9 @@ public class Java8Grammar {
 			      "ClassDeclaration",
 			      "InterfaceDeclaration",
 			      SEMICOLON));
-	lr.addRule ("FieldDeclaration",
-		    lr.zeroOrMore ("FieldModifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
-	lr.addRule ("FieldModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE,
-			      STATIC,
-			      FINAL,
-			      TRANSIENT,
-			      VOLATILE));
-	lr.addRule ("VariableDeclaratorList",
-		    "VariableDeclarator", lr.zeroOrMore (COMMA, "VariableDeclarator"));
-	lr.addRule ("VariableDeclarator",
-		    "VariableDeclaratorId", lr.zeroOrOne (EQUAL, "VariableInitializer")
-	    );
-	lr.addRule ("VariableDeclaratorId",
-		    IDENTIFIER, lr.zeroOrOne ("Dims"));
-	lr.addRule ("VariableInitializer",
-		    lr.oneOf ("Expression",
-			      "ArrayInitializer"));
-	lr.addRule ("UnannType",
-		    lr.oneOf ("UnannPrimitiveType",
-			      "UnannReferenceType"));
-	lr.addRule ("UnannPrimitiveType",
-		    lr.oneOf ("NumericType",
-			      BOOLEAN));
-	lr.addRule ("UnannReferenceType",
-		    lr.oneOf ("UnannClassOrInterfaceType",
-			      "UnannTypeVariable",
-			      "UnannArrayType"));
-	lr.addRule ("UnannClassOrInterfaceType",
-		    lr.oneOf ("UnannClassType",
-			      "UnannInterfaceType"));
-	lr.addRule ("UnannClassType",
-		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("UnannClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
-					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
-	lr.addRule ("UnannInterfaceType", "UnannClassType");
-	lr.addRule ("UnannTypeVariable", IDENTIFIER);
-	lr.addRule ("UnannArrayType",
-		    lr.oneOf (lr.sequence ("UnannPrimitiveType", "Dims"),
-			      lr.sequence ("UnannClassOrInterfaceType", "Dims"),
-			      lr.sequence ("UnannTypeVariable", "Dims")));
+	addFieldDeclaration ();
+	addUnannTypes ();
+
 	lr.addRule ("MethodDeclaration",
 		    lr.zeroOrMore ("MethodModifier"), "MethodHeader", "MethodBody");
 	lr.addRule ("MethodModifier",
@@ -720,6 +679,55 @@ public class Java8Grammar {
 		    lr.oneOf (lr.sequence (EXTENDS, "ReferenceType"),
 			      lr.sequence (SUPER, "ReferenceType")));
 	// End of §4
+    }
+
+    public void addFieldDeclaration () {
+	lr.addRule ("FieldDeclaration",
+		    lr.zeroOrMore ("FieldModifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
+	lr.addRule ("FieldModifier",
+		    lr.oneOf ("Annotation",
+			      PUBLIC,
+			      PROTECTED,
+			      PRIVATE,
+			      STATIC,
+			      FINAL,
+			      TRANSIENT,
+			      VOLATILE));
+	lr.addRule ("VariableDeclaratorList",
+		    "VariableDeclarator", lr.zeroOrMore (COMMA, "VariableDeclarator"));
+	lr.addRule ("VariableDeclarator",
+		    "VariableDeclaratorId", lr.zeroOrOne (EQUAL, "VariableInitializer"));
+	lr.addRule ("VariableDeclaratorId",
+		    IDENTIFIER, lr.zeroOrOne ("Dims"));
+	lr.addRule ("VariableInitializer",
+		    lr.oneOf ("Expression",
+			      "ArrayInitializer"));
+    }
+
+    public void addUnannTypes () {
+	lr.addRule ("UnannType",
+		    lr.oneOf ("UnannPrimitiveType",
+			      "UnannReferenceType"));
+	lr.addRule ("UnannPrimitiveType",
+		    lr.oneOf ("NumericType",
+			      BOOLEAN));
+	lr.addRule ("UnannReferenceType",
+		    lr.oneOf ("UnannClassOrInterfaceType",
+			      "UnannTypeVariable",
+			      "UnannArrayType"));
+	lr.addRule ("UnannClassOrInterfaceType",
+		    lr.oneOf ("UnannClassType",
+			      "UnannInterfaceType"));
+	lr.addRule ("UnannClassType",
+		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
+			      lr.sequence ("UnannClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
+					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
+	lr.addRule ("UnannInterfaceType", "UnannClassType");
+	lr.addRule ("UnannTypeVariable", IDENTIFIER);
+	lr.addRule ("UnannArrayType",
+		    lr.oneOf (lr.sequence ("UnannPrimitiveType", "Dims"),
+			      lr.sequence ("UnannClassOrInterfaceType", "Dims"),
+			      lr.sequence ("UnannTypeVariable", "Dims")));
     }
 
     public void addNameRules () {
