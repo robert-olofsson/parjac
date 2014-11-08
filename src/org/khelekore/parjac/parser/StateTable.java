@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.khelekore.parjac.lexer.Token;
@@ -27,6 +28,11 @@ public class StateTable {
     public int getGoTo (int state, String rule) {
 	StateRow row = states.get (state);
 	return row.getAction (rule).getN ();
+    }
+
+    public Collection<Object> getPossibleNextTokens (int state) {
+	StateRow row = states.get (state);
+	return row.getPossibleNextTokens ();
     }
 
     public String toTableString () {

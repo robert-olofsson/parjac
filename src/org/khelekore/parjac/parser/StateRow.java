@@ -1,7 +1,11 @@
 package org.khelekore.parjac.parser;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.khelekore.parjac.lexer.Token;
 
 public class StateRow {
     private final int stateId;
@@ -24,6 +28,10 @@ public class StateRow {
 
     public Action getAction (Object t) {
 	return actionPart.get (t);
+    }
+
+    public Collection<Object> getPossibleNextTokens () {
+	return actionPart.keySet ().stream ().filter (o -> o instanceof Token).collect (Collectors.toSet ());
     }
 
     @Override public String toString () {

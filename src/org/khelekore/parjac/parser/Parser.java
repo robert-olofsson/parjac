@@ -2,6 +2,7 @@ package org.khelekore.parjac.parser;
 
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.Collection;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
@@ -54,7 +55,8 @@ public class Parser {
 		break;
 	    }
 	    if (a == null) {
-		addParserError ("No action for nextToken: " + nextToken);
+		addParserError ("No action for nextToken: " + nextToken +
+				" expected one of: " + getPossibleNextTokens (currentState));
 		break;
 	    } else {
 		switch (a.getType ()) {
@@ -80,6 +82,10 @@ public class Parser {
 	    }
 	}
 	return null;
+    }
+
+    private Collection<Object> getPossibleNextTokens (int state) {
+	return lr.getPossibleNextTokens (state);
     }
 
     public CompilerDiagnosticCollector getDiagnostics () {
