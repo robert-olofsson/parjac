@@ -13,6 +13,8 @@ import org.khelekore.parjac.lexer.Lexer;
 public class TestParseHelper {
     public static void parse (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
 	Parser p = getParser (lr, s, diagnostics);
+	if (lr.getDebug ())
+	    System.out.println ("Trying to parse: " + s);
 	p.parse ();
     }
 
@@ -20,7 +22,7 @@ public class TestParseHelper {
 	CharBuffer charBuf = CharBuffer.wrap (s);
 	Path path = Paths.get ("TestParseHelper.getParser");
 	Lexer lexer = new CharBufferLexer (path, charBuf);
-	Parser p = new Parser (lr, path, lexer, diagnostics, false);
+	Parser p = new Parser (lr, path, lexer, diagnostics, lr.getDebug ());
 	return p;
     }
 
