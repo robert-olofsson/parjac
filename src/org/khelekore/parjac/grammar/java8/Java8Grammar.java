@@ -53,13 +53,9 @@ public class Java8Grammar {
 	lr.addRule ("ClassModifier",
 		    lr.oneOf ("Annotation", PUBLIC, PROTECTED, PRIVATE,
 			      ABSTRACT, STATIC, FINAL, STRICTFP));
-	lr.addRule ("TypeParameters",
-		    LT, "TypeParameterList", GT);
-	lr.addRule ("TypeParameterList",
-		    "TypeParameter", lr.zeroOrMore (COMMA, "TypeParameter"));
 	lr.addRule ("Superclass", EXTENDS, "ClassType");
 	lr.addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
-	lr.addRule ("InterfaceTypeList", "InterfaceType", lr.zeroOrMore (COMMA, "InterfaceType"));
+	lr.addRule ("InterfaceTypeList", "InterfaceType", lr.zeroOrMore (COMMA, "ClassType"));
 	lr.addRule ("ClassBody",
 		    LEFT_CURLY,
 		    lr.zeroOrMore ("ClassBodyDeclaration"),
@@ -77,59 +73,7 @@ public class Java8Grammar {
 			      SEMICOLON));
 	addFieldDeclaration ();
 	addUnannTypes ();
-
-	lr.addRule ("MethodDeclaration",
-		    lr.zeroOrMore ("MethodModifier"), "MethodHeader", "MethodBody");
-	lr.addRule ("MethodModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE,
-			      ABSTRACT,
-			      STATIC,
-			      FINAL,
-			      SYNCHRONIZED,
-			      NATIVE,
-			      STRICTFP));
-	lr.addRule ("MethodHeader",
-		    lr.oneOf (lr.sequence ("Result", "MethodDeclarator", lr.zeroOrOne ("Throws")),
-			      lr.sequence ("TypeParameters", lr.zeroOrMore ("Annotation"),
-					   "Result", "MethodDeclarator", lr.zeroOrOne ("Throws"))));
-	lr.addRule ("Result",
-		    lr.oneOf ("UnannType",
-			      VOID));
-	lr.addRule ("MethodDeclarator",
-		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
-		    lr.zeroOrOne ("Dims"));
-	lr.addRule ("FormalParameterList",
-		    lr.oneOf (lr.sequence ("FormalParameters", COMMA, "LastFormalParameter"),
-			      "LastFormalParameter"));
-	lr.addRule ("FormalParameters",
-		    lr.oneOf (lr.sequence ("FormalParameter", lr.zeroOrMore (COMMA, "FormalParameter")),
-			      lr.sequence ("ReceiverParameter", lr.zeroOrMore (COMMA, "FormalParameter"))));
-	lr.addRule ("FormalParameter",
-		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId");
-	lr.addRule ("VariableModifier",
-		    lr.oneOf ("Annotation",
-			      FINAL));
-	lr.addRule ("LastFormalParameter",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("VariableModifier"), "UnannType",
-					   lr.zeroOrMore ("Annotation"),
-					   ELLIPSIS, "VariableDeclaratorId"),
-			      "FormalParameter"));
-	lr.addRule ("ReceiverParameter",
-		    lr.zeroOrMore ("Annotation"), "UnannType",
-		    lr.zeroOrOne (IDENTIFIER, DOT), THIS);
-	lr.addRule ("Throws",
-		    THROWS, "ExceptionTypeList");
-	lr.addRule ("ExceptionTypeList",
-		    "ExceptionType", lr.zeroOrMore (COMMA, "ExceptionType"));
-	lr.addRule ("ExceptionType",
-		    lr.oneOf ("ClassType",
-			      "TypeVariable"));
-	lr.addRule ("MethodBody",
-		    lr.oneOf ("Block",
-			      SEMICOLON));
+	addMethodDeclaration ();
 	lr.addRule ("InstanceInitializer", "Block");
 	lr.addRule ("StaticInitializer", STATIC, "Block");
 	lr.addRule ("ConstructorDeclaration",
@@ -478,9 +422,9 @@ public class Java8Grammar {
 			      lr.sequence ("ArrayType", DOUBLE_COLON, NEW)));
 	lr.addRule ("ArrayCreationExpression",
 		    lr.oneOf (lr.sequence (NEW, "PrimitiveType", "DimExprs", lr.zeroOrOne ("Dims")),
-			      lr.sequence (NEW, "ClassOrInterfaceType", "DimExprs", lr.zeroOrOne ("Dims")),
+			      lr.sequence (NEW, "ClassType", "DimExprs", lr.zeroOrOne ("Dims")),
 			      lr.sequence (NEW, "PrimitiveType", "Dims", "ArrayInitializer"),
-			      lr.sequence (NEW, "ClassOrInterfaceType", "Dims", "ArrayInitializer")));
+			      lr.sequence (NEW, "ClassType", "Dims", "ArrayInitializer")));
 	lr.addRule ("DimExprs",
 		    "DimExpr", lr.zeroOrMore ("DimExpr"));
 	lr.addRule ("DimExpr",
@@ -638,35 +582,26 @@ public class Java8Grammar {
 		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR));
 	lr.addRule ("FloatingPointType",
 		    lr.oneOf (FLOAT, DOUBLE));
-	lr.addRule("ReferenceType",
-		   lr.oneOf ("ClassOrInterfaceType",
-			     "TypeVariable",
-			     "ArrayType"));
-	lr.addRule ("ClassOrInterfaceType",
-		    lr.oneOf ("ClassType",
-			      "InterfaceType"));
+	// removed TypeVariable, part of ClassOrInterfaceType
+	lr.addRule("ReferenceType", "ClassType");
+	lr.addRule("ReferenceType", "ArrayType");
 	lr.addRule ("ClassType",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
-					   IDENTIFIER,
-					   lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("ClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
+		    lr.oneOf (lr.sequence ("Annotations", IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
+			      lr.sequence ("ClassType", DOT, "Annotations",
 					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
-	lr.addRule ("InterfaceType", "ClassType");
-	lr.addRule ("TypeVariable", lr.zeroOrMore ("Annotation"), IDENTIFIER);
+	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
+	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
 		    lr.oneOf (lr.sequence ("PrimitiveType", "Dims"),
-			      lr.sequence ("ClassOrInterfaceType", "Dims"),
-			      lr.sequence ("TypeVariable", "Dims")));
+			      lr.sequence ("ClassType", "Dims")));
 	lr.addRule ("Dims",
 		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
 		    lr.zeroOrMore (lr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
 	lr.addRule ("TypeParameter",
 		    lr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, lr.zeroOrOne ("TypeBound"));
 	lr.addRule ("TypeParameterModifier", "Annotation");
-	lr.addRule ("TypeBound",
-		    lr.oneOf (lr.sequence (EXTENDS, "TypeVariable"),
-			      lr.sequence (EXTENDS, "ClassOrInterfaceType", lr.zeroOrMore ("AdditionalBound"))));
-	lr.addRule ("AdditionalBound", AND, "InterfaceType");
+	lr.addRule ("TypeBound", lr.sequence (EXTENDS, "ClassType", lr.zeroOrMore ("AdditionalBound")));
+	lr.addRule ("AdditionalBound", AND, "ClassType");
 	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
 	lr.addRule ("TypeArgumentList",
 		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
@@ -704,6 +639,68 @@ public class Java8Grammar {
 			      "ArrayInitializer"));
     }
 
+    public void addTypeParameters () {
+	lr.addRule ("TypeParameters",
+		    LT, "TypeParameterList", GT);
+	lr.addRule ("TypeParameterList",
+		    "TypeParameter", lr.zeroOrMore (COMMA, "TypeParameter"));
+    }
+
+    public void addMethodDeclaration () {
+	lr.addRule ("MethodDeclaration",
+		    lr.zeroOrMore ("MethodModifier"), "MethodHeader", "MethodBody");
+	lr.addRule ("MethodModifier",
+		    lr.oneOf ("Annotation",
+			      PUBLIC,
+			      PROTECTED,
+			      PRIVATE,
+			      ABSTRACT,
+			      STATIC,
+			      FINAL,
+			      SYNCHRONIZED,
+			      NATIVE,
+			      STRICTFP));
+	lr.addRule ("MethodHeader",
+		    lr.oneOf (lr.sequence ("Result", "MethodDeclarator", lr.zeroOrOne ("Throws")),
+			      lr.sequence ("TypeParameters", lr.zeroOrMore ("Annotation"),
+					   "Result", "MethodDeclarator", lr.zeroOrOne ("Throws"))));
+	lr.addRule ("Result",
+		    lr.oneOf ("UnannType",
+			      VOID));
+	lr.addRule ("MethodDeclarator",
+		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
+		    lr.zeroOrOne ("Dims"));
+	lr.addRule ("FormalParameterList",
+		    lr.zeroOrOne ("ReceiverParameter", COMMA),
+		    lr.zeroOrMore ("FormalParameter", COMMA),
+		    "LastFormalParameter");
+	lr.addRule ("FormalParameter",
+		    "Annotations", "UnannType", "VariableDeclaratorId");
+	lr.addRule ("FormalParameter",
+		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId");
+	lr.addRule ("VariableModifier",
+		    lr.oneOf ("Annotations",
+			      FINAL));
+	lr.addRule ("LastFormalParameter",
+		    lr.oneOf (lr.sequence (lr.zeroOrMore ("VariableModifier"),
+					   "UnannType", lr.zeroOrMore ("Annotation"),
+					   ELLIPSIS, "VariableDeclaratorId"),
+			      lr.sequence ("Annotations",
+					   "UnannType", lr.zeroOrMore ("Annotation"),
+					   ELLIPSIS, "VariableDeclaratorId"),
+			      "FormalParameter"));
+	lr.addRule ("ReceiverParameter",
+		    "Annotations", "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
+	lr.addRule ("Throws",
+		    THROWS, "ExceptionTypeList");
+	lr.addRule ("ExceptionTypeList",
+		    "ExceptionType", lr.zeroOrMore (COMMA, "ExceptionType"));
+	lr.addRule ("ExceptionType", "ClassType");
+	lr.addRule ("MethodBody",
+		    lr.oneOf ("Block",
+			      SEMICOLON));
+    }
+
     public void addUnannTypes () {
 	lr.addRule ("UnannType",
 		    lr.oneOf ("UnannPrimitiveType",
@@ -711,23 +708,21 @@ public class Java8Grammar {
 	lr.addRule ("UnannPrimitiveType",
 		    lr.oneOf ("NumericType",
 			      BOOLEAN));
+	/* UnannClassOrInterfaceType has been removed */
 	lr.addRule ("UnannReferenceType",
-		    lr.oneOf ("UnannClassOrInterfaceType",
-			      "UnannTypeVariable",
-			      "UnannArrayType"));
-	lr.addRule ("UnannClassOrInterfaceType",
 		    lr.oneOf ("UnannClassType",
-			      "UnannInterfaceType"));
+			      "UnannArrayType"));
+
+	// really lr.oneOf ("UnannClassType", "UnannInterfaceType");
+	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
+	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
 		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("UnannClassOrInterfaceType", DOT, lr.zeroOrMore ("Annotation"),
+			      lr.sequence ("UnannClassType", DOT, "Annotations",
 					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
-	lr.addRule ("UnannInterfaceType", "UnannClassType");
-	lr.addRule ("UnannTypeVariable", IDENTIFIER);
 	lr.addRule ("UnannArrayType",
 		    lr.oneOf (lr.sequence ("UnannPrimitiveType", "Dims"),
-			      lr.sequence ("UnannClassOrInterfaceType", "Dims"),
-			      lr.sequence ("UnannTypeVariable", "Dims")));
+			      lr.sequence ("UnannClassType", "Dims")));
     }
 
     public void addNameRules () {
@@ -768,6 +763,7 @@ public class Java8Grammar {
     }
 
     public void addAnnotationRules () {
+	lr.addRule ("Annotations", lr.zeroOrMore ("Annotation"));
 	lr.addRule ("Annotation",
 		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
 	lr.addRule ("NormalAnnotation",
