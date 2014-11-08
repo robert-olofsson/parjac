@@ -6,4 +6,8 @@ public class AnnotationUsage implements TreeNode {
     public AnnotationUsage (String typeName) {
 	this.typeName = typeName;
     }
+
+    @Override public String toString () {
+	return getClass ().getName () + "{typeName: " + typeName + "}";
+    }
 }
