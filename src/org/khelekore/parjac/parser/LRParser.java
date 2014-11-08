@@ -367,8 +367,12 @@ public class LRParser {
     }
 
     public void build () {
-	if (debug)
-	    rules.forEach (r -> debug (r.toString ()));
+	if (debug) {
+	    int i = 0;
+	    for (Rule r : rules) {
+		debug ("%4d: %s", i++, r);
+	    }
+	}
 	debug ("Validating rules: %d/%d", rules.size (), ruleCollections.size ());
 	validateRules ();
 	debug ("Memorizing empty");
@@ -407,8 +411,16 @@ public class LRParser {
 			    row.addAction (t, Action.createAccept ());
 			} else {
 			    // Do not overwrite shifts
-			    if (row.getAction (t) == null)
+			    Action a = row.getAction (t);
+			    if (a == null) {
 				row.addAction (t, Action.createReduce (ruleId));
+			    } else {
+				if (a.getType () == Action.Type.REDUCE) {
+				    System.out.println ("Got a reduce reduce conflict: " +
+							"row: " + row + ", rule: " + i.r +
+							", s: " + s);
+				}
+			    }
 			}
 		    }
 		}
@@ -689,8 +701,12 @@ public class LRParser {
 	}
     }
 
-    public Action getAction (int currentState, Token nextToken) {
-	return table.getAction (currentState, nextToken);
+    public Action getAction (int state, Token nextToken) {
+	return table.getAction (state, nextToken);
+    }
+
+    public Collection<Object> getPossibleNextTokens (int state) {
+	return table.getPossibleNextTokens (state);
     }
 
     public Integer getGoTo (int state, String rule) {
@@ -699,6 +715,10 @@ public class LRParser {
 
     public List<Rule> getRules () {
 	return rules;
+    }
+
+    public boolean getDebug () {
+	return debug;
     }
 
     private void debug (String format, Object... params) {
