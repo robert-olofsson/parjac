@@ -44,6 +44,9 @@ public interface Lexer {
     /** Get the next token */
     Token nextToken ();
 
+    /** Get the current line */
+    String getCurrentLine ();
+
     /** Get the next non-whitespace token.
      *  If there are no more non-whitespace tokens, then END_OF_INPUT will be returned
      */

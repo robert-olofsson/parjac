@@ -13,6 +13,7 @@ public class CharBufferLexer implements Lexer {
     private long tokenStartPosition = 0;
     private long tokenStartColumn = 0;
     private long currentLine = 1;
+    private int currentLineStart = 0;
     private long currentColumn = 0;
     private boolean insideTypeContext = false;
 
@@ -720,5 +721,18 @@ public class CharBufferLexer implements Lexer {
     private void nextLine () {
 	currentLine++;
 	currentColumn = 0;
+	currentLineStart = buf.position ();
+    }
+
+    @Override public String getCurrentLine () {
+	int p = (int)currentLineStart;
+	CharBuffer cb = buf.duplicate ();
+	cb.position (p);
+	int max = buf.limit ();
+	char c;
+	while (p < max && (c = buf.get (p)) != '\n' && c != '\r')
+	    p++;
+	cb.limit (p);
+	return cb.toString ();
     }
 }

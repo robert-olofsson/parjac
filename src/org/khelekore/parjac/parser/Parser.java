@@ -55,7 +55,8 @@ public class Parser {
 		break;
 	    }
 	    if (a == null) {
-		addParserError ("No action for nextToken: " + nextToken +
+		addParserError (lexer.getCurrentLine () +
+				"\nNo action for nextToken: " + nextToken +
 				" expected one of: " + getPossibleNextTokens (currentState));
 		break;
 	    } else {
