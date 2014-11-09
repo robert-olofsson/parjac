@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import static org.khelekore.parjac.lexer.Token.*;
 public class LRParser {
     // All the generated rules
     private final List<Rule> rules = new ArrayList<> ();
+    // To avoid dups
+    private final Set<Rule> ruleSet = new HashSet<> ();
     private final List<RuleCollection> ruleCollections = new ArrayList<> ();
     // Index from name to all the generated rules
     private final Map<String, RuleCollection> nameToRules = new HashMap<> ();
@@ -60,7 +63,11 @@ public class LRParser {
 
     private void addRule (String name, List<SimplePart> parts) {
 	Rule r = new Rule (name, rules.size (), parts);
+	// Do not add duplicate rules, they cause conflicts
+	if (ruleSet.contains (r))
+	    return;
 	rules.add (r);
+	ruleSet.add (r);
 	RuleCollection rc = nameToRules.get (name);
 	if (rc == null) {
 	    rc = new RuleCollection ();
@@ -136,7 +143,7 @@ public class LRParser {
 	}
 
 	@Override public String toString () {
-	    return name + " -> " + parts;
+	    return name + "(" + id + ") -> " + parts;
 	}
 
 	public String getName () {
@@ -159,6 +166,22 @@ public class LRParser {
 
 	public int size () {
 	    return parts.size ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != Rule.class)
+		return false;
+	    Rule r = (Rule)o;
+	    // Do not check id. We use this to avoid duplicate rules
+	    return name.equals (r.name) && parts.equals (r.parts);
+	}
+
+	@Override public int hashCode () {
+	    return name.hashCode () * 31 + parts.hashCode ();
 	}
     }
 
