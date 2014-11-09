@@ -50,6 +50,19 @@ public class TestMethodDeclaration {
     }
 
     @Test
+    public void testArrayMethods () {
+	testSuccessfulParse ("int[] foo () { }");
+	testSuccessfulParse ("int[][] foo () { }");
+	testSuccessfulParse ("int[][][] foo () { }");
+	testSuccessfulParse ("void foo (int[] a) { }");
+	testSuccessfulParse ("void foo (int[][] a) { }");
+	testSuccessfulParse ("void foo (int[][][] a) { }");
+	testSuccessfulParse ("void foo (int a[]) { }");
+	testSuccessfulParse ("void foo (int a[][]) { }");
+	testSuccessfulParse ("void foo (int[] a, Foo[] b) { }");
+    }
+
+    @Test
     public void testNonBodyMethods () {
 	testSuccessfulParse ("abstract int foo ();");
 	testSuccessfulParse ("final native double bar ();");
@@ -84,15 +97,18 @@ public class TestMethodDeclaration {
 	testSuccessfulParse ("void foo (@NotNull Foo foo) {}");
     }
 
-    /* Working on this one */
+    /* Working on this */
     /*
     @Test
     public void testReceiverParameter () {
 	testSuccessfulParse ("void foo (Foo this) {}");
+	testSuccessfulParse ("void foo (Foo Foo.this) {}");
 	testSuccessfulParse ("void foo (@NotNull Foo this) {}");
 	testSuccessfulParse ("void foo (@NotNull @ReadOnly Foo this) {}");
 	testSuccessfulParse ("void foo (Foo this, Bar bar) {}");
 	testFailedParse ("void foo (Foo foo, Bar this) {}");
+	testSuccessfulParse ("void innerMethod(@A Outer.@B Middle.@C Inner this) {}");
+	testSuccessfulParse ("@Result Inner(@Receiver Outer Outer.this, boolean b) {}");
     }
     */
 
