@@ -91,7 +91,11 @@ public class TestImports {
     }
 
     private void testFailedParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
-	assert diagnostics.hasError () : "Failed to detect errors";
+	try {
+	    TestParseHelper.parse (lr, s, diagnostics);
+	    assert diagnostics.hasError () : "Failed to detect errors";
+	} finally {
+	    diagnostics.clear ();
+	}
     }
 }

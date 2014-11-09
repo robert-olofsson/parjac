@@ -97,8 +97,6 @@ public class TestMethodDeclaration {
 	testSuccessfulParse ("void foo (@NotNull Foo foo) {}");
     }
 
-    /* Working on this */
-    /*
     @Test
     public void testReceiverParameter () {
 	testSuccessfulParse ("void foo (Foo this) {}");
@@ -108,9 +106,7 @@ public class TestMethodDeclaration {
 	testSuccessfulParse ("void foo (Foo this, Bar bar) {}");
 	testFailedParse ("void foo (Foo foo, Bar this) {}");
 	testSuccessfulParse ("void innerMethod(@A Outer.@B Middle.@C Inner this) {}");
-	testSuccessfulParse ("@Result Inner(@Receiver Outer Outer.this, boolean b) {}");
     }
-    */
 
     private void testSuccessfulParse (String s) {
 	TestParseHelper.parse (lr, s, diagnostics);
@@ -118,7 +114,11 @@ public class TestMethodDeclaration {
     }
 
     private void testFailedParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
-	assert diagnostics.hasError () : "Failed to detect errors";
+	try {
+	    TestParseHelper.parse (lr, s, diagnostics);
+	    assert diagnostics.hasError () : "Failed to detect errors";
+	} finally {
+	    diagnostics.clear ();
+	}
     }
 }
