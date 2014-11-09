@@ -671,13 +671,13 @@ public class Java8Grammar {
 		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
 		    lr.zeroOrOne ("Dims"));
 	lr.addRule ("FormalParameterList",
-		    lr.zeroOrOne ("ReceiverParameter", COMMA),
-		    lr.zeroOrMore ("FormalParameter", COMMA),
-		    "LastFormalParameter");
-	lr.addRule ("FormalParameter",
-		    "Annotations", "UnannType", "VariableDeclaratorId");
+		    lr.oneOf (lr.sequence ("ReceiverParameter", "FormalParameterListRest"),
+			      lr.sequence ("FormalParameter", "FormalParameterListRest"),
+			      "LastFormalParameter"));
 	lr.addRule ("FormalParameter",
 		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId");
+	lr.addRule ("FormalParameter",
+		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
 	lr.addRule ("VariableModifier",
 		    lr.oneOf ("Annotations",
 			      FINAL));
@@ -685,12 +685,14 @@ public class Java8Grammar {
 		    lr.oneOf (lr.sequence (lr.zeroOrMore ("VariableModifier"),
 					   "UnannType", lr.zeroOrMore ("Annotation"),
 					   ELLIPSIS, "VariableDeclaratorId"),
-			      lr.sequence ("Annotations",
+			      lr.sequence (lr.zeroOrMore ("Annotation"),
 					   "UnannType", lr.zeroOrMore ("Annotation"),
-					   ELLIPSIS, "VariableDeclaratorId"),
-			      "FormalParameter"));
+					   ELLIPSIS, "VariableDeclaratorId")));
 	lr.addRule ("ReceiverParameter",
-		    "Annotations", "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
+		    lr.zeroOrMore ("Annotation"), "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
+	lr.addRule ("FormalParameterListRest",
+		    lr.sequence (lr.zeroOrMore (COMMA, "FormalParameter"),
+				 lr.zeroOrOne (COMMA, "LastFormalParameter")));
 	lr.addRule ("Throws",
 		    THROWS, "ExceptionTypeList");
 	lr.addRule ("ExceptionTypeList",
