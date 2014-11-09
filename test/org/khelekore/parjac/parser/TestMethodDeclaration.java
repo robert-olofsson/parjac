@@ -23,6 +23,8 @@ public class TestMethodDeclaration {
 	grammar.addTypeParameters ();
 	grammar.addUnannTypes ();
 	grammar.addAnnotationRules ();
+
+	// A bit simplified rules, but we are not testing these rules in this class
 	lr.addRule ("Block",
 		    Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	lr.addRule ("Expression", Token.IDENTIFIER);
@@ -106,6 +108,12 @@ public class TestMethodDeclaration {
 	testSuccessfulParse ("void foo (Foo this, Bar bar) {}");
 	testFailedParse ("void foo (Foo foo, Bar this) {}");
 	testSuccessfulParse ("void innerMethod(@A Outer.@B Middle.@C Inner this) {}");
+    }
+
+    @Test
+    public void testThrows () {
+	testSuccessfulParse ("void foo () throws A {}");
+	testSuccessfulParse ("void foo () throws A, B, C {}");
     }
 
     private void testSuccessfulParse (String s) {
