@@ -76,37 +76,7 @@ public class Java8Grammar {
 	addMethodDeclaration ();
 	lr.addRule ("InstanceInitializer", "Block");
 	lr.addRule ("StaticInitializer", STATIC, "Block");
-	lr.addRule ("ConstructorDeclaration",
-		    lr.zeroOrMore ("ConstructorModifier"), "ConstructorDeclarator",
-		    lr.zeroOrOne ("Throws"), "ConstructorBody");
-	lr.addRule ("ConstructorModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE));
-	lr.addRule ("ConstructorDeclarator",
-		    lr.zeroOrOne ("TypeParameters"), "SimpleTypeName",
-		    LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
-	lr.addRule ("SimpleTypeName", IDENTIFIER);
-	lr.addRule ("ConstructorBody",
-		    LEFT_CURLY,
-		    lr.zeroOrOne ("ExplicitConstructorInvocation"), lr.zeroOrOne ("BlockStatements"),
-		    RIGHT_CURLY);
-	lr.addRule ("ExplicitConstructorInvocation",
-		    lr.oneOf (lr.sequence (lr.zeroOrOne ("TypeArguments"), THIS,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence (lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence ("ExpressionName", DOT,
-					   lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence ("Primary", DOT,
-					   lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON)));
+	addConstructorDeclaration ();
 	lr.addRule ("EnumDeclaration",
 		    lr.zeroOrMore ("ClassModifier"),
 		    ENUM, IDENTIFIER, lr.zeroOrOne ("Superinterfaces"), "EnumBody");
@@ -550,7 +520,7 @@ public class Java8Grammar {
 	// End of §15
     }
 
-    private void addLiteralRules () {
+    public void addLiteralRules () {
 	// Productions from §3 (Lexical Structure)
 	lr.addRule ("Literal",
 		    lr.oneOf ("IntegerLiteral",
@@ -670,6 +640,50 @@ public class Java8Grammar {
 	lr.addRule ("MethodDeclarator",
 		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
 		    lr.zeroOrOne ("Dims"));
+	addFormalParameterList ();
+	addThrows ();
+	lr.addRule ("MethodBody",
+		    lr.oneOf ("Block",
+			      SEMICOLON));
+    }
+
+    public void addConstructorDeclaration () {
+	lr.addRule ("ConstructorDeclaration",
+		    lr.zeroOrMore ("ConstructorModifier"), "ConstructorDeclarator",
+		    lr.zeroOrOne ("Throws"), "ConstructorBody");
+	lr.addRule ("ConstructorModifier",
+		    lr.oneOf ("Annotation",
+			      PUBLIC,
+			      PROTECTED,
+			      PRIVATE));
+	lr.addRule ("ConstructorDeclarator",
+		    lr.zeroOrOne ("TypeParameters"), "SimpleTypeName",
+		    LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
+	lr.addRule ("SimpleTypeName", IDENTIFIER);
+	lr.addRule ("ConstructorBody",
+		    LEFT_CURLY,
+		    lr.zeroOrOne ("ExplicitConstructorInvocation"), lr.zeroOrOne ("BlockStatements"),
+		    RIGHT_CURLY);
+	lr.addRule ("ExplicitConstructorInvocation",
+		    lr.oneOf (lr.sequence (lr.zeroOrOne ("TypeArguments"), THIS,
+					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+					   SEMICOLON),
+			      lr.sequence (lr.zeroOrOne ("TypeArguments"), SUPER,
+					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+					   SEMICOLON),
+			      lr.sequence ("ExpressionName", DOT,
+					   lr.zeroOrOne ("TypeArguments"), SUPER,
+					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+					   SEMICOLON),
+			      lr.sequence ("Primary", DOT,
+					   lr.zeroOrOne ("TypeArguments"), SUPER,
+					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+					   SEMICOLON)));
+	addFormalParameterList ();
+	addThrows ();
+    }
+
+    private void addFormalParameterList () {
 	lr.addRule ("FormalParameterList",
 		    lr.oneOf (lr.sequence ("ReceiverParameter", "FormalParameterListRest"),
 			      lr.sequence ("FormalParameter", "FormalParameterListRest"),
@@ -693,14 +707,14 @@ public class Java8Grammar {
 	lr.addRule ("FormalParameterListRest",
 		    lr.sequence (lr.zeroOrMore (COMMA, "FormalParameter"),
 				 lr.zeroOrOne (COMMA, "LastFormalParameter")));
+    }
+
+    private void addThrows () {
 	lr.addRule ("Throws",
 		    THROWS, "ExceptionTypeList");
 	lr.addRule ("ExceptionTypeList",
 		    "ExceptionType", lr.zeroOrMore (COMMA, "ExceptionType"));
 	lr.addRule ("ExceptionType", "ClassType");
-	lr.addRule ("MethodBody",
-		    lr.oneOf ("Block",
-			      SEMICOLON));
     }
 
     public void addUnannTypes () {
@@ -733,11 +747,9 @@ public class Java8Grammar {
 			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
 	lr.addRule ("ExpressionName",
 		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
+			      lr.sequence ("ExpressionName", DOT, IDENTIFIER)));
 	lr.addRule ("MethodName", IDENTIFIER);
-	lr.addRule ("AmbiguousName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("AmbiguousName", DOT, IDENTIFIER)));
+	// Removed AmbiguousName, it was only used in ExpressionName and in conflict
     }
 
     public void addPackageRules () {
