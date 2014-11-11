@@ -816,10 +816,9 @@ public class Java8Grammar {
 
     public void addModifiers () {
 	lr.addRule ("Modifier",
-		    lr.oneOf ("Annotation", "AccessLevel",
+		    lr.oneOf ("Annotation",
+			      PUBLIC, PROTECTED, PRIVATE,
 			      ABSTRACT, STATIC, FINAL, STRICTFP, TRANSIENT,
 			      VOLATILE, SYNCHRONIZED, NATIVE, DEFAULT));
-	lr.addRule ("AccessLevel",
-		    lr.oneOf (PUBLIC, PROTECTED, PRIVATE));
     }
 }
