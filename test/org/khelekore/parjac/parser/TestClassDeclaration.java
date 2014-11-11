@@ -16,15 +16,14 @@ public class TestClassDeclaration {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "TypeDeclaration");
+	grammar.addLiteralRules ();
+	grammar.addTypeRules ();
+	grammar.addNameRules ();
 	grammar.addTypeDeclaration ();
 	grammar.addAllClassRules ();
-	grammar.addTypeParameters ();
-	grammar.addTypeRules ();
 	grammar.addInterfaceRules ();
 	grammar.addAnnotationRules ();
 	grammar.addArrayInitializer ();
-	grammar.addNameRules ();
-	grammar.addLiteralRules ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
 	lr.addRule ("Block", Token.LEFT_CURLY, lr.zeroOrMore ("BlockStatements"), Token.RIGHT_CURLY);
