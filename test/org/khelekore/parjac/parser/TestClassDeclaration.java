@@ -15,7 +15,8 @@ public class TestClassDeclaration {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "ClassDeclaration");
+	lr.addRule ("Goal", "TypeDeclaration");
+	grammar.addTypeDeclaration ();
 	grammar.addAllClassRules ();
 	grammar.addTypeParameters ();
 	grammar.addTypeRules ();
@@ -30,8 +31,8 @@ public class TestClassDeclaration {
 	lr.addRule ("BlockStatements", Token.SEMICOLON);
 	lr.addRule ("ArgumentList", Token.IDENTIFIER);
 	lr.addRule ("Primary", "Literal");
-	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
+	lr.addRule ("Expression", lr.oneOf (Token.IDENTIFIER, "Literal"));
+	lr.addRule ("ConditionalExpression", lr.oneOf (Token.IDENTIFIER, "Literal"));
 	try {
 	    lr.build ();
 	} catch (Throwable t) {
@@ -75,6 +76,37 @@ public class TestClassDeclaration {
 			     "private int foo; \n"+
 			     "private Foo (int f) {}\n" +
 			     "public void getFoo () { }\n" +
+			     "}");
+    }
+
+    @Test
+    public void testInterfaces () {
+	testSuccessfulParse ("interface Foo {}");
+	testSuccessfulParse ("public interface Foo {}");
+	testSuccessfulParse ("protected interface Foo {}");
+	testSuccessfulParse ("private interface Foo {}");
+	testSuccessfulParse ("@Foo interface Foo {}");
+	testSuccessfulParse ("interface Foo { public static final int FOO; }");
+	testSuccessfulParse ("interface Foo { void foo (); }");
+	testSuccessfulParse ("interface Foo { default void foo () { } }");
+	testSuccessfulParse ("interface Foo { public void foo (); }");
+	testSuccessfulParse ("interface Foo { public static final int FOO; public void foo (); }");
+    }
+
+    @Test
+    public void testAnnotation () {
+	testSuccessfulParse ("@interface Foo {}");
+	testSuccessfulParse ("public @interface Foo {}");
+	testSuccessfulParse ("@Foo @interface Foo {}");
+
+	testSuccessfulParse ("@interface ClassPreamble {\n" +
+			     "String author();\n" +
+			     "String date();\n" +
+			     "int currentRevision() default 1;\n" +
+			     "String lastModified() default \"N/A\";\n" +
+			     "String lastModifiedBy() default \"N/A\";\n" +
+			     "// Note use of array\n" +
+			     "String[] reviewers();\n" +
 			     "}");
     }
 
