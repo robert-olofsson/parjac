@@ -17,13 +17,14 @@ public class TestFieldDeclaration {
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "FieldDeclaration");
 	grammar.addFieldDeclaration ();
+	grammar.addModifiers ();
 	grammar.addNameRules ();
 	grammar.addTypeRules ();
 	grammar.addUnannTypes ();
 	grammar.addAnnotationRules ();
+	grammar.addArrayInitializer ();
 	// simplified
 	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ArrayInitializer", Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();

@@ -17,6 +17,9 @@ public class TestConstructorDeclaration {
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "ConstructorDeclaration");
 	grammar.addConstructorDeclaration ();
+	grammar.addModifiers ();
+	grammar.addFormalParameterList ();
+	grammar.addThrows ();
 	grammar.addLiteralRules ();
 	grammar.addFieldDeclaration ();
 	grammar.addNameRules ();
@@ -24,13 +27,13 @@ public class TestConstructorDeclaration {
 	grammar.addTypeParameters ();
 	grammar.addUnannTypes ();
 	grammar.addAnnotationRules ();
+	grammar.addArrayInitializer ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
 	lr.addRule ("BlockStatements", Token.SEMICOLON);
 	lr.addRule ("ArgumentList", Token.IDENTIFIER);
 	lr.addRule ("Primary", "Literal");
 	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ArrayInitializer", Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();

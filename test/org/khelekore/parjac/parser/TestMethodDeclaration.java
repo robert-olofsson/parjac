@@ -17,18 +17,21 @@ public class TestMethodDeclaration {
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "MethodDeclaration");
 	grammar.addMethodDeclaration ();
+	grammar.addModifiers ();
+	grammar.addFormalParameterList ();
+	grammar.addThrows ();
 	grammar.addFieldDeclaration ();
 	grammar.addNameRules ();
 	grammar.addTypeRules ();
 	grammar.addTypeParameters ();
 	grammar.addUnannTypes ();
 	grammar.addAnnotationRules ();
+	grammar.addArrayInitializer ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
 	lr.addRule ("Block",
 		    Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ArrayInitializer", Token.LEFT_CURLY, Token.RIGHT_CURLY);
 	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();

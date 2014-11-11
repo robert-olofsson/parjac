@@ -1,10 +1,44 @@
 package org.khelekore.parjac.grammar.java8;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.khelekore.parjac.parser.LRParser;
+
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class Java8Grammar {
     private final LRParser lr;
+
+    // All modifiers are accepted in the grammar to avoid conflicts, need to check after
+    private Set<Object> CLASS_MODIFIERS =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
+				      ABSTRACT, STATIC, FINAL, STRICTFP));
+
+    private Set<Object> INTERFACE_MODIFIERS =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
+				      ABSTRACT, STATIC, STRICTFP));
+
+    private Set<Object> CONSTANT_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, STATIC, FINAL));
+
+    private Set<Object> INTERFACE_METHOD_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT, DEFAULT, STATIC, STRICTFP));
+
+    private Set<Object> FIELD_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
+				      STATIC, FINAL, TRANSIENT, VOLATILE));
+
+    private Set<Object> METHOD_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
+				      ABSTRACT, STATIC, FINAL, SYNCHRONIZED, NATIVE, STRICTFP));
+
+    private Set<Object> CONSTRUCTOR_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE));
+
+    private Set<Object> ANNOTATION_TYPE_ELEMENT_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT));
 
     public Java8Grammar (boolean debug) {
 	lr = new LRParser (debug);
@@ -37,138 +71,20 @@ public class Java8Grammar {
 		    lr.zeroOrMore ("TypeDeclaration"));
 	addPackageRules ();
 	addImportRules ();
-	lr.addRule ("TypeDeclaration",
-		    lr.oneOf ("ClassDeclaration",
-			      "InterfaceDeclaration",
-			      SEMICOLON));
+	addTypeDeclaration ();
 	// End of §7
 
 	// Productions from §8 (Classes)
-	lr.addRule ("ClassDeclaration",
-		    lr.oneOf ("NormalClassDeclaration", "EnumDeclaration"));
-	lr.addRule ("NormalClassDeclaration",
-		    lr.zeroOrMore ("ClassModifier"), CLASS, IDENTIFIER,
-		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("Superclass"),
-		    lr.zeroOrOne ("Superinterfaces"), "ClassBody");
-	lr.addRule ("ClassModifier",
-		    lr.oneOf ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-			      ABSTRACT, STATIC, FINAL, STRICTFP));
-	lr.addRule ("Superclass", EXTENDS, "ClassType");
-	lr.addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
-	lr.addRule ("InterfaceTypeList", "InterfaceType", lr.zeroOrMore (COMMA, "ClassType"));
-	lr.addRule ("ClassBody",
-		    LEFT_CURLY,
-		    lr.zeroOrMore ("ClassBodyDeclaration"),
-		    RIGHT_CURLY);
-	lr.addRule ("ClassBodyDeclaration",
-		    lr.oneOf ("ClassMemberDeclaration",
-			      "InstanceInitializer",
-			      "StaticInitializer",
-			      "ConstructorDeclaration"));
-	lr.addRule ("ClassMemberDeclaration",
-		    lr.oneOf ("FieldDeclaration",
-			      "MethodDeclaration",
-			      "ClassDeclaration",
-			      "InterfaceDeclaration",
-			      SEMICOLON));
-	addFieldDeclaration ();
-	addUnannTypes ();
-	addMethodDeclaration ();
-	lr.addRule ("InstanceInitializer", "Block");
-	lr.addRule ("StaticInitializer", STATIC, "Block");
-	addConstructorDeclaration ();
-	lr.addRule ("EnumDeclaration",
-		    lr.zeroOrMore ("ClassModifier"),
-		    ENUM, IDENTIFIER, lr.zeroOrOne ("Superinterfaces"), "EnumBody");
-	lr.addRule ("EnumBody",
-		    LEFT_CURLY,
-		    lr.zeroOrOne ("EnumConstantList"), lr.zeroOrOne (COMMA),
-		    lr.zeroOrOne ("EnumBodyDeclarations"),
-		    RIGHT_CURLY);
-	lr.addRule ("EnumConstantList",
-		    "EnumConstant", lr.zeroOrMore (COMMA, "EnumConstant"));
-	lr.addRule ("EnumConstant",
-		    lr.zeroOrMore ("EnumConstantModifier"), IDENTIFIER,
-		    lr.zeroOrOne (LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-		    lr.zeroOrOne ("ClassBody"));
-	lr.addRule ("EnumConstantModifier",
-		    "Annotation");
-	lr.addRule ("EnumBodyDeclarations",
-		    SEMICOLON, lr.zeroOrMore ("ClassBodyDeclaration"));
+	addAllClassRules ();
 	// End of §8
 
 	// Productions from §9 (Interfaces)
-	lr.addRule ("InterfaceDeclaration",
-		    lr.oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
-	lr.addRule ("NormalInterfaceDeclaration",
-		    lr.zeroOrMore ("InterfaceModifier"), INTERFACE, IDENTIFIER,
-		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("ExtendsInterfaces"), "InterfaceBody");
-	lr.addRule ("InterfaceModifier",
-		    lr.oneOf ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-			      ABSTRACT, STATIC, STRICTFP));
-	lr.addRule ("ExtendsInterfaces",
-		    EXTENDS, "InterfaceTypeList");
-	lr.addRule ("InterfaceBody",
-		    LEFT_CURLY,
-		    lr.zeroOrMore ("InterfaceMemberDeclaration"),
-		    RIGHT_CURLY);
-	lr.addRule ("InterfaceMemberDeclaration",
-		    lr.oneOf ("ConstantDeclaration",
-			      "InterfaceMethodDeclaration",
-			      "ClassDeclaration",
-			      "InterfaceDeclaration",
-			      SEMICOLON));
-	lr.addRule ("ConstantDeclaration",
-		    lr.zeroOrMore ("ConstantModifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
-	lr.addRule ("ConstantModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      STATIC,
-			      FINAL));
-	lr.addRule ("InterfaceMethodDeclaration",
-		    lr.zeroOrMore ("InterfaceMethodModifier"), "MethodHeader", "MethodBody");
-	lr.addRule ("InterfaceMethodModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      ABSTRACT,
-			      DEFAULT,
-			      STATIC,
-			      STRICTFP));
-	lr.addRule ("AnnotationTypeDeclaration",
-		    lr.zeroOrMore ("InterfaceModifier"),
-		    AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
-	lr.addRule ("AnnotationTypeBody",
-		    LEFT_CURLY,
-		    lr.zeroOrMore ("AnnotationTypeMemberDeclaration"),
-		    RIGHT_CURLY);
-
-	lr.addRule ("AnnotationTypeMemberDeclaration",
-		    lr.oneOf ("AnnotationTypeElementDeclaration",
-			      "ConstantDeclaration",
-			      "ClassDeclaration",
-			      "InterfaceDeclaration",
-			      SEMICOLON));
-	lr.addRule ("AnnotationTypeElementDeclaration",
-		    lr.zeroOrMore ("AnnotationTypeElementModifier"), "UnannType",
-		    IDENTIFIER, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, lr.zeroOrOne ("Dims"),
-		    lr.zeroOrOne ("DefaultValue"), SEMICOLON);
-	lr.addRule ("AnnotationTypeElementModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      ABSTRACT));
-	lr.addRule ("DefaultValue",
-		    DEFAULT, "ElementValue");
+	addInterfaceRules ();
 	addAnnotationRules ();
-
 	// End of §9
 
 	// Productions from §10 (Arrays)
-	lr.addRule ("ArrayInitializer",
-		    LEFT_CURLY, lr.zeroOrOne ("VariableInitializerList"),
-		    lr.zeroOrOne (COMMA), RIGHT_CURLY);
-	lr.addRule ("VariableInitializerList",
-		    "VariableInitializer", lr.zeroOrMore (COMMA, "VariableInitializer"));
-
+	addArrayInitializer ();
 	// End of §10
 
 	// Productions from §14 (Blocks and Statements)
@@ -586,18 +502,49 @@ public class Java8Grammar {
 	// End of §4
     }
 
+    public void addAllClassRules () {
+	addModifiers ();
+	addClassDeclaration ();
+	addFieldDeclaration ();
+	addUnannTypes ();
+	addMethodDeclaration ();
+	addFormalParameterList ();
+	addThrows ();
+	addInitializers ();
+	addConstructorDeclaration ();
+	addEnumDeclaration ();
+    }
+
+    public void addClassDeclaration () {
+	lr.addRule ("ClassDeclaration",
+		    lr.oneOf ("NormalClassDeclaration", "EnumDeclaration"));
+	lr.addRule ("NormalClassDeclaration",
+		    lr.zeroOrMore ("Modifier"), CLASS, IDENTIFIER,
+		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("Superclass"),
+		    lr.zeroOrOne ("Superinterfaces"), "ClassBody");
+	lr.addRule ("Superclass", EXTENDS, "ClassType");
+	lr.addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
+	lr.addRule ("InterfaceTypeList", "ClassType", lr.zeroOrMore (COMMA, "ClassType"));
+	lr.addRule ("ClassBody",
+		    LEFT_CURLY,
+		    lr.zeroOrMore ("ClassBodyDeclaration"),
+		    RIGHT_CURLY);
+	lr.addRule ("ClassBodyDeclaration",
+		    lr.oneOf ("ClassMemberDeclaration",
+			      "InstanceInitializer",
+			      "StaticInitializer",
+			      "ConstructorDeclaration"));
+	lr.addRule ("ClassMemberDeclaration",
+		    lr.oneOf ("FieldDeclaration",
+			      "MethodDeclaration",
+			      "ClassDeclaration",
+			      "InterfaceDeclaration",
+			      SEMICOLON));
+    }
+
     public void addFieldDeclaration () {
 	lr.addRule ("FieldDeclaration",
-		    lr.zeroOrMore ("FieldModifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
-	lr.addRule ("FieldModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE,
-			      STATIC,
-			      FINAL,
-			      TRANSIENT,
-			      VOLATILE));
+		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
 	lr.addRule ("VariableDeclaratorList",
 		    "VariableDeclarator", lr.zeroOrMore (COMMA, "VariableDeclarator"));
 	lr.addRule ("VariableDeclarator",
@@ -618,20 +565,10 @@ public class Java8Grammar {
 
     public void addMethodDeclaration () {
 	lr.addRule ("MethodDeclaration",
-		    lr.zeroOrMore ("MethodModifier"), "MethodHeader", "MethodBody");
-	lr.addRule ("MethodModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE,
-			      ABSTRACT,
-			      STATIC,
-			      FINAL,
-			      SYNCHRONIZED,
-			      NATIVE,
-			      STRICTFP));
+		    lr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
 	lr.addRule ("MethodHeader",
-		    lr.oneOf (lr.sequence ("Result", "MethodDeclarator", lr.zeroOrOne ("Throws")),
+		    lr.oneOf (lr.sequence (lr.oneOf ("UnannType", VOID),
+					   "MethodDeclarator", lr.zeroOrOne ("Throws")),
 			      lr.sequence ("TypeParameters", lr.zeroOrMore ("Annotation"),
 					   "Result", "MethodDeclarator", lr.zeroOrOne ("Throws"))));
 	lr.addRule ("Result",
@@ -640,26 +577,23 @@ public class Java8Grammar {
 	lr.addRule ("MethodDeclarator",
 		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
 		    lr.zeroOrOne ("Dims"));
-	addFormalParameterList ();
-	addThrows ();
 	lr.addRule ("MethodBody",
 		    lr.oneOf ("Block",
 			      SEMICOLON));
     }
 
+    public void addInitializers () {
+	lr.addRule ("InstanceInitializer", "Block");
+	lr.addRule ("StaticInitializer", STATIC, "Block");
+    }
+
     public void addConstructorDeclaration () {
 	lr.addRule ("ConstructorDeclaration",
-		    lr.zeroOrMore ("ConstructorModifier"), "ConstructorDeclarator",
+		    lr.zeroOrMore ("Modifier"), "ConstructorDeclarator",
 		    lr.zeroOrOne ("Throws"), "ConstructorBody");
-	lr.addRule ("ConstructorModifier",
-		    lr.oneOf ("Annotation",
-			      PUBLIC,
-			      PROTECTED,
-			      PRIVATE));
 	lr.addRule ("ConstructorDeclarator",
-		    lr.zeroOrOne ("TypeParameters"), "SimpleTypeName",
+		    lr.zeroOrOne ("TypeParameters"), "ClassName",
 		    LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
-	lr.addRule ("SimpleTypeName", IDENTIFIER);
 	lr.addRule ("ConstructorBody",
 		    LEFT_CURLY,
 		    lr.zeroOrOne ("ExplicitConstructorInvocation"), lr.zeroOrOne ("BlockStatements"),
@@ -679,11 +613,9 @@ public class Java8Grammar {
 					   lr.zeroOrOne ("TypeArguments"), SUPER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
 					   SEMICOLON)));
-	addFormalParameterList ();
-	addThrows ();
     }
 
-    private void addFormalParameterList () {
+    public void addFormalParameterList () {
 	lr.addRule ("FormalParameterList",
 		    lr.oneOf (lr.sequence ("ReceiverParameter", "FormalParameterListRest"),
 			      lr.sequence ("FormalParameter", "FormalParameterListRest"),
@@ -709,12 +641,77 @@ public class Java8Grammar {
 				 lr.zeroOrOne (COMMA, "LastFormalParameter")));
     }
 
-    private void addThrows () {
+    public void addThrows () {
 	lr.addRule ("Throws",
 		    THROWS, "ExceptionTypeList");
 	lr.addRule ("ExceptionTypeList",
 		    "ExceptionType", lr.zeroOrMore (COMMA, "ExceptionType"));
 	lr.addRule ("ExceptionType", "ClassType");
+    }
+
+    public void addEnumDeclaration () {
+	lr.addRule ("EnumDeclaration",
+		    lr.zeroOrMore ("Modifier"),
+		    ENUM, IDENTIFIER, lr.zeroOrOne ("Superinterfaces"), "EnumBody");
+	lr.addRule ("EnumBody",
+		    LEFT_CURLY,
+		    lr.zeroOrOne ("EnumConstantList"), lr.zeroOrOne (COMMA),
+		    lr.zeroOrOne ("EnumBodyDeclarations"),
+		    RIGHT_CURLY);
+	lr.addRule ("EnumConstantList",
+		    "EnumConstant", lr.zeroOrMore (COMMA, "EnumConstant"));
+	lr.addRule ("EnumConstant",
+		    lr.zeroOrMore ("EnumConstantModifier"), IDENTIFIER,
+		    lr.zeroOrOne (LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+		    lr.zeroOrOne ("ClassBody"));
+	lr.addRule ("EnumConstantModifier",
+		    "Annotation");
+	lr.addRule ("EnumBodyDeclarations",
+		    SEMICOLON, lr.zeroOrMore ("ClassBodyDeclaration"));
+    }
+
+    public void addInterfaceRules () {
+	lr.addRule ("InterfaceDeclaration",
+		    lr.oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
+	lr.addRule ("NormalInterfaceDeclaration",
+		    lr.zeroOrMore ("Modifier"), INTERFACE, IDENTIFIER,
+		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("ExtendsInterfaces"), "InterfaceBody");
+	lr.addRule ("ExtendsInterfaces",
+		    EXTENDS, "InterfaceTypeList");
+	lr.addRule ("InterfaceBody",
+		    LEFT_CURLY,
+		    lr.zeroOrMore ("InterfaceMemberDeclaration"),
+		    RIGHT_CURLY);
+	lr.addRule ("InterfaceMemberDeclaration",
+		    lr.oneOf ("ConstantDeclaration",
+			      "InterfaceMethodDeclaration",
+			      "ClassDeclaration",
+			      "InterfaceDeclaration",
+			      SEMICOLON));
+	lr.addRule ("ConstantDeclaration",
+		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
+	lr.addRule ("InterfaceMethodDeclaration",
+		    lr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
+	lr.addRule ("AnnotationTypeDeclaration",
+		    lr.zeroOrMore ("Modifier"),
+		    AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
+	lr.addRule ("AnnotationTypeBody",
+		    LEFT_CURLY,
+		    lr.zeroOrMore ("AnnotationTypeMemberDeclaration"),
+		    RIGHT_CURLY);
+
+	lr.addRule ("AnnotationTypeMemberDeclaration",
+		    lr.oneOf ("AnnotationTypeElementDeclaration",
+			      "ConstantDeclaration",
+			      "ClassDeclaration",
+			      "InterfaceDeclaration",
+			      SEMICOLON));
+	lr.addRule ("AnnotationTypeElementDeclaration",
+		    lr.zeroOrMore ("Modifier"), "UnannType",
+		    IDENTIFIER, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, lr.zeroOrOne ("Dims"),
+		    lr.zeroOrOne ("DefaultValue"), SEMICOLON);
+	lr.addRule ("DefaultValue",
+		    DEFAULT, "ElementValue");
     }
 
     public void addUnannTypes () {
@@ -733,7 +730,7 @@ public class Java8Grammar {
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
 	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
-		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
+		    lr.oneOf (lr.sequence ("ClassName", lr.zeroOrOne ("TypeArguments")),
 			      lr.sequence ("UnannClassType", DOT, "Annotations",
 					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
 	lr.addRule ("UnannArrayType",
@@ -749,6 +746,7 @@ public class Java8Grammar {
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("ExpressionName", DOT, IDENTIFIER)));
 	lr.addRule ("MethodName", IDENTIFIER);
+	lr.addRule ("ClassName", IDENTIFIER);
 	// Removed AmbiguousName, it was only used in ExpressionName and in conflict
     }
 
@@ -776,6 +774,13 @@ public class Java8Grammar {
 		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
     }
 
+    public void addTypeDeclaration () {
+	lr.addRule ("TypeDeclaration",
+		    lr.oneOf ("ClassDeclaration",
+			      "InterfaceDeclaration",
+			      SEMICOLON));
+    }
+
     public void addAnnotationRules () {
 	lr.addRule ("Annotations", lr.zeroOrMore ("Annotation"));
 	lr.addRule ("Annotation",
@@ -799,5 +804,22 @@ public class Java8Grammar {
 		    AT, "TypeName");
 	lr.addRule ("SingleElementAnnotation",
 		    AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
+    }
+
+    public void addArrayInitializer () {
+	lr.addRule ("ArrayInitializer",
+		    LEFT_CURLY, lr.zeroOrOne ("VariableInitializerList"),
+		    lr.zeroOrOne (COMMA), RIGHT_CURLY);
+	lr.addRule ("VariableInitializerList",
+		    "VariableInitializer", lr.zeroOrMore (COMMA, "VariableInitializer"));
+    }
+
+    public void addModifiers () {
+	lr.addRule ("Modifier",
+		    lr.oneOf ("Annotation", "AccessLevel",
+			      ABSTRACT, STATIC, FINAL, STRICTFP, TRANSIENT,
+			      VOLATILE, SYNCHRONIZED, NATIVE, DEFAULT));
+	lr.addRule ("AccessLevel",
+		    lr.oneOf (PUBLIC, PROTECTED, PRIVATE));
     }
 }
