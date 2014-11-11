@@ -728,7 +728,7 @@ public class LRParser {
 	return table.getAction (state, nextToken);
     }
 
-    public Collection<Object> getPossibleNextTokens (int state) {
+    public Collection<Token> getPossibleNextTokens (int state) {
 	return table.getPossibleNextTokens (state);
     }
 

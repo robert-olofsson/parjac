@@ -56,7 +56,7 @@ public class Parser {
 	    }
 	    if (a == null) {
 		addParserError (lexer.getCurrentLine () +
-				"\nNo action for nextToken: " + nextToken +
+				"\nInvalid token: " + nextToken +
 				" expected one of: " + getPossibleNextTokens (currentState));
 		break;
 	    } else {
@@ -85,7 +85,7 @@ public class Parser {
 	return null;
     }
 
-    private Collection<Object> getPossibleNextTokens (int state) {
+    private Collection<Token> getPossibleNextTokens (int state) {
 	return lr.getPossibleNextTokens (state);
     }
 

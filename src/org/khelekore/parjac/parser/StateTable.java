@@ -30,7 +30,7 @@ public class StateTable {
 	return row.getAction (rule).getN ();
     }
 
-    public Collection<Object> getPossibleNextTokens (int state) {
+    public Collection<Token> getPossibleNextTokens (int state) {
 	StateRow row = states.get (state);
 	return row.getPossibleNextTokens ();
     }
