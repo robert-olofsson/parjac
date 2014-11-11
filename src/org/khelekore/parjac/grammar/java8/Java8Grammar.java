@@ -1,9 +1,5 @@
 package org.khelekore.parjac.grammar.java8;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.khelekore.parjac.parser.LRParser;
 
 import static org.khelekore.parjac.lexer.Token.*;
