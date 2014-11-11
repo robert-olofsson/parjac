@@ -142,7 +142,7 @@ public enum Token {
     ERROR ("error"),
 
     // Signal end of input
-    END_OF_INPUT ("end of input");
+    END_OF_INPUT ("<end of input>");
 
     private final String description;
 
@@ -191,6 +191,10 @@ public enum Token {
 	nameToToken.put (NULL.description, NULL);
 	nameToToken.put (TRUE.description, TRUE);
 	nameToToken.put (FALSE.description, FALSE);
+    }
+
+    @Override public String toString () {
+	return description;
     }
 
     public static Token getFromIdentifier (String id) {
