@@ -12,6 +12,7 @@ public class Java8Grammar {
     private final LRParser lr;
 
     // All modifiers are accepted in the grammar to avoid conflicts, need to check after
+    /*
     private Set<Object> CLASS_MODIFIERS =
 	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
 				      ABSTRACT, STATIC, FINAL, STRICTFP));
@@ -39,6 +40,7 @@ public class Java8Grammar {
 
     private Set<Object> ANNOTATION_TYPE_ELEMENT_MODIFIER =
 	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT));
+    */
 
     public Java8Grammar (boolean debug) {
 	lr = new LRParser (debug);
