@@ -65,6 +65,14 @@ public class TestClassDeclaration {
     }
 
     @Test
+    public void testSimpleFailures () {
+	testFailedParse ("classs Foo { }");
+	testFailedParse ("class Foo ()");
+	testFailedParse ("class Foo {");
+	testFailedParse ("class Foo {]");
+    }
+
+    @Test
     public void testSimpleEnums () {
 	testSuccessfulParse ("enum Foo { ONE, TWO, THREE }");
 	testSuccessfulParse ("@Foo enum Foo { @Bar ONE, @Baz TWO, @Qux THREE }");
@@ -112,5 +120,14 @@ public class TestClassDeclaration {
     private void testSuccessfulParse (String s) {
 	TestParseHelper.parse (lr, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
+    }
+
+    private void testFailedParse (String s) {
+	try {
+	    TestParseHelper.parse (lr, s, diagnostics);
+	    assert diagnostics.hasError () : "Failed to detect errors";
+	} finally {
+	    diagnostics.clear ();
+	}
     }
 }
