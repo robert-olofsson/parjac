@@ -59,6 +59,8 @@ public class TestClassDeclaration {
 	testSuccessfulParse ("class Foo { private int foo; \n" +
 			     "public Foo () {}\n" +
 			     "public int getFoo () {}\n" +
+			     "private class Bar {}\n" +
+			     "private enum Baz { ONE, TWO }\n" +
 			     "}");
     }
 
