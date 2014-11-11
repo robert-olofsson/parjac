@@ -505,6 +505,7 @@ public class Java8Grammar {
     public void addAllClassRules () {
 	addModifiers ();
 	addClassDeclaration ();
+	addTypeParameters ();
 	addFieldDeclaration ();
 	addUnannTypes ();
 	addMethodDeclaration ();
