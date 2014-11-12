@@ -423,13 +423,14 @@ public class LRParser {
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
 	    ItemSet s = me.getKey ();
 	    Integer sr = me.getValue ();
+	    StateRow row = table.get (sr);
 
 	    for (Map.Entry<Item, EnumSet<Token>> i2la : s.itemToLookAhead.entrySet ()) {
 		Item i = i2la.getKey ();
 		if (i.dotIsLast ()) {
 		    int ruleId = i.r.id;
+		    EnumSet<Token> reduceReduceConflicts = null;
 		    for (Token t : i2la.getValue ()) {
-			StateRow row = table.get (sr);
 			if (t == Token.END_OF_INPUT && ruleId == 0) {
 			    row.addAction (t, Action.createAccept ());
 			} else {
@@ -439,12 +440,18 @@ public class LRParser {
 				row.addAction (t, Action.createReduce (ruleId));
 			    } else {
 				if (a.getType () == Action.Type.REDUCE) {
-				    System.out.println ("Got a reduce reduce conflict: " +
-							"row: " + row + ", rule: " + i.r +
-							", s: " + s);
+				    if (reduceReduceConflicts == null)
+					reduceReduceConflicts = EnumSet.noneOf (Token.class);
+				    reduceReduceConflicts.add (t);
 				}
 			    }
 			}
+		    }
+		    if (reduceReduceConflicts != null) {
+			System.out.println ("Got a reduce reduce conflict: " +
+					    "row: " + row.getId () + ", rule: " + i.r +
+					    ", s: " + s.getItemsWithDotLast () +
+					    ", lookahead tokens: " + reduceReduceConflicts);
 		    }
 		}
 	    }
@@ -656,7 +663,7 @@ public class LRParser {
 	}
 
 	@Override public String toString () {
-	    return "ItemSet" + itemToLookAhead;
+	    return "ItemSet" + itemToLookAhead.keySet ();
 	}
 
 	@Override public int hashCode () {
@@ -673,6 +680,12 @@ public class LRParser {
 	    if (o.getClass () == getClass ())
 		return itemToLookAhead.equals (((ItemSet)o).itemToLookAhead);
 	    return false;
+	}
+
+	public Set<Item> getItemsWithDotLast () {
+	    return itemToLookAhead.keySet ().stream ().
+		filter (i -> i.dotIsLast ()).
+		collect (Collectors.toSet ());
 	}
     }
 
