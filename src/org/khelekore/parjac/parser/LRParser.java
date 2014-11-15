@@ -450,8 +450,8 @@ public class LRParser {
 		    }
 		    if (reduceReduceConflicts != null) {
 			System.out.println ("Got a reduce reduce conflict: " +
-					    "row: " + row.getId () + ", rule: " + i.r +
-					    ", s: " + s.getItemsWithDotLast () +
+					    "row: " + row.getId () +
+					    ", complete items: " + s.getItemsWithDotLast () +
 					    ", lookahead tokens: " + reduceReduceConflicts);
 		    }
 		}
@@ -478,7 +478,6 @@ public class LRParser {
 	    sb.put (i.advance (), me.getValue ());
 	}
 	StateRow sr = table.get (itemSets.get (s));
-	debug (itemSets.get (s) + ": s:"  + s);
 	for (Map.Entry<SimplePart, Map<Item, EnumSet<Token>>> me : sp2sb.entrySet ()) {
 	    SimplePart sp = me.getKey ();
 	    ItemSet isb = new ItemSet (me.getValue ());
@@ -490,7 +489,6 @@ public class LRParser {
 		table.addState (new StateRow (i));
 		queue.add (nextState);
 	    }
-	    debug ("%d: adding shift for: %s -> %d", sr.getId (), sp.getId (), i);
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
     }
