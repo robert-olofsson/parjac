@@ -390,6 +390,7 @@ public class LRParser {
     }
 
     public void build () {
+	long start = System.nanoTime ();
 	if (debug) {
 	    int i = 0;
 	    for (Rule r : rules) {
@@ -456,8 +457,12 @@ public class LRParser {
 		}
 	    }
 	}
-	debug ("Got: " + itemSets.size () + " states");
-	debug ("Table:\n" + table.toTableString ());
+	long end = System.nanoTime ();
+	if (debug) {
+	    debug ("Total number of rules: %d\n" +
+		   "State table with %d states built in %.3f seconds\n",
+		   rules.size (), table.size (), (end - start) / 1e9);
+	}
     }
 
     private void addGoTo (Map<ItemSet, Integer> itemSets, Queue<ItemSet> queue, ItemSet s) {

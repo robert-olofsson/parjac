@@ -9,7 +9,8 @@ import org.khelekore.parjac.lexer.Token;
 public class StateTable {
     private final List<StateRow> states = new ArrayList<> ();
 
-    public StateTable () {
+    public int size () {
+	return states.size ();
     }
 
     public void addState (StateRow row) {
