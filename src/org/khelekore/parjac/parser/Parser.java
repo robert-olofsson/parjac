@@ -3,6 +3,7 @@ package org.khelekore.parjac.parser;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
@@ -57,7 +58,7 @@ public class Parser {
 	    if (a == null) {
 		addParserError (lexer.getCurrentLine () +
 				"\nInvalid token: " + nextToken +
-				" expected one of: " + getPossibleNextTokens (currentState));
+				" expected one of: " + getQuoted (getPossibleNextTokens (currentState)));
 		break;
 	    } else {
 		switch (a.getType ()) {
@@ -87,6 +88,12 @@ public class Parser {
 
     private Collection<Token> getPossibleNextTokens (int state) {
 	return lr.getPossibleNextTokens (state);
+    }
+
+    private String getQuoted (Collection<Token> tokens) {
+	return tokens.stream ().
+	    map (t -> t.toString ().replaceAll ("%", "%%")).
+	    collect (Collectors.joining (", "));
     }
 
     public CompilerDiagnosticCollector getDiagnostics () {
