@@ -114,21 +114,14 @@ public class Java8Grammar {
 
     public void addTypeRules () {
 	// Productions from §4 (Types, Values, and Variables)
-	lr.addRule ("Type", "PrimitiveType");
-	lr.addRule ("Type", "ReferenceType");
+	lr.addRule ("Type", lr.oneOf ("PrimitiveType", "ReferenceType"));
 	lr.addRule ("PrimitiveType",
 		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"), "NumericType"),
 			      lr.sequence (lr.zeroOrMore ("Annotation"), BOOLEAN)));
 	lr.addRule ("NumericType",
-		    lr.oneOf ("IntegralType",
-			      "FloatingPointType"));
-	lr.addRule ("IntegralType",
-		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR));
-	lr.addRule ("FloatingPointType",
-		    lr.oneOf (FLOAT, DOUBLE));
+		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE));
 	// removed TypeVariable, part of ClassOrInterfaceType
-	lr.addRule("ReferenceType", "ClassType");
-	lr.addRule("ReferenceType", "ArrayType");
+	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
 	lr.addRule ("ClassType",
 		    lr.oneOf (lr.sequence ("Annotations", IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
 			      lr.sequence ("ClassType", DOT, "Annotations",
@@ -251,7 +244,7 @@ public class Java8Grammar {
 		    lr.zeroOrMore ("Modifier"), "ConstructorDeclarator",
 		    lr.zeroOrOne ("Throws"), "ConstructorBody");
 	lr.addRule ("ConstructorDeclarator",
-		    lr.zeroOrOne ("TypeParameters"), "ClassName",
+		    lr.zeroOrOne ("TypeParameters"), IDENTIFIER,
 		    LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
 	lr.addRule ("ConstructorBody",
 		    LEFT_CURLY,
@@ -264,7 +257,7 @@ public class Java8Grammar {
 			      lr.sequence (lr.zeroOrOne ("TypeArguments"), SUPER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
 					   SEMICOLON),
-			      lr.sequence ("ExpressionName", DOT,
+			      lr.sequence ("ComplexName", DOT,
 					   lr.zeroOrOne ("TypeArguments"), SUPER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
 					   SEMICOLON),
@@ -375,11 +368,8 @@ public class Java8Grammar {
 
     public void addUnannTypes () {
 	lr.addRule ("UnannType",
-		    lr.oneOf ("UnannPrimitiveType",
-			      "UnannReferenceType"));
-	lr.addRule ("UnannPrimitiveType",
 		    lr.oneOf ("NumericType",
-			      BOOLEAN));
+			      "UnannReferenceType"));
 	/* UnannClassOrInterfaceType has been removed */
 	lr.addRule ("UnannReferenceType",
 		    lr.oneOf ("UnannClassType",
@@ -389,24 +379,19 @@ public class Java8Grammar {
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
 	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
-		    lr.oneOf (lr.sequence ("ClassName", lr.zeroOrOne ("TypeArguments")),
+		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
 			      lr.sequence ("UnannClassType", DOT, "Annotations",
 					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
 	lr.addRule ("UnannArrayType",
-		    lr.oneOf (lr.sequence ("UnannPrimitiveType", "Dims"),
+		    lr.oneOf (lr.sequence ("NumericType", "Dims"),
+			      lr.sequence (BOOLEAN, "Dims"),
 			      lr.sequence ("UnannClassType", "Dims")));
     }
 
     public void addNameRules () {
-	lr.addRule ("TypeName",
+	lr.addRule ("ComplexName",
 		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
-	lr.addRule ("ExpressionName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("ExpressionName", DOT, IDENTIFIER)));
-	lr.addRule ("MethodName", IDENTIFIER);
-	lr.addRule ("ClassName", IDENTIFIER);
-	// Removed AmbiguousName, it was only used in ExpressionName and in conflict
+			      lr.sequence ("ComplexName", DOT, IDENTIFIER)));
     }
 
     public void addPackageRules () {
@@ -423,14 +408,14 @@ public class Java8Grammar {
 			      "SingleStaticImportDeclaration",
 			      "StaticImportOnDemandDeclaration"));
 	lr.addRule ("SingleTypeImportDeclaration",
-		    IMPORT, "TypeName", SEMICOLON);
+		    IMPORT, "ComplexName", SEMICOLON);
 	// This one should really be IMPORT, PackageOrTypeName, but then we need more lookahead
 	lr.addRule ("TypeImportOnDemandDeclaration",
-		    IMPORT, "TypeName", DOT, MULTIPLY, SEMICOLON);
+		    IMPORT, "ComplexName", DOT, MULTIPLY, SEMICOLON);
 	lr.addRule ("SingleStaticImportDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
+		    IMPORT, STATIC, "ComplexName", DOT, IDENTIFIER, SEMICOLON);
 	lr.addRule ("StaticImportOnDemandDeclaration",
-		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
+		    IMPORT, STATIC, "ComplexName", DOT, MULTIPLY, SEMICOLON);
     }
 
     public void addTypeDeclaration () {
@@ -445,7 +430,7 @@ public class Java8Grammar {
 	lr.addRule ("Annotation",
 		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
 	lr.addRule ("NormalAnnotation",
-		    AT, "TypeName", LEFT_PARENTHESIS, lr.zeroOrOne ("ElementValuePairList"), RIGHT_PARENTHESIS);
+		    AT, "ComplexName", LEFT_PARENTHESIS, lr.zeroOrOne ("ElementValuePairList"), RIGHT_PARENTHESIS);
 	lr.addRule ("ElementValuePairList",
 		    "ElementValuePair", lr.zeroOrMore (COMMA, "ElementValuePair"));
 	lr.addRule ("ElementValuePair",
@@ -460,9 +445,9 @@ public class Java8Grammar {
 	lr.addRule ("ElementValueList",
 		    "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
 	lr.addRule ("MarkerAnnotation",
-		    AT, "TypeName");
+		    AT, "ComplexName");
 	lr.addRule ("SingleElementAnnotation",
-		    AT, "TypeName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
+		    AT, "ComplexName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
     }
 
     public void addArrayInitializer () {
@@ -540,14 +525,11 @@ public class Java8Grammar {
 		    LEFT_CURLY, lr.zeroOrMore ("SwitchBlockStatementGroup"),
 		    lr.zeroOrMore ("SwitchLabel"), RIGHT_CURLY);
 	lr.addRule ("SwitchBlockStatementGroup",
-		    "SwitchLabels", "BlockStatements");
-	lr.addRule ("SwitchLabels",
-		    "SwitchLabel", lr.zeroOrMore ("SwitchLabel"));
+		    lr.sequence ("SwitchLabel", lr.zeroOrMore ("SwitchLabel"), "BlockStatements"));
 	lr.addRule ("SwitchLabel",
 		    lr.oneOf (lr.sequence (CASE, "ConstantExpression", COLON),
-			      lr.sequence (CASE, "EnumConstantName", COLON),
+			      lr.sequence (CASE, IDENTIFIER, COLON),
 			      lr.sequence (DEFAULT, COLON)));
-	lr.addRule ("EnumConstantName", IDENTIFIER);
 	lr.addRule ("WhileStatement",
 		    WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "Statement");
 	lr.addRule ("WhileStatementNoShortIf",
@@ -626,10 +608,10 @@ public class Java8Grammar {
 			      "ArrayCreationExpression"));
 	lr.addRule ("PrimaryNoNewArray",
 		    lr.oneOf ("Literal",
-			      lr.sequence ("TypeName", lr.zeroOrMore (LEFT_BRACKET, RIGHT_BRACKET), DOT, CLASS),
+			      lr.sequence ("ComplexName", lr.zeroOrMore (LEFT_BRACKET, RIGHT_BRACKET), DOT, CLASS),
 			      lr.sequence (VOID, DOT, CLASS),
 			      THIS,
-			      lr.sequence ("TypeName", DOT, THIS),
+			      lr.sequence ("ComplexName", DOT, THIS),
 			      lr.sequence (LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS),
 			      "ClassInstanceCreationExpression",
 			      "FieldAccess",
@@ -637,7 +619,7 @@ public class Java8Grammar {
 			      "MethodInvocation",
 			      "MethodReference"));
 	lr.addRule ("ClassInstanceCreationExpression",
-		    lr.oneOf (lr.sequence (lr.zeroOrOne (lr.oneOf ("ExpressionName", "Primary"), DOT),
+		    lr.oneOf (lr.sequence (lr.zeroOrOne (lr.oneOf ("ComplexName", "Primary"), DOT),
 					   NEW, lr.zeroOrOne ("TypeArguments"),
 					   lr.zeroOrMore ("Annotation"), IDENTIFIER,
 					   lr.zeroOrOne ("TypeArgumentsOrDiamond"),
@@ -649,27 +631,27 @@ public class Java8Grammar {
 	lr.addRule ("FieldAccess",
 		    lr.oneOf (lr.sequence ("Primary", DOT, IDENTIFIER),
 			      lr.sequence (SUPER, DOT, IDENTIFIER),
-			      lr.sequence ("TypeName", DOT, SUPER, DOT, IDENTIFIER)));
+			      lr.sequence ("ComplexName", DOT, SUPER, DOT, IDENTIFIER)));
 	lr.addRule ("ArrayAccess",
-		    lr.oneOf (lr.sequence ("ExpressionName", LEFT_BRACKET, "Expression", RIGHT_BRACKET),
+		    lr.oneOf (lr.sequence ("ComplexName", LEFT_BRACKET, "Expression", RIGHT_BRACKET),
 			      lr.sequence ("PrimaryNoNewArray", LEFT_BRACKET, "Expression", RIGHT_BRACKET)));
 	lr.addRule ("MethodInvocation",
-		    lr.oneOf (lr.sequence ("MethodName",
+		    lr.oneOf (lr.sequence (IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("TypeName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence ("ComplexName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("ExpressionName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence ("ComplexName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
 			      lr.sequence ("Primary", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
 			      lr.sequence (SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("TypeName", DOT, SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence ("ComplexName", DOT, SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS)));
 	lr.addRule ("ArgumentList",
 		    "Expression", lr.zeroOrMore (COMMA, "Expression"));
 	lr.addRule ("MethodReference",
-		    lr.oneOf (lr.sequence ("ExpressionName", DOUBLE_COLON,
+		    lr.oneOf (lr.sequence ("ComplexName", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("ReferenceType", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
@@ -677,7 +659,7 @@ public class Java8Grammar {
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence (SUPER, DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("TypeName", DOT, SUPER, DOUBLE_COLON,
+			      lr.sequence ("ComplexName", DOT, SUPER, DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("ClassType", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), NEW),
@@ -695,25 +677,19 @@ public class Java8Grammar {
 	lr.addRule ("Expression",
 		    lr.oneOf ("LambdaExpression", "AssignmentExpression"));
 	lr.addRule ("LambdaExpression",
-		    "LambdaParameters", ARROW, "LambdaBody");
+		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "LambdaParameters"),
+					   ARROW, "LambdaBody")));
 	lr.addRule ("LambdaParameters",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence (LEFT_PARENTHESIS,
+		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS,
 					   lr.zeroOrOne ("FormalParameterList"),
 					   RIGHT_PARENTHESIS),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   "InferredFormalParameterList",
+					   IDENTIFIER, lr.zeroOrMore (COMMA, IDENTIFIER),
 					   RIGHT_PARENTHESIS)));
-	lr.addRule ("InferredFormalParameterList",
-		    IDENTIFIER, lr.zeroOrMore (COMMA, IDENTIFIER));
-	lr.addRule ("LambdaBody",
-		    lr.oneOf ("Expression",
-			      "Block"));
-	lr.addRule ("AssignmentExpression",
-		    lr.oneOf ("ConditionalExpression",
-			      "Assignment"));
+	lr.addRule ("LambdaBody", lr.oneOf ("Expression", "Block"));
+	lr.addRule ("AssignmentExpression", lr.oneOf ("ConditionalExpression", "Assignment"));
 	lr.addRule ("Assignment",
-		    lr.sequence (lr.oneOf ("ExpressionName", "FieldAccess", "ArrayAccess"),
+		    lr.sequence (lr.oneOf ("ComplexName", "FieldAccess", "ArrayAccess"),
 				 "AssignmentOperator", "Expression"));
 	lr.addRule ("AssignmentOperator",
 		    lr.oneOf (EQUAL,
@@ -789,7 +765,7 @@ public class Java8Grammar {
 			      "CastExpression"));
 	lr.addRule ("PostfixExpression",
 		    lr.oneOf ("Primary",
-			      "ExpressionName",
+			      "ComplexName",
 			      "PostIncrementExpression",
 			      "PostDecrementExpression"));
 	lr.addRule ("PostIncrementExpression",
