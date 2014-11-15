@@ -246,9 +246,7 @@ public class Java8Grammar {
 		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId");
 	lr.addRule ("FormalParameter",
 		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
-	lr.addRule ("VariableModifier",
-		    lr.oneOf ("Annotations",
-			      FINAL));
+	lr.addRule ("VariableModifier", lr.oneOf ("Annotations", FINAL));
 	lr.addRule ("LastFormalParameter",
 		    lr.oneOf (lr.sequence (lr.zeroOrMore ("VariableModifier"),
 					   "UnannType", lr.zeroOrMore ("Annotation"),
