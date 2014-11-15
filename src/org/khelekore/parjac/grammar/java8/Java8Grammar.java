@@ -43,7 +43,8 @@ public class Java8Grammar {
     }
 
     public void buildFullGrammar () {
-	addRules ();
+	addGoal ();
+	addAllRules ();
 	lr.build ();
     }
 
@@ -51,47 +52,22 @@ public class Java8Grammar {
 	return lr;
     }
 
-    private void addRules () {
+    public void addGoal () {
 	// First rule should be the goal rule
 	lr.addRule ("Goal", "CompilationUnit");
+    }
 
+    public void addAllRules () {
 	addLiteralRules ();
 	addTypeRules ();
-
-	// Productions from §6 Names
 	addNameRules ();
-	// End of §6
-
-	// Productions from §7 (Packages)
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrOne ("PackageDeclaration"),
-		    lr.zeroOrMore ("ImportDeclaration"),
-		    lr.zeroOrMore ("TypeDeclaration"));
-	addPackageRules ();
-	addImportRules ();
-	addTypeDeclaration ();
-	// End of §7
-
-	// Productions from §8 (Classes)
+	addCompilationUnit ();
 	addAllClassRules ();
-	// End of §8
-
-	// Productions from §9 (Interfaces)
 	addInterfaceRules ();
 	addAnnotationRules ();
-	// End of §9
-
-	// Productions from §10 (Arrays)
 	addArrayInitializer ();
-	// End of §10
-
-	// Productions from §14 (Blocks and Statements)
 	addBlockStatements ();
-	// End of §14
-
-	// Productions from §15 (Expressions)
 	addExpressions ();
-	// End of §15
     }
 
     public void addLiteralRules () {
@@ -150,9 +126,9 @@ public class Java8Grammar {
 	lr.addRule ("WildcardBounds",
 		    lr.oneOf (lr.sequence (EXTENDS, "ReferenceType"),
 			      lr.sequence (SUPER, "ReferenceType")));
-	// End of §4
     }
 
+    // Productions from §8 (Classes)
     public void addAllClassRules () {
 	addModifiers ();
 	addClassDeclaration ();
@@ -322,6 +298,7 @@ public class Java8Grammar {
 		    SEMICOLON, lr.zeroOrMore ("ClassBodyDeclaration"));
     }
 
+    // Productions from §9 (Interfaces)
     public void addInterfaceRules () {
 	lr.addRule ("InterfaceDeclaration",
 		    lr.oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
@@ -388,10 +365,22 @@ public class Java8Grammar {
 			      lr.sequence ("UnannClassType", "Dims")));
     }
 
+    // Productions from §6 Names
     public void addNameRules () {
 	lr.addRule ("ComplexName",
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("ComplexName", DOT, IDENTIFIER)));
+    }
+
+    // Productions from §7 (Packages)
+    public void addCompilationUnit () {
+	lr.addRule ("CompilationUnit",
+		    lr.zeroOrOne ("PackageDeclaration"),
+		    lr.zeroOrMore ("ImportDeclaration"),
+		    lr.zeroOrMore ("TypeDeclaration"));
+	addPackageRules ();
+	addImportRules ();
+	addTypeDeclaration ();
     }
 
     public void addPackageRules () {
@@ -450,6 +439,7 @@ public class Java8Grammar {
 		    AT, "ComplexName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
     }
 
+    // Productions from §10 (Arrays)
     public void addArrayInitializer () {
 	lr.addRule ("ArrayInitializer",
 		    LEFT_CURLY, lr.zeroOrOne ("VariableInitializerList"),
@@ -458,6 +448,7 @@ public class Java8Grammar {
 		    "VariableInitializer", lr.zeroOrMore (COMMA, "VariableInitializer"));
     }
 
+    // Productions from §14 (Blocks and Statements)
     public void addBlockStatements () {
 	lr.addRule ("Block",
 		    LEFT_CURLY, lr.zeroOrOne ("BlockStatements"), RIGHT_CURLY);
@@ -602,6 +593,7 @@ public class Java8Grammar {
 		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
     }
 
+    // Productions from §15 (Expressions)
     public void addExpressions () {
 	lr.addRule ("Primary",
 		    lr.oneOf ("PrimaryNoNewArray",
