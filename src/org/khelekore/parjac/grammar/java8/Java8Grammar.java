@@ -179,9 +179,7 @@ public class Java8Grammar {
 		    "VariableDeclaratorId", lr.zeroOrOne (EQUAL, "VariableInitializer"));
 	lr.addRule ("VariableDeclaratorId",
 		    IDENTIFIER, lr.zeroOrOne ("Dims"));
-	lr.addRule ("VariableInitializer",
-		    lr.oneOf ("Expression",
-			      "ArrayInitializer"));
+	lr.addRule ("VariableInitializer", lr.oneOf ("Expression", "ArrayInitializer"));
     }
 
     public void addTypeParameters () {
@@ -199,15 +197,11 @@ public class Java8Grammar {
 					   "MethodDeclarator", lr.zeroOrOne ("Throws")),
 			      lr.sequence ("TypeParameters", lr.zeroOrMore ("Annotation"),
 					   "Result", "MethodDeclarator", lr.zeroOrOne ("Throws"))));
-	lr.addRule ("Result",
-		    lr.oneOf ("UnannType",
-			      VOID));
+	lr.addRule ("Result", lr.oneOf ("UnannType", VOID));
 	lr.addRule ("MethodDeclarator",
 		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
 		    lr.zeroOrOne ("Dims"));
-	lr.addRule ("MethodBody",
-		    lr.oneOf ("Block",
-			      SEMICOLON));
+	lr.addRule ("MethodBody", lr.oneOf ("Block", SEMICOLON));
     }
 
     public void addInitializers () {
@@ -344,13 +338,9 @@ public class Java8Grammar {
     }
 
     public void addUnannTypes () {
-	lr.addRule ("UnannType",
-		    lr.oneOf ("NumericType",
-			      "UnannReferenceType"));
+	lr.addRule ("UnannType", lr.oneOf ("NumericType", "UnannReferenceType"));
 	/* UnannClassOrInterfaceType has been removed */
-	lr.addRule ("UnannReferenceType",
-		    lr.oneOf ("UnannClassType",
-			      "UnannArrayType"));
+	lr.addRule ("UnannReferenceType", lr.oneOf ("UnannClassType", "UnannArrayType"));
 
 	// really lr.oneOf ("UnannClassType", "UnannInterfaceType");
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
@@ -409,9 +399,7 @@ public class Java8Grammar {
 
     public void addTypeDeclaration () {
 	lr.addRule ("TypeDeclaration",
-		    lr.oneOf ("ClassDeclaration",
-			      "InterfaceDeclaration",
-			      SEMICOLON));
+		    lr.oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
     }
 
     public void addAnnotationRules () {
@@ -425,10 +413,9 @@ public class Java8Grammar {
 	lr.addRule ("ElementValuePair",
 		    IDENTIFIER, EQUAL, "ElementValue");
 	lr.addRule ("ElementValue",
-		    lr.oneOf (
-			"ConditionalExpression",
-			"ElementValueArrayInitializer",
-			"Annotation"));
+		    lr.oneOf ("ConditionalExpression",
+			      "ElementValueArrayInitializer",
+			      "Annotation"));
 	lr.addRule ("ElementValueArrayInitializer",
 		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA), RIGHT_CURLY);
 	lr.addRule ("ElementValueList",
@@ -595,9 +582,7 @@ public class Java8Grammar {
 
     // Productions from §15 (Expressions)
     public void addExpressions () {
-	lr.addRule ("Primary",
-		    lr.oneOf ("PrimaryNoNewArray",
-			      "ArrayCreationExpression"));
+	lr.addRule ("Primary", lr.oneOf ("PrimaryNoNewArray", "ArrayCreationExpression"));
 	lr.addRule ("PrimaryNoNewArray",
 		    lr.oneOf ("Literal",
 			      lr.sequence ("ComplexName", lr.zeroOrMore (LEFT_BRACKET, RIGHT_BRACKET), DOT, CLASS),
@@ -661,13 +646,11 @@ public class Java8Grammar {
 			      lr.sequence (NEW, "ClassType", "DimExprs", lr.zeroOrOne ("Dims")),
 			      lr.sequence (NEW, "PrimitiveType", "Dims", "ArrayInitializer"),
 			      lr.sequence (NEW, "ClassType", "Dims", "ArrayInitializer")));
-	lr.addRule ("DimExprs",
-		    "DimExpr", lr.zeroOrMore ("DimExpr"));
+	lr.addRule ("DimExprs", "DimExpr", lr.zeroOrMore ("DimExpr"));
 	lr.addRule ("DimExpr",
 		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, "Expression", RIGHT_BRACKET);
 	lr.addRule ("ConstantExpression", "Expression");
-	lr.addRule ("Expression",
-		    lr.oneOf ("LambdaExpression", "AssignmentExpression"));
+	lr.addRule ("Expression", lr.oneOf ("LambdaExpression", "AssignmentExpression"));
 	lr.addRule ("LambdaExpression",
 		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "LambdaParameters"),
 					   ARROW, "LambdaBody")));
