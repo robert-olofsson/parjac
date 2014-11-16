@@ -332,13 +332,10 @@ public class Java8Grammar {
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
 	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
-		    lr.oneOf (lr.sequence (IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("UnannClassType", DOT, "Annotations",
-					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
+		    lr.zeroOrOne ("UnannClassType", DOT, "Annotations"),
+		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	lr.addRule ("UnannArrayType",
-		    lr.oneOf (lr.sequence ("NumericType", "Dims"),
-			      lr.sequence (BOOLEAN, "Dims"),
-			      lr.sequence ("UnannClassType", "Dims")));
+		    lr.oneOf ("NumericType", BOOLEAN, "UnannClassType"), "Dims");
     }
 
     // Productions from §6 Names
