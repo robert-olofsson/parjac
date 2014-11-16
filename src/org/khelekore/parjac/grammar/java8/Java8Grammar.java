@@ -184,11 +184,8 @@ public class Java8Grammar {
 	lr.addRule ("MethodDeclaration",
 		    lr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
 	lr.addRule ("MethodHeader",
-		    lr.oneOf (lr.sequence (lr.oneOf ("UnannType", VOID),
-					   "MethodDeclarator", lr.zeroOrOne ("Throws")),
-			      lr.sequence ("TypeParameters", lr.zeroOrMore ("Annotation"),
-					   "Result", "MethodDeclarator", lr.zeroOrOne ("Throws"))));
-	lr.addRule ("Result", lr.oneOf ("UnannType", VOID));
+		    lr.zeroOrOne ("TypeParameters", lr.zeroOrMore ("Annotation")),
+		    lr.oneOf ("UnannType", VOID), "MethodDeclarator", lr.zeroOrOne ("Throws"));
 	lr.addRule ("MethodDeclarator",
 		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
 		    lr.zeroOrOne ("Dims"));
