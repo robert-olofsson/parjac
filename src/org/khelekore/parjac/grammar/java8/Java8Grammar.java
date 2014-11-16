@@ -209,20 +209,10 @@ public class Java8Grammar {
 		    lr.zeroOrOne ("ExplicitConstructorInvocation"), lr.zeroOrOne ("BlockStatements"),
 		    RIGHT_CURLY);
 	lr.addRule ("ExplicitConstructorInvocation",
-		    lr.oneOf (lr.sequence (lr.zeroOrOne ("TypeArguments"), THIS,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence (lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence ("ComplexName", DOT,
-					   lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON),
-			      lr.sequence ("Primary", DOT,
-					   lr.zeroOrOne ("TypeArguments"), SUPER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   SEMICOLON)));
+		    lr.oneOf (lr.sequence (lr.zeroOrOne ("TypeArguments"), THIS),
+			      lr.sequence (lr.zeroOrOne (lr.oneOf ("ComplexName", "Primary"), DOT),
+					   lr.zeroOrOne ("TypeArguments"), SUPER)),
+		    LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS, SEMICOLON);
     }
 
     public void addFormalParameterList () {
@@ -341,8 +331,7 @@ public class Java8Grammar {
     // Productions from §6 Names
     public void addNameRules () {
 	lr.addRule ("ComplexName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("ComplexName", DOT, IDENTIFIER)));
+		    lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)));
     }
 
     // Productions from §7 (Packages)
