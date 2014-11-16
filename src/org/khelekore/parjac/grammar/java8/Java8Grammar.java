@@ -486,9 +486,7 @@ public class Java8Grammar {
 		    WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "StatementNoShortIf");
 	lr.addRule ("DoStatement",
 		    DO, "Statement", WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, SEMICOLON);
-	lr.addRule ("ForStatement",
-		    lr.oneOf ("BasicForStatement",
-			      "EnhancedForStatement"));
+	lr.addRule ("ForStatement", lr.oneOf ("BasicForStatement", "EnhancedForStatement"));
 	lr.addRule ("ForStatementNoShortIf",
 		    lr.oneOf ("BasicForStatementNoShortIf",
 			      "EnhancedForStatementNoShortIf"));
@@ -532,22 +530,17 @@ public class Java8Grammar {
 		    lr.oneOf (lr.sequence (TRY, "Block", "Catches"),
 			      lr.sequence (TRY, "Block", lr.zeroOrOne ("Catches"), "Finally"),
 			      "TryWithResourcesStatement"));
-	lr.addRule ("Catches",
-		    "CatchClause", lr.zeroOrMore ("CatchClause"));
-	lr.addRule ("CatchClause",
-		    CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
+	lr.addRule ("Catches", "CatchClause", lr.zeroOrMore ("CatchClause"));
+	lr.addRule ("CatchClause", CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
 	lr.addRule ("CatchFormalParameter",
 		    lr.zeroOrMore ("VariableModifier"), "CatchType", "VariableDeclaratorId");
-	lr.addRule ("CatchType",
-		    "UnannClassType", lr.zeroOrMore (OR, "ClassType"));
-	lr.addRule ("Finally",
-		    FINALLY, "Block");
+	lr.addRule ("CatchType", "UnannClassType", lr.zeroOrMore (OR, "ClassType"));
+	lr.addRule ("Finally", FINALLY, "Block");
 	lr.addRule ("TryWithResourcesStatement",
 		    TRY, "ResourceSpecification", "Block", lr.zeroOrOne ("Catches"), lr.zeroOrOne ("Finally"));
 	lr.addRule ("ResourceSpecification",
 		    LEFT_PARENTHESIS, "ResourceList", lr.zeroOrOne (SEMICOLON), RIGHT_PARENTHESIS);
-	lr.addRule ("ResourceList",
-		    "Resource", lr.zeroOrMore (SEMICOLON, "Resource"));
+	lr.addRule ("ResourceList", "Resource", lr.zeroOrMore (SEMICOLON, "Resource"));
 	lr.addRule ("Resource",
 		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
     }
