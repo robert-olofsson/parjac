@@ -561,12 +561,12 @@ public class Java8Grammar {
 			      "MethodInvocation",
 			      "MethodReference"));
 	lr.addRule ("ClassInstanceCreationExpression",
-		    lr.oneOf (lr.sequence (lr.zeroOrOne (lr.oneOf ("ComplexName", "Primary"), DOT),
-					   NEW, lr.zeroOrOne ("TypeArguments"),
-					   lr.zeroOrMore ("Annotation"), IDENTIFIER,
-					   lr.zeroOrOne ("TypeArgumentsOrDiamond"),
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-					   lr.zeroOrOne ("ClassBody"))));
+		    lr.sequence (lr.zeroOrOne (lr.oneOf ("ComplexName", "Primary"), DOT),
+				 NEW, lr.zeroOrOne ("TypeArguments"),
+				 lr.zeroOrMore ("Annotation"), IDENTIFIER,
+				 lr.zeroOrOne ("TypeArgumentsOrDiamond"),
+				 LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+				 lr.zeroOrOne ("ClassBody")));
 	lr.addRule ("TypeArgumentsOrDiamond",
 		    lr.oneOf ("TypeArguments", lr.sequence (LT, GT)));
 	lr.addRule ("FieldAccess",
