@@ -379,13 +379,17 @@ public class LRParser {
 	}
 
 	@Override public void split (List<List<SimplePart>> parts) {
-	    parts.clear (); // TODO: currently only handled at beginning
-	    for (ComplexPart oop : this.parts) {
-		List<List<SimplePart>> subRules = new ArrayList<> ();
-		subRules.add (new ArrayList<> ());
-		oop.split (subRules);
-		parts.addAll (subRules);
+	    List<List<SimplePart>> fullSet = new ArrayList<> ();
+	    for (List<SimplePart> ls : parts) {
+		for (ComplexPart cp : this.parts) {
+		    List<List<SimplePart>> subRules = new ArrayList<> ();
+		    subRules.add (new ArrayList<> (ls));
+		    cp.split (subRules);
+		    fullSet.addAll (subRules);
+		}
 	    }
+	    parts.clear ();
+	    parts.addAll (fullSet);
 	}
     }
 
