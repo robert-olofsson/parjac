@@ -36,6 +36,9 @@ public class Java8Grammar {
 
     private Set<Object> ANNOTATION_TYPE_ELEMENT_MODIFIER =
 	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT));
+
+    private Set<Object> VARIABLE_MODIFIER =
+	new HashSet<> (Arrays.asList ("Annotations", FINAL));
     */
 
     public Java8Grammar (boolean debug) {
@@ -73,29 +76,19 @@ public class Java8Grammar {
     public void addLiteralRules () {
 	// Productions from §3 (Lexical Structure)
 	lr.addRule ("Literal",
-		    lr.oneOf ("IntegerLiteral",
-			      "FloatingPointLiteral",
-			      "BooleanLiteral",
+		    lr.oneOf (INT_LITERAL, LONG_LITERAL,
+			      FLOAT_LITERAL, DOUBLE_LITERAL,
+			      TRUE, FALSE,
 			      CHARACTER_LITERAL,
 			      STRING_LITERAL,
 			      NULL));
-	lr.addRule ("IntegerLiteral", INT_LITERAL);
-	lr.addRule ("IntegerLiteral", LONG_LITERAL);
-	lr.addRule ("FloatingPointLiteral", FLOAT_LITERAL);
-	lr.addRule ("FloatingPointLiteral", DOUBLE_LITERAL);
-	lr.addRule ("BooleanLiteral", TRUE);
-	lr.addRule ("BooleanLiteral", FALSE);
-	// End of §3
     }
 
     public void addTypeRules () {
 	// Productions from §4 (Types, Values, and Variables)
 	lr.addRule ("Type", lr.oneOf ("PrimitiveType", "ReferenceType"));
-	lr.addRule ("PrimitiveType",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"), "NumericType"),
-			      lr.sequence (lr.zeroOrMore ("Annotation"), BOOLEAN)));
-	lr.addRule ("NumericType",
-		    lr.oneOf (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE));
+	lr.addRule ("PrimitiveType", lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN));
+	lr.addRule ("NumericType", lr.oneOf (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE));
 	// removed TypeVariable, part of ClassOrInterfaceType
 	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
 	lr.addRule ("ClassType",
@@ -118,9 +111,7 @@ public class Java8Grammar {
 	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
 	lr.addRule ("TypeArgumentList",
 		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
-	lr.addRule ("TypeArgument",
-		    lr.oneOf ("ReferenceType",
-			      "Wildcard"));
+	lr.addRule ("TypeArgument", lr.oneOf ("ReferenceType", "Wildcard"));
 	lr.addRule ("Wildcard",
 		    lr.zeroOrMore ("Annotation"), QUESTIONMARK, lr.zeroOrOne ("WildcardBounds"));
 	lr.addRule ("WildcardBounds",
@@ -601,8 +592,7 @@ public class Java8Grammar {
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
 					   lr.zeroOrOne ("ClassBody"))));
 	lr.addRule ("TypeArgumentsOrDiamond",
-		    lr.oneOf ("TypeArguments",
-			      lr.sequence (LT, GT)));
+		    lr.oneOf ("TypeArguments", lr.sequence (LT, GT)));
 	lr.addRule ("FieldAccess",
 		    lr.oneOf (lr.sequence ("Primary", DOT, IDENTIFIER),
 			      lr.sequence (SUPER, DOT, IDENTIFIER),
@@ -746,7 +736,9 @@ public class Java8Grammar {
 	lr.addRule ("PostDecrementExpression",
 		    "PostfixExpression", DECREMENT);
 	lr.addRule ("CastExpression",
-		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS, "PrimitiveType", RIGHT_PARENTHESIS,
+		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS,
+					   lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN),
+					   RIGHT_PARENTHESIS,
 					   "UnaryExpression"),
 			      lr.sequence (LEFT_PARENTHESIS,
 					   "ReferenceType", lr.zeroOrMore ("AdditionalBound"),
