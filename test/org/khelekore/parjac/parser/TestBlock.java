@@ -2,7 +2,6 @@ package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
-import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -77,8 +76,6 @@ public class TestBlock {
 			     "case 2: a = bar; break;\n" +
 			     "case 3: a = baz; break;\n" +
 			     "}}");
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{ switch (foo) {\n" +
 			     "case 1: a = b; break;\n" +
 			     "case 2: b = 2; break;\n" +
@@ -88,7 +85,6 @@ public class TestBlock {
 			     "case B: case C: return 2;\n" +
 			     "default: return 3;\n" +
 			     "}}");
-	*/
     }
 
     @Test

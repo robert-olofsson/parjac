@@ -300,7 +300,7 @@ public class Java8Grammar {
 	lr.addRule ("ConstantDeclaration",
 		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
 	lr.addRule ("InterfaceMethodDeclaration",
-		    lr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
+		    lr.zeroOrMore (lr.oneOf ("Modifier", DEFAULT)), "MethodHeader", "MethodBody");
 	lr.addRule ("AnnotationTypeDeclaration",
 		    lr.zeroOrMore ("Modifier"),
 		    AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
@@ -747,6 +747,6 @@ public class Java8Grammar {
 		    lr.oneOf ("Annotation",
 			      PUBLIC, PROTECTED, PRIVATE,
 			      ABSTRACT, STATIC, FINAL, STRICTFP, TRANSIENT,
-			      VOLATILE, SYNCHRONIZED, NATIVE, DEFAULT));
+			      VOLATILE, SYNCHRONIZED, NATIVE));
     }
 }
