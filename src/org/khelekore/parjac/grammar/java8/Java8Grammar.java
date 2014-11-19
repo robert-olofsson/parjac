@@ -218,14 +218,15 @@ public class Java8Grammar {
 		    lr.oneOf (lr.sequence ("ReceiverParameter", "FormalParameterListRest"),
 			      lr.sequence ("FormalParameter", "FormalParameterListRest"),
 			      "LastFormalParameter"));
-	lr.addRule ("FormalParameter",
-		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId");
-	lr.addRule ("FormalParameter",
-		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
-	lr.addRule ("VariableModifier", lr.oneOf ("Annotations", FINAL));
+	lr.addRule ("FormalParameter", lr.zeroOrOne ("VariableModifiers"), "UnannType", "VariableDeclaratorId");
+	lr.addRule ("FormalParameter", lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
+	lr.addRule ("VariableModifiers",
+		    lr.zeroOrMore ("Annotation"), lr.zeroOrOne (FINAL), lr.zeroOrMore ("Annotation"));
 	lr.addRule ("LastFormalParameter",
-		    lr.oneOf (lr.zeroOrMore ("VariableModifier"), lr.zeroOrMore ("Annotation")),
-		    "UnannType", lr.zeroOrMore ("Annotation"),
+		    lr.zeroOrOne ("VariableModifiers"), "UnannType", lr.zeroOrMore ("Annotation"),
+		    ELLIPSIS, "VariableDeclaratorId");
+	lr.addRule ("LastFormalParameter",
+		    lr.zeroOrMore ("Annotation"), "UnannType", lr.zeroOrMore ("Annotation"),
 		    ELLIPSIS, "VariableDeclaratorId");
 	lr.addRule ("ReceiverParameter",
 		    lr.zeroOrMore ("Annotation"), "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
@@ -414,7 +415,9 @@ public class Java8Grammar {
 			      "Statement"));
 	lr.addRule ("LocalVariableDeclarationStatement", "LocalVariableDeclaration", SEMICOLON);
 	lr.addRule ("LocalVariableDeclaration",
-		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorList");
+		    lr.zeroOrOne ("VariableModifiers"), "UnannType", "VariableDeclaratorList");
+	lr.addRule ("LocalVariableDeclaration",
+		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorList");
 	lr.addRule ("Statement",
 		    lr.oneOf ("StatementWithoutTrailingSubstatement",
 			      "LabeledStatement",
@@ -504,11 +507,11 @@ public class Java8Grammar {
 	lr.addRule ("StatementExpressionList",
 		    "StatementExpression", lr.zeroOrMore (COMMA, "StatementExpression"));
 	lr.addRule ("EnhancedForStatement",
-		    FOR, LEFT_PARENTHESIS, lr.zeroOrMore ("VariableModifier"),
+		    FOR, LEFT_PARENTHESIS, "VariableModifiers",
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "Statement");
 	lr.addRule ("EnhancedForStatementNoShortIf",
-		    FOR, LEFT_PARENTHESIS, lr.zeroOrMore ("VariableModifier"),
+		    FOR, LEFT_PARENTHESIS, "VariableModifiers",
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "StatementNoShortIf");
 	lr.addRule ("BreakStatement",
@@ -528,7 +531,7 @@ public class Java8Grammar {
 	lr.addRule ("Catches", "CatchClause", lr.zeroOrMore ("CatchClause"));
 	lr.addRule ("CatchClause", CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
 	lr.addRule ("CatchFormalParameter",
-		    lr.zeroOrMore ("VariableModifier"), "CatchType", "VariableDeclaratorId");
+		    "VariableModifiers", "CatchType", "VariableDeclaratorId");
 	lr.addRule ("CatchType", "UnannClassType", lr.zeroOrMore (OR, "ClassType"));
 	lr.addRule ("Finally", FINALLY, "Block");
 	lr.addRule ("TryWithResourcesStatement",
@@ -537,7 +540,7 @@ public class Java8Grammar {
 		    LEFT_PARENTHESIS, "ResourceList", lr.zeroOrOne (SEMICOLON), RIGHT_PARENTHESIS);
 	lr.addRule ("ResourceList", "Resource", lr.zeroOrMore (SEMICOLON, "Resource"));
 	lr.addRule ("Resource",
-		    lr.zeroOrMore ("VariableModifier"), "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
+		    "VariableModifiers", "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
     }
 
     // Productions from §15 (Expressions)
