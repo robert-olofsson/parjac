@@ -96,8 +96,11 @@ public class TestClassDeclaration {
 	testSuccessfulParse ("interface Foo { public static final int FOO; }");
 	testSuccessfulParse ("interface Foo { void foo (); }");
 	testSuccessfulParse ("interface Foo { default void foo () { } }");
+	testSuccessfulParse ("interface Foo { public default void foo () { } }");
+	testSuccessfulParse ("interface Foo { public default strictfp void foo () { } }");
 	testSuccessfulParse ("interface Foo { public void foo (); }");
 	testSuccessfulParse ("interface Foo { public static final int FOO; public void foo (); }");
+	testSuccessfulParse ("interface Foo { public strictfp default void foo () { } }");
     }
 
     @Test

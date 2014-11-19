@@ -22,7 +22,7 @@ public class Trivial {
     private final LRParser lr;
 
     public Trivial () {
-	lr = new LRParser (false);
+	lr = new LRParser (true);
 	addRules ();
 	lr.build ();
     }
@@ -45,6 +45,11 @@ public class Trivial {
     }
 
     private void addRules () {
+	lr.addRule ("Goal", "E");
+	lr.addRule ("E", lr.zeroOrMore ("M"), lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("M"),
+		    lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("M"), DOT);
+	lr.addRule ("M", IDENTIFIER);
+	/*
 	lr.addRule ("Goal", "CompilationUnit");
 	lr.addRule ("CompilationUnit",
 		    lr.zeroOrMore ("ImportDeclaration"));
@@ -64,7 +69,7 @@ public class Trivial {
 	lr.addRule ("TypeName",
 		    lr.oneOf (IDENTIFIER,
 			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
-
+	*/
 	/*
 	lr.addRule ("Goal", "E");
 	lr.addRule ("E", "E", PLUS, "T");

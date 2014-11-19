@@ -290,7 +290,8 @@ public class Java8Grammar {
 	lr.addRule ("ConstantDeclaration",
 		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
 	lr.addRule ("InterfaceMethodDeclaration",
-		    lr.zeroOrMore (lr.oneOf ("Modifier", DEFAULT)), "MethodHeader", "MethodBody");
+		    lr.zeroOrMore ("Modifier"), lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("Modifier"),
+		    "MethodHeader", "MethodBody");
 	lr.addRule ("AnnotationTypeDeclaration",
 		    lr.zeroOrMore ("Modifier"),
 		    AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
@@ -298,7 +299,6 @@ public class Java8Grammar {
 		    LEFT_CURLY,
 		    lr.zeroOrMore ("AnnotationTypeMemberDeclaration"),
 		    RIGHT_CURLY);
-
 	lr.addRule ("AnnotationTypeMemberDeclaration",
 		    lr.oneOf ("AnnotationTypeElementDeclaration",
 			      "ConstantDeclaration",

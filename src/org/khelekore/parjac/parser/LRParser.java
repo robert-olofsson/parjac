@@ -62,6 +62,16 @@ public class LRParser {
     }
 
     private void addRule (String name, List<SimplePart> parts) {
+	// Remove duplicate entries (ZOM_x ZOM_x).
+	Iterator<SimplePart> i = parts.iterator ();
+	SimplePart p = null;
+	while (i.hasNext ()) {
+	    SimplePart c = i.next ();
+	    if (c.equals (p))
+		i.remove ();
+	    else
+		p = c;
+	}
 	Rule r = new Rule (name, rules.size (), parts);
 	// Do not add duplicate rules, they cause conflicts
 	if (ruleSet.contains (r))
