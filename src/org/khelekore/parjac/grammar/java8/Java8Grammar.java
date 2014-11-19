@@ -92,9 +92,7 @@ public class Java8Grammar {
 	// removed TypeVariable, part of ClassOrInterfaceType
 	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
 	lr.addRule ("ClassType",
-		    lr.oneOf (lr.sequence ("Annotations", IDENTIFIER, lr.zeroOrOne ("TypeArguments")),
-			      lr.sequence ("ClassType", DOT, "Annotations",
-					   IDENTIFIER, lr.zeroOrOne ("TypeArguments"))));
+		    lr.zeroOrOne ("ClassType", DOT),"Annotations", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
@@ -226,12 +224,9 @@ public class Java8Grammar {
 		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
 	lr.addRule ("VariableModifier", lr.oneOf ("Annotations", FINAL));
 	lr.addRule ("LastFormalParameter",
-		    lr.oneOf (lr.sequence (lr.zeroOrMore ("VariableModifier"),
-					   "UnannType", lr.zeroOrMore ("Annotation"),
-					   ELLIPSIS, "VariableDeclaratorId"),
-			      lr.sequence (lr.zeroOrMore ("Annotation"),
-					   "UnannType", lr.zeroOrMore ("Annotation"),
-					   ELLIPSIS, "VariableDeclaratorId")));
+		    lr.oneOf (lr.zeroOrMore ("VariableModifier"), lr.zeroOrMore ("Annotation")),
+		    "UnannType", lr.zeroOrMore ("Annotation"),
+		    ELLIPSIS, "VariableDeclaratorId");
 	lr.addRule ("ReceiverParameter",
 		    lr.zeroOrMore ("Annotation"), "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
 	lr.addRule ("FormalParameterListRest",
