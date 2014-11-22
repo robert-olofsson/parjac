@@ -92,7 +92,8 @@ public class Java8Grammar {
 	// removed TypeVariable, part of ClassOrInterfaceType
 	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
 	lr.addRule ("ClassType",
-		    lr.zeroOrOne ("ClassType", DOT),"Annotations", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
+		    lr.zeroOrOne ("ClassType", DOT), lr.zeroOrMore ("Annotation"),
+		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
@@ -220,8 +221,7 @@ public class Java8Grammar {
 			      "LastFormalParameter"));
 	lr.addRule ("FormalParameter", lr.zeroOrOne ("VariableModifiers"), "UnannType", "VariableDeclaratorId");
 	lr.addRule ("FormalParameter", lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId");
-	lr.addRule ("VariableModifiers",
-		    lr.zeroOrMore ("Annotation"), lr.zeroOrOne (FINAL), lr.zeroOrMore ("Annotation"));
+	lr.addRule ("VariableModifiers", lr.zeroOrMore ("Annotation"), FINAL, lr.zeroOrMore ("Annotation"));
 	lr.addRule ("LastFormalParameter",
 		    lr.zeroOrOne ("VariableModifiers"), "UnannType", lr.zeroOrMore ("Annotation"),
 		    ELLIPSIS, "VariableDeclaratorId");
@@ -318,7 +318,7 @@ public class Java8Grammar {
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
 	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
-		    lr.zeroOrOne ("UnannClassType", DOT, "Annotations"),
+		    lr.zeroOrOne ("UnannClassType", DOT, lr.zeroOrMore ("Annotation")),
 		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	lr.addRule ("UnannArrayType",
 		    lr.oneOf ("NumericType", BOOLEAN, "UnannClassType"), "Dims");
@@ -371,7 +371,6 @@ public class Java8Grammar {
     }
 
     public void addAnnotationRules () {
-	lr.addRule ("Annotations", lr.zeroOrMore ("Annotation"));
 	lr.addRule ("Annotation",
 		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
 	lr.addRule ("NormalAnnotation",
@@ -381,15 +380,11 @@ public class Java8Grammar {
 	lr.addRule ("ElementValuePair",
 		    IDENTIFIER, EQUAL, "ElementValue");
 	lr.addRule ("ElementValue",
-		    lr.oneOf ("ConditionalExpression",
-			      "ElementValueArrayInitializer",
-			      "Annotation"));
+		    lr.oneOf ("ConditionalExpression", "ElementValueArrayInitializer", "Annotation"));
 	lr.addRule ("ElementValueArrayInitializer",
 		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA), RIGHT_CURLY);
-	lr.addRule ("ElementValueList",
-		    "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
-	lr.addRule ("MarkerAnnotation",
-		    AT, "ComplexName");
+	lr.addRule ("ElementValueList", "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
+	lr.addRule ("MarkerAnnotation", AT, "ComplexName");
 	lr.addRule ("SingleElementAnnotation",
 		    AT, "ComplexName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
     }
@@ -531,7 +526,9 @@ public class Java8Grammar {
 	lr.addRule ("Catches", "CatchClause", lr.zeroOrMore ("CatchClause"));
 	lr.addRule ("CatchClause", CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
 	lr.addRule ("CatchFormalParameter",
-		    "VariableModifiers", "CatchType", "VariableDeclaratorId");
+		    lr.zeroOrOne ("VariableModifiers"), "CatchType", "VariableDeclaratorId");
+	lr.addRule ("CatchFormalParameter",
+		    lr.zeroOrMore ("Annotation"), "CatchType", "VariableDeclaratorId");
 	lr.addRule ("CatchType", "UnannClassType", lr.zeroOrMore (OR, "ClassType"));
 	lr.addRule ("Finally", FINALLY, "Block");
 	lr.addRule ("TryWithResourcesStatement",
@@ -540,7 +537,9 @@ public class Java8Grammar {
 		    LEFT_PARENTHESIS, "ResourceList", lr.zeroOrOne (SEMICOLON), RIGHT_PARENTHESIS);
 	lr.addRule ("ResourceList", "Resource", lr.zeroOrMore (SEMICOLON, "Resource"));
 	lr.addRule ("Resource",
-		    "VariableModifiers", "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
+		    lr.zeroOrOne ("VariableModifiers"), "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
+	lr.addRule ("Resource",
+		    lr.zeroOrMore ("Annotation"), "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
     }
 
     // Productions from §15 (Expressions)
