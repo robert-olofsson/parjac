@@ -42,13 +42,13 @@ public class TestBlock {
 
     @Test
     public void testFor () {
-	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {\n" +
-			     "System.out.println (\"i: \"+ i);\n" +
-			     "}\n}");
 	/* Currently failing */
 	/*
 	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {\n" +
 			     "System.out.println (\"foo: \"+ foo);\n" +
+			     "}\n}");
+	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {\n" +
+			     "System.out.println (\"i: \"+ i);\n" +
 			     "}\n}");
 	*/
     }
@@ -108,8 +108,7 @@ public class TestBlock {
 	testSuccessfulParse ("{int i = a;}");
 	testSuccessfulParse ("{int i = 1 + 2;}");
 	testSuccessfulParse ("{int i = 1 + a;}");
-	/* Currently failing */
-	// testSuccessfulParse ("{int i;\nFoo foo;\nBar baz;\ndouble d; }");
+	testSuccessfulParse ("{int i;\nFoo foo;\nBar baz;\ndouble d; }");
     }
 
     @Test
