@@ -93,7 +93,8 @@ public class Java8Grammar {
 	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
 	lr.addRule ("ClassType",
 		    lr.zeroOrOne ("ClassType", DOT), lr.zeroOrMore ("Annotation"),
-		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
+		    "TypedName");
+	lr.addRule ("TypedName", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
@@ -317,7 +318,7 @@ public class Java8Grammar {
 	// UnannTypeVariable: IDENTIFIER
 	lr.addRule ("UnannClassType",
 		    lr.zeroOrOne ("UnannClassType", DOT, lr.zeroOrMore ("Annotation")),
-		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
+		    "TypedName");
 	lr.addRule ("UnannArrayType",
 		    lr.oneOf ("NumericType", BOOLEAN, "UnannClassType"), "Dims");
     }
