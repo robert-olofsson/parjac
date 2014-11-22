@@ -502,11 +502,19 @@ public class Java8Grammar {
 	lr.addRule ("StatementExpressionList",
 		    "StatementExpression", lr.zeroOrMore (COMMA, "StatementExpression"));
 	lr.addRule ("EnhancedForStatement",
-		    FOR, LEFT_PARENTHESIS, "VariableModifiers",
+		    FOR, LEFT_PARENTHESIS, lr.zeroOrOne ("VariableModifiers"),
+		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
+		    "Statement");
+	lr.addRule ("EnhancedForStatement",
+		    FOR, LEFT_PARENTHESIS, lr.zeroOrMore ("Annotation"),
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "Statement");
 	lr.addRule ("EnhancedForStatementNoShortIf",
-		    FOR, LEFT_PARENTHESIS, "VariableModifiers",
+		    FOR, LEFT_PARENTHESIS, lr.zeroOrOne ("VariableModifiers"),
+		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
+		    "StatementNoShortIf");
+	lr.addRule ("EnhancedForStatementNoShortIf",
+		    FOR, LEFT_PARENTHESIS, lr.zeroOrMore ("Annotation"),
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "StatementNoShortIf");
 	lr.addRule ("BreakStatement",
