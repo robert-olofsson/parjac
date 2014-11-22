@@ -569,36 +569,41 @@ public class Java8Grammar {
 	lr.addRule ("FieldAccess",
 		    lr.oneOf (lr.sequence ("Primary", DOT, IDENTIFIER),
 			      lr.sequence (SUPER, DOT, IDENTIFIER),
-			      lr.sequence ("ComplexName", DOT, SUPER, DOT, IDENTIFIER)));
+			      lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOT, SUPER, DOT, IDENTIFIER)));
 	lr.addRule ("ArrayAccess",
-		    lr.oneOf (lr.sequence ("ComplexName", LEFT_BRACKET, "Expression", RIGHT_BRACKET),
+		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   LEFT_BRACKET, "Expression", RIGHT_BRACKET),
 			      lr.sequence ("PrimaryNoNewArray", LEFT_BRACKET, "Expression", RIGHT_BRACKET)));
 	lr.addRule ("MethodInvocation",
 		    lr.oneOf (lr.sequence (IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("ComplexName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("ComplexName", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
 			      lr.sequence ("Primary", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
 			      lr.sequence (SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("ComplexName", DOT, SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+			      lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOT, SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS)));
 	lr.addRule ("ArgumentList",
 		    "Expression", lr.zeroOrMore (COMMA, "Expression"));
 	lr.addRule ("MethodReference",
-		    lr.oneOf (lr.sequence ("ComplexName", DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOUBLE_COLON, lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("ReferenceType", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("Primary", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence (SUPER, DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("ComplexName", DOT, SUPER, DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      lr.sequence (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   DOT, SUPER, DOUBLE_COLON, lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
 			      lr.sequence ("ClassType", DOUBLE_COLON,
 					   lr.zeroOrOne ("TypeArguments"), NEW),
 			      lr.sequence ("ArrayType", DOUBLE_COLON, NEW)));
@@ -625,7 +630,8 @@ public class Java8Grammar {
 	lr.addRule ("LambdaBody", lr.oneOf ("Expression", "Block"));
 	lr.addRule ("AssignmentExpression", lr.oneOf ("ConditionalExpression", "Assignment"));
 	lr.addRule ("Assignment",
-		    lr.sequence (lr.oneOf ("ComplexName", "FieldAccess", "ArrayAccess"),
+		    lr.sequence (lr.oneOf (lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
+					   "FieldAccess", "ArrayAccess"),
 				 "AssignmentOperator", "Expression"));
 	lr.addRule ("AssignmentOperator",
 		    lr.oneOf (EQUAL,
@@ -701,7 +707,7 @@ public class Java8Grammar {
 			      "CastExpression"));
 	lr.addRule ("PostfixExpression",
 		    lr.oneOf ("Primary",
-			      "ComplexName",
+			      lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)),
 			      "PostIncrementExpression",
 			      "PostDecrementExpression"));
 	lr.addRule ("PostIncrementExpression",
