@@ -149,6 +149,15 @@ public class TestBlock {
 	testSuccessfulParse ("{ assert foo : \"lorem...\"; }");
     }
 
+    @Test
+    public void testLambda () {
+	testSuccessfulParse("{ btn.foo(e -> System.out.println(\"Hello World!\")); }");
+	testSuccessfulParse("{ btn.foo((k, v) -> k - v); }");
+	testSuccessfulParse("{ IntegerMath addition = (a, b) -> a + b; }");
+	testSuccessfulParse("{ String s = invoke(() -> \"done\"); }");
+	testSuccessfulParse("{ btn.foo((int i) -> i + 2); }");
+    }
+
     private void testSuccessfulParse (String s) {
 	TestParseHelper.parse (lr, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
