@@ -41,11 +41,22 @@ public class TestBlock {
     }
 
     @Test
+    public void testMethodCall () {
+	testSuccessfulParse ("{ foo(); }");
+	testSuccessfulParse ("{ int a = foo (); }");
+	testSuccessfulParse ("{ a.foo (); }");
+	testSuccessfulParse ("{ a.b.foo (); }");
+    }
+
+    @Test
     public void testFor () {
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {\n" +
 			     "System.out.println (\"foo: \"+ foo);\n" +
+			     "}\n}");
+	/* Currently failing */
+	/*
+	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {\n" +
+			     "System.out.println (\"i: \"+ i);\n" +
 			     "}\n}");
 	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {\n" +
 			     "System.out.println (\"i: \"+ i);\n" +
