@@ -158,6 +158,15 @@ public class TestBlock {
 	testSuccessfulParse("{ btn.foo((int i) -> i + 2); }");
     }
 
+    @Test
+    public void testCast () {
+	testSuccessfulParse ("{ int i = (int)j; }");
+	/* Currently failing */
+	/*
+	testSuccessfulParse ("{ Foo foo = (Foo)bar; }");
+	*/
+    }
+
     private void testSuccessfulParse (String s) {
 	TestParseHelper.parse (lr, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
