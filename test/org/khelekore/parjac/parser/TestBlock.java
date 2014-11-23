@@ -168,9 +168,9 @@ public class TestBlock {
     @Test
     public void testCast () {
 	testSuccessfulParse ("{ int i = (int)j; }");
+	testSuccessfulParse ("{ Foo foo = (Foo)bar; }");
 	/* Currently failing */
 	/*
-	testSuccessfulParse ("{ Foo foo = (Foo)bar; }");
 	testSuccessfulParse ("{ foo.Bar foo = (foo.Bar)bar; }");
 	testSuccessfulParse ("{ foo.bar.Baz foo = (foo.bar.Baz)bar; }");
 	*/

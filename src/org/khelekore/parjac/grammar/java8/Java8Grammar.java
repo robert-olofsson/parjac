@@ -95,6 +95,9 @@ public class Java8Grammar {
 		    lr.zeroOrOne ("ClassType", DOT), lr.zeroOrMore ("Annotation"),
 		    "TypedName");
 	lr.addRule ("TypedName", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
+	lr.addRule ("NonTrivialClassType",
+		    "ClassType", DOT, lr.zeroOrMore ("Annotation"),
+		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
@@ -309,9 +312,7 @@ public class Java8Grammar {
     }
 
     public void addUnannTypes () {
-	lr.addRule ("UnannType", lr.oneOf ("NumericType", "UnannReferenceType"));
-	/* UnannClassOrInterfaceType has been removed */
-	lr.addRule ("UnannReferenceType", lr.oneOf ("UnannClassType", "UnannArrayType"));
+	lr.addRule ("UnannType", lr.oneOf ("NumericType", "UnannClassType", "UnannArrayType"));
 
 	// really lr.oneOf ("UnannClassType", "UnannInterfaceType");
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
@@ -345,9 +346,8 @@ public class Java8Grammar {
 
     public void addPackageRules () {
 	lr.addRule ("PackageDeclaration",
-		    lr.zeroOrMore ("PackageModifier"), PACKAGE, IDENTIFIER,
+		    lr.zeroOrMore ("Annotation"), PACKAGE, IDENTIFIER,
 		    lr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
-	lr.addRule ("PackageModifier", "Annotation");
     }
 
     public void addImportRules () {
@@ -722,10 +722,12 @@ public class Java8Grammar {
 					   RIGHT_PARENTHESIS,
 					   "UnaryExpression"),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   "ReferenceType", lr.zeroOrMore ("AdditionalBound"),
+					   lr.oneOf (IDENTIFIER, "NonTrivialClassType"),
+					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS, "UnaryExpressionNotPlusMinus"),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   "ReferenceType", lr.zeroOrMore ("AdditionalBound"),
+					   lr.oneOf (IDENTIFIER, "NonTrivialClassType"),
+					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS, "LambdaExpression")));
     }
 
