@@ -435,6 +435,7 @@ public class LRParser {
 	    addGoTo (itemSets, queue, s);
 	}
 	debug ("Adding reducde and accept");
+	int reduceConflictCount = 0;
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
 	    ItemSet s = me.getKey ();
 	    Integer sr = me.getValue ();
@@ -463,10 +464,10 @@ public class LRParser {
 			}
 		    }
 		    if (reduceReduceConflicts != null) {
-			System.out.println ("Got a reduce reduce conflict: " +
-					    "row: " + row.getId () +
-					    ", complete items: " + s.getItemsWithDotLast () +
-					    ", lookahead tokens: " + reduceReduceConflicts);
+			System.out.format ("%4d: Got a reduce conflict: %4d, " +
+					   "complete items: %s, lookahead tokens: %s\n",
+					   ++reduceConflictCount, row.getId (),
+					   s.getItemsWithDotLast (), reduceReduceConflicts);
 		    }
 		}
 	    }
@@ -492,6 +493,11 @@ public class LRParser {
 	    sb.put (i.advance (), me.getValue ());
 	}
 	StateRow sr = table.get (itemSets.get (s));
+	/* Can be usefule when debugging */
+	/*
+	if (debug)
+	    debug (sr.getId () + ": " + s);
+	*/
 	for (Map.Entry<SimplePart, Map<Item, EnumSet<Token>>> me : sp2sb.entrySet ()) {
 	    SimplePart sp = me.getKey ();
 	    ItemSet isb = new ItemSet (me.getValue ());
