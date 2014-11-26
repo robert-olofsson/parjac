@@ -465,9 +465,11 @@ public class LRParser {
 		    }
 		    if (reduceReduceConflicts != null) {
 			System.out.format ("%4d: Got a reduce conflict: %4d, " +
-					   "complete items: %s, lookahead tokens: %s\n",
+					   "complete items: %s, lookahead tokens: %s, " +
+					   "row id: %d\n",
 					   ++reduceConflictCount, row.getId (),
-					   s.getItemsWithDotLast (), reduceReduceConflicts);
+					   s.getItemsWithDotLast (), reduceReduceConflicts,
+					   sr);
 		    }
 		}
 	    }
@@ -509,6 +511,10 @@ public class LRParser {
 		table.addState (new StateRow (i));
 		queue.add (nextState);
 	    }
+	    /*
+	    if (debug)
+		debug (sp + " -> " + i);
+	    */
 	    sr.addAction (sp.getId (), Action.createShift (i));
 	}
     }
