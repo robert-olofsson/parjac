@@ -163,6 +163,7 @@ public class TestBlock {
 	testSuccessfulParse("{ IntegerMath addition = (a, b) -> a + b; }");
 	testSuccessfulParse("{ String s = invoke(() -> \"done\"); }");
 	testSuccessfulParse("{ btn.foo((int i) -> i + 2); }");
+	testSuccessfulParse("{ Consumer<Integer>  c = (int x) -> { System.out.println(x); }; }");
     }
 
     @Test
@@ -173,6 +174,17 @@ public class TestBlock {
 	testSuccessfulParse ("{ Baz foo = (foo.bar.Baz)bar; }");
 	testSuccessfulParse ("{ foo = (Foo & bar.Baz)bar; }");
 	testSuccessfulParse ("{ foo = (foo.Bar & Baz)bar; }");
+	testSuccessfulParse ("{ foo = (foo.Bar)bar; }");
+	testSuccessfulParse ("{ Foo<T> foo = (Foo<T>)bar; }");
+	testSuccessfulParse ("{ Bar<T> foo = (foo.Bar<T>)bar; }");
+	testSuccessfulParse ("{ Baz<T> foo = (foo.bar.Baz<T>)bar; }");
+	testSuccessfulParse ("{ foo = (Foo<T> & Bar<T>)bar; }");
+	/* Currently failing */
+	/*
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>)bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
+	*/
     }
 
     private void testSuccessfulParse (String s) {

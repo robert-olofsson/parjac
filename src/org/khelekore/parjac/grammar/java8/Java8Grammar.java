@@ -719,16 +719,14 @@ public class Java8Grammar {
 	lr.addRule ("CastExpression",
 		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS,
 					   lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN),
+					   RIGHT_PARENTHESIS, "UnaryExpression"),
+			      lr.sequence (LEFT_PARENTHESIS,
+					   lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
+								  lr.zeroOrOne ("TypeArguments")),
+						     "NonTrivialClassType"),
+					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS,
-					   "UnaryExpression"),
-			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (IDENTIFIER, "NonTrivialClassType", "MultiName"),
-					   lr.zeroOrMore ("AdditionalBound"),
-					   RIGHT_PARENTHESIS, "UnaryExpressionNotPlusMinus"),
-			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (IDENTIFIER, "NonTrivialClassType", "MultiName"),
-					   lr.zeroOrMore ("AdditionalBound"),
-					   RIGHT_PARENTHESIS, "LambdaExpression")));
+					   lr.oneOf ("UnaryExpressionNotPlusMinus", "LambdaExpression"))));
     }
 
     public void addModifiers () {
