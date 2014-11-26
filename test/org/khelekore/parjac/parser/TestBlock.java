@@ -184,6 +184,10 @@ public class TestBlock {
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
+	testSuccessfulParse ("{ foo = (int[])bar; }");
+	testSuccessfulParse ("{ foo = (int[][])bar; }");
+	testSuccessfulParse ("{ foo = (Foo[])bar; }");
+	testSuccessfulParse ("{ foo = (foo.Bar[])bar; }");
 	*/
     }
 
