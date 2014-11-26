@@ -97,7 +97,7 @@ public class Java8Grammar {
 	lr.addRule ("TypedName", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
 	lr.addRule ("NonTrivialClassType",
 		    "ClassType", DOT, lr.zeroOrMore ("Annotation"),
-		    IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
+		    "TypedName");
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
@@ -723,7 +723,8 @@ public class Java8Grammar {
 			      lr.sequence (LEFT_PARENTHESIS,
 					   lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
 								  lr.zeroOrOne ("TypeArguments")),
-						     "NonTrivialClassType"),
+						     "NonTrivialClassType",
+						     "ArrayType"),
 					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS,
 					   lr.oneOf ("UnaryExpressionNotPlusMinus", "LambdaExpression"))));
