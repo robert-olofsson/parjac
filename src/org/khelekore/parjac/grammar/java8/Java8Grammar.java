@@ -722,11 +722,11 @@ public class Java8Grammar {
 					   RIGHT_PARENTHESIS,
 					   "UnaryExpression"),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (IDENTIFIER, "NonTrivialClassType"),
+					   lr.oneOf (IDENTIFIER, "NonTrivialClassType", "MultiName"),
 					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS, "UnaryExpressionNotPlusMinus"),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (IDENTIFIER, "NonTrivialClassType"),
+					   lr.oneOf (IDENTIFIER, "NonTrivialClassType", "MultiName"),
 					   lr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS, "LambdaExpression")));
     }

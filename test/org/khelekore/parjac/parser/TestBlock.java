@@ -12,7 +12,7 @@ public class TestBlock {
 
     @BeforeClass
     public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (false);
+	Java8Grammar grammar = new Java8Grammar (true);
 	lr = grammar.getLRParser ();
 	lr.addRule ("Goal", "Block");
 	grammar.addAllRules ();
@@ -169,11 +169,10 @@ public class TestBlock {
     public void testCast () {
 	testSuccessfulParse ("{ int i = (int)j; }");
 	testSuccessfulParse ("{ Foo foo = (Foo)bar; }");
-	/* Currently failing */
-	/*
-	testSuccessfulParse ("{ foo.Bar foo = (foo.Bar)bar; }");
-	testSuccessfulParse ("{ foo.bar.Baz foo = (foo.bar.Baz)bar; }");
-	*/
+	testSuccessfulParse ("{ foo = (foo.Bar)bar; }");
+	testSuccessfulParse ("{ Baz foo = (foo.bar.Baz)bar; }");
+	testSuccessfulParse ("{ foo = (Foo & bar.Baz)bar; }");
+	testSuccessfulParse ("{ foo = (foo.Bar & Baz)bar; }");
     }
 
     private void testSuccessfulParse (String s) {
