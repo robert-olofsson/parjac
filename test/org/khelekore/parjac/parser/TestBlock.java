@@ -130,6 +130,13 @@ public class TestBlock {
     }
 
     @Test
+    public void testNew () {
+	testSuccessfulParse ("{Foo foo = new Foo ();}");
+	testSuccessfulParse ("{Bar bar = new foo.Bar ();}");
+	testSuccessfulParse ("{Baz baz = new foo.bar.Baz ();}");
+    }
+
+    @Test
     public void testSynchronized () {
 	testSuccessfulParse ("{synchronized (foo) { i = 0; }}");
     }

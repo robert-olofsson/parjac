@@ -563,6 +563,7 @@ public class Java8Grammar {
 		    lr.sequence (lr.zeroOrOne (lr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
 				 NEW, lr.zeroOrOne ("TypeArguments"),
 				 lr.zeroOrMore ("Annotation"), IDENTIFIER,
+				 lr.zeroOrMore (DOT, lr.zeroOrMore ("Annotation"), IDENTIFIER),
 				 lr.zeroOrOne ("TypeArgumentsOrDiamond"),
 				 LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
 				 lr.zeroOrOne ("ClassBody")));
