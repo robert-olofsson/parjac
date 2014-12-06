@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
@@ -36,7 +35,7 @@ public class LRParser {
     // The state table with action and goto parts
     private final StateTable table = new StateTable ();
 
-    // Useful to turn on or off debuggin for now, maybe we want to log instead?
+    // Useful to turn on or off debugging for now, maybe we want to log instead?
     private final boolean debug;
 
     public LRParser (boolean debug) {
@@ -435,6 +434,7 @@ public class LRParser {
 	    addGoTo (itemSets, queue, s);
 	}
 	debug ("Adding reducde and accept");
+	int loopCounter = 0;
 	int reduceConflictCount = 0;
 	for (Map.Entry<ItemSet, Integer> me : itemSets.entrySet ()) {
 	    ItemSet s = me.getKey ();
@@ -473,6 +473,9 @@ public class LRParser {
 		    }
 		}
 	    }
+	    loopCounter++;
+	    if (loopCounter % 1000 == 0)
+		debug ("loopCounter: " + loopCounter);
 	}
 	long end = System.nanoTime ();
 	if (debug) {
@@ -674,7 +677,7 @@ public class LRParser {
 	}
 
 	public ItemSet (ItemSet s) {
-	    itemToLookAhead = new TreeMap<> (s.itemToLookAhead);
+	    itemToLookAhead = new HashMap<> (s.itemToLookAhead);
 	}
 
 	public Iterator<Map.Entry<Item, EnumSet<Token>>> iterator () {
@@ -718,28 +721,23 @@ public class LRParser {
 	}
     }
 
-    private static class Item implements Comparable<Item> {
+    private static class Item {
 	private final Rule r;
 	private final int dotPos;
+	private final int hc;
 
 	public Item (Rule r, int dotPos) {
 	    this.r = r;
 	    this.dotPos = dotPos;
+	    hc = r.hashCode () + dotPos;
 	}
 
 	@Override public String toString () {
 	    return "[" + r + ", dotPos: " + dotPos + "]";
 	}
 
-	public int compareTo (Item i2) {
-	    int dr = r.id - i2.r.id;
-	    if (dr != 0)
-		return dr;
-	    return dotPos - i2.dotPos;
-	}
-
 	@Override public int hashCode () {
-	    return r.hashCode () + dotPos;
+	    return hc;
 	}
 
 	@Override public boolean equals (Object o) {
