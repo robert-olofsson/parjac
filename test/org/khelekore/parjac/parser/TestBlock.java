@@ -57,11 +57,9 @@ public class TestBlock {
 	testSuccessfulParse ("{ int a = b >> 1; }");
 	testSuccessfulParse ("{ int a = b >> c; }");
 	testSuccessfulParse ("{ boolean a = b > c; }");
-
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{ boolean a = b < c; }");
-	*/
+	testSuccessfulParse ("{ boolean a = a.b < c; }");
+	testSuccessfulParse ("{ boolean a = a.b.c < d; }");
     }
 
     @Test
@@ -80,16 +78,12 @@ public class TestBlock {
 	testSuccessfulParse ("{ for (int i = CONSTANT; i >= 0; i--) {\n" +
 			     "System.out.println (\"i: \"+ i);\n" +
 			     "}\n}");
-
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {\n" +
 			     "System.out.println (\"i: \"+ i);\n" +
 			     "}\n}");
 	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {\n" +
 			     "System.out.println (\"i: \"+ i);\n" +
 			     "}\n}");
-	*/
     }
 
     @Test

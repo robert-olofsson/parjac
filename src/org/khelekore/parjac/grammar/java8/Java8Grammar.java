@@ -672,6 +672,9 @@ public class Java8Grammar {
 	lr.addRule ("RelationalExpression",
 		    lr.oneOf ("ShiftExpression",
 			      lr.sequence ("RelationalExpression", LT, "ShiftExpression"),
+			      // This is a bit iffy, but i< is a shift/reduce conflict
+			      // and this solves that problem.
+			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"), LT, "ShiftExpression"),
 			      lr.sequence ("RelationalExpression", GT, "ShiftExpression"),
 			      lr.sequence ("RelationalExpression", LE, "ShiftExpression"),
 			      lr.sequence ("RelationalExpression", GE, "ShiftExpression"),
