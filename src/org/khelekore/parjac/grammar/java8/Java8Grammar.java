@@ -312,7 +312,7 @@ public class Java8Grammar {
     }
 
     public void addUnannTypes () {
-	lr.addRule ("UnannType", lr.oneOf ("NumericType", "UnannClassType", "UnannArrayType"));
+	lr.addRule ("UnannType", lr.oneOf ("NumericType", BOOLEAN, "UnannClassType", "UnannArrayType"));
 
 	// really lr.oneOf ("UnannClassType", "UnannInterfaceType");
 	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");

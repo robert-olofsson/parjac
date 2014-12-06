@@ -41,6 +41,30 @@ public class TestBlock {
     }
 
     @Test
+    public void testConditionalExpressions () {
+	testSuccessfulParse ("{ int a = b * c; }");
+	testSuccessfulParse ("{ int a = b / c; }");
+	testSuccessfulParse ("{ int a = b + c; }");
+	testSuccessfulParse ("{ int a = b - c; }");
+	testSuccessfulParse ("{ int a = b & c; }");
+	testSuccessfulParse ("{ int a = b | c; }");
+	testSuccessfulParse ("{ int a = b ^ c; }");
+	testSuccessfulParse ("{ int a = b % c; }");
+	testSuccessfulParse ("{ boolean a = b == c; }");
+	testSuccessfulParse ("{ boolean a = b != c; }");
+	testSuccessfulParse ("{ int a = b << 1; }");
+	testSuccessfulParse ("{ int a = b << c; }");
+	testSuccessfulParse ("{ int a = b >> 1; }");
+	testSuccessfulParse ("{ int a = b >> c; }");
+	testSuccessfulParse ("{ boolean a = b > c; }");
+
+	/* Currently failing */
+	/*
+	testSuccessfulParse ("{ boolean a = b < c; }");
+	*/
+    }
+
+    @Test
     public void testMethodCall () {
 	testSuccessfulParse ("{ foo(); }");
 	testSuccessfulParse ("{ int a = foo (); }");
@@ -53,6 +77,10 @@ public class TestBlock {
 	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {\n" +
 			     "System.out.println (\"foo: \"+ foo);\n" +
 			     "}\n}");
+	testSuccessfulParse ("{ for (int i = CONSTANT; i >= 0; i--) {\n" +
+			     "System.out.println (\"i: \"+ i);\n" +
+			     "}\n}");
+
 	/* Currently failing */
 	/*
 	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {\n" +
