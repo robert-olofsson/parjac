@@ -621,15 +621,12 @@ public class Java8Grammar {
 	lr.addRule ("ConstantExpression", "Expression");
 	lr.addRule ("Expression", lr.oneOf ("LambdaExpression", "AssignmentExpression"));
 	lr.addRule ("LambdaExpression",
-		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "LambdaParameters"),
-					   ARROW, "LambdaBody")));
+		    lr.oneOf (IDENTIFIER, "LambdaParameters"), ARROW, "LambdaBody");
 	lr.addRule ("LambdaParameters",
-		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS,
-					   lr.zeroOrOne ("FormalParameterList"),
-					   RIGHT_PARENTHESIS),
-			      lr.sequence (LEFT_PARENTHESIS,
-					   IDENTIFIER, lr.zeroOrMore (COMMA, IDENTIFIER),
-					   RIGHT_PARENTHESIS)));
+		    LEFT_PARENTHESIS,
+		    lr.oneOf (lr.zeroOrOne ("FormalParameterList"),
+			      lr.sequence (IDENTIFIER, lr.zeroOrMore (COMMA, IDENTIFIER))),
+		    RIGHT_PARENTHESIS);
 	lr.addRule ("LambdaBody", lr.oneOf ("Expression", "Block"));
 	lr.addRule ("AssignmentExpression", lr.oneOf ("ConditionalExpression", "Assignment"));
 	lr.addRule ("Assignment",
