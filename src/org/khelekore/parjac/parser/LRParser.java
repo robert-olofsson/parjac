@@ -784,6 +784,12 @@ public class LRParser {
 	return debug;
     }
 
+    private void debug (String line) {
+	if (debug) {
+	    System.out.println (line);
+	}
+    }
+
     private void debug (String format, Object... params) {
 	if (debug) {
 	    System.out.format (format, params);
