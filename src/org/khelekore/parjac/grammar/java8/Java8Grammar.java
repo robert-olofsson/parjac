@@ -108,7 +108,7 @@ public class Java8Grammar {
 	lr.addRule ("TypeParameter",
 		    lr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, lr.zeroOrOne ("TypeBound"));
 	lr.addRule ("TypeParameterModifier", "Annotation");
-	lr.addRule ("TypeBound", lr.sequence (EXTENDS, "ClassType", lr.zeroOrMore ("AdditionalBound")));
+	lr.addRule ("TypeBound", EXTENDS, "ClassType", lr.zeroOrMore ("AdditionalBound"));
 	lr.addRule ("AdditionalBound", AND, "ClassType");
 	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
 	lr.addRule ("TypeArgumentList",
@@ -468,7 +468,7 @@ public class Java8Grammar {
 		    LEFT_CURLY, lr.zeroOrMore ("SwitchBlockStatementGroup"),
 		    lr.zeroOrMore ("SwitchLabel"), RIGHT_CURLY);
 	lr.addRule ("SwitchBlockStatementGroup",
-		    lr.sequence ("SwitchLabel", lr.zeroOrMore ("SwitchLabel"), "BlockStatements"));
+		    "SwitchLabel", lr.zeroOrMore ("SwitchLabel"), "BlockStatements");
 	lr.addRule ("SwitchLabel",
 		    lr.oneOf (lr.sequence (CASE, "ConstantExpression", COLON),
 			      lr.sequence (CASE, IDENTIFIER, COLON),
@@ -559,13 +559,13 @@ public class Java8Grammar {
 			      "MethodInvocation",
 			      "MethodReference"));
 	lr.addRule ("ClassInstanceCreationExpression",
-		    lr.sequence (lr.zeroOrOne (lr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
-				 NEW, lr.zeroOrOne ("TypeArguments"),
-				 lr.zeroOrMore ("Annotation"), IDENTIFIER,
-				 lr.zeroOrMore (DOT, lr.zeroOrMore ("Annotation"), IDENTIFIER),
-				 lr.zeroOrOne ("TypeArgumentsOrDiamond"),
-				 LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-				 lr.zeroOrOne ("ClassBody")));
+		    lr.zeroOrOne (lr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
+		    NEW, lr.zeroOrOne ("TypeArguments"),
+		    lr.zeroOrMore ("Annotation"), IDENTIFIER,
+		    lr.zeroOrMore (DOT, lr.zeroOrMore ("Annotation"), IDENTIFIER),
+		    lr.zeroOrOne ("TypeArgumentsOrDiamond"),
+		    LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+		    lr.zeroOrOne ("ClassBody"));
 	lr.addRule ("TypeArgumentsOrDiamond",
 		    lr.oneOf ("TypeArguments", lr.sequence (LT, GT)));
 	lr.addRule ("FieldAccess",
@@ -579,9 +579,6 @@ public class Java8Grammar {
 			      lr.sequence ("PrimaryNoNewArray", LEFT_BRACKET, "Expression", RIGHT_BRACKET)));
 	lr.addRule ("MethodInvocation",
 		    lr.oneOf (lr.sequence (IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
 					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
 			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
 					   DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
@@ -629,9 +626,8 @@ public class Java8Grammar {
 	lr.addRule ("LambdaBody", lr.oneOf ("Expression", "Block"));
 	lr.addRule ("AssignmentExpression", lr.oneOf ("ConditionalExpression", "Assignment"));
 	lr.addRule ("Assignment",
-		    lr.sequence (lr.oneOf (lr.oneOf (IDENTIFIER, "MultiName"),
-					   "FieldAccess", "ArrayAccess"),
-				 "AssignmentOperator", "Expression"));
+		    lr.oneOf (IDENTIFIER, "MultiName", "FieldAccess", "ArrayAccess"),
+		    "AssignmentOperator", "Expression");
 	lr.addRule ("AssignmentOperator",
 		    lr.oneOf (EQUAL,
 			      MULTIPLY_EQUAL,
