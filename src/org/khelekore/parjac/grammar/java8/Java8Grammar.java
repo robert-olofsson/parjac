@@ -101,8 +101,7 @@ public class Java8Grammar {
 	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
 	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
 	lr.addRule ("ArrayType",
-		    lr.oneOf (lr.sequence ("PrimitiveType", "Dims"),
-			      lr.sequence ("ClassType", "Dims")));
+		    lr.oneOf ("PrimitiveType", "ClassType"), "Dims");
 	lr.addRule ("Dims",
 		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
 		    lr.zeroOrMore (lr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
@@ -722,7 +721,8 @@ public class Java8Grammar {
 					   lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN),
 					   RIGHT_PARENTHESIS, "UnaryExpression"),
 			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
+					   lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
+								  lr.oneOf (IDENTIFIER, "MultiName"),
 								  lr.zeroOrOne ("TypeArguments")),
 						     "NonTrivialClassType",
 						     "ArrayType"),
