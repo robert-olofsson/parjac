@@ -1,3 +1,3 @@
 java \
- -cp bin/:libs/asm-5.0.3.jar \
+ -cp bin/:resources/:libs/asm-5.0.3.jar \
  org.khelekore.parjac.batch.Main "$@"

@@ -7,5 +7,5 @@ javac \
 && \
 java \
  -ea \
- -classpath libs/testng-6.8.jar:bin/:libs/asm-5.0.3.jar \
+ -classpath bin/:resources/:libs/testng-6.8.jar:libs/asm-5.0.3.jar \
  org.testng.TestNG test/testng.xml
