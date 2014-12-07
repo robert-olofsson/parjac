@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Lexer" verbose="1">
+<suite name="Parjac" verbose="1">
   <test name="Lexer">
     <packages>
       <package name="org.khelekore.parjac.lexer" />
