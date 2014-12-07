@@ -128,12 +128,12 @@ public enum Token {
     IDENTIFIER ("identifier"),
 
     // Literal
-    INT_LITERAL ("int literal"),
-    LONG_LITERAL ("long literal"),
-    FLOAT_LITERAL ("float literal"),
-    DOUBLE_LITERAL ("double literal"),
-    CHARACTER_LITERAL ("character literal"),
-    STRING_LITERAL ("string literal"),
+    INT_LITERAL ("int_literal"),
+    LONG_LITERAL ("long_literal"),
+    FLOAT_LITERAL ("float_literal"),
+    DOUBLE_LITERAL ("double_literal"),
+    CHARACTER_LITERAL ("character_literal"),
+    STRING_LITERAL ("string_literal"),
     NULL ("null"),
     TRUE ("true"),
     FALSE ("false"),
@@ -142,7 +142,7 @@ public enum Token {
     ERROR ("error"),
 
     // Signal end of input
-    END_OF_INPUT ("<end of input>");
+    END_OF_INPUT ("<end_of_input>");
 
     private final String description;
 
@@ -197,8 +197,19 @@ public enum Token {
 	return description;
     }
 
+    /** Check if an identifier is actually a keyword or the null, true or false litera. */
     public static Token getFromIdentifier (String id) {
 	return nameToToken.get (id);
+    }
+
+    private static final Map<String, Token> descToToken = new HashMap<> ();
+    static {
+	for (Token t : values ())
+	    descToToken.put (t.description, t);
+    }
+
+    public static Token getFromDescription (String desc) {
+	return descToToken.get (desc);
     }
 
     public boolean isWhitespace () {
