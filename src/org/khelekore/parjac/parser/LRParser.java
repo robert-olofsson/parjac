@@ -124,7 +124,8 @@ public class LRParser {
 	    else if (os[i] instanceof String)
 		parts[i] = new RulePart ((String)os[i]);
 	    else
-		throw new IllegalArgumentException ("Unknown part: " + os[i]);
+		throw new IllegalArgumentException ("Unknown part: " + os[i] +
+						    ", os: " + Arrays.toString (os));
 	}
 	return parts;
     }
@@ -152,7 +153,7 @@ public class LRParser {
 	}
 
 	@Override public String toString () {
-	    return name + "(" + id + ") -> " + parts;
+	    return name + " -> " + parts;
 	}
 
 	public String getName () {
@@ -420,7 +421,8 @@ public class LRParser {
 	memorizeFollows ();
 	debug ("Building shift/goto");
 	Map<ItemSet, Integer> itemSets = new HashMap<> ();
-	Item startItem = new Item (rules.get (0), 0);
+	Rule r = nameToRules.get ("Goal").rules.get (0);
+	Item startItem = new Item (r, 0);
 	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
 	ItemSet s0 = closure1 (is);
 	itemSets.put (s0, 0);
@@ -531,7 +533,10 @@ public class LRParser {
 		    if (!validRules.contains (subrule))
 			throw new IllegalStateException ("*" + rule + "* missing subrule: " + subrule);
 	    });
-	List<Rule> ls = nameToRules.get ("Goal").rules;
+	RuleCollection goal = nameToRules.get ("Goal");
+	if (goal == null)
+	    throw new IllegalStateException ("No Goal rule defined");
+	List<Rule> ls = goal.rules;
 	if (ls == null || ls.isEmpty())
 	    throw new IllegalStateException ("no Goal rule defined");
 	if (ls.size () > 1)
