@@ -60,6 +60,8 @@ public class TestBlock {
 	testSuccessfulParse ("{ boolean a = b < c; }");
 	testSuccessfulParse ("{ boolean a = a.b < c; }");
 	testSuccessfulParse ("{ boolean a = a.b.c < d; }");
+	testSuccessfulParse ("{ a = b < c; }");
+	testSuccessfulParse ("{ a = b + c; }");
     }
 
     @Test
@@ -75,15 +77,10 @@ public class TestBlock {
 	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {\n" +
 			     "System.out.println (\"foo: \"+ foo);\n" +
 			     "}\n}");
-	testSuccessfulParse ("{ for (int i = CONSTANT; i >= 0; i--) {\n" +
-			     "System.out.println (\"i: \"+ i);\n" +
-			     "}\n}");
-	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {\n" +
-			     "System.out.println (\"i: \"+ i);\n" +
-			     "}\n}");
-	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {\n" +
-			     "System.out.println (\"i: \"+ i);\n" +
-			     "}\n}");
+	testSuccessfulParse ("{ for (int i = CONSTANT; i >= 0; i--) {}}");
+	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {}}");
+	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {}}");
+	testSuccessfulParse ("{ for (int i = 0, j = 0, k = a; bar1.b; i++) {}}");
     }
 
     @Test
@@ -208,15 +205,18 @@ public class TestBlock {
 	testSuccessfulParse ("{ Bar<T> foo = (foo.Bar<T>)bar; }");
 	testSuccessfulParse ("{ Baz<T> foo = (foo.bar.Baz<T>)bar; }");
 	testSuccessfulParse ("{ foo = (Foo<T> & Bar<T>)bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla)bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>)bar; }");
+
 	/* Currently failing */
 	/*
-	testSuccessfulParse ("{ foo = (@Foo Bla<T>)bar; }");
-	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
-	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
 	testSuccessfulParse ("{ foo = (int[])bar; }");
+	testSuccessfulParse ("{ foo = (@Foo int[])bar; }");
 	testSuccessfulParse ("{ foo = (int[][])bar; }");
 	testSuccessfulParse ("{ foo = (Foo[])bar; }");
 	testSuccessfulParse ("{ foo = (foo.Bar[])bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
+	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
 	*/
     }
 
