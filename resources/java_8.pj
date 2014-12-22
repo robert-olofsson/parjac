@@ -1,5 +1,5 @@
-Goal:
-	CompilationUnit
+#Goal:
+#	CompilationUnit
 
 # Productions from §3 (Lexical Structure)
 Literal:
@@ -36,7 +36,11 @@ ReferenceType:
 	ArrayType
 
 ClassType:
-	(ClassType '.')? Annotation* TypedName
+	Annotation* TypedName
+	ClassType '.' AnnotatedType
+
+AnnotatedType:
+	Annotation* TypedName
 
 TypedName:
 	'identifier' TypeArguments?
@@ -182,7 +186,8 @@ UnannType:
 	UnannArrayType
 
 UnannClassType:
-	(UnannClassType '.' Annotation*)? TypedName
+	TypedName
+	UnannClassType '.' AnnotatedType
 
 UnannArrayType:
 	NumericType Dims

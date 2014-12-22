@@ -17,6 +17,7 @@ public class TestFullClass {
 	GrammarReader gr = new GrammarReader (false);
 	gr.read (getClass ().getResource ("/java_8.pj"));
 	lr = gr.getParser ();
+	lr.addRule ("Goal", "CompilationUnit");
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

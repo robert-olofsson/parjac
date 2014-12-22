@@ -421,8 +421,8 @@ public class LRParser {
 	memorizeFollows ();
 	debug ("Building shift/goto");
 	Map<ItemSet, Integer> itemSets = new HashMap<> ();
-	Rule r = nameToRules.get ("Goal").rules.get (0);
-	Item startItem = new Item (r, 0);
+	Rule goalRule = nameToRules.get ("Goal").rules.get (0);
+	Item startItem = new Item (goalRule, 0);
 	ItemSet is = new ItemSet (Collections.singletonMap (startItem, EnumSet.of (END_OF_INPUT)));
 	ItemSet s0 = closure1 (is);
 	itemSets.put (s0, 0);
@@ -449,7 +449,7 @@ public class LRParser {
 		    int ruleId = i.r.id;
 		    EnumSet<Token> reduceReduceConflicts = null;
 		    for (Token t : i2la.getValue ()) {
-			if (t == Token.END_OF_INPUT && ruleId == 0) {
+			if (t == Token.END_OF_INPUT && ruleId == goalRule.id) {
 			    row.addAction (t, Action.createAccept ());
 			} else {
 			    // Do not overwrite shifts

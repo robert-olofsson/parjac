@@ -1,7 +1,9 @@
 package org.khelekore.parjac.parser;
 
+import java.io.IOException;
+
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.grammar.java8.Java8Grammar;
+import org.khelekore.parjac.grammar.GrammarReader;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -11,11 +13,11 @@ public class TestBlock {
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
-    public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (true);
-	lr = grammar.getLRParser ();
+    public void createLRParser () throws IOException {
+	GrammarReader gr = new GrammarReader (true);
+	gr.read (getClass ().getResource ("/java_8.pj"));
+	lr = gr.getParser ();
 	lr.addRule ("Goal", "Block");
-	grammar.addAllRules ();
 	try {
 	    lr.build ();
 	} catch (Throwable t) {
