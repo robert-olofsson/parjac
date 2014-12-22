@@ -141,13 +141,10 @@ public class TestBlock {
 	testSuccessfulParse ("{int i = 1 + 2;}");
 	testSuccessfulParse ("{int i = 1 + a;}");
 	testSuccessfulParse ("{int i;\nFoo foo;\nBar baz;\ndouble d; }");
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{foo.Bar bar; }");
 	testSuccessfulParse ("{foo.bar.Baz baz; }");
 	testSuccessfulParse ("{foo.Bar bar = new foo.Bar(); }");
 	testSuccessfulParse ("{foo.bar.Baz baz = new foo.bar.Baz(); }");
-	*/
     }
 
     @Test

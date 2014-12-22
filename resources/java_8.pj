@@ -187,6 +187,7 @@ UnannType:
 
 UnannClassType:
 	TypedName
+	MultiName
 	UnannClassType '.' AnnotatedType
 
 UnannArrayType:
