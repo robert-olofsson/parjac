@@ -19,4 +19,3 @@ public interface SimplePart {
     /** Get all the possible first tokens */
     EnumSet<Token> getFirsts ();
 }
-
