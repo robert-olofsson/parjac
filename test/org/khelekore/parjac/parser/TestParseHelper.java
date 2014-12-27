@@ -22,7 +22,7 @@ public class TestParseHelper {
     private static Parser getParser (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
 	Path path = Paths.get ("TestParseHelper.getParser");
-	Lexer lexer = new CharBufferLexer (path, charBuf);
+	Lexer lexer = new CharBufferLexer (charBuf);
 	Parser p = new Parser (lr, path, lexer, diagnostics, lr.getDebug ());
 	return p;
     }
@@ -30,7 +30,7 @@ public class TestParseHelper {
     public static void earleyParse (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
 	Path path = Paths.get ("TestParseHelper.getParser");
-	Lexer lexer = new CharBufferLexer (path, charBuf);
+	Lexer lexer = new CharBufferLexer (charBuf);
 	EarleyParser ep = new EarleyParser (g, path, lexer, diagnostics, false);
 	ep.parse ();
     }

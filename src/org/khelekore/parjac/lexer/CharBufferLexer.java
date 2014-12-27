@@ -2,12 +2,9 @@ package org.khelekore.parjac.lexer;
 
 import java.math.BigInteger;
 import java.nio.CharBuffer;
-import java.nio.file.Path;
 
 /** A lexer for the java language */
 public class CharBufferLexer implements Lexer {
-    // Typically the file name, used for error output
-    private final Path path;
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
     private long tokenStartPosition = 0;
@@ -34,8 +31,7 @@ public class CharBufferLexer implements Lexer {
     private static final BigInteger MAX_UINT_LITERAL = new BigInteger  ("FFFFFFFF", 16);
     private static final BigInteger MAX_ULONG_LITERAL = new BigInteger ("FFFFFFFFFFFFFFFF", 16);
 
-    public CharBufferLexer (Path path, CharBuffer buf) {
-	this.path = path;
+    public CharBufferLexer (CharBuffer buf) {
 	this.buf = buf.duplicate ();
     }
 

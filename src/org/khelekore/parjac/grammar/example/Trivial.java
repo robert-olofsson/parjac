@@ -39,7 +39,7 @@ public class Trivial {
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
 	    CharsetDecoder decoder = Charset.forName ("UTF-8").newDecoder ();
 	    CharBuffer charBuf = decoder.decode (buf);
-	    Lexer lexer = new CharBufferLexer (path, charBuf);
+	    Lexer lexer = new CharBufferLexer (charBuf);
 	    Parser p = new Parser (g.lr, path, lexer, diagnostics, false);
 	    p.parse ();
 	    diagnostics.getDiagnostics ().

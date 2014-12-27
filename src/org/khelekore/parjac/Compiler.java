@@ -63,7 +63,7 @@ public class Compiler {
 	    decoder.onMalformedInput (CodingErrorAction.REPORT);
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
-	    Lexer lexer = new CharBufferLexer (path, charBuf);
+	    Lexer lexer = new CharBufferLexer (charBuf);
 	    Parser parser = new Parser (lr, path, lexer, diagnostics, false);
 	    SyntaxTree tree = parser.parse ();
 	    return tree;

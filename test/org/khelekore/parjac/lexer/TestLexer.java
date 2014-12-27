@@ -1,7 +1,6 @@
 package org.khelekore.parjac.lexer;
 
 import java.nio.CharBuffer;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import org.testng.annotations.Test;
 
@@ -370,7 +369,7 @@ public class TestLexer {
 
     private Lexer getLexer (String text) {
 	CharBuffer cb = CharBuffer.wrap (text.toCharArray ());
-	return new CharBufferLexer (Paths.get ("TestLexer"), cb);
+	return new CharBufferLexer (cb);
     }
 
     private void testLexing (Lexer l, Token... expected) {
