@@ -53,8 +53,7 @@ public class Main {
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
 	Java8Grammar grammar = new Java8Grammar (false);
-	LRParser lr = grammar.getLRParser ();
-	Compiler c = new Compiler (diagnostics, lr);
+	Compiler c = new Compiler (diagnostics, grammar.getGrammar ());
 	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));

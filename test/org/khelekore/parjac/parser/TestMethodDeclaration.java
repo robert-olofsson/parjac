@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
@@ -8,14 +9,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestMethodDeclaration {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
-	lr = grammar.getLRParser ();
-	lr.getGrammar ().addRule ("Goal", "MethodDeclaration");
 	grammar.addMethodDeclaration ();
 	grammar.addModifiers ();
 	grammar.addFormalParameterList ();
@@ -28,13 +27,15 @@ public class TestMethodDeclaration {
 	grammar.addAnnotationRules ();
 	grammar.addArrayInitializer ();
 
+	g = grammar.getGrammar ();
+	g.addRule ("Goal", "MethodDeclaration", Token.END_OF_INPUT);
 	// A bit simplified rules, but we are not testing these rules in this class
-	lr.getGrammar ().addRule ("Block",
+	g.addRule ("Block",
 		    Token.LEFT_CURLY, Token.RIGHT_CURLY);
-	lr.getGrammar ().addRule ("Expression", Token.IDENTIFIER);
-	lr.getGrammar ().addRule ("ConditionalExpression", Token.IDENTIFIER);
+	g.addRule ("Expression", Token.IDENTIFIER);
+	g.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
-	    lr.build ();
+	    g.validateRules ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
 	}
@@ -120,13 +121,13 @@ public class TestMethodDeclaration {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 
     private void testFailedParse (String s) {
 	try {
-	    TestParseHelper.parse (lr, s, diagnostics);
+	    TestParseHelper.earleyParse (g, s, diagnostics);
 	    assert diagnostics.hasError () : "Failed to detect errors";
 	} finally {
 	    diagnostics.clear ();

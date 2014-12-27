@@ -51,11 +51,10 @@ public class Java8Grammar {
     public void buildFullGrammar () {
 	addGoal ();
 	addAllRules ();
-	lr.build ();
     }
 
-    public LRParser getLRParser () {
-	return lr;
+    public Grammar getGrammar () {
+	return gr;
     }
 
     public void addGoal () {

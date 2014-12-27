@@ -15,6 +15,7 @@ import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.grammar.TokenPart;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.SyntaxTree;
 
 public class EarleyParser {
     // The grammar we are using
@@ -40,7 +41,7 @@ public class EarleyParser {
 	this.debug = debug;
     }
 
-    public void parse () {
+    public SyntaxTree parse () {
 	Rule goalRule = grammar.getRules ("Goal").getRules ().get (0);
 	Item startItem = new Item (goalRule, 0);
 	int currentPosition = 0;
@@ -53,14 +54,14 @@ public class EarleyParser {
 	    debugPrintStates (currentPosition++);
 	    if (states.size () <= currentPosition) {
 		addParserError ("No possible next state");
-		return;
+		return null;
 	    }
 	}
 	handleToken (currentPosition, Token.END_OF_INPUT);
 	debugPrintStates (currentPosition++);
 	if (states.size () <= currentPosition) {
 	    addParserError ("No possible next state");
-	    return;
+	    return null;
 	}
 	StateSet finishingStates = states.get (currentPosition);
 	if (debug)
@@ -72,6 +73,7 @@ public class EarleyParser {
 	} else {
 	    addParserError ("Ended up in many states: " + finishingStates);
 	}
+	return null;
     }
 
     private void handleToken (int currentPosition, Token nextToken) {

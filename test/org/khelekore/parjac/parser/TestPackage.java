@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
@@ -8,24 +9,22 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestPackage {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
-	lr = grammar.getLRParser ();
-	lr.getGrammar ().addRule ("Goal", "CompilationUnit");
-	lr.getGrammar ().addRule ("CompilationUnit",
-				  lr.getGrammar ().zeroOrOne ("PackageDeclaration"));
 	grammar.addNameRules ();
 	grammar.addPackageRules ();
 	grammar.addAnnotationRules ();
+	g = grammar.getGrammar ();
+	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
+	g.addRule ("CompilationUnit", g.zeroOrOne ("PackageDeclaration"));
 	// Just make it something, CE will be tested in its own test
-	lr.getGrammar ().addRule ("ConditionalExpression",
-				  Token.IDENTIFIER);
+	g.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
-	    lr.build ();
+	    g.validateRules ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
 	}
@@ -72,13 +71,13 @@ public class TestPackage {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 
     private void testFailedParse (String s) {
 	try {
-	    TestParseHelper.parse (lr, s, diagnostics);
+	    TestParseHelper.earleyParse (g, s, diagnostics);
 	    assert diagnostics.hasError () : "Failed to detect errors";
 	} finally {
 	    diagnostics.clear ();

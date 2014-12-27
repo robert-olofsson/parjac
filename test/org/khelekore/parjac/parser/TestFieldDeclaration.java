@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
@@ -8,14 +9,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestFieldDeclaration {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
-	lr = grammar.getLRParser ();
-	lr.getGrammar ().addRule ("Goal", "FieldDeclaration");
 	grammar.addFieldDeclaration ();
 	grammar.addModifiers ();
 	grammar.addNameRules ();
@@ -23,11 +22,14 @@ public class TestFieldDeclaration {
 	grammar.addUnannTypes ();
 	grammar.addAnnotationRules ();
 	grammar.addArrayInitializer ();
+
+	g = grammar.getGrammar ();
+	g.addRule ("Goal", "FieldDeclaration", Token.END_OF_INPUT);
 	// simplified
-	lr.getGrammar ().addRule ("Expression", Token.IDENTIFIER);
-	lr.getGrammar ().addRule ("ConditionalExpression", Token.IDENTIFIER);
+	g.addRule ("Expression", Token.IDENTIFIER);
+	g.addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
-	    lr.build ();
+	    g.validateRules ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
 	}
@@ -60,7 +62,7 @@ public class TestFieldDeclaration {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 }

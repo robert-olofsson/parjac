@@ -15,8 +15,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.parser.EarleyParser;
 import org.khelekore.parjac.parser.LRParser;
 import org.khelekore.parjac.parser.Parser;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -25,11 +27,11 @@ import org.khelekore.parjac.tree.SyntaxTree;
  */
 public class Compiler {
     private final CompilerDiagnosticCollector diagnostics;
-    private final LRParser lr;
+    private final Grammar g;
 
-    public Compiler (CompilerDiagnosticCollector diagnostics, LRParser lr) {
+    public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g) {
 	this.diagnostics = diagnostics;
-	this.lr = lr;
+	this.g = g;
     }
 
     public void compile (List<Path> srcFiles, Path destinationDir, Charset encoding) {
@@ -64,7 +66,7 @@ public class Compiler {
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
-	    Parser parser = new Parser (lr, path, lexer, diagnostics, false);
+	    EarleyParser parser = new EarleyParser (g, path, lexer, diagnostics, false);
 	    SyntaxTree tree = parser.parse ();
 	    return tree;
 	} catch (MalformedInputException e) {

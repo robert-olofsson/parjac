@@ -1,25 +1,26 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
+import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestImports {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
-	lr = grammar.getLRParser ();
-	lr.getGrammar ().addRule ("Goal", "CompilationUnit");
-	lr.getGrammar ().addRule ("CompilationUnit",
-				  lr.getGrammar ().zeroOrMore ("ImportDeclaration"));
 	grammar.addNameRules ();
 	grammar.addImportRules ();
-	lr.build ();
+	g = grammar.getGrammar ();
+	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
+	g.addRule ("CompilationUnit", g.zeroOrMore ("ImportDeclaration"));
+	g = grammar.getGrammar ();
     }
 
     @BeforeMethod
@@ -86,13 +87,13 @@ public class TestImports {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 
     private void testFailedParse (String s) {
 	try {
-	    TestParseHelper.parse (lr, s, diagnostics);
+	    TestParseHelper.earleyParse (g, s, diagnostics);
 	    assert diagnostics.hasError () : "Failed to detect errors";
 	} finally {
 	    diagnostics.clear ();

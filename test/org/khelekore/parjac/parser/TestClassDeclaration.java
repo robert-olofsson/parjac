@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
@@ -8,14 +9,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestClassDeclaration {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
-	lr = grammar.getLRParser ();
-	lr.getGrammar ().addRule ("Goal", "TypeDeclaration");
 	grammar.addLiteralRules ();
 	grammar.addTypeRules ();
 	grammar.addNameRules ();
@@ -25,16 +24,18 @@ public class TestClassDeclaration {
 	grammar.addAnnotationRules ();
 	grammar.addArrayInitializer ();
 
+	g = grammar.getGrammar ();
+	g.addRule ("Goal", "TypeDeclaration", Token.END_OF_INPUT);
 	// A bit simplified rules, but we are not testing these rules in this class
-	lr.getGrammar ().addRule ("Block", Token.LEFT_CURLY,
-				  lr.getGrammar ().zeroOrMore ("BlockStatements"), Token.RIGHT_CURLY);
-	lr.getGrammar ().addRule ("BlockStatements", Token.SEMICOLON);
-	lr.getGrammar ().addRule ("ArgumentList", Token.IDENTIFIER);
-	lr.getGrammar ().addRule ("Primary", "Literal");
-	lr.getGrammar ().addRule ("Expression", lr.getGrammar ().oneOf (Token.IDENTIFIER, "Literal"));
-	lr.getGrammar ().addRule ("ConditionalExpression", lr.getGrammar ().oneOf (Token.IDENTIFIER, "Literal"));
+	g.addRule ("Block", Token.LEFT_CURLY,
+		   g.zeroOrMore ("BlockStatements"), Token.RIGHT_CURLY);
+	g.addRule ("BlockStatements", Token.SEMICOLON);
+	g.addRule ("ArgumentList", Token.IDENTIFIER);
+	g.addRule ("Primary", "Literal");
+	g.addRule ("Expression", g.oneOf (Token.IDENTIFIER, "Literal"));
+	g.addRule ("ConditionalExpression", g.oneOf (Token.IDENTIFIER, "Literal"));
 	try {
-	    lr.build ();
+	    g.validateRules ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
 	}
@@ -122,13 +123,13 @@ public class TestClassDeclaration {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 
     private void testFailedParse (String s) {
 	try {
-	    TestParseHelper.parse (lr, s, diagnostics);
+	    TestParseHelper.earleyParse (g, s, diagnostics);
 	    assert diagnostics.hasError () : "Failed to detect errors";
 	} finally {
 	    diagnostics.clear ();
