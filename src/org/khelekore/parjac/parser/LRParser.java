@@ -80,7 +80,7 @@ public class LRParser {
 	    for (Map.Entry<Item, EnumSet<Token>> i2la : s.itemToLookAhead.entrySet ()) {
 		Item i = i2la.getKey ();
 		if (i.dotIsLast ()) {
-		    int ruleId = i.r.getId ();
+		    int ruleId = i.getRule ().getId ();
 		    EnumSet<Token> reduceReduceConflicts = null;
 		    for (Token t : i2la.getValue ()) {
 			if (t == Token.END_OF_INPUT && ruleId == goalRule.getId ()) {
@@ -168,12 +168,12 @@ public class LRParser {
 		Item i = me.getKey ();
 		EnumSet<Token> mlookAhead = me.getValue ();
 
-		if (i.r.getParts ().size () <= i.dotPos)
+		if (i.getRule ().getParts ().size () <= i.getDotPos ())
 		    continue;
-		SimplePart symbolRightOfDot = i.r.getRulePart (i.dotPos);
+		SimplePart symbolRightOfDot = i.getRule ().getRulePart (i.getDotPos ());
 		EnumSet<Token> lookAhead = EnumSet.noneOf (Token.class);
 		boolean empty = true;
-		for (SimplePart p : i.r.getPartsAfter (i.dotPos + 1)) {
+		for (SimplePart p : i.getRule ().getPartsAfter (i.getDotPos () + 1)) {
 		    lookAhead.addAll (p.getFirsts ());
 		    if (!p.canBeEmpty ()) {
 			empty = false;
@@ -247,49 +247,6 @@ public class LRParser {
 	    return itemToLookAhead.keySet ().stream ().
 		filter (i -> i.dotIsLast ()).
 		collect (Collectors.toSet ());
-	}
-    }
-
-    private static class Item {
-	private final Rule r;
-	private final int dotPos;
-	private final int hc;
-
-	public Item (Rule r, int dotPos) {
-	    this.r = r;
-	    this.dotPos = dotPos;
-	    hc = r.hashCode () + dotPos;
-	}
-
-	@Override public String toString () {
-	    return "[" + r + ", dotPos: " + dotPos + "]";
-	}
-
-	@Override public int hashCode () {
-	    return hc;
-	}
-
-	@Override public boolean equals (Object o) {
-	    if (o == this)
-		return true;
-	    if (o == null)
-		return false;
-	    if (o.getClass () != getClass ())
-		return false;
-	    Item i = (Item)o;
-	    return dotPos == i.dotPos && r.equals (i.r);
-	}
-
-	public SimplePart getPartAfterDot () {
-	    return r.getParts ().get (dotPos);
-	}
-
-	public Item advance () {
-	    return new Item (r, dotPos + 1);
-	}
-
-	public boolean dotIsLast () {
-	    return dotPos == r.getParts ().size ();
 	}
     }
 
