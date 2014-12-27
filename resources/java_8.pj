@@ -32,25 +32,28 @@ NumericType:
 	'double'
 
 ReferenceType:
+	ClassOrInterfaceType
+	TypeVariable
+ 	ArrayType
+
+ClassOrInterfaceType:
 	ClassType
-	ArrayType
+	InterfaceType
 
 ClassType:
-	Annotation* TypedName
-	ClassType '.' AnnotatedType
+	Annotation* 'identifier' TypeArguments?
+	ClassOrInterfaceType '.' Annotation* 'identifier' TypeArguments?
 
-AnnotatedType:
-	Annotation* TypedName
+InterfaceType:
+	ClassType
 
-TypedName:
-	'identifier' TypeArguments?
-
-NonTrivialClassType:
-	ClassType '.' Annotation* TypedName
+TypeVariable:
+	Annotation* 'identifier'
 
 ArrayType:
 	PrimitiveType Dims
-	ClassType Dims
+	ClassOrInterfaceType Dims
+	TypeVariable Dims
 
 Dims:
 	Annotation* '[' ']' (Annotation* '[' ']')*
@@ -62,10 +65,11 @@ TypeParameterModifier:
 	Annotation
 
 TypeBound:
-	'extends' ClassType AdditionalBound*
+	'extends' TypeVariable
+	'extends' ClassOrInterfaceType AdditionalBound*
 
 AdditionalBound:
-	'&' ClassType
+	'&' InterfaceType
 
 TypeArguments:
 	'<' TypeArgumentList '>'
@@ -85,20 +89,38 @@ WildcardBounds:
 	'super' ReferenceType
 
 # Productions from §6 Names
-ComplexName:
+PackageName:
 	'identifier'
- 	ComplexName '.' 'identifier'
+	PackageName '.' 'identifier'
 
-MultiName:
-	'identifier' '.' 'identifier'
-	MultiName '.' 'identifier'
+TypeName:
+	'identifier'
+	PackageOrTypeName '.' 'identifier'
+
+PackageOrTypeName:
+	'identifier'
+	PackageOrTypeName '.' 'identifier'
+
+ExpressionName:
+	'identifier'
+	AmbigousName '.' 'identifier'
+
+MethodName:
+	'identifier'
+
+AmbigousName:
+	'identifier'
+	AmbigousName '.' 'identifier'
 
 # Productions from §7 (Packages)
 CompilationUnit:
 	PackageDeclaration? ImportDeclaration* TypeDeclaration*
 
 PackageDeclaration:
-	Annotation* 'package' 'identifier' ('.' 'identifier')* ';'
+	PackageModifier* 'package' 'identifier' ('.' 'identifier')* ';'
+
+PackageModifier:
+	Annotation
 
 ImportDeclaration:
 	SingleTypeImportDeclaration
@@ -107,16 +129,16 @@ ImportDeclaration:
 	StaticImportOnDemandDeclaration
 
 SingleTypeImportDeclaration:
-	'import' ComplexName ';'
+	'import' TypeName ';'
 
 TypeImportOnDemandDeclaration:
-	'import' ComplexName '.' '*' ';'
+	'import' PackageOrTypeName '.' '*' ';'
 
 SingleStaticImportDeclaration:
-	'import' 'static' ComplexName '.' 'identifier' ';'
+	'import' 'static' TypeName '.' 'identifier' ';'
 
 StaticImportOnDemandDeclaration:
-	'import' 'static' ComplexName '.' '*' ';'
+	'import' 'static' TypeName '.' '*' ';'
 
 TypeDeclaration:
 	ClassDeclaration
@@ -129,7 +151,17 @@ ClassDeclaration:
 	EnumDeclaration
 
 NormalClassDeclaration:
-	Modifier* 'class' 'identifier' TypeParameters? Superclass? Superinterfaces? ClassBody
+	ClassModifier* 'class' 'identifier' TypeParameters? Superclass? Superinterfaces? ClassBody
+
+ClassModifier:
+	Annotation
+	'public'
+	'protected'
+	'private'
+	'abstract'
+	'static'
+	'final'
+	'strictfp'
 
 TypeParameters:
 	'<' TypeParameterList '>'
@@ -144,7 +176,7 @@ Superinterfaces:
 	'implements' InterfaceTypeList
 
 InterfaceTypeList:
-	ClassType (',' ClassType)*
+	InterfaceType (',' ClassType)*
 
 ClassBody:
 	'{' ClassBodyDeclaration* '}'
@@ -163,7 +195,17 @@ ClassMemberDeclaration:
 	';'
 
 FieldDeclaration:
-	Modifier* UnannType VariableDeclaratorList ';'
+	FieldModifier* UnannType VariableDeclaratorList ';'
+
+FieldModifier:
+	Annotation
+	'public'
+	'protected'
+	'private'
+	'static'
+	'final'
+	'transient'
+	'volatile'
 
 VariableDeclaratorList:
 	VariableDeclarator (',' VariableDeclarator)*
@@ -180,27 +222,59 @@ VariableInitializer:
 
 # Inlined unann types a lot
 UnannType:
+	UnannPrimitiveType
+	UnannReferenceType
+
+UnannPrimitiveType:
 	NumericType
 	'boolean'
-	UnannClassType
+
+UnannReferenceType:
+	UnannClassOrInterfaceType
+	UnannTypeVariable
 	UnannArrayType
 
+UnannClassOrInterfaceType:
+	UnannClassType
+	UnannInterfaceType
+
 UnannClassType:
-	TypedName
-	MultiName
-	UnannClassType '.' AnnotatedType
+	'identifier' TypeArguments?
+	UnannClassOrInterfaceType '.' Annotation* 'identifier' TypeArguments?
+
+UnannInterfaceType:
+	UnannClassType
+
+UnannTypeVariable:
+	'identifier'
 
 UnannArrayType:
-	NumericType Dims
- 	'boolean' Dims
-	UnannClassType Dims
+	UnannPrimitiveType Dims
+	UnannClassOrInterfaceType Dims
+	UnannTypeVariable Dims
 
 MethodDeclaration:
-	Modifier* MethodHeader MethodBody
+	MethodModifier* MethodHeader MethodBody
+
+MethodModifier:
+	Annotation
+	'public'
+	'protected'
+	'private'
+	'abstract'
+	'static'
+	'final'
+	'synchronized'
+	'native'
+	'strictfp'
 
 MethodHeader:
-	(TypeParameters Annotation*)? UnannType MethodDeclarator Throws?
-	(TypeParameters Annotation*)? 'void' MethodDeclarator Throws?
+	Result MethodDeclarator Throws?
+	TypeParameters Annotation* Result MethodDeclarator Throws?
+
+Result:
+	UnannType
+	'void'
 
 MethodDeclarator:
 	'identifier' '(' FormalParameterList? ')' Dims?
@@ -211,15 +285,14 @@ FormalParameterList:
 	LastFormalParameter
 
 FormalParameter:
-	VariableModifiers UnannType VariableDeclaratorId
-	Annotation* UnannType VariableDeclaratorId
+	VariableModifier* UnannType VariableDeclaratorId
 
-VariableModifiers:
-	Annotation* 'final' Annotation*
+VariableModifier:
+	Annotation
+	'final'
 
 LastFormalParameter:
-	VariableModifiers UnannType Annotation* '...' VariableDeclaratorId
-	Annotation* UnannType Annotation* '...' VariableDeclaratorId
+	VariableModifier* UnannType Annotation* '...' VariableDeclaratorId
 
 ReceiverParameter:
 	Annotation* UnannType ('identifier' '.')? 'this'
@@ -235,6 +308,7 @@ ExceptionTypeList:
 
 ExceptionType:
 	ClassType
+	TypeVariable
 
 MethodBody:
 	Block
@@ -247,7 +321,13 @@ StaticInitializer:
 	'static' Block
 
 ConstructorDeclaration:
-	Modifier* ConstructorDeclarator Throws? ConstructorBody
+	ConstructorModifier* ConstructorDeclarator Throws? ConstructorBody
+
+ConstructorModifier:
+	Annotation
+	'public'
+	'protected'
+	'private'
 
 ConstructorDeclarator:
 	TypeParameters? 'identifier' '(' FormalParameterList? ')'
@@ -258,12 +338,11 @@ ConstructorBody:
 ExplicitConstructorInvocation:
 	TypeArguments? 'this' '(' ArgumentList? ')' ';'
 	TypeArguments? 'super' '(' ArgumentList? ')' ';'
-	'identifier' '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
-	MultiName '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
+	ExpressionName '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
 	Primary '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
 
 EnumDeclaration:
-	Modifier* 'enum' 'identifier' Superinterfaces? EnumBody
+	ClassModifier* 'enum' 'identifier' Superinterfaces? EnumBody
 
 EnumBody:
 	'{' EnumConstantList? ','? EnumBodyDeclarations? '}'
@@ -283,7 +362,16 @@ InterfaceDeclaration:
 	AnnotationTypeDeclaration
 
 NormalInterfaceDeclaration:
-	Modifier* 'interface' 'identifier' TypeParameters? ExtendsInterfaces? InterfaceBody
+	InterfaceModifier* 'interface' 'identifier' TypeParameters? ExtendsInterfaces? InterfaceBody
+
+InterfaceModifier:
+	Annotation
+	'public'
+	'protected'
+	'private'
+	'abstract'
+	'static'
+	'strictfp'
 
 ExtendsInterfaces:
 	'extends' InterfaceTypeList
@@ -299,13 +387,27 @@ InterfaceMemberDeclaration:
 	';'
 
 ConstantDeclaration:
-	Modifier* UnannType VariableDeclaratorList ';'
+	ConstantModifier* UnannType VariableDeclaratorList ';'
+
+ConstantModifier:
+	Annotation
+	'public'
+	'static'
+	'final'
 
 InterfaceMethodDeclaration:
-	Modifier* 'default'? Modifier* MethodHeader MethodBody
+	InterfaceMethodModifier* MethodHeader MethodBody
+
+InterfaceMethodModifier:
+	Annotation
+	'public'
+	'abstract'
+	'default'
+	'static'
+	'strictfp'
 
 AnnotationTypeDeclaration:
-	Modifier* '@' 'interface' 'identifier' AnnotationTypeBody
+	InterfaceModifier* '@' 'interface' 'identifier' AnnotationTypeBody
 
 AnnotationTypeBody:
 	'{' AnnotationTypeMemberDeclaration* '}'
@@ -318,7 +420,12 @@ AnnotationTypeMemberDeclaration:
 	';'
 
 AnnotationTypeElementDeclaration:
-	Modifier* UnannType 'identifier' '(' ')' Dims? DefaultValue? ';'
+	AnnotationTypeElementModifier* UnannType 'identifier' '(' ')' Dims? DefaultValue? ';'
+
+AnnotationTypeElementModifier:
+	Annotation
+	'public'
+	'abstract'
 
 DefaultValue:
 	'default' ElementValue
@@ -329,7 +436,7 @@ Annotation:
 	SingleElementAnnotation
 
 NormalAnnotation:
-	'@' ComplexName '(' ElementValuePairList? ')'
+	'@' TypeName '(' ElementValuePairList? ')'
 
 ElementValuePairList:
 	ElementValuePair (',' ElementValuePair)*
@@ -349,10 +456,10 @@ ElementValueList:
 	ElementValue (',' ElementValue)*
 
 MarkerAnnotation:
-	'@' ComplexName
+	'@' TypeName
 
 SingleElementAnnotation:
-	'@' ComplexName '(' ElementValue ')'
+	'@' TypeName '(' ElementValue ')'
 
 # Productions from §10 (Arrays)
 ArrayInitializer:
@@ -377,8 +484,7 @@ LocalVariableDeclarationStatement:
 	LocalVariableDeclaration ';'
 
 LocalVariableDeclaration:
-	VariableModifiers? UnannType VariableDeclaratorList
-	Annotation* UnannType VariableDeclaratorList
+	VariableModifier* UnannType VariableDeclaratorList
 
 Statement:
 	StatementWithoutTrailingSubstatement
@@ -492,12 +598,10 @@ StatementExpressionList:
 	StatementExpression (',' StatementExpression)*
 
 EnhancedForStatement:
-	'for' '(' VariableModifiers? UnannType VariableDeclaratorId ':' Expression ')' Statement
-	'for' '(' Annotation* UnannType VariableDeclaratorId ':' Expression ')' Statement
+	'for' '(' VariableModifier* UnannType VariableDeclaratorId ':' Expression ')' Statement
 
 EnhancedForStatementNoShortIf:
-	'for' '(' VariableModifiers? UnannType VariableDeclaratorId ':' Expression ')' StatementNoShortIf
-	'for' '(' Annotation* UnannType VariableDeclaratorId ':' Expression ')' StatementNoShortIf
+	'for' '(' VariableModifier* UnannType VariableDeclaratorId ':' Expression ')' StatementNoShortIf
 
 BreakStatement:
 	'break' 'identifier'? ';'
@@ -526,8 +630,7 @@ CatchClause:
 	'catch' '(' CatchFormalParameter ')' Block
 
 CatchFormalParameter:
-	VariableModifiers? CatchType VariableDeclaratorId
-	Annotation* CatchType VariableDeclaratorId
+	VariableModifier* CatchType VariableDeclaratorId
 
 CatchType:
 	UnannClassType ('|' ClassType)*
@@ -545,8 +648,7 @@ ResourceList:
 	Resource (';' Resource)*
 
 Resource:
-	VariableModifiers? UnannType VariableDeclaratorId '=' Expression
-	Annotation* UnannType VariableDeclaratorId '=' Expression
+	VariableModifier* UnannType VariableDeclaratorId '=' Expression
 
 # Productions from §15 (Expressions)
 Primary:
@@ -555,12 +657,10 @@ Primary:
 
 PrimaryNoNewArray:
 	Literal
-	'identifier' ('[' ']')* '.' 'class'
-	MultiName ('[' ']')* '.' 'class'
+	TypeName ('[' ']')* '.' 'class'
 	'void' '.' 'class'
 	'this'
-	'identifier' '.' 'this'
-	MultiName '.' 'this'
+	TypeName '.' 'this'
 	'(' Expression ')'
 	ClassInstanceCreationExpression
 	FieldAccess
@@ -570,8 +670,7 @@ PrimaryNoNewArray:
 
 ClassInstanceCreationExpression:
 	'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
-	'identifier' '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
-	MultiName '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
+	ExpressionName '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
 	Primary '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
 
 TypeArgumentsOrDiamond:
@@ -581,43 +680,38 @@ TypeArgumentsOrDiamond:
 FieldAccess:
 	Primary '.' 'identifier'
 	'super' '.' 'identifier'
-	'identifier' '.' 'super' '.' 'identifier'
-	MultiName '.' 'super' '.' 'identifier'
+	TypeName '.' 'super' '.' 'identifier'
 
 ArrayAccess:
-	'identifier' '[' Expression ']'
- 	MultiName '[' Expression ']'
+	ExpressionName '[' Expression ']'
 	PrimaryNoNewArray '[' Expression ']'
 
 
 MethodInvocation:
-	'identifier' '(' ArgumentList? ')'
-	'identifier' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	MultiName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
+	MethodName '(' ArgumentList? ')'
+	TypeName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
+	ExpressionName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
  	Primary '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
 	'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	'identifier' '.' 'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	MultiName '.' 'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
+	TypeName '.' 'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
 
 ArgumentList:
 	Expression (',' Expression)*
 
 MethodReference:
-	'identifier' '::' TypeArguments? 'identifier'
-	MultiName '::' TypeArguments? 'identifier'
+	ExpressionName '::' TypeArguments? 'identifier'
 	ReferenceType '::' TypeArguments? 'identifier'
 	Primary '::' TypeArguments? 'identifier'
 	'super' '::' TypeArguments? 'identifier'
-	'identifier' '.' 'super' '::' TypeArguments? 'identifier'
-	MultiName '.' 'super' '::' TypeArguments? 'identifier'
+	TypeName '.' 'super' '::' TypeArguments? 'identifier'
 	ClassType '::' TypeArguments? 'new'
 	ArrayType '::' 'new'
 
 ArrayCreationExpression:
 	'new' PrimitiveType DimExprs Dims?
-	'new' ClassType DimExprs Dims?
+	'new' ClassOrInterfaceType DimExprs Dims?
  	'new' PrimitiveType Dims ArrayInitializer
-	'new' ClassType Dims ArrayInitializer
+	'new' ClassOrInterfaceType Dims ArrayInitializer
 
 DimExprs:
 	DimExpr DimExpr*
@@ -634,9 +728,9 @@ Expression:
 
 LambdaExpression:
 	LambdaParameters '->' LambdaBody
-	'identifier' '->' LambdaBody
 
 LambdaParameters:
+	'identifier'
 	'(' FormalParameterList? ')'
 	'(' 'identifier' (',' 'identifier')* ')'
 
@@ -649,10 +743,12 @@ AssignmentExpression:
 	Assignment
 
 Assignment:
-	'identifier' AssignmentOperator Expression
-	MultiName AssignmentOperator Expression
-	FieldAccess AssignmentOperator Expression
-	ArrayAccess AssignmentOperator Expression
+	LeftHandSide AssignmentOperator Expression
+
+LeftHandSide:
+	ExpressionName
+	FieldAccess
+	ArrayAccess
 
 AssignmentOperator:
 	'='
@@ -700,10 +796,6 @@ EqualityExpression:
 RelationalExpression:
 	ShiftExpression
 	RelationalExpression '<' ShiftExpression
-	# This is a bit iffy, but i< is a shift/reduce conflict for typedname
-	# and this solves that problem
-	'identifier' '<' ShiftExpression
-	MultiName '<' ShiftExpression
 	RelationalExpression '>' ShiftExpression
 	RelationalExpression '<=' ShiftExpression
 	RelationalExpression '>=' ShiftExpression
@@ -747,8 +839,7 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
 	Primary
-	'identifier'
-	MultiName
+	ExpressionName
 	PostIncrementExpression
 	PostDecrementExpression
 
@@ -759,28 +850,7 @@ PostDecrementExpression:
 	PostfixExpression '--'
 
 CastExpression:
-	'(' Annotation* NumericType ')' UnaryExpression
-	'(' Annotation* 'boolean' ')' UnaryExpression
-	'(' Annotation* 'identifier' TypeArguments? AdditionalBound* ')' UnaryExpressionNotPlusMinus
-	'(' Annotation* 'identifier' TypeArguments? AdditionalBound* ')' LambdaExpression
-	'(' Annotation* MultiName TypeArguments? AdditionalBound* ')' UnaryExpressionNotPlusMinus
-	'(' Annotation* MultiName TypeArguments? AdditionalBound* ')' LambdaExpression
-	'(' NonTrivialClassType AdditionalBound* ')' UnaryExpressionNotPlusMinus
-	'(' NonTrivialClassType AdditionalBound* ')' LambdaExpression
-	'(' ArrayType AdditionalBound* ')' UnaryExpressionNotPlusMinus
-	'(' ArrayType AdditionalBound* ')' LambdaExpression
+	'(' PrimitiveType ')' UnaryExpression
+	'(' ReferenceType AdditionalBound* ')' UnaryExpressionNotPlusMinus
+	'(' ReferenceType AdditionalBound* ')' LambdaExpression
 
-# Own Productions
-Modifier:
-	Annotation
-	'public'
-	'protected'
-	'private'
-	'abstract'
-	'static'
-	'final'
-	'strictfp'
-	'transient'
-	'volatile'
-	'synchronized'
-	'native'
