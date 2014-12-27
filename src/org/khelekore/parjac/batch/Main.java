@@ -14,7 +14,10 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.grammar.Grammar;
+import org.khelekore.parjac.grammar.GrammarReader;
 import org.khelekore.parjac.grammar.java8.Java8Grammar;
+import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.parser.LRParser;
 
 /** Program to run a batch compilation.
@@ -22,7 +25,7 @@ import org.khelekore.parjac.parser.LRParser;
 public class Main {
     private final CompilerDiagnosticCollector diagnostics;
 
-    public static void main (String[] args) {
+    public static void main (String[] args) throws IOException {
 	CompilerDiagnosticCollector collector = new CompilerDiagnosticCollector ();
 
 	Main main = new Main (collector);
@@ -37,7 +40,7 @@ public class Main {
 	this.diagnostics = diagnostics;
     }
 
-    public void compile (String[] args) {
+    public void compile (String[] args) throws IOException {
 	long startTime = System.nanoTime ();
 	CompilationArguments settings = parseArgs (args);
 	if (settings == null || diagnostics.hasError ())
@@ -52,8 +55,11 @@ public class Main {
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
-	Java8Grammar grammar = new Java8Grammar (false);
-	Compiler c = new Compiler (diagnostics, grammar.getGrammar ());
+	GrammarReader gr = new GrammarReader (false);
+	gr.read (getClass ().getResource ("/java_8.pj"));
+	Grammar g = gr.getGrammar ();
+	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
+	Compiler c = new Compiler (diagnostics, g);
 	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
