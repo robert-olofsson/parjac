@@ -3,23 +3,25 @@ package org.khelekore.parjac.parser;
 import java.io.IOException;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.GrammarReader;
+import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class TestBlock {
-    private LRParser lr;
+    private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
 
     @BeforeClass
     public void createLRParser () throws IOException {
 	GrammarReader gr = new GrammarReader (true);
 	gr.read (getClass ().getResource ("/java_8.pj"));
-	lr = new LRParser (gr.getGrammar (), true);
-	lr.getGrammar ().addRule ("Goal", "Block");
+	g = gr.getGrammar ();
+	g.addRule ("Goal", "Block", Token.END_OF_INPUT);
 	try {
-	    lr.build ();
+	    g.validateRules ();
 	} catch (Throwable t) {
 	    t.printStackTrace ();
 	}
@@ -206,9 +208,6 @@ public class TestBlock {
 	testSuccessfulParse ("{ foo = (Foo<T> & Bar<T>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>)bar; }");
-
-	/* Currently failing */
-	/*
 	testSuccessfulParse ("{ foo = (int[])bar; }");
 	testSuccessfulParse ("{ foo = (@Foo int[])bar; }");
 	testSuccessfulParse ("{ foo = (int[][])bar; }");
@@ -216,11 +215,10 @@ public class TestBlock {
 	testSuccessfulParse ("{ foo = (foo.Bar[])bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
-	*/
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.parse (lr, s, diagnostics);
+	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
     }
 }

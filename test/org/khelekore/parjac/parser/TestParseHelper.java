@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 
@@ -24,6 +25,14 @@ public class TestParseHelper {
 	Lexer lexer = new CharBufferLexer (path, charBuf);
 	Parser p = new Parser (lr, path, lexer, diagnostics, lr.getDebug ());
 	return p;
+    }
+
+    public static void earleyParse (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
+	CharBuffer charBuf = CharBuffer.wrap (s);
+	Path path = Paths.get ("TestParseHelper.getParser");
+	Lexer lexer = new CharBufferLexer (path, charBuf);
+	EarleyParser ep = new EarleyParser (g, path, lexer, diagnostics, false);
+	ep.parse ();
     }
 
     public static String getParseOutput (CompilerDiagnosticCollector diagnostics) {

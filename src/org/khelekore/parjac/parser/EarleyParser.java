@@ -1,8 +1,6 @@
 package org.khelekore.parjac.parser;
 
-import java.nio.CharBuffer;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,7 +13,6 @@ import org.khelekore.parjac.grammar.RuleCollection;
 import org.khelekore.parjac.grammar.RulePart;
 import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.grammar.TokenPart;
-import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 
@@ -67,7 +64,7 @@ public class EarleyParser {
 	}
 	StateSet finishingStates = states.get (currentPosition);
 	if (debug)
-	    System.out.println ("finishingStates: " + finishingStates);
+	    System.err.println ("finishingStates: " + finishingStates);
 	if (finishingStates.size () == 1) {
 	    State finish = finishingStates.get (0);
 	    if (!isEndState (finish))
@@ -79,7 +76,7 @@ public class EarleyParser {
 
     private void handleToken (int currentPosition, Token nextToken) {
 	if (debug)
-	    System.out.println ("nextToken: " + nextToken);
+	    System.err.println ("nextToken: " + nextToken);
 	StateSet currentStates = states.get (currentPosition);
 	for (int s = 0; s < currentStates.size (); s++) {
 	    State state = currentStates.get (s);
@@ -126,9 +123,11 @@ public class EarleyParser {
 
     private void complete (State state, int pos, StateSet currentStates) {
 	StateSet originStates = states.get (state.startPos);
-	for (State os : originStates)
+	for (int i = 0; i < originStates.size (); i++) {
+	    State os = originStates.get (i);
 	    if (incomplete (os) && nextIsRule (os, state.item.getRule ().getName ()))
 		currentStates.add (new State (os.item.advance (), os.startPos));
+	}
     }
 
     private boolean nextIsRule (State state, String ruleName) {
@@ -146,7 +145,7 @@ public class EarleyParser {
 
     private void debugPrintStates (int pos) {
 	if (debug)
-	    states.get (pos).forEach (s -> System.out.println (pos + ": " + s));
+	    states.get (pos).forEach (s -> System.err.println (pos + ": " + s));
     }
 
     private static class StateSet implements Iterable<State> {
@@ -210,27 +209,5 @@ public class EarleyParser {
 						   lexer.getLineNumber (),
 						   lexer.getTokenColumn (),
 						   error));
-    }
-
-    public static void main (String[] args) {
-	Grammar g = new Grammar ();
-	g.addRule ("Goal", "S", Token.END_OF_INPUT);
-	g.addRule ("S", "NP", "VP");
-	g.addRule ("NP", Token.PLUS, Token.GT, Token.IDENTIFIER);
-	g.addRule ("NP", Token.PLUS, Token.IDENTIFIER);
-	g.addRule ("NP", Token.GT, Token.IDENTIFIER);
-	g.addRule ("VP", Token.AT, "VP");
-	g.addRule ("VP", Token.MULTIPLY, "NP");
-	g.validateRules ();
-	g.memorize ();
-
-	CharBuffer cb = CharBuffer.wrap ("+ > noun @ * + noun2");
-	Path path = Paths.get ("EarleyParser");
-	Lexer lexer = new CharBufferLexer (path, cb);
-	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
-	EarleyParser ep = new EarleyParser (g, path, lexer, diagnostics, true);
-	ep.parse ();
-	if (diagnostics.hasError ())
-	    System.err.println ("Failed to parse correctly");
     }
 }
