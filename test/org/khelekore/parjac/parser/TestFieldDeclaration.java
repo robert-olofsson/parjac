@@ -15,7 +15,7 @@ public class TestFieldDeclaration {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "FieldDeclaration");
+	lr.getGrammar ().addRule ("Goal", "FieldDeclaration");
 	grammar.addFieldDeclaration ();
 	grammar.addModifiers ();
 	grammar.addNameRules ();
@@ -24,8 +24,8 @@ public class TestFieldDeclaration {
 	grammar.addAnnotationRules ();
 	grammar.addArrayInitializer ();
 	// simplified
-	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("Expression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

@@ -16,8 +16,8 @@ public class TestBlock {
     public void createLRParser () throws IOException {
 	GrammarReader gr = new GrammarReader (true);
 	gr.read (getClass ().getResource ("/java_8.pj"));
-	lr = gr.getParser ();
-	lr.addRule ("Goal", "Block");
+	lr = new LRParser (gr.getGrammar (), true);
+	lr.getGrammar ().addRule ("Goal", "Block");
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

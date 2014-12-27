@@ -1,10 +1,12 @@
 package org.khelekore.parjac.grammar.java8;
 
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.LRParser;
 
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class Java8Grammar {
+    private final Grammar gr;
     private final LRParser lr;
 
     // All modifiers are accepted in the grammar to avoid conflicts, need to check after
@@ -42,7 +44,8 @@ public class Java8Grammar {
     */
 
     public Java8Grammar (boolean debug) {
-	lr = new LRParser (debug);
+	gr = new Grammar ();
+	lr = new LRParser (gr, debug);
     }
 
     public void buildFullGrammar () {
@@ -57,7 +60,7 @@ public class Java8Grammar {
 
     public void addGoal () {
 	// First rule should be the goal rule
-	lr.addRule ("Goal", "CompilationUnit");
+	gr.addRule ("Goal", "CompilationUnit");
     }
 
     public void addAllRules () {
@@ -75,8 +78,8 @@ public class Java8Grammar {
 
     public void addLiteralRules () {
 	// Productions from §3 (Lexical Structure)
-	lr.addRule ("Literal",
-		    lr.oneOf (INT_LITERAL, LONG_LITERAL,
+	gr.addRule ("Literal",
+		    gr.oneOf (INT_LITERAL, LONG_LITERAL,
 			      FLOAT_LITERAL, DOUBLE_LITERAL,
 			      TRUE, FALSE,
 			      CHARACTER_LITERAL,
@@ -86,39 +89,39 @@ public class Java8Grammar {
 
     public void addTypeRules () {
 	// Productions from §4 (Types, Values, and Variables)
-	lr.addRule ("Type", lr.oneOf ("PrimitiveType", "ReferenceType"));
-	lr.addRule ("PrimitiveType", lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN));
-	lr.addRule ("NumericType", lr.oneOf (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE));
+	gr.addRule ("Type", gr.oneOf ("PrimitiveType", "ReferenceType"));
+	gr.addRule ("PrimitiveType", gr.zeroOrMore ("Annotation"), gr.oneOf ("NumericType", BOOLEAN));
+	gr.addRule ("NumericType", gr.oneOf (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE));
 	// removed TypeVariable, part of ClassOrInterfaceType
-	lr.addRule("ReferenceType", lr.oneOf ("ClassType", "ArrayType"));
-	lr.addRule ("ClassType",
-		    lr.zeroOrOne ("ClassType", DOT), lr.zeroOrMore ("Annotation"),
+	gr.addRule("ReferenceType", gr.oneOf ("ClassType", "ArrayType"));
+	gr.addRule ("ClassType",
+		    gr.zeroOrOne ("ClassType", DOT), gr.zeroOrMore ("Annotation"),
 		    "TypedName");
-	lr.addRule ("TypedName", IDENTIFIER, lr.zeroOrOne ("TypeArguments"));
-	lr.addRule ("NonTrivialClassType",
-		    "ClassType", DOT, lr.zeroOrMore ("Annotation"),
+	gr.addRule ("TypedName", IDENTIFIER, gr.zeroOrOne ("TypeArguments"));
+	gr.addRule ("NonTrivialClassType",
+		    "ClassType", DOT, gr.zeroOrMore ("Annotation"),
 		    "TypedName");
-	// lr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
-	// lr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
-	lr.addRule ("ArrayType",
-		    lr.oneOf ("PrimitiveType", "ClassType"), "Dims");
-	lr.addRule ("Dims",
-		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
-		    lr.zeroOrMore (lr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
-	lr.addRule ("TypeParameter",
-		    lr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, lr.zeroOrOne ("TypeBound"));
-	lr.addRule ("TypeParameterModifier", "Annotation");
-	lr.addRule ("TypeBound", EXTENDS, "ClassType", lr.zeroOrMore ("AdditionalBound"));
-	lr.addRule ("AdditionalBound", AND, "ClassType");
-	lr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
-	lr.addRule ("TypeArgumentList",
-		    "TypeArgument", lr.zeroOrMore (COMMA, "TypeArgument"));
-	lr.addRule ("TypeArgument", lr.oneOf ("ReferenceType", "Wildcard"));
-	lr.addRule ("Wildcard",
-		    lr.zeroOrMore ("Annotation"), QUESTIONMARK, lr.zeroOrOne ("WildcardBounds"));
-	lr.addRule ("WildcardBounds",
-		    lr.oneOf (lr.sequence (EXTENDS, "ReferenceType"),
-			      lr.sequence (SUPER, "ReferenceType")));
+	// gr.addRule ("InterfaceType", "ClassType"); removed to avoid conflicts
+	// gr.addRule ("TypeVariable", "Annotations", IDENTIFIER);
+	gr.addRule ("ArrayType",
+		    gr.oneOf ("PrimitiveType", "ClassType"), "Dims");
+	gr.addRule ("Dims",
+		    gr.zeroOrMore ("Annotation"), LEFT_BRACKET, RIGHT_BRACKET,
+		    gr.zeroOrMore (gr.zeroOrMore ("Annotation"),  LEFT_BRACKET, RIGHT_BRACKET));
+	gr.addRule ("TypeParameter",
+		    gr.zeroOrMore ("TypeParameterModifier"), IDENTIFIER, gr.zeroOrOne ("TypeBound"));
+	gr.addRule ("TypeParameterModifier", "Annotation");
+	gr.addRule ("TypeBound", EXTENDS, "ClassType", gr.zeroOrMore ("AdditionalBound"));
+	gr.addRule ("AdditionalBound", AND, "ClassType");
+	gr.addRule ("TypeArguments", LT, "TypeArgumentList", GT);
+	gr.addRule ("TypeArgumentList",
+		    "TypeArgument", gr.zeroOrMore (COMMA, "TypeArgument"));
+	gr.addRule ("TypeArgument", gr.oneOf ("ReferenceType", "Wildcard"));
+	gr.addRule ("Wildcard",
+		    gr.zeroOrMore ("Annotation"), QUESTIONMARK, gr.zeroOrOne ("WildcardBounds"));
+	gr.addRule ("WildcardBounds",
+		    gr.oneOf (gr.sequence (EXTENDS, "ReferenceType"),
+			      gr.sequence (SUPER, "ReferenceType")));
     }
 
     // Productions from §8 (Classes)
@@ -137,26 +140,26 @@ public class Java8Grammar {
     }
 
     public void addClassDeclaration () {
-	lr.addRule ("ClassDeclaration",
-		    lr.oneOf ("NormalClassDeclaration", "EnumDeclaration"));
-	lr.addRule ("NormalClassDeclaration",
-		    lr.zeroOrMore ("Modifier"), CLASS, IDENTIFIER,
-		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("Superclass"),
-		    lr.zeroOrOne ("Superinterfaces"), "ClassBody");
-	lr.addRule ("Superclass", EXTENDS, "ClassType");
-	lr.addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
-	lr.addRule ("InterfaceTypeList", "ClassType", lr.zeroOrMore (COMMA, "ClassType"));
-	lr.addRule ("ClassBody",
+	gr.addRule ("ClassDeclaration",
+		    gr.oneOf ("NormalClassDeclaration", "EnumDeclaration"));
+	gr.addRule ("NormalClassDeclaration",
+		    gr.zeroOrMore ("Modifier"), CLASS, IDENTIFIER,
+		    gr.zeroOrOne ("TypeParameters"), gr.zeroOrOne ("Superclass"),
+		    gr.zeroOrOne ("Superinterfaces"), "ClassBody");
+	gr.addRule ("Superclass", EXTENDS, "ClassType");
+	gr.addRule ("Superinterfaces", IMPLEMENTS, "InterfaceTypeList");
+	gr.addRule ("InterfaceTypeList", "ClassType", gr.zeroOrMore (COMMA, "ClassType"));
+	gr.addRule ("ClassBody",
 		    LEFT_CURLY,
-		    lr.zeroOrMore ("ClassBodyDeclaration"),
+		    gr.zeroOrMore ("ClassBodyDeclaration"),
 		    RIGHT_CURLY);
-	lr.addRule ("ClassBodyDeclaration",
-		    lr.oneOf ("ClassMemberDeclaration",
+	gr.addRule ("ClassBodyDeclaration",
+		    gr.oneOf ("ClassMemberDeclaration",
 			      "InstanceInitializer",
 			      "StaticInitializer",
 			      "ConstructorDeclaration"));
-	lr.addRule ("ClassMemberDeclaration",
-		    lr.oneOf ("FieldDeclaration",
+	gr.addRule ("ClassMemberDeclaration",
+		    gr.oneOf ("FieldDeclaration",
 			      "MethodDeclaration",
 			      "ClassDeclaration",
 			      "InterfaceDeclaration",
@@ -164,270 +167,270 @@ public class Java8Grammar {
     }
 
     public void addFieldDeclaration () {
-	lr.addRule ("FieldDeclaration",
-		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
-	lr.addRule ("VariableDeclaratorList",
-		    "VariableDeclarator", lr.zeroOrMore (COMMA, "VariableDeclarator"));
-	lr.addRule ("VariableDeclarator",
-		    "VariableDeclaratorId", lr.zeroOrOne (EQUAL, "VariableInitializer"));
-	lr.addRule ("VariableDeclaratorId",
-		    IDENTIFIER, lr.zeroOrOne ("Dims"));
-	lr.addRule ("VariableInitializer", lr.oneOf ("Expression", "ArrayInitializer"));
+	gr.addRule ("FieldDeclaration",
+		    gr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
+	gr.addRule ("VariableDeclaratorList",
+		    "VariableDeclarator", gr.zeroOrMore (COMMA, "VariableDeclarator"));
+	gr.addRule ("VariableDeclarator",
+		    "VariableDeclaratorId", gr.zeroOrOne (EQUAL, "VariableInitializer"));
+	gr.addRule ("VariableDeclaratorId",
+		    IDENTIFIER, gr.zeroOrOne ("Dims"));
+	gr.addRule ("VariableInitializer", gr.oneOf ("Expression", "ArrayInitializer"));
     }
 
     public void addTypeParameters () {
-	lr.addRule ("TypeParameters",
+	gr.addRule ("TypeParameters",
 		    LT, "TypeParameterList", GT);
-	lr.addRule ("TypeParameterList",
-		    "TypeParameter", lr.zeroOrMore (COMMA, "TypeParameter"));
+	gr.addRule ("TypeParameterList",
+		    "TypeParameter", gr.zeroOrMore (COMMA, "TypeParameter"));
     }
 
     public void addMethodDeclaration () {
-	lr.addRule ("MethodDeclaration",
-		    lr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
-	lr.addRule ("MethodHeader",
-		    lr.zeroOrOne ("TypeParameters", lr.zeroOrMore ("Annotation")),
-		    lr.oneOf ("UnannType", VOID), "MethodDeclarator", lr.zeroOrOne ("Throws"));
-	lr.addRule ("MethodDeclarator",
-		    IDENTIFIER, LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
-		    lr.zeroOrOne ("Dims"));
-	lr.addRule ("MethodBody", lr.oneOf ("Block", SEMICOLON));
+	gr.addRule ("MethodDeclaration",
+		    gr.zeroOrMore ("Modifier"), "MethodHeader", "MethodBody");
+	gr.addRule ("MethodHeader",
+		    gr.zeroOrOne ("TypeParameters", gr.zeroOrMore ("Annotation")),
+		    gr.oneOf ("UnannType", VOID), "MethodDeclarator", gr.zeroOrOne ("Throws"));
+	gr.addRule ("MethodDeclarator",
+		    IDENTIFIER, LEFT_PARENTHESIS, gr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS,
+		    gr.zeroOrOne ("Dims"));
+	gr.addRule ("MethodBody", gr.oneOf ("Block", SEMICOLON));
     }
 
     public void addInitializers () {
-	lr.addRule ("InstanceInitializer", "Block");
-	lr.addRule ("StaticInitializer", STATIC, "Block");
+	gr.addRule ("InstanceInitializer", "Block");
+	gr.addRule ("StaticInitializer", STATIC, "Block");
     }
 
     public void addConstructorDeclaration () {
-	lr.addRule ("ConstructorDeclaration",
-		    lr.zeroOrMore ("Modifier"), "ConstructorDeclarator",
-		    lr.zeroOrOne ("Throws"), "ConstructorBody");
-	lr.addRule ("ConstructorDeclarator",
-		    lr.zeroOrOne ("TypeParameters"), IDENTIFIER,
-		    LEFT_PARENTHESIS, lr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
-	lr.addRule ("ConstructorBody",
+	gr.addRule ("ConstructorDeclaration",
+		    gr.zeroOrMore ("Modifier"), "ConstructorDeclarator",
+		    gr.zeroOrOne ("Throws"), "ConstructorBody");
+	gr.addRule ("ConstructorDeclarator",
+		    gr.zeroOrOne ("TypeParameters"), IDENTIFIER,
+		    LEFT_PARENTHESIS, gr.zeroOrOne ("FormalParameterList"), RIGHT_PARENTHESIS);
+	gr.addRule ("ConstructorBody",
 		    LEFT_CURLY,
-		    lr.zeroOrOne ("ExplicitConstructorInvocation"), lr.zeroOrOne ("BlockStatements"),
+		    gr.zeroOrOne ("ExplicitConstructorInvocation"), gr.zeroOrOne ("BlockStatements"),
 		    RIGHT_CURLY);
-	lr.addRule ("ExplicitConstructorInvocation",
-		    lr.oneOf (lr.sequence (lr.zeroOrOne ("TypeArguments"), THIS),
-			      lr.sequence (lr.zeroOrOne (lr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
-					   lr.zeroOrOne ("TypeArguments"), SUPER)),
-		    LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS, SEMICOLON);
+	gr.addRule ("ExplicitConstructorInvocation",
+		    gr.oneOf (gr.sequence (gr.zeroOrOne ("TypeArguments"), THIS),
+			      gr.sequence (gr.zeroOrOne (gr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
+					   gr.zeroOrOne ("TypeArguments"), SUPER)),
+		    LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS, SEMICOLON);
     }
 
     public void addFormalParameterList () {
-	lr.addRule ("FormalParameterList",
-		    lr.oneOf (lr.sequence ("ReceiverParameter", "FormalParameterListRest"),
-			      lr.sequence ("FormalParameter", "FormalParameterListRest"),
+	gr.addRule ("FormalParameterList",
+		    gr.oneOf (gr.sequence ("ReceiverParameter", "FormalParameterListRest"),
+			      gr.sequence ("FormalParameter", "FormalParameterListRest"),
 			      "LastFormalParameter"));
-	lr.addRule ("FormalParameter",
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+	gr.addRule ("FormalParameter",
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "UnannType", "VariableDeclaratorId");
-	lr.addRule ("VariableModifiers", lr.zeroOrMore ("Annotation"), FINAL, lr.zeroOrMore ("Annotation"));
-	lr.addRule ("LastFormalParameter",
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
-		    "UnannType", lr.zeroOrMore ("Annotation"), ELLIPSIS, "VariableDeclaratorId");
-	lr.addRule ("ReceiverParameter",
-		    lr.zeroOrMore ("Annotation"), "UnannType", lr.zeroOrOne (IDENTIFIER, DOT), THIS);
-	lr.addRule ("FormalParameterListRest",
-		    lr.sequence (lr.zeroOrMore (COMMA, "FormalParameter"),
-				 lr.zeroOrOne (COMMA, "LastFormalParameter")));
+	gr.addRule ("VariableModifiers", gr.zeroOrMore ("Annotation"), FINAL, gr.zeroOrMore ("Annotation"));
+	gr.addRule ("LastFormalParameter",
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
+		    "UnannType", gr.zeroOrMore ("Annotation"), ELLIPSIS, "VariableDeclaratorId");
+	gr.addRule ("ReceiverParameter",
+		    gr.zeroOrMore ("Annotation"), "UnannType", gr.zeroOrOne (IDENTIFIER, DOT), THIS);
+	gr.addRule ("FormalParameterListRest",
+		    gr.sequence (gr.zeroOrMore (COMMA, "FormalParameter"),
+				 gr.zeroOrOne (COMMA, "LastFormalParameter")));
     }
 
     public void addThrows () {
-	lr.addRule ("Throws",
+	gr.addRule ("Throws",
 		    THROWS, "ExceptionTypeList");
-	lr.addRule ("ExceptionTypeList",
-		    "ExceptionType", lr.zeroOrMore (COMMA, "ExceptionType"));
-	lr.addRule ("ExceptionType", "ClassType");
+	gr.addRule ("ExceptionTypeList",
+		    "ExceptionType", gr.zeroOrMore (COMMA, "ExceptionType"));
+	gr.addRule ("ExceptionType", "ClassType");
     }
 
     public void addEnumDeclaration () {
-	lr.addRule ("EnumDeclaration",
-		    lr.zeroOrMore ("Modifier"),
-		    ENUM, IDENTIFIER, lr.zeroOrOne ("Superinterfaces"), "EnumBody");
-	lr.addRule ("EnumBody",
+	gr.addRule ("EnumDeclaration",
+		    gr.zeroOrMore ("Modifier"),
+		    ENUM, IDENTIFIER, gr.zeroOrOne ("Superinterfaces"), "EnumBody");
+	gr.addRule ("EnumBody",
 		    LEFT_CURLY,
-		    lr.zeroOrOne ("EnumConstantList"), lr.zeroOrOne (COMMA),
-		    lr.zeroOrOne ("EnumBodyDeclarations"),
+		    gr.zeroOrOne ("EnumConstantList"), gr.zeroOrOne (COMMA),
+		    gr.zeroOrOne ("EnumBodyDeclarations"),
 		    RIGHT_CURLY);
-	lr.addRule ("EnumConstantList",
-		    "EnumConstant", lr.zeroOrMore (COMMA, "EnumConstant"));
-	lr.addRule ("EnumConstant",
-		    lr.zeroOrMore ("EnumConstantModifier"), IDENTIFIER,
-		    lr.zeroOrOne (LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-		    lr.zeroOrOne ("ClassBody"));
-	lr.addRule ("EnumConstantModifier",
+	gr.addRule ("EnumConstantList",
+		    "EnumConstant", gr.zeroOrMore (COMMA, "EnumConstant"));
+	gr.addRule ("EnumConstant",
+		    gr.zeroOrMore ("EnumConstantModifier"), IDENTIFIER,
+		    gr.zeroOrOne (LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+		    gr.zeroOrOne ("ClassBody"));
+	gr.addRule ("EnumConstantModifier",
 		    "Annotation");
-	lr.addRule ("EnumBodyDeclarations",
-		    SEMICOLON, lr.zeroOrMore ("ClassBodyDeclaration"));
+	gr.addRule ("EnumBodyDeclarations",
+		    SEMICOLON, gr.zeroOrMore ("ClassBodyDeclaration"));
     }
 
     // Productions from §9 (Interfaces)
     public void addInterfaceRules () {
-	lr.addRule ("InterfaceDeclaration",
-		    lr.oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
-	lr.addRule ("NormalInterfaceDeclaration",
-		    lr.zeroOrMore ("Modifier"), INTERFACE, IDENTIFIER,
-		    lr.zeroOrOne ("TypeParameters"), lr.zeroOrOne ("ExtendsInterfaces"), "InterfaceBody");
-	lr.addRule ("ExtendsInterfaces",
+	gr.addRule ("InterfaceDeclaration",
+		    gr.oneOf ("NormalInterfaceDeclaration", "AnnotationTypeDeclaration"));
+	gr.addRule ("NormalInterfaceDeclaration",
+		    gr.zeroOrMore ("Modifier"), INTERFACE, IDENTIFIER,
+		    gr.zeroOrOne ("TypeParameters"), gr.zeroOrOne ("ExtendsInterfaces"), "InterfaceBody");
+	gr.addRule ("ExtendsInterfaces",
 		    EXTENDS, "InterfaceTypeList");
-	lr.addRule ("InterfaceBody",
+	gr.addRule ("InterfaceBody",
 		    LEFT_CURLY,
-		    lr.zeroOrMore ("InterfaceMemberDeclaration"),
+		    gr.zeroOrMore ("InterfaceMemberDeclaration"),
 		    RIGHT_CURLY);
-	lr.addRule ("InterfaceMemberDeclaration",
-		    lr.oneOf ("ConstantDeclaration",
+	gr.addRule ("InterfaceMemberDeclaration",
+		    gr.oneOf ("ConstantDeclaration",
 			      "InterfaceMethodDeclaration",
 			      "ClassDeclaration",
 			      "InterfaceDeclaration",
 			      SEMICOLON));
-	lr.addRule ("ConstantDeclaration",
-		    lr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
-	lr.addRule ("InterfaceMethodDeclaration",
-		    lr.zeroOrMore ("Modifier"), lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("Modifier"),
+	gr.addRule ("ConstantDeclaration",
+		    gr.zeroOrMore ("Modifier"), "UnannType", "VariableDeclaratorList", SEMICOLON);
+	gr.addRule ("InterfaceMethodDeclaration",
+		    gr.zeroOrMore ("Modifier"), gr.zeroOrOne (DEFAULT), gr.zeroOrMore ("Modifier"),
 		    "MethodHeader", "MethodBody");
-	lr.addRule ("AnnotationTypeDeclaration",
-		    lr.zeroOrMore ("Modifier"),
+	gr.addRule ("AnnotationTypeDeclaration",
+		    gr.zeroOrMore ("Modifier"),
 		    AT, INTERFACE, IDENTIFIER, "AnnotationTypeBody");
-	lr.addRule ("AnnotationTypeBody",
+	gr.addRule ("AnnotationTypeBody",
 		    LEFT_CURLY,
-		    lr.zeroOrMore ("AnnotationTypeMemberDeclaration"),
+		    gr.zeroOrMore ("AnnotationTypeMemberDeclaration"),
 		    RIGHT_CURLY);
-	lr.addRule ("AnnotationTypeMemberDeclaration",
-		    lr.oneOf ("AnnotationTypeElementDeclaration",
+	gr.addRule ("AnnotationTypeMemberDeclaration",
+		    gr.oneOf ("AnnotationTypeElementDeclaration",
 			      "ConstantDeclaration",
 			      "ClassDeclaration",
 			      "InterfaceDeclaration",
 			      SEMICOLON));
-	lr.addRule ("AnnotationTypeElementDeclaration",
-		    lr.zeroOrMore ("Modifier"), "UnannType",
-		    IDENTIFIER, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, lr.zeroOrOne ("Dims"),
-		    lr.zeroOrOne ("DefaultValue"), SEMICOLON);
-	lr.addRule ("DefaultValue",
+	gr.addRule ("AnnotationTypeElementDeclaration",
+		    gr.zeroOrMore ("Modifier"), "UnannType",
+		    IDENTIFIER, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, gr.zeroOrOne ("Dims"),
+		    gr.zeroOrOne ("DefaultValue"), SEMICOLON);
+	gr.addRule ("DefaultValue",
 		    DEFAULT, "ElementValue");
     }
 
     public void addUnannTypes () {
-	lr.addRule ("UnannType", lr.oneOf ("NumericType", BOOLEAN, "UnannClassType", "UnannArrayType"));
+	gr.addRule ("UnannType", gr.oneOf ("NumericType", BOOLEAN, "UnannClassType", "UnannArrayType"));
 
-	// really lr.oneOf ("UnannClassType", "UnannInterfaceType");
-	// lr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
+	// really gr.oneOf ("UnannClassType", "UnannInterfaceType");
+	// gr.addRule ("UnannClassOrInterfaceType", "UnannClassType");
 	// UnannTypeVariable: IDENTIFIER
-	lr.addRule ("UnannClassType",
-		    lr.zeroOrOne ("UnannClassType", DOT, lr.zeroOrMore ("Annotation")),
+	gr.addRule ("UnannClassType",
+		    gr.zeroOrOne ("UnannClassType", DOT, gr.zeroOrMore ("Annotation")),
 		    "TypedName");
-	lr.addRule ("UnannArrayType",
-		    lr.oneOf ("NumericType", BOOLEAN, "UnannClassType"), "Dims");
+	gr.addRule ("UnannArrayType",
+		    gr.oneOf ("NumericType", BOOLEAN, "UnannClassType"), "Dims");
     }
 
     // Productions from §6 Names
     public void addNameRules () {
-	lr.addRule ("ComplexName",
-		    lr.oneOf (IDENTIFIER, lr.sequence ("ComplexName", DOT, IDENTIFIER)));
-	lr.addRule ("MultiName",
-		    lr.oneOf (lr.sequence (IDENTIFIER, DOT, IDENTIFIER),
-			      lr.sequence ("MultiName", DOT, IDENTIFIER)));
+	gr.addRule ("ComplexName",
+		    gr.oneOf (IDENTIFIER, gr.sequence ("ComplexName", DOT, IDENTIFIER)));
+	gr.addRule ("MultiName",
+		    gr.oneOf (gr.sequence (IDENTIFIER, DOT, IDENTIFIER),
+			      gr.sequence ("MultiName", DOT, IDENTIFIER)));
     }
 
     // Productions from §7 (Packages)
     public void addCompilationUnit () {
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrOne ("PackageDeclaration"),
-		    lr.zeroOrMore ("ImportDeclaration"),
-		    lr.zeroOrMore ("TypeDeclaration"));
+	gr.addRule ("CompilationUnit",
+		    gr.zeroOrOne ("PackageDeclaration"),
+		    gr.zeroOrMore ("ImportDeclaration"),
+		    gr.zeroOrMore ("TypeDeclaration"));
 	addPackageRules ();
 	addImportRules ();
 	addTypeDeclaration ();
     }
 
     public void addPackageRules () {
-	lr.addRule ("PackageDeclaration",
-		    lr.zeroOrMore ("Annotation"), PACKAGE, IDENTIFIER,
-		    lr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
+	gr.addRule ("PackageDeclaration",
+		    gr.zeroOrMore ("Annotation"), PACKAGE, IDENTIFIER,
+		    gr.zeroOrMore (DOT, IDENTIFIER), SEMICOLON);
     }
 
     public void addImportRules () {
-	lr.addRule ("ImportDeclaration",
-		    lr.oneOf ("SingleTypeImportDeclaration",
+	gr.addRule ("ImportDeclaration",
+		    gr.oneOf ("SingleTypeImportDeclaration",
 			      "TypeImportOnDemandDeclaration",
 			      "SingleStaticImportDeclaration",
 			      "StaticImportOnDemandDeclaration"));
-	lr.addRule ("SingleTypeImportDeclaration",
+	gr.addRule ("SingleTypeImportDeclaration",
 		    IMPORT, "ComplexName", SEMICOLON);
 	// This one should really be IMPORT, PackageOrTypeName, but then we need more lookahead
-	lr.addRule ("TypeImportOnDemandDeclaration",
+	gr.addRule ("TypeImportOnDemandDeclaration",
 		    IMPORT, "ComplexName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("SingleStaticImportDeclaration",
+	gr.addRule ("SingleStaticImportDeclaration",
 		    IMPORT, STATIC, "ComplexName", DOT, IDENTIFIER, SEMICOLON);
-	lr.addRule ("StaticImportOnDemandDeclaration",
+	gr.addRule ("StaticImportOnDemandDeclaration",
 		    IMPORT, STATIC, "ComplexName", DOT, MULTIPLY, SEMICOLON);
     }
 
     public void addTypeDeclaration () {
-	lr.addRule ("TypeDeclaration",
-		    lr.oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
+	gr.addRule ("TypeDeclaration",
+		    gr.oneOf ("ClassDeclaration", "InterfaceDeclaration", SEMICOLON));
     }
 
     public void addAnnotationRules () {
-	lr.addRule ("Annotation",
-		    lr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
-	lr.addRule ("NormalAnnotation",
-		    AT, "ComplexName", LEFT_PARENTHESIS, lr.zeroOrOne ("ElementValuePairList"), RIGHT_PARENTHESIS);
-	lr.addRule ("ElementValuePairList",
-		    "ElementValuePair", lr.zeroOrMore (COMMA, "ElementValuePair"));
-	lr.addRule ("ElementValuePair",
+	gr.addRule ("Annotation",
+		    gr.oneOf ("NormalAnnotation", "MarkerAnnotation", "SingleElementAnnotation"));
+	gr.addRule ("NormalAnnotation",
+		    AT, "ComplexName", LEFT_PARENTHESIS, gr.zeroOrOne ("ElementValuePairList"), RIGHT_PARENTHESIS);
+	gr.addRule ("ElementValuePairList",
+		    "ElementValuePair", gr.zeroOrMore (COMMA, "ElementValuePair"));
+	gr.addRule ("ElementValuePair",
 		    IDENTIFIER, EQUAL, "ElementValue");
-	lr.addRule ("ElementValue",
-		    lr.oneOf ("ConditionalExpression", "ElementValueArrayInitializer", "Annotation"));
-	lr.addRule ("ElementValueArrayInitializer",
-		    LEFT_CURLY, lr.zeroOrOne ("ElementValueList"), lr.zeroOrOne (COMMA), RIGHT_CURLY);
-	lr.addRule ("ElementValueList", "ElementValue", lr.zeroOrMore (COMMA, "ElementValue"));
-	lr.addRule ("MarkerAnnotation", AT, "ComplexName");
-	lr.addRule ("SingleElementAnnotation",
+	gr.addRule ("ElementValue",
+		    gr.oneOf ("ConditionalExpression", "ElementValueArrayInitializer", "Annotation"));
+	gr.addRule ("ElementValueArrayInitializer",
+		    LEFT_CURLY, gr.zeroOrOne ("ElementValueList"), gr.zeroOrOne (COMMA), RIGHT_CURLY);
+	gr.addRule ("ElementValueList", "ElementValue", gr.zeroOrMore (COMMA, "ElementValue"));
+	gr.addRule ("MarkerAnnotation", AT, "ComplexName");
+	gr.addRule ("SingleElementAnnotation",
 		    AT, "ComplexName", LEFT_PARENTHESIS, "ElementValue", RIGHT_PARENTHESIS);
     }
 
     // Productions from §10 (Arrays)
     public void addArrayInitializer () {
-	lr.addRule ("ArrayInitializer",
-		    LEFT_CURLY, lr.zeroOrOne ("VariableInitializerList"),
-		    lr.zeroOrOne (COMMA), RIGHT_CURLY);
-	lr.addRule ("VariableInitializerList",
-		    "VariableInitializer", lr.zeroOrMore (COMMA, "VariableInitializer"));
+	gr.addRule ("ArrayInitializer",
+		    LEFT_CURLY, gr.zeroOrOne ("VariableInitializerList"),
+		    gr.zeroOrOne (COMMA), RIGHT_CURLY);
+	gr.addRule ("VariableInitializerList",
+		    "VariableInitializer", gr.zeroOrMore (COMMA, "VariableInitializer"));
     }
 
     // Productions from §14 (Blocks and Statements)
     public void addBlockStatements () {
-	lr.addRule ("Block",
-		    LEFT_CURLY, lr.zeroOrOne ("BlockStatements"), RIGHT_CURLY);
-	lr.addRule ("BlockStatements",
-		    "BlockStatement", lr.zeroOrMore ("BlockStatement"));
-	lr.addRule ("BlockStatement",
-		    lr.oneOf ("LocalVariableDeclarationStatement",
+	gr.addRule ("Block",
+		    LEFT_CURLY, gr.zeroOrOne ("BlockStatements"), RIGHT_CURLY);
+	gr.addRule ("BlockStatements",
+		    "BlockStatement", gr.zeroOrMore ("BlockStatement"));
+	gr.addRule ("BlockStatement",
+		    gr.oneOf ("LocalVariableDeclarationStatement",
 			      "ClassDeclaration",
 			      "Statement"));
-	lr.addRule ("LocalVariableDeclarationStatement", "LocalVariableDeclaration", SEMICOLON);
-	lr.addRule ("LocalVariableDeclaration",
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+	gr.addRule ("LocalVariableDeclarationStatement", "LocalVariableDeclaration", SEMICOLON);
+	gr.addRule ("LocalVariableDeclaration",
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "UnannType", "VariableDeclaratorList");
-	lr.addRule ("Statement",
-		    lr.oneOf ("StatementWithoutTrailingSubstatement",
+	gr.addRule ("Statement",
+		    gr.oneOf ("StatementWithoutTrailingSubstatement",
 			      "LabeledStatement",
 			      "IfThenStatement",
 			      "IfThenElseStatement",
 			      "WhileStatement",
 			      "ForStatement"));
-	lr.addRule ("StatementNoShortIf",
-		    lr.oneOf ("StatementWithoutTrailingSubstatement",
+	gr.addRule ("StatementNoShortIf",
+		    gr.oneOf ("StatementWithoutTrailingSubstatement",
 			      "LabeledStatementNoShortIf",
 			      "IfThenElseStatementNoShortIf",
 			      "WhileStatementNoShortIf",
 			      "ForStatementNoShortIf"));
-	lr.addRule ("StatementWithoutTrailingSubstatement",
-		    lr.oneOf ("Block",
+	gr.addRule ("StatementWithoutTrailingSubstatement",
+		    gr.oneOf ("Block",
 			      "EmptyStatement",
 			      "ExpressionStatement",
 			      "AssertStatement",
@@ -439,197 +442,197 @@ public class Java8Grammar {
 			      "SynchronizedStatement",
 			      "ThrowStatement",
 			      "TryStatement"));
-	lr.addRule ("EmptyStatement", SEMICOLON);
-	lr.addRule ("LabeledStatement", IDENTIFIER, COLON, "Statement");
-	lr.addRule ("LabeledStatementNoShortIf", IDENTIFIER, COLON, "StatementNoShortIf");
-	lr.addRule ("ExpressionStatement", "StatementExpression", SEMICOLON);
-	lr.addRule ("StatementExpression",
-		    lr.oneOf ("Assignment",
+	gr.addRule ("EmptyStatement", SEMICOLON);
+	gr.addRule ("LabeledStatement", IDENTIFIER, COLON, "Statement");
+	gr.addRule ("LabeledStatementNoShortIf", IDENTIFIER, COLON, "StatementNoShortIf");
+	gr.addRule ("ExpressionStatement", "StatementExpression", SEMICOLON);
+	gr.addRule ("StatementExpression",
+		    gr.oneOf ("Assignment",
 			      "PreIncrementExpression",
 			      "PreDecrementExpression",
 			      "PostIncrementExpression",
 			      "PostDecrementExpression",
 			      "MethodInvocation",
 			      "ClassInstanceCreationExpression"));
-	lr.addRule ("IfThenStatement",
+	gr.addRule ("IfThenStatement",
 		    IF, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "Statement");
-	lr.addRule ("IfThenElseStatement",
+	gr.addRule ("IfThenElseStatement",
 		    IF, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS,
 		    "StatementNoShortIf", ELSE, "Statement");
-	lr.addRule ("IfThenElseStatementNoShortIf",
+	gr.addRule ("IfThenElseStatementNoShortIf",
 		    IF, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS,
 		    "StatementNoShortIf", ELSE, "StatementNoShortIf");
-	lr.addRule ("AssertStatement",
-		    lr.oneOf (lr.sequence (ASSERT, "Expression", SEMICOLON),
-			      lr.sequence (ASSERT, "Expression", COLON, "Expression", SEMICOLON)));
-	lr.addRule ("SwitchStatement",
+	gr.addRule ("AssertStatement",
+		    gr.oneOf (gr.sequence (ASSERT, "Expression", SEMICOLON),
+			      gr.sequence (ASSERT, "Expression", COLON, "Expression", SEMICOLON)));
+	gr.addRule ("SwitchStatement",
 		    SWITCH, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "SwitchBlock");
-	lr.addRule ("SwitchBlock",
-		    LEFT_CURLY, lr.zeroOrMore ("SwitchBlockStatementGroup"),
-		    lr.zeroOrMore ("SwitchLabel"), RIGHT_CURLY);
-	lr.addRule ("SwitchBlockStatementGroup",
-		    "SwitchLabel", lr.zeroOrMore ("SwitchLabel"), "BlockStatements");
-	lr.addRule ("SwitchLabel",
-		    lr.oneOf (lr.sequence (CASE, "ConstantExpression", COLON),
-			      lr.sequence (CASE, IDENTIFIER, COLON),
-			      lr.sequence (DEFAULT, COLON)));
-	lr.addRule ("WhileStatement",
+	gr.addRule ("SwitchBlock",
+		    LEFT_CURLY, gr.zeroOrMore ("SwitchBlockStatementGroup"),
+		    gr.zeroOrMore ("SwitchLabel"), RIGHT_CURLY);
+	gr.addRule ("SwitchBlockStatementGroup",
+		    "SwitchLabel", gr.zeroOrMore ("SwitchLabel"), "BlockStatements");
+	gr.addRule ("SwitchLabel",
+		    gr.oneOf (gr.sequence (CASE, "ConstantExpression", COLON),
+			      gr.sequence (CASE, IDENTIFIER, COLON),
+			      gr.sequence (DEFAULT, COLON)));
+	gr.addRule ("WhileStatement",
 		    WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "Statement");
-	lr.addRule ("WhileStatementNoShortIf",
+	gr.addRule ("WhileStatementNoShortIf",
 		    WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "StatementNoShortIf");
-	lr.addRule ("DoStatement",
+	gr.addRule ("DoStatement",
 		    DO, "Statement", WHILE, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, SEMICOLON);
-	lr.addRule ("ForStatement", lr.oneOf ("BasicForStatement", "EnhancedForStatement"));
-	lr.addRule ("ForStatementNoShortIf",
-		    lr.oneOf ("BasicForStatementNoShortIf",
+	gr.addRule ("ForStatement", gr.oneOf ("BasicForStatement", "EnhancedForStatement"));
+	gr.addRule ("ForStatementNoShortIf",
+		    gr.oneOf ("BasicForStatementNoShortIf",
 			      "EnhancedForStatementNoShortIf"));
-	lr.addRule ("BasicForStatement",
+	gr.addRule ("BasicForStatement",
 		    FOR, LEFT_PARENTHESIS,
-		    lr.zeroOrOne ("ForInit"), SEMICOLON,
-		    lr.zeroOrOne ("Expression"), SEMICOLON,
-		    lr.zeroOrOne ("ForUpdate"),
+		    gr.zeroOrOne ("ForInit"), SEMICOLON,
+		    gr.zeroOrOne ("Expression"), SEMICOLON,
+		    gr.zeroOrOne ("ForUpdate"),
 		    RIGHT_PARENTHESIS, "Statement");
-	lr.addRule ("BasicForStatementNoShortIf",
+	gr.addRule ("BasicForStatementNoShortIf",
 		    FOR, LEFT_PARENTHESIS,
-		    lr.zeroOrOne ("ForInit"), SEMICOLON,
-		    lr.zeroOrOne ("Expression"), SEMICOLON,
-		    lr.zeroOrOne ("ForUpdate"),
+		    gr.zeroOrOne ("ForInit"), SEMICOLON,
+		    gr.zeroOrOne ("Expression"), SEMICOLON,
+		    gr.zeroOrOne ("ForUpdate"),
 		    RIGHT_PARENTHESIS, "StatementNoShortIf");
-	lr.addRule ("ForInit",
-		    lr.oneOf ("StatementExpressionList",
+	gr.addRule ("ForInit",
+		    gr.oneOf ("StatementExpressionList",
 			      "LocalVariableDeclaration"));
-	lr.addRule ("ForUpdate", "StatementExpressionList");
-	lr.addRule ("StatementExpressionList",
-		    "StatementExpression", lr.zeroOrMore (COMMA, "StatementExpression"));
-	lr.addRule ("EnhancedForStatement",
+	gr.addRule ("ForUpdate", "StatementExpressionList");
+	gr.addRule ("StatementExpressionList",
+		    "StatementExpression", gr.zeroOrMore (COMMA, "StatementExpression"));
+	gr.addRule ("EnhancedForStatement",
 		    FOR, LEFT_PARENTHESIS,
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "Statement");
-	lr.addRule ("EnhancedForStatementNoShortIf",
+	gr.addRule ("EnhancedForStatementNoShortIf",
 		    FOR, LEFT_PARENTHESIS,
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "UnannType", "VariableDeclaratorId", COLON, "Expression", RIGHT_PARENTHESIS,
 		    "StatementNoShortIf");
-	lr.addRule ("BreakStatement",
-		    BREAK, lr.zeroOrOne (IDENTIFIER), SEMICOLON);
-	lr.addRule ("ContinueStatement",
-		    CONTINUE, lr.zeroOrOne (IDENTIFIER), SEMICOLON);
-	lr.addRule ("ReturnStatement",
-		    RETURN, lr.zeroOrOne ("Expression"), SEMICOLON);
-	lr.addRule ("ThrowStatement",
+	gr.addRule ("BreakStatement",
+		    BREAK, gr.zeroOrOne (IDENTIFIER), SEMICOLON);
+	gr.addRule ("ContinueStatement",
+		    CONTINUE, gr.zeroOrOne (IDENTIFIER), SEMICOLON);
+	gr.addRule ("ReturnStatement",
+		    RETURN, gr.zeroOrOne ("Expression"), SEMICOLON);
+	gr.addRule ("ThrowStatement",
 		    THROW, "Expression", SEMICOLON);
-	lr.addRule ("SynchronizedStatement",
+	gr.addRule ("SynchronizedStatement",
 		    SYNCHRONIZED, LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS, "Block");
-	lr.addRule ("TryStatement",
-		    lr.oneOf (lr.sequence (TRY, "Block", "Catches"),
-			      lr.sequence (TRY, "Block", lr.zeroOrOne ("Catches"), "Finally"),
+	gr.addRule ("TryStatement",
+		    gr.oneOf (gr.sequence (TRY, "Block", "Catches"),
+			      gr.sequence (TRY, "Block", gr.zeroOrOne ("Catches"), "Finally"),
 			      "TryWithResourcesStatement"));
-	lr.addRule ("Catches", "CatchClause", lr.zeroOrMore ("CatchClause"));
-	lr.addRule ("CatchClause", CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
-	lr.addRule ("CatchFormalParameter",
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+	gr.addRule ("Catches", "CatchClause", gr.zeroOrMore ("CatchClause"));
+	gr.addRule ("CatchClause", CATCH, LEFT_PARENTHESIS, "CatchFormalParameter", RIGHT_PARENTHESIS, "Block");
+	gr.addRule ("CatchFormalParameter",
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "CatchType", "VariableDeclaratorId");
-	lr.addRule ("CatchType", "UnannClassType", lr.zeroOrMore (OR, "ClassType"));
-	lr.addRule ("Finally", FINALLY, "Block");
-	lr.addRule ("TryWithResourcesStatement",
-		    TRY, "ResourceSpecification", "Block", lr.zeroOrOne ("Catches"), lr.zeroOrOne ("Finally"));
-	lr.addRule ("ResourceSpecification",
-		    LEFT_PARENTHESIS, "ResourceList", lr.zeroOrOne (SEMICOLON), RIGHT_PARENTHESIS);
-	lr.addRule ("ResourceList", "Resource", lr.zeroOrMore (SEMICOLON, "Resource"));
-	lr.addRule ("Resource",
-		    lr.oneOf (lr.zeroOrOne ("VariableModifiers"), lr.zeroOrMore ("Annotation")),
+	gr.addRule ("CatchType", "UnannClassType", gr.zeroOrMore (OR, "ClassType"));
+	gr.addRule ("Finally", FINALLY, "Block");
+	gr.addRule ("TryWithResourcesStatement",
+		    TRY, "ResourceSpecification", "Block", gr.zeroOrOne ("Catches"), gr.zeroOrOne ("Finally"));
+	gr.addRule ("ResourceSpecification",
+		    LEFT_PARENTHESIS, "ResourceList", gr.zeroOrOne (SEMICOLON), RIGHT_PARENTHESIS);
+	gr.addRule ("ResourceList", "Resource", gr.zeroOrMore (SEMICOLON, "Resource"));
+	gr.addRule ("Resource",
+		    gr.oneOf (gr.zeroOrOne ("VariableModifiers"), gr.zeroOrMore ("Annotation")),
 		    "UnannType", "VariableDeclaratorId", EQUAL, "Expression");
     }
 
     // Productions from §15 (Expressions)
     public void addExpressions () {
-	lr.addRule ("Primary", lr.oneOf ("PrimaryNoNewArray", "ArrayCreationExpression"));
-	lr.addRule ("PrimaryNoNewArray",
-		    lr.oneOf ("Literal",
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   lr.zeroOrMore (LEFT_BRACKET, RIGHT_BRACKET), DOT, CLASS),
-			      lr.sequence (VOID, DOT, CLASS),
+	gr.addRule ("Primary", gr.oneOf ("PrimaryNoNewArray", "ArrayCreationExpression"));
+	gr.addRule ("PrimaryNoNewArray",
+		    gr.oneOf ("Literal",
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
+					   gr.zeroOrMore (LEFT_BRACKET, RIGHT_BRACKET), DOT, CLASS),
+			      gr.sequence (VOID, DOT, CLASS),
 			      THIS,
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"), DOT, THIS),
-			      lr.sequence (LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS),
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"), DOT, THIS),
+			      gr.sequence (LEFT_PARENTHESIS, "Expression", RIGHT_PARENTHESIS),
 			      "ClassInstanceCreationExpression",
 			      "FieldAccess",
 			      "ArrayAccess",
 			      "MethodInvocation",
 			      "MethodReference"));
-	lr.addRule ("ClassInstanceCreationExpression",
-		    lr.zeroOrOne (lr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
-		    NEW, lr.zeroOrOne ("TypeArguments"),
-		    lr.zeroOrMore ("Annotation"), IDENTIFIER,
-		    lr.zeroOrMore (DOT, lr.zeroOrMore ("Annotation"), IDENTIFIER),
-		    lr.zeroOrOne ("TypeArgumentsOrDiamond"),
-		    LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
-		    lr.zeroOrOne ("ClassBody"));
-	lr.addRule ("TypeArgumentsOrDiamond",
-		    lr.oneOf ("TypeArguments", lr.sequence (LT, GT)));
-	lr.addRule ("FieldAccess",
-		    lr.oneOf (lr.sequence ("Primary", DOT, IDENTIFIER),
-			      lr.sequence (SUPER, DOT, IDENTIFIER),
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
+	gr.addRule ("ClassInstanceCreationExpression",
+		    gr.zeroOrOne (gr.oneOf (IDENTIFIER, "MultiName", "Primary"), DOT),
+		    NEW, gr.zeroOrOne ("TypeArguments"),
+		    gr.zeroOrMore ("Annotation"), IDENTIFIER,
+		    gr.zeroOrMore (DOT, gr.zeroOrMore ("Annotation"), IDENTIFIER),
+		    gr.zeroOrOne ("TypeArgumentsOrDiamond"),
+		    LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS,
+		    gr.zeroOrOne ("ClassBody"));
+	gr.addRule ("TypeArgumentsOrDiamond",
+		    gr.oneOf ("TypeArguments", gr.sequence (LT, GT)));
+	gr.addRule ("FieldAccess",
+		    gr.oneOf (gr.sequence ("Primary", DOT, IDENTIFIER),
+			      gr.sequence (SUPER, DOT, IDENTIFIER),
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
 					   DOT, SUPER, DOT, IDENTIFIER)));
-	lr.addRule ("ArrayAccess",
-		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
+	gr.addRule ("ArrayAccess",
+		    gr.oneOf (gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
 					   LEFT_BRACKET, "Expression", RIGHT_BRACKET),
-			      lr.sequence ("PrimaryNoNewArray", LEFT_BRACKET, "Expression", RIGHT_BRACKET)));
-	lr.addRule ("MethodInvocation",
-		    lr.oneOf (lr.sequence (IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence ("Primary", DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence (SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   DOT, SUPER, DOT, lr.zeroOrOne ("TypeArguments"), IDENTIFIER,
-					   LEFT_PARENTHESIS, lr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS)));
-	lr.addRule ("ArgumentList",
-		    "Expression", lr.zeroOrMore (COMMA, "Expression"));
-	lr.addRule ("MethodReference",
-		    lr.oneOf (lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   DOUBLE_COLON, lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("ReferenceType", DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("Primary", DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence (SUPER, DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"),
-					   DOT, SUPER, DOUBLE_COLON, lr.zeroOrOne ("TypeArguments"), IDENTIFIER),
-			      lr.sequence ("ClassType", DOUBLE_COLON,
-					   lr.zeroOrOne ("TypeArguments"), NEW),
-			      lr.sequence ("ArrayType", DOUBLE_COLON, NEW)));
-	lr.addRule ("ArrayCreationExpression",
-		    lr.oneOf (lr.sequence (NEW, "PrimitiveType", "DimExprs", lr.zeroOrOne ("Dims")),
-			      lr.sequence (NEW, "ClassType", "DimExprs", lr.zeroOrOne ("Dims")),
-			      lr.sequence (NEW, "PrimitiveType", "Dims", "ArrayInitializer"),
-			      lr.sequence (NEW, "ClassType", "Dims", "ArrayInitializer")));
-	lr.addRule ("DimExprs", "DimExpr", lr.zeroOrMore ("DimExpr"));
-	lr.addRule ("DimExpr",
-		    lr.zeroOrMore ("Annotation"), LEFT_BRACKET, "Expression", RIGHT_BRACKET);
-	lr.addRule ("ConstantExpression", "Expression");
-	lr.addRule ("Expression", lr.oneOf ("LambdaExpression", "AssignmentExpression"));
-	lr.addRule ("LambdaExpression",
-		    lr.oneOf (IDENTIFIER, "LambdaParameters"), ARROW, "LambdaBody");
-	lr.addRule ("LambdaParameters",
+			      gr.sequence ("PrimaryNoNewArray", LEFT_BRACKET, "Expression", RIGHT_BRACKET)));
+	gr.addRule ("MethodInvocation",
+		    gr.oneOf (gr.sequence (IDENTIFIER,
+					   LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
+					   DOT, gr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+					   LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+			      gr.sequence ("Primary", DOT, gr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+					   LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+			      gr.sequence (SUPER, DOT, gr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+					   LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS),
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
+					   DOT, SUPER, DOT, gr.zeroOrOne ("TypeArguments"), IDENTIFIER,
+					   LEFT_PARENTHESIS, gr.zeroOrOne ("ArgumentList"), RIGHT_PARENTHESIS)));
+	gr.addRule ("ArgumentList",
+		    "Expression", gr.zeroOrMore (COMMA, "Expression"));
+	gr.addRule ("MethodReference",
+		    gr.oneOf (gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
+					   DOUBLE_COLON, gr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      gr.sequence ("ReferenceType", DOUBLE_COLON,
+					   gr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      gr.sequence ("Primary", DOUBLE_COLON,
+					   gr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      gr.sequence (SUPER, DOUBLE_COLON,
+					   gr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"),
+					   DOT, SUPER, DOUBLE_COLON, gr.zeroOrOne ("TypeArguments"), IDENTIFIER),
+			      gr.sequence ("ClassType", DOUBLE_COLON,
+					   gr.zeroOrOne ("TypeArguments"), NEW),
+			      gr.sequence ("ArrayType", DOUBLE_COLON, NEW)));
+	gr.addRule ("ArrayCreationExpression",
+		    gr.oneOf (gr.sequence (NEW, "PrimitiveType", "DimExprs", gr.zeroOrOne ("Dims")),
+			      gr.sequence (NEW, "ClassType", "DimExprs", gr.zeroOrOne ("Dims")),
+			      gr.sequence (NEW, "PrimitiveType", "Dims", "ArrayInitializer"),
+			      gr.sequence (NEW, "ClassType", "Dims", "ArrayInitializer")));
+	gr.addRule ("DimExprs", "DimExpr", gr.zeroOrMore ("DimExpr"));
+	gr.addRule ("DimExpr",
+		    gr.zeroOrMore ("Annotation"), LEFT_BRACKET, "Expression", RIGHT_BRACKET);
+	gr.addRule ("ConstantExpression", "Expression");
+	gr.addRule ("Expression", gr.oneOf ("LambdaExpression", "AssignmentExpression"));
+	gr.addRule ("LambdaExpression",
+		    gr.oneOf (IDENTIFIER, "LambdaParameters"), ARROW, "LambdaBody");
+	gr.addRule ("LambdaParameters",
 		    LEFT_PARENTHESIS,
-		    lr.oneOf (lr.zeroOrOne ("FormalParameterList"),
-			      lr.sequence (IDENTIFIER, lr.zeroOrMore (COMMA, IDENTIFIER))),
+		    gr.oneOf (gr.zeroOrOne ("FormalParameterList"),
+			      gr.sequence (IDENTIFIER, gr.zeroOrMore (COMMA, IDENTIFIER))),
 		    RIGHT_PARENTHESIS);
-	lr.addRule ("LambdaBody", lr.oneOf ("Expression", "Block"));
-	lr.addRule ("AssignmentExpression", lr.oneOf ("ConditionalExpression", "Assignment"));
-	lr.addRule ("Assignment",
-		    lr.oneOf (IDENTIFIER, "MultiName", "FieldAccess", "ArrayAccess"),
+	gr.addRule ("LambdaBody", gr.oneOf ("Expression", "Block"));
+	gr.addRule ("AssignmentExpression", gr.oneOf ("ConditionalExpression", "Assignment"));
+	gr.addRule ("Assignment",
+		    gr.oneOf (IDENTIFIER, "MultiName", "FieldAccess", "ArrayAccess"),
 		    "AssignmentOperator", "Expression");
-	lr.addRule ("AssignmentOperator",
-		    lr.oneOf (EQUAL,
+	gr.addRule ("AssignmentOperator",
+		    gr.oneOf (EQUAL,
 			      MULTIPLY_EQUAL,
 			      DIVIDE_EQUAL,
 			      REMAINDER_EQUAL,
@@ -641,95 +644,95 @@ public class Java8Grammar {
 			      BIT_AND_EQUAL,
 			      BIT_XOR_EQUAL,
 			      BIT_OR_EQUAL));
-	lr.addRule ("ConditionalExpression",
-		    lr.oneOf ("ConditionalOrExpression",
-			      lr.sequence ("ConditionalOrExpression", QUESTIONMARK,
+	gr.addRule ("ConditionalExpression",
+		    gr.oneOf ("ConditionalOrExpression",
+			      gr.sequence ("ConditionalOrExpression", QUESTIONMARK,
 					   "Expression", COLON, "ConditionalExpression")));
-	lr.addRule ("ConditionalOrExpression",
-		    lr.oneOf ("ConditionalAndExpression",
-			      lr.sequence ("ConditionalOrExpression", LOGICAL_OR, "ConditionalAndExpression")));
-	lr.addRule ("ConditionalAndExpression",
-		    lr.oneOf ("InclusiveOrExpression",
-			      lr.sequence ("ConditionalAndExpression", LOGICAL_AND, "InclusiveOrExpression")));
-	lr.addRule ("InclusiveOrExpression",
-		    lr.oneOf ("ExclusiveOrExpression",
-			      lr.sequence ("InclusiveOrExpression", OR, "ExclusiveOrExpression")));
-	lr.addRule ("ExclusiveOrExpression",
-		    lr.oneOf ("AndExpression",
-			      lr.sequence ("ExclusiveOrExpression", XOR, "AndExpression")));
-	lr.addRule ("AndExpression",
-		    lr.oneOf ("EqualityExpression",
-			      lr.sequence ("AndExpression", AND, "EqualityExpression")));
-	lr.addRule ("EqualityExpression",
-		    lr.oneOf ("RelationalExpression",
-			      lr.sequence ("EqualityExpression", DOUBLE_EQUAL, "RelationalExpression"),
-			      lr.sequence ("EqualityExpression", NOT_EQUAL, "RelationalExpression")));
-	lr.addRule ("RelationalExpression",
-		    lr.oneOf ("ShiftExpression",
-			      lr.sequence ("RelationalExpression", LT, "ShiftExpression"),
+	gr.addRule ("ConditionalOrExpression",
+		    gr.oneOf ("ConditionalAndExpression",
+			      gr.sequence ("ConditionalOrExpression", LOGICAL_OR, "ConditionalAndExpression")));
+	gr.addRule ("ConditionalAndExpression",
+		    gr.oneOf ("InclusiveOrExpression",
+			      gr.sequence ("ConditionalAndExpression", LOGICAL_AND, "InclusiveOrExpression")));
+	gr.addRule ("InclusiveOrExpression",
+		    gr.oneOf ("ExclusiveOrExpression",
+			      gr.sequence ("InclusiveOrExpression", OR, "ExclusiveOrExpression")));
+	gr.addRule ("ExclusiveOrExpression",
+		    gr.oneOf ("AndExpression",
+			      gr.sequence ("ExclusiveOrExpression", XOR, "AndExpression")));
+	gr.addRule ("AndExpression",
+		    gr.oneOf ("EqualityExpression",
+			      gr.sequence ("AndExpression", AND, "EqualityExpression")));
+	gr.addRule ("EqualityExpression",
+		    gr.oneOf ("RelationalExpression",
+			      gr.sequence ("EqualityExpression", DOUBLE_EQUAL, "RelationalExpression"),
+			      gr.sequence ("EqualityExpression", NOT_EQUAL, "RelationalExpression")));
+	gr.addRule ("RelationalExpression",
+		    gr.oneOf ("ShiftExpression",
+			      gr.sequence ("RelationalExpression", LT, "ShiftExpression"),
 			      // This is a bit iffy, but i< is a shift/reduce conflict
 			      // and this solves that problem.
-			      lr.sequence (lr.oneOf (IDENTIFIER, "MultiName"), LT, "ShiftExpression"),
-			      lr.sequence ("RelationalExpression", GT, "ShiftExpression"),
-			      lr.sequence ("RelationalExpression", LE, "ShiftExpression"),
-			      lr.sequence ("RelationalExpression", GE, "ShiftExpression"),
-			      lr.sequence ("RelationalExpression", INSTANCEOF, "ReferenceType")));
-	lr.addRule ("ShiftExpression",
-		    lr.oneOf ("AdditiveExpression",
-			      lr.sequence ("ShiftExpression", LEFT_SHIFT, "AdditiveExpression"),
-			      lr.sequence ("ShiftExpression", RIGHT_SHIFT, "AdditiveExpression"),
-			      lr.sequence ("ShiftExpression", RIGHT_SHIFT_UNSIGNED, "AdditiveExpression")));
-	lr.addRule ("AdditiveExpression",
-		    lr.oneOf ("MultiplicativeExpression",
-			      lr.sequence ("AdditiveExpression", PLUS, "MultiplicativeExpression"),
-			      lr.sequence ("AdditiveExpression", MINUS, "MultiplicativeExpression")));
-	lr.addRule ("MultiplicativeExpression",
-		    lr.oneOf ("UnaryExpression",
-			      lr.sequence ("MultiplicativeExpression", MULTIPLY, "UnaryExpression"),
-			      lr.sequence ("MultiplicativeExpression", DIVIDE, "UnaryExpression"),
-			      lr.sequence ("MultiplicativeExpression", REMAINDER, "UnaryExpression")));
-	lr.addRule ("UnaryExpression",
-		    lr.oneOf ("PreIncrementExpression",
+			      gr.sequence (gr.oneOf (IDENTIFIER, "MultiName"), LT, "ShiftExpression"),
+			      gr.sequence ("RelationalExpression", GT, "ShiftExpression"),
+			      gr.sequence ("RelationalExpression", LE, "ShiftExpression"),
+			      gr.sequence ("RelationalExpression", GE, "ShiftExpression"),
+			      gr.sequence ("RelationalExpression", INSTANCEOF, "ReferenceType")));
+	gr.addRule ("ShiftExpression",
+		    gr.oneOf ("AdditiveExpression",
+			      gr.sequence ("ShiftExpression", LEFT_SHIFT, "AdditiveExpression"),
+			      gr.sequence ("ShiftExpression", RIGHT_SHIFT, "AdditiveExpression"),
+			      gr.sequence ("ShiftExpression", RIGHT_SHIFT_UNSIGNED, "AdditiveExpression")));
+	gr.addRule ("AdditiveExpression",
+		    gr.oneOf ("MultiplicativeExpression",
+			      gr.sequence ("AdditiveExpression", PLUS, "MultiplicativeExpression"),
+			      gr.sequence ("AdditiveExpression", MINUS, "MultiplicativeExpression")));
+	gr.addRule ("MultiplicativeExpression",
+		    gr.oneOf ("UnaryExpression",
+			      gr.sequence ("MultiplicativeExpression", MULTIPLY, "UnaryExpression"),
+			      gr.sequence ("MultiplicativeExpression", DIVIDE, "UnaryExpression"),
+			      gr.sequence ("MultiplicativeExpression", REMAINDER, "UnaryExpression")));
+	gr.addRule ("UnaryExpression",
+		    gr.oneOf ("PreIncrementExpression",
 			      "PreDecrementExpression",
-			      lr.sequence (PLUS, "UnaryExpression"),
-			      lr.sequence (MINUS, "UnaryExpression"),
+			      gr.sequence (PLUS, "UnaryExpression"),
+			      gr.sequence (MINUS, "UnaryExpression"),
 			      "UnaryExpressionNotPlusMinus"));
-	lr.addRule ("PreIncrementExpression",
+	gr.addRule ("PreIncrementExpression",
 		    INCREMENT, "UnaryExpression");
-	lr.addRule ("PreDecrementExpression",
+	gr.addRule ("PreDecrementExpression",
 		    DECREMENT, "UnaryExpression");
-	lr.addRule ("UnaryExpressionNotPlusMinus",
-		    lr.oneOf ("PostfixExpression",
-			      lr.sequence (TILDE, "UnaryExpression"),
-			      lr.sequence (NOT, "UnaryExpression"),
+	gr.addRule ("UnaryExpressionNotPlusMinus",
+		    gr.oneOf ("PostfixExpression",
+			      gr.sequence (TILDE, "UnaryExpression"),
+			      gr.sequence (NOT, "UnaryExpression"),
 			      "CastExpression"));
-	lr.addRule ("PostfixExpression",
-		    lr.oneOf ("Primary",
-			      lr.oneOf (IDENTIFIER, "MultiName"),
+	gr.addRule ("PostfixExpression",
+		    gr.oneOf ("Primary",
+			      gr.oneOf (IDENTIFIER, "MultiName"),
 			      "PostIncrementExpression",
 			      "PostDecrementExpression"));
-	lr.addRule ("PostIncrementExpression",
+	gr.addRule ("PostIncrementExpression",
 		    "PostfixExpression", INCREMENT);
-	lr.addRule ("PostDecrementExpression",
+	gr.addRule ("PostDecrementExpression",
 		    "PostfixExpression", DECREMENT);
-	lr.addRule ("CastExpression",
-		    lr.oneOf (lr.sequence (LEFT_PARENTHESIS,
-					   lr.zeroOrMore ("Annotation"), lr.oneOf ("NumericType", BOOLEAN),
+	gr.addRule ("CastExpression",
+		    gr.oneOf (gr.sequence (LEFT_PARENTHESIS,
+					   gr.zeroOrMore ("Annotation"), gr.oneOf ("NumericType", BOOLEAN),
 					   RIGHT_PARENTHESIS, "UnaryExpression"),
-			      lr.sequence (LEFT_PARENTHESIS,
-					   lr.oneOf (lr.sequence (lr.zeroOrMore ("Annotation"),
-								  lr.oneOf (IDENTIFIER, "MultiName"),
-								  lr.zeroOrOne ("TypeArguments")),
+			      gr.sequence (LEFT_PARENTHESIS,
+					   gr.oneOf (gr.sequence (gr.zeroOrMore ("Annotation"),
+								  gr.oneOf (IDENTIFIER, "MultiName"),
+								  gr.zeroOrOne ("TypeArguments")),
 						     "NonTrivialClassType",
 						     "ArrayType"),
-					   lr.zeroOrMore ("AdditionalBound"),
+					   gr.zeroOrMore ("AdditionalBound"),
 					   RIGHT_PARENTHESIS,
-					   lr.oneOf ("UnaryExpressionNotPlusMinus", "LambdaExpression"))));
+					   gr.oneOf ("UnaryExpressionNotPlusMinus", "LambdaExpression"))));
     }
 
     public void addModifiers () {
-	lr.addRule ("Modifier",
-		    lr.oneOf ("Annotation",
+	gr.addRule ("Modifier",
+		    gr.oneOf ("Annotation",
 			      PUBLIC, PROTECTED, PRIVATE,
 			      ABSTRACT, STATIC, FINAL, STRICTFP, TRANSIENT,
 			      VOLATILE, SYNCHRONIZED, NATIVE));

@@ -15,15 +15,15 @@ public class TestTypes {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "Types");
-	lr.addRule ("Types",
-		    lr.zeroOrMore ("Type"));
+	lr.getGrammar ().addRule ("Goal", "Types");
+	lr.getGrammar ().addRule ("Types",
+				  lr.getGrammar ().zeroOrMore ("Type"));
 	grammar.addTypeRules ();
 	grammar.addNameRules ();
 	grammar.addAnnotationRules ();
 	// Just make it something, CE will be tested in its own test
-	lr.addRule ("ConditionalExpression",
-		    Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("ConditionalExpression",
+				  Token.IDENTIFIER);
 	try  {
 	    lr.build ();
 	} catch (Throwable t) {

@@ -11,18 +11,17 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import org.khelekore.parjac.lexer.Token;
-import org.khelekore.parjac.parser.LRParser;
 
 public class GrammarReader {
-    private final LRParser lr;
+    private final Grammar grammar;
     private String currentRule;
 
     public GrammarReader (boolean debug) {
-	lr = new LRParser (debug);
+	grammar = new Grammar ();
     }
 
-    public LRParser getParser () {
-	return lr;
+    public Grammar getGrammar () {
+	return grammar;
     }
 
     public void read (URL u) throws IOException {
@@ -47,7 +46,7 @@ public class GrammarReader {
 	    currentRule = line.substring (0, line.length () - 1);
 	} else {
 	    StringTokenizer st = new StringTokenizer (line, "'?*() ", true);
-	    lr.addRule (currentRule, parseRecursive (st));
+	    grammar.addRule (currentRule, parseRecursive (st));
 	}
     }
 
@@ -61,10 +60,10 @@ public class GrammarReader {
 		currentSequence.add (lastParsed);
 		break;
 	    case "?":
-		lastParsed = lr.zeroOrOne (lastParsed);
+		lastParsed = grammar.zeroOrOne (lastParsed);
 		break;
 	    case "*":
-		lastParsed = lr.zeroOrMore (lastParsed);
+		lastParsed = grammar.zeroOrMore (lastParsed);
 		break;
 	    case "(":
 		lastParsed = parseRecursive (st);
@@ -85,16 +84,16 @@ public class GrammarReader {
 
     private Object finish (List<Object> currentSequence, Object lastParsed) {
 	currentSequence.add (lastParsed);
-	return lr.sequence (currentSequence.toArray ());
+	return grammar.sequence (currentSequence.toArray ());
     }
 
     public static void main (String[] args) throws IOException {
 	for (String filename : args) {
 	    GrammarReader gr = new GrammarReader (true);
 	    gr.read (Paths.get (filename).toFile ().toURI ().toURL ());
-	    LRParser lr = gr.getParser ();
-	    lr.addRule ("Goal", "CompilationUnit");
-	    lr.build ();
+	    Grammar grammar = gr.getGrammar ();
+	    grammar.addRule ("Goal", "CompilationUnit");
+	    grammar.validateRules ();
 	}
     }
 }

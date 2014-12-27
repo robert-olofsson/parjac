@@ -16,8 +16,8 @@ public class TestFullClass {
     public void createLRParser () throws IOException {
 	GrammarReader gr = new GrammarReader (false);
 	gr.read (getClass ().getResource ("/java_8.pj"));
-	lr = gr.getParser ();
-	lr.addRule ("Goal", "CompilationUnit");
+	lr = new LRParser (gr.getGrammar (), false);
+	lr.getGrammar ().addRule ("Goal", "CompilationUnit");
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

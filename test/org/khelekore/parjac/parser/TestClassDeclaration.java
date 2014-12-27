@@ -15,7 +15,7 @@ public class TestClassDeclaration {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "TypeDeclaration");
+	lr.getGrammar ().addRule ("Goal", "TypeDeclaration");
 	grammar.addLiteralRules ();
 	grammar.addTypeRules ();
 	grammar.addNameRules ();
@@ -26,12 +26,13 @@ public class TestClassDeclaration {
 	grammar.addArrayInitializer ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
-	lr.addRule ("Block", Token.LEFT_CURLY, lr.zeroOrMore ("BlockStatements"), Token.RIGHT_CURLY);
-	lr.addRule ("BlockStatements", Token.SEMICOLON);
-	lr.addRule ("ArgumentList", Token.IDENTIFIER);
-	lr.addRule ("Primary", "Literal");
-	lr.addRule ("Expression", lr.oneOf (Token.IDENTIFIER, "Literal"));
-	lr.addRule ("ConditionalExpression", lr.oneOf (Token.IDENTIFIER, "Literal"));
+	lr.getGrammar ().addRule ("Block", Token.LEFT_CURLY,
+				  lr.getGrammar ().zeroOrMore ("BlockStatements"), Token.RIGHT_CURLY);
+	lr.getGrammar ().addRule ("BlockStatements", Token.SEMICOLON);
+	lr.getGrammar ().addRule ("ArgumentList", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("Primary", "Literal");
+	lr.getGrammar ().addRule ("Expression", lr.getGrammar ().oneOf (Token.IDENTIFIER, "Literal"));
+	lr.getGrammar ().addRule ("ConditionalExpression", lr.getGrammar ().oneOf (Token.IDENTIFIER, "Literal"));
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

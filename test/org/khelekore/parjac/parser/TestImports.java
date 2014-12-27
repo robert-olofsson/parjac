@@ -14,9 +14,9 @@ public class TestImports {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "CompilationUnit");
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrMore ("ImportDeclaration"));
+	lr.getGrammar ().addRule ("Goal", "CompilationUnit");
+	lr.getGrammar ().addRule ("CompilationUnit",
+				  lr.getGrammar ().zeroOrMore ("ImportDeclaration"));
 	grammar.addNameRules ();
 	grammar.addImportRules ();
 	lr.build ();

@@ -15,7 +15,7 @@ public class TestConstructorDeclaration {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "ConstructorDeclaration");
+	lr.getGrammar ().addRule ("Goal", "ConstructorDeclaration");
 	grammar.addConstructorDeclaration ();
 	grammar.addModifiers ();
 	grammar.addFormalParameterList ();
@@ -30,11 +30,11 @@ public class TestConstructorDeclaration {
 	grammar.addArrayInitializer ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
-	lr.addRule ("BlockStatements", Token.SEMICOLON);
-	lr.addRule ("ArgumentList", Token.IDENTIFIER);
-	lr.addRule ("Primary", "Literal");
-	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("BlockStatements", Token.SEMICOLON);
+	lr.getGrammar ().addRule ("ArgumentList", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("Primary", "Literal");
+	lr.getGrammar ().addRule ("Expression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

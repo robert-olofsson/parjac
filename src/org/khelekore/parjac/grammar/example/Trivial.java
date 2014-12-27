@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.LRParser;
@@ -19,11 +20,13 @@ import org.khelekore.parjac.parser.Parser;
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class Trivial {
+    private final Grammar gr;
     private final LRParser lr;
 
     public Trivial () {
-	lr = new LRParser (true);
+	gr = new Grammar ();
 	addRules ();
+	lr = new LRParser (gr, true);
 	lr.build ();
     }
 
@@ -45,68 +48,68 @@ public class Trivial {
     }
 
     private void addRules () {
-	lr.addRule ("Goal", "E");
-	lr.addRule ("E", lr.zeroOrMore ("M"), lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("M"),
-		    lr.zeroOrOne (DEFAULT), lr.zeroOrMore ("M"), DOT);
-	lr.addRule ("M", IDENTIFIER);
+	gr.addRule ("Goal", "E");
+	gr.addRule ("E", gr.zeroOrMore ("M"), gr.zeroOrOne (DEFAULT), gr.zeroOrMore ("M"),
+		    gr.zeroOrOne (DEFAULT), gr.zeroOrMore ("M"), DOT);
+	gr.addRule ("M", IDENTIFIER);
 	/*
-	lr.addRule ("Goal", "CompilationUnit");
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrMore ("ImportDeclaration"));
-	lr.addRule ("ImportDeclaration",
-		    lr.oneOf ("SingleTypeImportDeclaration",
+	gr.addRule ("Goal", "CompilationUnit");
+	gr.addRule ("CompilationUnit",
+		    gr.zeroOrMore ("ImportDeclaration"));
+	gr.addRule ("ImportDeclaration",
+		    gr.oneOf ("SingleTypeImportDeclaration",
 			      "TypeImportOnDemandDeclaration",
 			      "SingleStaticImportDeclaration",
 			      "StaticImportOnDemandDeclaration"));
-	lr.addRule ("SingleTypeImportDeclaration",
+	gr.addRule ("SingleTypeImportDeclaration",
 		    IMPORT, "TypeName", SEMICOLON);
-	lr.addRule ("TypeImportOnDemandDeclaration",
+	gr.addRule ("TypeImportOnDemandDeclaration",
 		    IMPORT, "TypeName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("SingleStaticImportDeclaration",
+	gr.addRule ("SingleStaticImportDeclaration",
 		    IMPORT, STATIC, "TypeName", DOT, IDENTIFIER, SEMICOLON);
-	lr.addRule ("StaticImportOnDemandDeclaration",
+	gr.addRule ("StaticImportOnDemandDeclaration",
 		    IMPORT, STATIC, "TypeName", DOT, MULTIPLY, SEMICOLON);
-	lr.addRule ("TypeName",
-		    lr.oneOf (IDENTIFIER,
-			      lr.sequence ("TypeName", DOT, IDENTIFIER)));
+	gr.addRule ("TypeName",
+		    gr.oneOf (IDENTIFIER,
+			      gr.sequence ("TypeName", DOT, IDENTIFIER)));
 	*/
 	/*
-	lr.addRule ("Goal", "E");
-	lr.addRule ("E", "E", PLUS, "T");
-	lr.addRule ("E", "T");
-	lr.addRule ("T", "T", MULTIPLY, "P");
-	lr.addRule ("T", "P");
-	lr.addRule ("P", IDENTIFIER);
-	lr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+	gr.addRule ("Goal", "E");
+	gr.addRule ("E", "E", PLUS, "T");
+	gr.addRule ("E", "T");
+	gr.addRule ("T", "T", MULTIPLY, "P");
+	gr.addRule ("T", "P");
+	gr.addRule ("P", IDENTIFIER);
+	gr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
 
-	lr.addRule ("Goal", "S");
-	lr.addRule ("S", "E", EQUAL, "E");
-	lr.addRule ("S", IDENTIFIER);
-	lr.addRule ("E", "E", PLUS, IDENTIFIER);
-	lr.addRule ("E", IDENTIFIER);
+	gr.addRule ("Goal", "S");
+	gr.addRule ("S", "E", EQUAL, "E");
+	gr.addRule ("S", IDENTIFIER);
+	gr.addRule ("E", "E", PLUS, IDENTIFIER);
+	gr.addRule ("E", IDENTIFIER);
 
-	lr.addRule ("Goal", "E");
-	lr.addRule ("E", "T", PLUS, "E");
-	lr.addRule ("E", "T");
-	lr.addRule ("T", IDENTIFIER);
+	gr.addRule ("Goal", "E");
+	gr.addRule ("E", "T", PLUS, "E");
+	gr.addRule ("E", "T");
+	gr.addRule ("T", IDENTIFIER);
 
-	lr.addRule ("Goal", "E");
-	lr.addRule ("E", "E", PLUS, "T");
-	lr.addRule ("E", "E", MINUS, "T");
-	lr.addRule ("E", "T");
-	lr.addRule ("T", "T", MULTIPLY, "F");
-	lr.addRule ("T", "T", DIVIDE, "F");
-	lr.addRule ("T", "F");
-	lr.addRule ("F", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
-	lr.addRule ("F", IDENTIFIER);
+	gr.addRule ("Goal", "E");
+	gr.addRule ("E", "E", PLUS, "T");
+	gr.addRule ("E", "E", MINUS, "T");
+	gr.addRule ("E", "T");
+	gr.addRule ("T", "T", MULTIPLY, "F");
+	gr.addRule ("T", "T", DIVIDE, "F");
+	gr.addRule ("T", "F");
+	gr.addRule ("F", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+	gr.addRule ("F", IDENTIFIER);
 
-	lr.addRule ("Goal", "E", END_OF_INPUT);
-	lr.addRule ("E", "E", PLUS, "T");
-	lr.addRule ("E", "T");
-	lr.addRule ("T", "T", MULTIPLY, "P");
-	lr.addRule ("T", "P");
-	lr.addRule ("P", IDENTIFIER);
-	lr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
+	gr.addRule ("Goal", "E", END_OF_INPUT);
+	gr.addRule ("E", "E", PLUS, "T");
+	gr.addRule ("E", "T");
+	gr.addRule ("T", "T", MULTIPLY, "P");
+	gr.addRule ("T", "P");
+	gr.addRule ("P", IDENTIFIER);
+	gr.addRule ("P", LEFT_PARENTHESIS, "E", RIGHT_PARENTHESIS);
 
 	//
 	addRule ("Goal", "S", END_OF_INPUT);

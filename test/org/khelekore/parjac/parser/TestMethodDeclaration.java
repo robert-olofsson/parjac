@@ -15,7 +15,7 @@ public class TestMethodDeclaration {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "MethodDeclaration");
+	lr.getGrammar ().addRule ("Goal", "MethodDeclaration");
 	grammar.addMethodDeclaration ();
 	grammar.addModifiers ();
 	grammar.addFormalParameterList ();
@@ -29,10 +29,10 @@ public class TestMethodDeclaration {
 	grammar.addArrayInitializer ();
 
 	// A bit simplified rules, but we are not testing these rules in this class
-	lr.addRule ("Block",
+	lr.getGrammar ().addRule ("Block",
 		    Token.LEFT_CURLY, Token.RIGHT_CURLY);
-	lr.addRule ("Expression", Token.IDENTIFIER);
-	lr.addRule ("ConditionalExpression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("Expression", Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("ConditionalExpression", Token.IDENTIFIER);
 	try {
 	    lr.build ();
 	} catch (Throwable t) {

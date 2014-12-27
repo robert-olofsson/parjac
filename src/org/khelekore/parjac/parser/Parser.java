@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
+import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -67,7 +68,7 @@ public class Parser {
 		    nextToken = lexer.nextNonWhitespaceToken ();
 		    break;
 		case REDUCE:
-		    LRParser.Rule r = lr.getRules ().get (a.getN ());
+		    Rule r = lr.getRules ().get (a.getN ());
 		    debug ("reduce using %s", r);
 		    for (int i = 0, s = r.size (); i < s; i ++) // pop the parts
 			stack.pop ();

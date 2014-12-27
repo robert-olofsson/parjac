@@ -15,15 +15,15 @@ public class TestPackage {
     public void createLRParser () {
 	Java8Grammar grammar = new Java8Grammar (false);
 	lr = grammar.getLRParser ();
-	lr.addRule ("Goal", "CompilationUnit");
-	lr.addRule ("CompilationUnit",
-		    lr.zeroOrOne ("PackageDeclaration"));
+	lr.getGrammar ().addRule ("Goal", "CompilationUnit");
+	lr.getGrammar ().addRule ("CompilationUnit",
+				  lr.getGrammar ().zeroOrOne ("PackageDeclaration"));
 	grammar.addNameRules ();
 	grammar.addPackageRules ();
 	grammar.addAnnotationRules ();
 	// Just make it something, CE will be tested in its own test
-	lr.addRule ("ConditionalExpression",
-		    Token.IDENTIFIER);
+	lr.getGrammar ().addRule ("ConditionalExpression",
+				  Token.IDENTIFIER);
 	try {
 	    lr.build ();
 	} catch (Throwable t) {
