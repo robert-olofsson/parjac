@@ -4,6 +4,7 @@ import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -30,7 +31,7 @@ public class EarleyParser {
     private final boolean debug;
 
     // The state table
-    private final List<List<State>> states = new ArrayList<> ();
+    private final List<StateSet> states = new ArrayList<> ();
 
     public EarleyParser (Grammar grammar, Path path, Lexer lexer,
 			 CompilerDiagnosticCollector diagnostics,
@@ -46,7 +47,7 @@ public class EarleyParser {
 	Rule goalRule = grammar.getRules ("Goal").getRules ().get (0);
 	Item startItem = new Item (goalRule, 0);
 	int currentPosition = 0;
-	List<State> startStates = new ArrayList<> ();
+	StateSet startStates = new StateSet ();
 	startStates.add (new State (startItem, currentPosition));
 	states.add (startStates);
 	while (lexer.hasMoreTokens ()) {
@@ -64,7 +65,7 @@ public class EarleyParser {
 	    addParserError ("No possible next state");
 	    return;
 	}
-	List<State> finishingStates = states.get (currentPosition);
+	StateSet finishingStates = states.get (currentPosition);
 	if (debug)
 	    System.out.println ("finishingStates: " + finishingStates);
 	if (finishingStates.size () == 1) {
@@ -79,7 +80,7 @@ public class EarleyParser {
     private void handleToken (int currentPosition, Token nextToken) {
 	if (debug)
 	    System.out.println ("nextToken: " + nextToken);
-	List<State> currentStates = states.get (currentPosition);
+	StateSet currentStates = states.get (currentPosition);
 	for (int s = 0; s < currentStates.size (); s++) {
 	    State state = currentStates.get (s);
 	    if (incomplete (state)) {
@@ -106,9 +107,9 @@ public class EarleyParser {
 	TokenPart tp = (TokenPart)state.item.getPartAfterDot ();
 	if (tp.getId () == nextToken) {
 	    int nextPos = pos + 1;
-	    List<State> nextStates;
+	    StateSet nextStates;
 	    if (states.size () <= nextPos) {
-		nextStates = new ArrayList<> ();
+		nextStates = new StateSet ();
 		states.add (nextStates);
 	    } else {
 		nextStates = states.get (nextPos);
@@ -117,14 +118,14 @@ public class EarleyParser {
 	}
     }
 
-    private void predict (State state, int pos, List<State> states) {
+    private void predict (State state, int pos, StateSet states) {
 	RulePart rp = (RulePart)state.item.getPartAfterDot ();
 	RuleCollection rc = grammar.getRules (rp.getId ());
 	rc.getRules ().forEach (r -> states.add (new State (new Item (r, 0), pos)));
     }
 
-    private void complete (State state, int pos, List<State> currentStates) {
-	List<State> originStates = states.get (state.startPos);
+    private void complete (State state, int pos, StateSet currentStates) {
+	StateSet originStates = states.get (state.startPos);
 	for (State os : originStates)
 	    if (incomplete (os) && nextIsRule (os, state.item.getRule ().getName ()))
 		currentStates.add (new State (os.item.advance (), os.startPos));
@@ -148,6 +149,31 @@ public class EarleyParser {
 	    states.get (pos).forEach (s -> System.out.println (pos + ": " + s));
     }
 
+    private static class StateSet implements Iterable<State> {
+	private final List<State> states = new ArrayList<> ();
+
+	public void add (State state) {
+	    if (!states.stream ().anyMatch (s -> s.equals (state)))
+		states.add (state);
+	}
+
+	public int size () {
+	    return states.size ();
+	}
+
+	public State get (int i) {
+	    return states.get (i);
+	}
+
+	@Override public String toString () {
+	    return states.toString ();
+	}
+
+	public Iterator<State> iterator () {
+	    return states.iterator ();
+	}
+    }
+
     private static class State {
 	private final Item item;
 	private final int startPos;
@@ -159,6 +185,21 @@ public class EarleyParser {
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{" + item + ", " + startPos + "}";
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    State s = (State)o;
+	    return startPos == s.startPos && item.equals (s.item);
+	}
+
+	@Override public int hashCode () {
+	    return startPos * 31 + item.hashCode ();
 	}
     }
 
