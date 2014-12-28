@@ -53,10 +53,13 @@ public class Main {
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
+
 	GrammarReader gr = new GrammarReader (false);
 	gr.read (getClass ().getResource ("/java_8.pj"));
 	Grammar g = gr.getGrammar ();
 	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
+	g.validateRules ();
+
 	Compiler c = new Compiler (diagnostics, g);
 	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
 	long endTime = System.nanoTime ();
