@@ -50,20 +50,25 @@ public class EarleyParser {
 	StateSet startStates = new StateSet ();
 	startStates.add (new State (startItem, currentPosition));
 	states.add (startStates);
+	Token nextToken = Token.END_OF_INPUT;
 	while (lexer.hasMoreTokens ()) {
-	    Token nextToken = lexer.nextNonWhitespaceToken ();
+	    nextToken = lexer.nextNonWhitespaceToken ();
 	    handleToken (currentPosition, nextToken);
 	    debugPrintStates (currentPosition++);
 	    if (states.size () <= currentPosition) {
 		addParserError ("No possible next state");
 		return null;
 	    }
-	}
-	handleToken (currentPosition, Token.END_OF_INPUT);
-	debugPrintStates (currentPosition++);
-	if (states.size () <= currentPosition) {
-	    addParserError ("No possible next state");
-	    return null;
+	    StateSet ss = states.get (currentPosition);
+	    if (ss.size () == 1) {
+		Item i = ss.get(0).item;
+		if (i.getRule ().getName ().equals ("TypeArguments")) {
+		    if (i.getDotPos () == 1)
+			lexer.pushInsideTypeContext ();
+		    else if (i.getDotPos () == 3)
+			lexer.popInsideTypeContext ();
+		}
+	    }
 	}
 	StateSet finishingStates = states.get (currentPosition);
 	if (debug)

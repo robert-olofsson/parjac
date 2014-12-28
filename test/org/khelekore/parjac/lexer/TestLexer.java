@@ -351,6 +351,7 @@ public class TestLexer {
     public void testNextNonWhitespaceToken () {
 	testNextNonWhitespace ("", Token.END_OF_INPUT);
 	testNextNonWhitespace ("package   ", Token.PACKAGE, Token.END_OF_INPUT);
+	testNextNonWhitespace ("package\n", Token.PACKAGE, Token.END_OF_INPUT);
 	testNextNonWhitespace ("  \t  <  >", Token.LT, Token.GT, Token.END_OF_INPUT);
     }
 
@@ -380,6 +381,10 @@ public class TestLexer {
 	    assert t != null : "Returned token may not be null";
 	    assert t == expected[i] : "Wrong Token: expected: " + expected[i] + ", got: " + t
 		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
+	}
+	if (l.hasMoreTokens ()) {
+	    Token lt = l.nextToken ();
+	    assert lt == Token.END_OF_INPUT : "Lexer has more tokens: " + lt;
 	}
 	assert !l.hasMoreTokens () : "Lexer has more available tokens than expected";
     }

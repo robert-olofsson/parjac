@@ -7,6 +7,8 @@ import java.nio.CharBuffer;
 public class CharBufferLexer implements Lexer {
     // We use the position for keeping track of where we are
     private final CharBuffer buf;
+    private boolean hasSentEOI = false;
+
     private long tokenStartPosition = 0;
     private long tokenStartColumn = 0;
     private long currentLine = 1;
@@ -198,11 +200,21 @@ public class CharBufferLexer implements Lexer {
 		return Token.ERROR;
 	    }
 	}
+	hasSentEOI = true;
+	return Token.END_OF_INPUT;
+    }
+
+    @Override public Token nextNonWhitespaceToken () {
+	while (hasMoreTokens ()) {
+	    Token t = nextToken ();
+	    if (!t.isWhitespace ())
+		return t;
+	}
 	return Token.END_OF_INPUT;
     }
 
     public boolean hasMoreTokens () {
-	return buf.position () != buf.limit ();
+	return buf.position () != buf.limit () || !hasSentEOI;
     }
 
     private Token readWhitespace () {

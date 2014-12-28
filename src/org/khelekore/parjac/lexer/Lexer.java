@@ -38,7 +38,9 @@ public interface Lexer {
     /** Get the start column of the current token */
     long getTokenColumn ();
 
-    /** Check if there are any more tokens */
+    /** Check if there are any more tokens.
+     *  Note that this method will return true until END_OF_INPUT has been returned.
+     */
     boolean hasMoreTokens ();
 
     /** Get the next token */
@@ -50,14 +52,7 @@ public interface Lexer {
     /** Get the next non-whitespace token.
      *  If there are no more non-whitespace tokens, then END_OF_INPUT will be returned
      */
-    default Token nextNonWhitespaceToken () {
-	while (hasMoreTokens ()) {
-	    Token t = nextToken ();
-	    if (!t.isWhitespace ())
-		return t;
-	}
-	return Token.END_OF_INPUT;
-    }
+    Token nextNonWhitespaceToken ();
 
     /** Make several consecutive &gt; be reported individually so that
      *  generic types can be correctly parsed.
