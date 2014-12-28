@@ -33,6 +33,8 @@ public class TestParseHelper {
 	Lexer lexer = new CharBufferLexer (charBuf);
 	EarleyParser ep = new EarleyParser (g, path, lexer, diagnostics, false);
 	ep.parse ();
+	assert !lexer.isInsideTypeContext () : "Lexer still inside type context: " + s;
+
     }
 
     public static String getParseOutput (CompilerDiagnosticCollector diagnostics) {

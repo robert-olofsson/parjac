@@ -60,15 +60,7 @@ public class EarleyParser {
 		return null;
 	    }
 	    StateSet ss = states.get (currentPosition);
-	    if (ss.size () == 1) {
-		Item i = ss.get(0).item;
-		if (i.getRule ().getName ().equals ("TypeArguments")) {
-		    if (i.getDotPos () == 1)
-			lexer.pushInsideTypeContext ();
-		    else if (i.getDotPos () == 3)
-			lexer.popInsideTypeContext ();
-		}
-	    }
+	    possiblyFlipTypeContext (ss);
 	}
 	StateSet finishingStates = states.get (currentPosition);
 	if (debug)
@@ -84,8 +76,12 @@ public class EarleyParser {
     }
 
     private void handleToken (int currentPosition, Token nextToken) {
-	if (debug)
-	    System.err.println ("nextToken: " + nextToken);
+	if (debug) {
+	    if (nextToken == Token.IDENTIFIER)
+		System.err.println ("nextToken: " + nextToken + " \"" + lexer.getIdentifier () + "\"");
+	    else
+		System.err.println ("nextToken: " + nextToken);
+	}
 	StateSet currentStates = states.get (currentPosition);
 	for (int s = 0; s < currentStates.size (); s++) {
 	    State state = currentStates.get (s);
@@ -156,6 +152,34 @@ public class EarleyParser {
     private void debugPrintStates (int pos) {
 	if (debug)
 	    states.get (pos).forEach (s -> System.err.println (pos + ": " + s));
+    }
+
+    private void possiblyFlipTypeContext (StateSet ss) {
+	if (ss.size () > 2)
+	    return;
+	Item i1 = ss.get(0).item;
+	String rulename1 = i1.getRule ().getName ();
+	Item i2 = null;
+	String rulename2 = null;
+
+	if (ss.size () == 2) {
+	    i2 = ss.get(1).item;
+	    rulename2 = i1.getRule ().getName ();
+	}
+
+	if (rulename1.equals ("TypeArguments")) {
+	    if (rulename2 == null || rulename2.equals ("TypeArgumentsOrDiamond")) {
+		if (i1.getDotPos () == 1)
+		    lexer.pushInsideTypeContext ();
+		else if (i1.getDotPos () == 3)
+		    lexer.popInsideTypeContext ();
+	    }
+	} else if (rulename1.equals ("TypeArgumentsOrDiamond")) {
+	    if (i1.getDotPos () == 1)
+		lexer.pushInsideTypeContext ();
+	    else if (i1.getDotPos () == 2)
+		lexer.popInsideTypeContext ();
+	}
     }
 
     private static class StateSet implements Iterable<State> {

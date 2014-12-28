@@ -99,6 +99,8 @@ public class TestBlock {
     public void testWhile () {
 	testSuccessfulParse ("{ while (true) { i++; }}");
 	testSuccessfulParse ("{ do { i++; } while (true); }");
+	testSuccessfulParse ("{ while (i < 4) { i++; }}");
+	testSuccessfulParse ("{ while (i < foo) { i++; }}");
     }
 
     @Test
@@ -147,6 +149,7 @@ public class TestBlock {
 	testSuccessfulParse ("{foo.bar.Baz baz; }");
 	testSuccessfulParse ("{foo.Bar bar = new foo.Bar(); }");
 	testSuccessfulParse ("{foo.bar.Baz baz = new foo.bar.Baz(); }");
+	testSuccessfulParse ("{Map<D, S> work = new TreeMap<D, S> (); }");
     }
 
     @Test
@@ -154,6 +157,7 @@ public class TestBlock {
 	testSuccessfulParse ("{Foo foo = new Foo ();}");
 	testSuccessfulParse ("{Bar bar = new foo.Bar ();}");
 	testSuccessfulParse ("{Baz baz = new foo.bar.Baz ();}");
+	testSuccessfulParse ("{rules = new ArrayList<> ();}");
     }
 
     @Test

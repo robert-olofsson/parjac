@@ -63,4 +63,8 @@ public interface Lexer {
      *  will be reported as shift.
      */
     void popInsideTypeContext ();
+
+    /** Check if the lexer is currently inside a type context. */
+    boolean isInsideTypeContext ();
+
 }

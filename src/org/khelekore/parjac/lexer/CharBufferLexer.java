@@ -79,7 +79,12 @@ public class CharBufferLexer implements Lexer {
     public void popInsideTypeContext () {
 	insideTypeContext--;
 	if (insideTypeContext < 0)
-	    throw new IllegalStateException ("Popped non existing type context");
+	    throw new IllegalStateException ("Popped non existing type context: " +
+					     currentLine + ":" + currentColumn);
+    }
+
+    public boolean isInsideTypeContext () {
+	return insideTypeContext > 0;
     }
 
     public long getLineNumber () {
