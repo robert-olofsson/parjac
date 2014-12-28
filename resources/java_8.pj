@@ -801,14 +801,8 @@ RelationalExpression:
 ShiftExpression:
 	AdditiveExpression
 	ShiftExpression '<<' AdditiveExpression
-	ShiftExpression RightShift AdditiveExpression
-	ShiftExpression RightShiftUnsigned AdditiveExpression
-
-RightShift:
-	'>' '>'
-
-RightShiftUnsigned:
-	'>' '>' '>'
+	ShiftExpression '>' '>' AdditiveExpression
+	ShiftExpression '>' '>' '>' AdditiveExpression
 
 AdditiveExpression:
 	MultiplicativeExpression
