@@ -1,5 +1,6 @@
 package org.khelekore.parjac.parser;
 
+import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,10 +9,26 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
+import org.khelekore.parjac.grammar.GrammarReader;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.lexer.Token;
 
 public class TestParseHelper {
+
+    public static Grammar getJavaGrammarFromFile (String goalRule) throws IOException {
+	GrammarReader gr = new GrammarReader (true);
+	gr.read (TestParseHelper.class.getResource ("/java_8.pj"));
+	Grammar g = gr.getGrammar ();
+	g.addRule ("Goal", goalRule, Token.END_OF_INPUT);
+	try {
+	    g.validateRules ();
+	} catch (Throwable t) {
+	    t.printStackTrace ();
+	}
+	return g;
+    }
+
     public static void parse (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
 	Parser p = getParser (lr, s, diagnostics);
 	if (lr.getDebug ())
@@ -33,8 +50,6 @@ public class TestParseHelper {
 	Lexer lexer = new CharBufferLexer (charBuf);
 	EarleyParser ep = new EarleyParser (g, path, lexer, diagnostics, false);
 	ep.parse ();
-	assert !lexer.isInsideTypeContext () : "Lexer still inside type context: " + s;
-
     }
 
     public static String getParseOutput (CompilerDiagnosticCollector diagnostics) {

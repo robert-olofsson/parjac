@@ -73,8 +73,6 @@ public class Compiler {
 	    EarleyParser parser =
 		new EarleyParser (g, path, lexer, diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
-	    if (lexer.isInsideTypeContext ())
-		diagnostics.report (new NoSourceDiagnostics ("Lexer still inside type context: %s", path));
 	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",

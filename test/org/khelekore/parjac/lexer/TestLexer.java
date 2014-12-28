@@ -87,8 +87,8 @@ public class TestLexer {
 	testInput ("^", Token.XOR);
 	testInput ("%", Token.REMAINDER);
 	testInput ("<<", Token.LEFT_SHIFT);
-	testInput (">>", Token.RIGHT_SHIFT);
-	testInput (">>>", Token.RIGHT_SHIFT_UNSIGNED);
+	testInput (">>", Token.GT, Token.GT);
+	testInput (">>>", Token.GT, Token.GT, Token.GT);
 	testInput ("+=", Token.PLUS_EQUAL);
 	testInput ("-=", Token.MINUS_EQUAL);
 	testInput ("*=", Token.MULTIPLY_EQUAL);
@@ -105,9 +105,7 @@ public class TestLexer {
     @Test
     public void testGenerics () {
 	Lexer l = getLexer (">>");
-	l.pushInsideTypeContext ();
 	testLexing (l, Token.GT, Token.GT);
-	l.popInsideTypeContext ();
     }
 
     @Test
@@ -359,7 +357,7 @@ public class TestLexer {
 	Lexer l = getLexer (text);
 	for (int i = 0; i < expected.length; i++) {
 	    Token t = l.nextNonWhitespaceToken ();
-	    assert t == expected[i] : "Wrong Token: expected: " + expected[i] + ", got: " + t
+	    assert t == expected[i] : i + ": Wrong Token: expected: " + expected[i] + ", got: " + t
 		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
 	}
     }
@@ -379,7 +377,7 @@ public class TestLexer {
 	    assert l.hasMoreTokens () : "Too few tokens, expected: " + Arrays.toString (expected);
 	    Token t = l.nextToken ();
 	    assert t != null : "Returned token may not be null";
-	    assert t == expected[i] : "Wrong Token: expected: " + expected[i] + ", got: " + t
+	    assert t == expected[i] : i + ": Wrong Token: expected: " + expected[i] + ", got: " + t
 		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
 	}
 	if (l.hasMoreTokens ()) {

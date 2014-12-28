@@ -94,6 +94,8 @@ public class GrammarReader {
 	    Grammar grammar = gr.getGrammar ();
 	    grammar.addRule ("Goal", "CompilationUnit");
 	    grammar.validateRules ();
+	    for (Rule r : grammar.getRules ())
+		System.out.println (r);
 	}
     }
 }

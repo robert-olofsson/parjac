@@ -53,18 +53,4 @@ public interface Lexer {
      *  If there are no more non-whitespace tokens, then END_OF_INPUT will be returned
      */
     Token nextNonWhitespaceToken ();
-
-    /** Make several consecutive &gt; be reported individually so that
-     *  generic types can be correctly parsed.
-     */
-    void pushInsideTypeContext ();
-
-    /** If all pushed inside type context have been popped conecutive &gt;
-     *  will be reported as shift.
-     */
-    void popInsideTypeContext ();
-
-    /** Check if the lexer is currently inside a type context. */
-    boolean isInsideTypeContext ();
-
 }

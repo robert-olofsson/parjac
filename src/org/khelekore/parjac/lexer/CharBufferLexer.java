@@ -14,7 +14,6 @@ public class CharBufferLexer implements Lexer {
     private long currentLine = 1;
     private int currentLineStart = 0;
     private long currentColumn = 0;
-    private int insideTypeContext = 0;
 
     // Text set when we get an lexer ERROR
     private String errorText;
@@ -70,21 +69,6 @@ public class CharBufferLexer implements Lexer {
 
     public String getIdentifier () {
 	return currentIdentifier;
-    }
-
-    public void pushInsideTypeContext () {
-	insideTypeContext++;
-    }
-
-    public void popInsideTypeContext () {
-	insideTypeContext--;
-	if (insideTypeContext < 0)
-	    throw new IllegalStateException ("Popped non existing type context: " +
-					     currentLine + ":" + currentColumn);
-    }
-
-    public boolean isInsideTypeContext () {
-	return insideTypeContext > 0;
     }
 
     public long getLineNumber () {
@@ -364,26 +348,33 @@ public class CharBufferLexer implements Lexer {
 	// >, >=, >>, >>=, >>>, >>>=
 	Token tt = Token.GT;
 
-	// generics
-	if (insideTypeContext > 0)
-	    return tt;
-
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();
 	    if (c == '=') {
-		tt = Token.GE;
+		return Token.GE;
 	    } else if (c == '>') {
-		tt = handleLTGT ('>', Token.RIGHT_SHIFT, Token.RIGHT_SHIFT_EQUAL,
-				 Token.RIGHT_SHIFT_UNSIGNED, Token.RIGHT_SHIFT_UNSIGNED_EQUAL);
-	    } else {
-		pushBack ();
+		if (buf.hasRemaining ()) {
+		    char d = nextChar ();
+		    if (d == '=') {
+			return Token.RIGHT_SHIFT_EQUAL;
+		    } else if (d == '>') {
+			if (buf.hasRemaining ()) {
+			    char e = nextChar ();
+			    if (e == '=')
+				return Token.RIGHT_SHIFT_UNSIGNED_EQUAL;
+			    pushBack ();
+			}
+		    }
+		    pushBack ();
+		}
 	    }
+	    pushBack ();
 	}
 	return tt;
     }
 
     private Token handleLTGT (char ltgt, Token base, Token baseEqual,
-				  Token doubleBase, Token doubleBaseEqual) {
+			      Token doubleBase, Token doubleBaseEqual) {
 	Token tt = base;
 	if (buf.hasRemaining ()) {
 	    char c = nextChar ();

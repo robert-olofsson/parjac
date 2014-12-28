@@ -41,6 +41,11 @@ public class EarleyParser {
 	this.lexer = lexer;
 	this.diagnostics = diagnostics;
 	this.debug = debug;
+	if (debug) {
+	    int i = 0;
+	    for (Rule r : grammar.getRules ())
+		System.err.format ("%4d: %s\n", i++, r);
+	}
     }
 
     public SyntaxTree parse () {
@@ -59,8 +64,6 @@ public class EarleyParser {
 		addParserError ("No possible next state");
 		return null;
 	    }
-	    StateSet ss = states.get (currentPosition);
-	    possiblyFlipTypeContext (ss);
 	}
 	StateSet finishingStates = states.get (currentPosition);
 	if (debug)
@@ -152,34 +155,6 @@ public class EarleyParser {
     private void debugPrintStates (int pos) {
 	if (debug)
 	    states.get (pos).forEach (s -> System.err.println (pos + ": " + s));
-    }
-
-    private void possiblyFlipTypeContext (StateSet ss) {
-	if (ss.size () > 2)
-	    return;
-	Item i1 = ss.get(0).item;
-	String rulename1 = i1.getRule ().getName ();
-	Item i2 = null;
-	String rulename2 = null;
-
-	if (ss.size () == 2) {
-	    i2 = ss.get(1).item;
-	    rulename2 = i1.getRule ().getName ();
-	}
-
-	if (rulename1.equals ("TypeArguments")) {
-	    if (rulename2 == null || rulename2.equals ("TypeArgumentsOrDiamond")) {
-		if (i1.getDotPos () == 1)
-		    lexer.pushInsideTypeContext ();
-		else if (i1.getDotPos () == 3)
-		    lexer.popInsideTypeContext ();
-	    }
-	} else if (rulename1.equals ("TypeArgumentsOrDiamond")) {
-	    if (i1.getDotPos () == 1)
-		lexer.pushInsideTypeContext ();
-	    else if (i1.getDotPos () == 2)
-		lexer.popInsideTypeContext ();
-	}
     }
 
     private static class StateSet implements Iterable<State> {

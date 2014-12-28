@@ -174,7 +174,7 @@ public class Grammar {
 	SimplePart p = null;
 	while (i.hasNext ()) {
 	    SimplePart c = i.next ();
-	    if (c.equals (p))
+	    if (c.equals (p) && c.getId ().toString ().startsWith ("ZOM_"))
 		i.remove ();
 	    else
 		p = c;

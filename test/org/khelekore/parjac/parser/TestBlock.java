@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.grammar.GrammarReader;
-import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -16,15 +14,7 @@ public class TestBlock {
 
     @BeforeClass
     public void createLRParser () throws IOException {
-	GrammarReader gr = new GrammarReader (true);
-	gr.read (getClass ().getResource ("/java_8.pj"));
-	g = gr.getGrammar ();
-	g.addRule ("Goal", "Block", Token.END_OF_INPUT);
-	try {
-	    g.validateRules ();
-	} catch (Throwable t) {
-	    t.printStackTrace ();
-	}
+	g = TestParseHelper.getJavaGrammarFromFile ("Block");
     }
 
     @BeforeMethod
@@ -219,6 +209,8 @@ public class TestBlock {
 	testSuccessfulParse ("{ foo = (foo.Bar[])bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
+	testSuccessfulParse ("{ NCacheEntry<K, V> nent = (NCacheEntry<K, V>)ent; }");
+
     }
 
     private void testSuccessfulParse (String s) {
