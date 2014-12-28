@@ -12,7 +12,7 @@ public class CharBufferLexer implements Lexer {
     private long currentLine = 1;
     private int currentLineStart = 0;
     private long currentColumn = 0;
-    private boolean insideTypeContext = false;
+    private int insideTypeContext = 0;
 
     // Text set when we get an lexer ERROR
     private String errorText;
@@ -70,8 +70,14 @@ public class CharBufferLexer implements Lexer {
 	return currentIdentifier;
     }
 
-    public void setInsideTypeContext (boolean insideTypeContext) {
-	this.insideTypeContext = insideTypeContext;
+    public void pushInsideTypeContext () {
+	insideTypeContext++;
+    }
+
+    public void popInsideTypeContext () {
+	insideTypeContext--;
+	if (insideTypeContext < 0)
+	    throw new IllegalStateException ("Popped non existing type context");
     }
 
     public long getLineNumber () {
@@ -342,7 +348,7 @@ public class CharBufferLexer implements Lexer {
 	Token tt = Token.GT;
 
 	// generics
-	if (insideTypeContext)
+	if (insideTypeContext > 0)
 	    return tt;
 
 	if (buf.hasRemaining ()) {

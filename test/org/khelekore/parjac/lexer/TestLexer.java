@@ -105,8 +105,9 @@ public class TestLexer {
     @Test
     public void testGenerics () {
 	Lexer l = getLexer (">>");
-	l.setInsideTypeContext (true);
+	l.pushInsideTypeContext ();
 	testLexing (l, Token.GT, Token.GT);
+	l.popInsideTypeContext ();
     }
 
     @Test

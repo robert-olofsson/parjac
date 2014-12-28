@@ -62,5 +62,10 @@ public interface Lexer {
     /** Make several consecutive &gt; be reported individually so that
      *  generic types can be correctly parsed.
      */
-    void setInsideTypeContext (boolean insideTypeContext);
+    void pushInsideTypeContext ();
+
+    /** If all pushed inside type context have been popped conecutive &gt;
+     *  will be reported as shift.
+     */
+    void popInsideTypeContext ();
 }
