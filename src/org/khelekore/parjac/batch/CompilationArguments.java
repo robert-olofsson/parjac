@@ -11,8 +11,10 @@ public class CompilationArguments {
     private final List<Path> srcDirs;
     private final Path outputDir;
     private final Charset encoding;
+    private final boolean debug;
 
-    public CompilationArguments (List<Path> srcDirs, Path outputDir, Charset encoding) {
+    public CompilationArguments (List<Path> srcDirs, Path outputDir,
+				 Charset encoding, boolean debug) {
 	if (srcDirs == null)
 	    throw new NullPointerException ("srcDirs may not be null");
 	if (srcDirs.isEmpty ())
@@ -22,6 +24,7 @@ public class CompilationArguments {
 	this.srcDirs = new ArrayList<> (srcDirs);
 	this.outputDir = outputDir;
 	this.encoding = encoding;
+	this.debug = debug;
     }
 
     public List<Path> getSrcDirs () {
@@ -34,5 +37,9 @@ public class CompilationArguments {
 
     public Charset getEncoding () {
 	return encoding;
+    }
+
+    public boolean getDebug () {
+	return debug;
     }
 }

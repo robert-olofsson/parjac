@@ -54,14 +54,14 @@ public class Main {
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
 
-	GrammarReader gr = new GrammarReader (false);
+	GrammarReader gr = new GrammarReader (settings.getDebug ());
 	gr.read (getClass ().getResource ("/java_8.pj"));
 	Grammar g = gr.getGrammar ();
 	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
 	g.validateRules ();
 
-	Compiler c = new Compiler (diagnostics, g);
-	c.compile (srcFiles, settings.getOutputDir (), settings.getEncoding ());
+	Compiler c = new Compiler (diagnostics, g, settings);
+	c.compile (srcFiles);
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
     }
@@ -70,6 +70,7 @@ public class Main {
 	List<Path> srcDirs = new ArrayList<> ();
 	Path outputDir = null;
 	Charset encoding = Charset.forName ("UTF-8");
+	boolean debug = false;
 	for (int i = 0; i < args.length; i++) {
 	    switch (args[i]) {
 	    case "-i":
@@ -92,6 +93,9 @@ public class Main {
 		    encoding = Charset.forName (e);
 		}
 		break;
+	    case "--debug":
+		debug = true;
+		break;
 	    case "-h":
 	    case "--help":
 		usage ();
@@ -100,7 +104,7 @@ public class Main {
 		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: %s", args[i]));
 	    }
 	}
-	return new CompilationArguments (srcDirs, outputDir, encoding);
+	return new CompilationArguments (srcDirs, outputDir, encoding, debug);
     }
 
     private boolean hasFollowingArgExists (String[] args, int pos) {
@@ -114,8 +118,8 @@ public class Main {
 
     private void usage () {
 	System.err.println ("usage: java " + getClass () +
-			    " [-i|--input srcdir]+ [-d|--destination dir] " +
-			    "[-h|--help]");
+			    " [-i|--input srcdir]+ [-d|--destination dir]" +
+			    " [--debug] [-h|--help]");
     }
 
     private void addFiles (Path p, List<Path> srcFiles) {

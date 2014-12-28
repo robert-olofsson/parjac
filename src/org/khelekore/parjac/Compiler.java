@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.batch.CompilationArguments;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
@@ -26,14 +27,17 @@ import org.khelekore.parjac.tree.SyntaxTree;
 public class Compiler {
     private final CompilerDiagnosticCollector diagnostics;
     private final Grammar g;
+    private final CompilationArguments settings;
 
-    public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g) {
+    public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
+		     CompilationArguments settings) {
 	this.diagnostics = diagnostics;
 	this.g = g;
+	this.settings = settings;
     }
 
-    public void compile (List<Path> srcFiles, Path destinationDir, Charset encoding) {
-	List<SyntaxTree> trees = parse (srcFiles, encoding);
+    public void compile (List<Path> srcFiles) {
+	List<SyntaxTree> trees = parse (srcFiles);
 	if (diagnostics.hasError ())
 	    return;
 
@@ -41,37 +45,40 @@ public class Compiler {
 	if (diagnostics.hasError ())
 	    return;
 
-	createOutputDirectories (trees, destinationDir);
+	createOutputDirectories (trees, settings.getOutputDir ());
 	if (diagnostics.hasError ())
 	    return;
 
-	writeClasses (trees, destinationDir);
+	writeClasses (trees, settings.getOutputDir ());
     }
 
-    private List<SyntaxTree> parse (List<Path> srcFiles, Charset encoding) {
+    private List<SyntaxTree> parse (List<Path> srcFiles) {
 	return
 	    srcFiles.parallelStream ().
-	    map (p -> parse (p, encoding)).
+	    map (p -> parse (p)).
 	    filter (p -> p != null).
 	    collect (Collectors.toList ());
     }
 
-    private SyntaxTree parse (Path path, Charset encoding) {
+    private SyntaxTree parse (Path path) {
 	try {
+	    if (settings.getDebug ())
+		System.out.println ("parsing: " + path);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
-	    CharsetDecoder decoder = encoding.newDecoder ();
+	    CharsetDecoder decoder = settings.getEncoding ().newDecoder ();
 	    decoder.onMalformedInput (CodingErrorAction.REPORT);
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
-	    EarleyParser parser = new EarleyParser (g, path, lexer, diagnostics, false);
+	    EarleyParser parser =
+		new EarleyParser (g, path, lexer, diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    if (lexer.isInsideTypeContext ())
 		diagnostics.report (new NoSourceDiagnostics ("Lexer still inside type context: %s", path));
 	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
-							 path, encoding));
+							 path, settings.getEncoding ()));
 	    return null;
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s: %s", path, e));
