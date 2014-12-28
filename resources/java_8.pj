@@ -105,9 +105,6 @@ ExpressionName:
 	'identifier'
 	AmbigousName '.' 'identifier'
 
-MethodName:
-	'identifier'
-
 AmbigousName:
 	'identifier'
 	AmbigousName '.' 'identifier'
@@ -688,7 +685,7 @@ ArrayAccess:
 
 
 MethodInvocation:
-	MethodName '(' ArgumentList? ')'
+	'identifier' '(' ArgumentList? ')'
 	TypeName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
 	ExpressionName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
  	Primary '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
