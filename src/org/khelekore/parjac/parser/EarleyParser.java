@@ -2,8 +2,10 @@ package org.khelekore.parjac.parser;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
@@ -120,7 +122,8 @@ public class EarleyParser {
     private void predict (State state, int pos, StateSet states) {
 	RulePart rp = (RulePart)state.item.getPartAfterDot ();
 	RuleCollection rc = grammar.getRules (rp.getId ());
-	rc.getRules ().forEach (r -> states.add (new State (new Item (r, 0), pos)));
+	for (Rule r : rc.getRules ())
+	    states.add (new State (new Item (r, 0), pos));
     }
 
     private void complete (State state, int pos, StateSet currentStates) {
@@ -152,9 +155,10 @@ public class EarleyParser {
 
     private static class StateSet implements Iterable<State> {
 	private final List<State> states = new ArrayList<> ();
+	private final Set<State> ss = new HashSet<> ();
 
 	public void add (State state) {
-	    if (!states.stream ().anyMatch (s -> s.equals (state)))
+	    if (ss.add (state))
 		states.add (state);
 	}
 
