@@ -1,51 +1,15 @@
 package org.khelekore.parjac.grammar.java8;
 
 import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.parser.LRParser;
 
 import static org.khelekore.parjac.lexer.Token.*;
 
+/** Java 8 grammar, but it should not be used. Use the grammar from the java_8.pj instead. */
 public class Java8Grammar {
     private final Grammar gr;
-    private final LRParser lr;
-
-    // All modifiers are accepted in the grammar to avoid conflicts, need to check after
-    /*
-    private Set<Object> CLASS_MODIFIERS =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-				      ABSTRACT, STATIC, FINAL, STRICTFP));
-
-    private Set<Object> INTERFACE_MODIFIERS =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-				      ABSTRACT, STATIC, STRICTFP));
-
-    private Set<Object> CONSTANT_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, STATIC, FINAL));
-
-    private Set<Object> INTERFACE_METHOD_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT, DEFAULT, STATIC, STRICTFP));
-
-    private Set<Object> FIELD_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-				      STATIC, FINAL, TRANSIENT, VOLATILE));
-
-    private Set<Object> METHOD_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE,
-				      ABSTRACT, STATIC, FINAL, SYNCHRONIZED, NATIVE, STRICTFP));
-
-    private Set<Object> CONSTRUCTOR_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, PROTECTED, PRIVATE));
-
-    private Set<Object> ANNOTATION_TYPE_ELEMENT_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotation", PUBLIC, ABSTRACT));
-
-    private Set<Object> VARIABLE_MODIFIER =
-	new HashSet<> (Arrays.asList ("Annotations", FINAL));
-    */
 
     public Java8Grammar (boolean debug) {
 	gr = new Grammar ();
-	lr = new LRParser (gr, debug);
     }
 
     public void buildFullGrammar () {

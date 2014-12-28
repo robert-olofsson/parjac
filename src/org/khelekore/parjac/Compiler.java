@@ -19,8 +19,6 @@ import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
-import org.khelekore.parjac.parser.LRParser;
-import org.khelekore.parjac.parser.Parser;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler

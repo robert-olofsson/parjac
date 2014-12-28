@@ -16,9 +16,7 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.GrammarReader;
-import org.khelekore.parjac.grammar.java8.Java8Grammar;
 import org.khelekore.parjac.lexer.Token;
-import org.khelekore.parjac.parser.LRParser;
 
 /** Program to run a batch compilation.
  */
