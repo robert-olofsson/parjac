@@ -38,6 +38,11 @@ public class TestFullClass {
 	testSuccessfulParse ("class HW { public static void main (String[] args) { S.o.p(\"HW!\"); } }");
     }
 
+    @Test
+    public void testInterface () {
+	testSuccessfulParse ("interface CP { void split (List<List<SP>> parts); }");
+    }
+
     private void testSuccessfulParse (String s) {
 	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
