@@ -509,6 +509,12 @@ public class CharBufferLexer implements Lexer {
 	    } else if (c == 'l' || c == 'L') {
 		currentIntValue = BigInteger.ZERO;
 		return Token.LONG_LITERAL;
+	    } else if (c == 'd' || c == 'D') {
+		currentDoubleValue = 0.0;
+		return Token.DOUBLE_LITERAL;
+	    } else if (c == 'f' || c == 'F') {
+		currentDoubleValue = 0.0;
+		return Token.FLOAT_LITERAL;
 	    } else if (c == '_' || (c >= '0' && c <= '7')) {
 		StringBuilder value = new StringBuilder ();
 		value.append (c);

@@ -294,6 +294,8 @@ public class TestLexer {
 	testInput ("1 2.0 3.14 4e5 6", Token.INT_LITERAL, Token.WHITESPACE, Token.DOUBLE_LITERAL,
 		   Token.WHITESPACE, Token.DOUBLE_LITERAL, Token.WHITESPACE, Token.DOUBLE_LITERAL,
 		   Token.WHITESPACE, Token.INT_LITERAL);
+	testDouble ("0d", 0d);
+	testFloat ("0f", 0f);
     }
 
     private void testDouble (String toLex, double expected) {
