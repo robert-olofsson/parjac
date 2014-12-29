@@ -50,10 +50,9 @@ public class EarleyParser {
 
     public SyntaxTree parse () {
 	Rule goalRule = grammar.getRules ("Goal").getRules ().get (0);
-	Item startItem = new Item (goalRule, 0);
 	int currentPosition = 0;
 	StateSet startStates = new StateSet ();
-	startStates.add (new State (startItem, currentPosition));
+	startStates.add (new State (goalRule, 0, currentPosition));
 	states.add (startStates);
 	Token nextToken = Token.END_OF_INPUT;
 	while (lexer.hasMoreTokens ()) {
@@ -101,15 +100,15 @@ public class EarleyParser {
     }
 
     private boolean incomplete (State state) {
-	return !state.item.dotIsLast ();
+	return !state.dotIsLast ();
     }
 
     private boolean nextIsToken (State state) {
-	return state.item.getPartAfterDot () instanceof TokenPart;
+	return state.getPartAfterDot () instanceof TokenPart;
     }
 
     private void scan (Token nextToken, State state, int pos) {
-	TokenPart tp = (TokenPart)state.item.getPartAfterDot ();
+	TokenPart tp = (TokenPart)state.getPartAfterDot ();
 	if (tp.getId () == nextToken) {
 	    int nextPos = pos + 1;
 	    StateSet nextStates;
@@ -119,28 +118,28 @@ public class EarleyParser {
 	    } else {
 		nextStates = states.get (nextPos);
 	    }
-	    nextStates.add (new State (state.item.advance (), state.startPos));
+	    nextStates.add (state.advance ());
 	}
     }
 
     private void predict (State state, int pos, StateSet states) {
-	RulePart rp = (RulePart)state.item.getPartAfterDot ();
+	RulePart rp = (RulePart)state.getPartAfterDot ();
 	RuleCollection rc = grammar.getRules (rp.getId ());
 	for (Rule r : rc.getRules ())
-	    states.add (new State (new Item (r, 0), pos));
+	    states.add (new State (r, 0, pos));
     }
 
     private void complete (State state, int pos, StateSet currentStates) {
 	StateSet originStates = states.get (state.startPos);
 	for (int i = 0; i < originStates.size (); i++) {
 	    State os = originStates.get (i);
-	    if (incomplete (os) && nextIsRule (os, state.item.getRule ().getName ()))
-		currentStates.add (new State (os.item.advance (), os.startPos));
+	    if (incomplete (os) && nextIsRule (os, state.getRule ().getName ()))
+		currentStates.add (os.advance ());
 	}
     }
 
     private boolean nextIsRule (State state, String ruleName) {
-	SimplePart sp = state.item.getPartAfterDot ();
+	SimplePart sp = state.getPartAfterDot ();
 	if (sp instanceof RulePart) {
 	    RulePart rp = (RulePart)sp;
 	    return ruleName.equals (rp.getId ());
@@ -149,7 +148,7 @@ public class EarleyParser {
     }
 
     private boolean isEndState (State s) {
-	return s.startPos == 0 && s.item.dotIsLast () && s.item.getRule ().getName ().equals ("Goal");
+	return s.startPos == 0 && s.dotIsLast () && s.getRule ().getName ().equals ("Goal");
     }
 
     private void debugPrintStates (int pos) {
@@ -183,17 +182,19 @@ public class EarleyParser {
 	}
     }
 
-    private static class State {
-	private final Item item;
+    private static class State extends Item {
 	private final int startPos;
+	private final int hc;
 
-	public State (Item item, int startPos) {
-	    this.item = item;
+	public State (Rule r, int dotPos, int startPos) {
+	    super (r, dotPos);
 	    this.startPos = startPos;
+	    hc = startPos * 31 + super.hashCode ();
 	}
 
 	@Override public String toString () {
-	    return getClass ().getSimpleName () + "{" + item + ", " + startPos + "}";
+	    return getClass ().getSimpleName () +
+		"{" + getRule () + ", " + getDotPos () + ", " + startPos + "}";
 	}
 
 	@Override public boolean equals (Object o) {
@@ -204,11 +205,17 @@ public class EarleyParser {
 	    if (o.getClass () != getClass ())
 		return false;
 	    State s = (State)o;
-	    return startPos == s.startPos && item.equals (s.item);
+	    return startPos == s.startPos &&
+		getDotPos () == s.getDotPos () &&
+		getRule ().equals (s.getRule ());
 	}
 
 	@Override public int hashCode () {
-	    return startPos * 31 + item.hashCode ();
+	    return hc;
+	}
+
+	@Override public State advance () {
+	    return new State (getRule (), getDotPos () + 1, startPos);
 	}
     }
 
