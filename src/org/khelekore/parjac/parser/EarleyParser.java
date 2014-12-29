@@ -204,7 +204,7 @@ public class EarleyParser {
 	    State s = (State)o;
 	    return startPos == s.startPos &&
 		getDotPos () == s.getDotPos () &&
-		getRule ().equals (s.getRule ());
+		getRule () == s.getRule (); // yes, ref comparisson
 	}
 
 	@Override public int hashCode () {
