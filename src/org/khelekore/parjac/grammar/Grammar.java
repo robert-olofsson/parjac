@@ -58,6 +58,14 @@ public class Grammar {
 	return rules;
     }
 
+    public int getNumberOfRules () {
+	return rules.size ();
+    }
+
+    public int getNumberOfRuleNames () {
+	return ruleCollections.size ();
+    }
+
     public RuleCollection getRules (String name) {
 	return nameToRules.get (name);
     }

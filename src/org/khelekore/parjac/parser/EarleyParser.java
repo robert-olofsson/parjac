@@ -43,6 +43,9 @@ public class EarleyParser {
 	this.debug = debug;
 	if (debug) {
 	    int i = 0;
+	    System.err.format ("%d rule names, %d rules\n",
+			       grammar.getNumberOfRuleNames (),
+			       grammar.getNumberOfRules ());
 	    for (Rule r : grammar.getRules ())
 		System.err.format ("%4d: %s\n", i++, r);
 	}
