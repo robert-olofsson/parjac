@@ -140,6 +140,8 @@ public class TestBlock {
 	testSuccessfulParse ("{foo.Bar bar = new foo.Bar(); }");
 	testSuccessfulParse ("{foo.bar.Baz baz = new foo.bar.Baz(); }");
 	testSuccessfulParse ("{Map<D, S> work = new TreeMap<D, S> (); }");
+	testSuccessfulParse ("{Class<Boolean> c = boolean.class; }");
+	testSuccessfulParse ("{Class<Integer> c = int.class; }");
     }
 
     @Test

@@ -655,6 +655,7 @@ Primary:
 PrimaryNoNewArray:
 	Literal
 	TypeName ('[' ']')* '.' 'class'
+	UnannPrimitiveType ('[' ']')* '.' 'class'
 	'void' '.' 'class'
 	'this'
 	TypeName '.' 'this'
