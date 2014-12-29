@@ -8,11 +8,13 @@ public class Rule {
     private final String name;
     private final int id;
     private final List<SimplePart> parts;
+    private final int hc;
 
     public Rule (String name, int id, List<SimplePart> parts) {
 	this.name = name;
 	this.id = id;
 	this.parts = parts;
+	hc = name.hashCode () * 31 + parts.hashCode ();
     }
 
     @Override public String toString () {
@@ -62,6 +64,6 @@ public class Rule {
     }
 
     @Override public int hashCode () {
-	return name.hashCode () * 31 + parts.hashCode ();
+	return hc;
     }
 }
