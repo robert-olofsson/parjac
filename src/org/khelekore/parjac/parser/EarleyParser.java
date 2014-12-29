@@ -88,10 +88,13 @@ public class EarleyParser {
 	for (int s = 0; s < currentStates.size (); s++) {
 	    State state = currentStates.get (s);
 	    if (incomplete (state)) {
-		if (nextIsToken (state)) {
-		    scan (nextToken, state, currentPosition);
+		SimplePart sp = state.getPartAfterDot ();
+		if (sp instanceof TokenPart) {
+		    TokenPart tp = (TokenPart)sp;
+		    scan (nextToken, tp, state, currentPosition);
 		} else {
-		    predict (state, currentPosition, currentStates);
+		    RulePart rp = (RulePart)sp;
+		    predict (state, rp, currentPosition, currentStates);
 		}
 	    } else {
 		complete (state, currentPosition, currentStates);
@@ -103,13 +106,8 @@ public class EarleyParser {
 	return !state.dotIsLast ();
     }
 
-    private boolean nextIsToken (State state) {
-	return state.getPartAfterDot () instanceof TokenPart;
-    }
-
-    private void scan (Token nextToken, State state, int pos) {
-	TokenPart tp = (TokenPart)state.getPartAfterDot ();
-	if (tp.getId () == nextToken) {
+    private void scan (Token nextToken, TokenPart afterDot, State state, int pos) {
+	if (afterDot.getId () == nextToken) {
 	    int nextPos = pos + 1;
 	    StateSet nextStates;
 	    if (states.size () <= nextPos) {
@@ -122,8 +120,7 @@ public class EarleyParser {
 	}
     }
 
-    private void predict (State state, int pos, StateSet states) {
-	RulePart rp = (RulePart)state.getPartAfterDot ();
+    private void predict (State state, RulePart rp, int pos, StateSet states) {
 	RuleCollection rc = grammar.getRules (rp.getId ());
 	for (Rule r : rc.getRules ())
 	    states.add (new State (r, 0, pos));
@@ -157,8 +154,8 @@ public class EarleyParser {
     }
 
     private static class StateSet implements Iterable<State> {
-	private final List<State> states = new ArrayList<> ();
-	private final Set<State> ss = new HashSet<> ();
+	private final List<State> states = new ArrayList<> (100);
+	private final Set<State> ss = new HashSet<> (100);
 
 	public void add (State state) {
 	    if (ss.add (state))
