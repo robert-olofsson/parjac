@@ -41,8 +41,11 @@ ClassOrInterfaceType:
 	InterfaceType
 
 ClassType:
+	SimpleClassType
+	ClassOrInterfaceType '.' SimpleClassType
+
+SimpleClassType:
 	Annotation* 'identifier' TypeArguments?
-	ClassOrInterfaceType '.' Annotation* 'identifier' TypeArguments?
 
 InterfaceType:
 	ClassType
@@ -266,8 +269,11 @@ MethodModifier:
 	'strictfp'
 
 MethodHeader:
+	UntypedMethodHeader
+	TypeParameters Annotation* UntypedMethodHeader
+
+UntypedMethodHeader:
 	Result MethodDeclarator Throws?
-	TypeParameters Annotation* Result MethodDeclarator Throws?
 
 Result:
 	UnannType
@@ -333,10 +339,13 @@ ConstructorBody:
 	'{' ExplicitConstructorInvocation? BlockStatements? '}'
 
 ExplicitConstructorInvocation:
-	TypeArguments? 'this' '(' ArgumentList? ')' ';'
-	TypeArguments? 'super' '(' ArgumentList? ')' ';'
-	ExpressionName '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
-	Primary '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
+	TypeArguments? 'this' ConstructorArguments
+	TypeArguments? 'super' ConstructorArguments
+	ExpressionName '.' TypeArguments? 'super' ConstructorArguments
+	Primary '.' TypeArguments? 'super' ConstructorArguments
+
+ConstructorArguments:
+	'(' ArgumentList? ')' ';'
 
 EnumDeclaration:
 	ClassModifier* 'enum' 'identifier' Superinterfaces? EnumBody
@@ -667,9 +676,12 @@ PrimaryNoNewArray:
 	MethodReference
 
 ClassInstanceCreationExpression:
+	UntypedClassInstanceCreationExpression
+	ExpressionName '.' UntypedClassInstanceCreationExpression
+	Primary '.' UntypedClassInstanceCreationExpression
+
+UntypedClassInstanceCreationExpression:
 	'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
-	ExpressionName '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
-	Primary '.' 'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
 
 TypeArgumentsOrDiamond:
 	TypeArguments
@@ -686,12 +698,15 @@ ArrayAccess:
 
 
 MethodInvocation:
+	UntypedMethodInvocation
+	TypeName '.' TypeArguments? UntypedMethodInvocation
+	ExpressionName '.' TypeArguments? UntypedMethodInvocation
+ 	Primary '.' TypeArguments? UntypedMethodInvocation
+	'super' '.' TypeArguments? UntypedMethodInvocation
+	TypeName '.' 'super' '.' TypeArguments? UntypedMethodInvocation
+
+UntypedMethodInvocation:
 	'identifier' '(' ArgumentList? ')'
-	TypeName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	ExpressionName '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
- 	Primary '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
-	TypeName '.' 'super' '.' TypeArguments? 'identifier' '(' ArgumentList? ')'
 
 ArgumentList:
 	Expression (',' Expression)*
