@@ -33,6 +33,11 @@ public class TestFullClass {
 	testSuccessfulParse ("interface CP { void split (List<List<SP>> parts); }");
     }
 
+    @Test
+    public void testMultiClass () {
+	testSuccessfulParse ("class A {} class B {} class C {}");
+    }
+
     private void testSuccessfulParse (String s) {
 	TestParseHelper.earleyParse (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
