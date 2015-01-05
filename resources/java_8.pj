@@ -283,9 +283,12 @@ MethodDeclarator:
 	'identifier' '(' FormalParameterList? ')' Dims?
 
 FormalParameterList:
-	ReceiverParameter FormalParameterListRest
-	FormalParameter FormalParameterListRest
+	ReceiverParameter (',' FormalParameterListRest)?
+	FormalParameter (',' FormalParameterListRest)?
 	LastFormalParameter
+
+FormalParameterListRest:
+	(FormalParameter ',')* LastFormalParameter
 
 FormalParameter:
 	VariableModifier* UnannType VariableDeclaratorId
@@ -296,12 +299,10 @@ VariableModifier:
 
 LastFormalParameter:
 	VariableModifier* UnannType Annotation* '...' VariableDeclaratorId
+	FormalParameter
 
 ReceiverParameter:
 	Annotation* UnannType ('identifier' '.')? 'this'
-
-FormalParameterListRest:
-	(',' FormalParameter)* (',' LastFormalParameter)?
 
 Throws:
 	'throws' ExceptionTypeList

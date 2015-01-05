@@ -3,7 +3,6 @@ package org.khelekore.parjac;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.MalformedInputException;
@@ -20,6 +19,7 @@ import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
+import org.khelekore.parjac.parser.PredictCache;
 import org.khelekore.parjac.tree.SyntaxTree;
 
 /** The actual compiler
@@ -27,12 +27,14 @@ import org.khelekore.parjac.tree.SyntaxTree;
 public class Compiler {
     private final CompilerDiagnosticCollector diagnostics;
     private final Grammar g;
+    private final PredictCache predictCache;
     private final CompilationArguments settings;
 
     public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
 		     CompilationArguments settings) {
 	this.diagnostics = diagnostics;
 	this.g = g;
+	this.predictCache = new PredictCache (g);
 	this.settings = settings;
     }
 
@@ -62,7 +64,7 @@ public class Compiler {
 
     private SyntaxTree parse (Path path) {
 	try {
-	    if (settings.getDebug ())
+	    //if (settings.getDebug ())
 		System.out.println ("parsing: " + path);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
 	    CharsetDecoder decoder = settings.getEncoding ().newDecoder ();
@@ -71,7 +73,7 @@ public class Compiler {
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
 	    EarleyParser parser =
-		new EarleyParser (g, path, lexer, diagnostics, settings.getDebug ());
+		new EarleyParser (g, path, lexer, predictCache, diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    return tree;
 	} catch (MalformedInputException e) {
