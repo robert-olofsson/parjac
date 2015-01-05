@@ -14,7 +14,7 @@ public class TestBlock {
 
     @BeforeClass
     public void createLRParser () throws IOException {
-	g = TestParseHelper.getJavaGrammarFromFile ("Block");
+	g = TestParseHelper.getJavaGrammarFromFile ("Block", false);
     }
 
     @BeforeMethod

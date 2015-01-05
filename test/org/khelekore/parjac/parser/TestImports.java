@@ -2,8 +2,6 @@ package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.grammar.java8.Java8Grammar;
-import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -14,13 +12,7 @@ public class TestImports {
 
     @BeforeClass
     public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (false);
-	grammar.addNameRules ();
-	grammar.addImportRules ();
-	g = grammar.getGrammar ();
-	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
-	g.addRule ("CompilationUnit", g.zeroOrMore ("ImportDeclaration"));
-	g = grammar.getGrammar ();
+	g = TestParseHelper.getJavaGrammarFromFile ("ImportDeclaration", true);
     }
 
     @BeforeMethod

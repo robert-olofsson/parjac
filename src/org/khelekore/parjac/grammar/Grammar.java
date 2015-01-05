@@ -26,6 +26,19 @@ public class Grammar {
     private final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
     private int zomCounter = 0; // used when generating zomRules
 
+    public Grammar () {
+	// empty
+    }
+
+    public Grammar (Grammar toCopy) {
+	this.rules.addAll (toCopy.rules);
+	ruleSet.addAll (toCopy.ruleSet);
+	ruleCollections.addAll (toCopy.ruleCollections);
+	nameToRules.putAll (toCopy.nameToRules);
+	zomRules.putAll (toCopy.zomRules);
+	zomCounter = toCopy.zomCounter;
+    }
+
     public void validateRules () {
 	Set<String> validRules =
 	    rules.stream ().map (r -> r.getName ()).collect (Collectors.toSet ());

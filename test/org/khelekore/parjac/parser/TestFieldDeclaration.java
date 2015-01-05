@@ -2,8 +2,6 @@ package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.grammar.java8.Java8Grammar;
-import org.khelekore.parjac.lexer.Token;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -14,25 +12,7 @@ public class TestFieldDeclaration {
 
     @BeforeClass
     public void createLRParser () {
-	Java8Grammar grammar = new Java8Grammar (false);
-	grammar.addFieldDeclaration ();
-	grammar.addModifiers ();
-	grammar.addNameRules ();
-	grammar.addTypeRules ();
-	grammar.addUnannTypes ();
-	grammar.addAnnotationRules ();
-	grammar.addArrayInitializer ();
-
-	g = grammar.getGrammar ();
-	g.addRule ("Goal", "FieldDeclaration", Token.END_OF_INPUT);
-	// simplified
-	g.addRule ("Expression", Token.IDENTIFIER);
-	g.addRule ("ConditionalExpression", Token.IDENTIFIER);
-	try {
-	    g.validateRules ();
-	} catch (Throwable t) {
-	    t.printStackTrace ();
-	}
+	g = TestParseHelper.getJavaGrammarFromFile ("FieldDeclaration", false);
     }
 
     @BeforeMethod

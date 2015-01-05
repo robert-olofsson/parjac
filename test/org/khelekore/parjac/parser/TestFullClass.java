@@ -14,7 +14,7 @@ public class TestFullClass {
 
     @BeforeClass
     public void createLRParser () throws IOException {
-	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit");
+	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
     }
 
     @BeforeMethod

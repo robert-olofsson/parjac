@@ -15,12 +15,26 @@ import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 
 public class TestParseHelper {
+    private static final Grammar baseGrammar;
 
-    public static Grammar getJavaGrammarFromFile (String goalRule) throws IOException {
-	GrammarReader gr = new GrammarReader (true);
-	gr.read (TestParseHelper.class.getResource ("/java_8.pj"));
-	Grammar g = gr.getGrammar ();
-	g.addRule ("Goal", goalRule, Token.END_OF_INPUT);
+    static {
+	try {
+	    GrammarReader gr = new GrammarReader ();
+	    gr.read (TestParseHelper.class.getResource ("/java_8.pj"));
+	    baseGrammar = gr.getGrammar ();
+	} catch (IOException e) {
+	    throw new RuntimeException ("Failed to read grammar", e);
+	}
+    }
+
+    public static Grammar getJavaGrammarFromFile (String goalRule, boolean allowMany) {
+	Grammar g = new Grammar (baseGrammar);
+	if (allowMany) {
+	    g.addRule ("Goalp", g.zeroOrMore (goalRule));
+	    g.addRule ("Goal", "Goalp", Token.END_OF_INPUT);
+	} else {
+	    g.addRule ("Goal", goalRule, Token.END_OF_INPUT);
+	}
 	try {
 	    g.validateRules ();
 	} catch (Throwable t) {

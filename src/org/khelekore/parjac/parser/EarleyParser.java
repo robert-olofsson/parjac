@@ -56,7 +56,11 @@ public class EarleyParser {
     public SyntaxTree parse () {
 	Rule goalRule = grammar.getRules ("Goal").getRules ().get (0);
 	int currentPosition = 0;
-	MultiState state = new SimpleMultiState (new State (goalRule, 0, currentPosition));
+	List<State> startStates = new ArrayList<> ();
+	startStates.add (new State (goalRule, 0, currentPosition));
+	if (grammar.getRules ("Goal").canBeEmpty ())
+	    startStates.add (new State (goalRule, 1, currentPosition));
+	MultiState state = new ListMultiState (startStates);
 	states.add (state);
 	Token nextToken = Token.END_OF_INPUT;
 	while (lexer.hasMoreTokens ()) {
