@@ -23,6 +23,11 @@ public class TestFullClass {
     }
 
     @Test
+    public void testEmpty () {
+	testSuccessfulParse ("");
+    }
+
+    @Test
     public void testHelloWorld () {
 	testSuccessfulParse ("class HW { public static void main (String... args) { S.o.p(\"HW!\"); } }");
 	testSuccessfulParse ("class HW { public static void main (String[] args) { S.o.p(\"HW!\"); } }");
