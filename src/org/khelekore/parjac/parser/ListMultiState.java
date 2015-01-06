@@ -14,12 +14,14 @@ import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.lexer.Token;
 
 class ListMultiState implements MultiState {
-    private final List<State> completed = new ArrayList<> ();
+    private List<State> completed = Collections.emptyList ();
     private final Map<Object, List<State>> m = new HashMap<> ();
 
     public ListMultiState (List<State> ss) {
 	for (State s : ss) {
 	    if (s.dotIsLast ()) {
+		if (completed.isEmpty ())
+		    completed = new ArrayList<> ();
 		completed.add (s);
 	    } else {
 		SimplePart sp = s.getPartAfterDot ();
