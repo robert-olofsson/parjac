@@ -1,5 +1,6 @@
 package org.khelekore.parjac.parser;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class PredictCache {
 
     public PredictCache (Grammar grammar) {
 	this.grammar = grammar;
-	cache = calculatePredictSets ();
+	cache = Collections.synchronizedMap (calculatePredictSets ());
     }
 
     public ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
