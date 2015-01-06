@@ -2,6 +2,7 @@ package org.khelekore.parjac.grammar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,6 +70,10 @@ public class Grammar {
 
     public List<Rule> getRules () {
 	return rules;
+    }
+
+    public Collection<String> getUniqueRuleNames () {
+	return nameToRules.keySet ();
     }
 
     public int getNumberOfRules () {

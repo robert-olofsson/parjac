@@ -43,12 +43,10 @@ public class PredictCache {
 
     private Map<String, ListRuleHolder> calculatePredictSets () {
 	Map<String, Set<Rule>> ruleToPredictRules = new HashMap<> ();
-	for (Rule r : grammar.getRules ()) {
-	    if (ruleToPredictRules.get (r.getName ()) == null) {
-		Set<Rule> rules = new HashSet<> ();
-		rules.addAll (grammar.getRules (r.getName ()).getRules ());
-		ruleToPredictRules.put (r.getName (), rules);
-	    }
+	for (String rulename : grammar.getUniqueRuleNames ()) {
+	    Set<Rule> rules = new HashSet<> ();
+	    rules.addAll (grammar.getRules (rulename).getRules ());
+	    ruleToPredictRules.put (rulename, rules);
 	}
 
 	boolean thereWasChange;
