@@ -12,36 +12,39 @@ import org.khelekore.parjac.grammar.SimplePart;
 
 public class PredictCache {
     private final Grammar grammar;
-    private final Map<String, ListRuleHolder> ruleToPredictRules;
+    private final Map<Object, ListRuleHolder> cache;
 
     public PredictCache (Grammar grammar) {
 	this.grammar = grammar;
-	ruleToPredictRules = calculatePredictSets ();
+	cache = calculatePredictSets ();
     }
 
     public ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
-	ListRuleHolder predicted = getPredictedRules (rules);
-	ListRuleHolder ppredicted = getPredictedRules (crules);
-	if (predicted == null)
-	    return ppredicted;
-	return predicted.merge (ppredicted);
+	if (crules.isEmpty ())
+	    return getPredictedRules (rules);
+	if (rules.isEmpty ())
+	    return getPredictedRules (crules);
+	Set<String> rr = new HashSet<> ();
+	rr.addAll (rules);
+	rr.addAll (crules);
+	return getPredictedRules (rr);
     }
 
     public ListRuleHolder getPredictedRules (Set<String> rules) {
-	ListRuleHolder predicted = null;
+	ListRuleHolder predicted = cache.get (rules);
+	if (predicted != null)
+	    return predicted;
+
 	for (String rule : rules) {
-	    ListRuleHolder pr = getPredictedRules (rule);
+	    ListRuleHolder pr = cache.get (rule);
 	    if (pr != null)
 		predicted = pr.merge (predicted);
 	}
+	cache.put (rules, predicted);
 	return predicted;
     }
 
-    public ListRuleHolder getPredictedRules (String rule) {
-	return ruleToPredictRules.get (rule);
-    }
-
-    private Map<String, ListRuleHolder> calculatePredictSets () {
+    private Map<Object, ListRuleHolder> calculatePredictSets () {
 	Map<String, Set<Rule>> ruleToPredictRules = new HashMap<> ();
 	for (String rulename : grammar.getUniqueRuleNames ()) {
 	    Set<Rule> rules = new HashSet<> ();
@@ -67,7 +70,7 @@ public class PredictCache {
 		}
 	    }
 	} while (thereWasChange);
-	Map<String, ListRuleHolder> ret = new HashMap<> ();
+	Map<Object, ListRuleHolder> ret = new HashMap<> ();
 	for (Map.Entry<String, Set<Rule>> me : ruleToPredictRules.entrySet ())
 	    ret.put (me.getKey (), new ListRuleHolder (me.getValue ()));
 	return ret;
