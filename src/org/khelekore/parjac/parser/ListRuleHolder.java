@@ -1,5 +1,6 @@
 package org.khelekore.parjac.parser;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +21,7 @@ class ListRuleHolder {
 	// hidden
     }
 
-    ListRuleHolder (Set<Rule> rr) {
+    ListRuleHolder (Collection<Rule> rr) {
 	for (Rule r : rr) {
 	    if (r.size () == 0) {
 		if (completed.isEmpty ())

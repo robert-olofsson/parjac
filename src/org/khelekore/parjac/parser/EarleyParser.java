@@ -129,29 +129,16 @@ public class EarleyParser {
 	}
     }
 
-    private MultiState predict (MultiState currentStates, MultiState pms, int currentPosition) {
-	Set<String> prules = pms != null ? pms.getPredictRules () : Collections.emptySet ();
-	ListRuleHolder rh = getPredictedRules (currentStates.getPredictRules (), prules);
+    private MultiState predict (MultiState currentStates, MultiState cms, int currentPosition) {
+	Set<String> crules = cms != null ? cms.getPredictRules () : Collections.emptySet ();
+	ListRuleHolder rh = getPredictedRules (currentStates.getPredictRules (), crules);
 	if (rh == null)
 	    return null;
 	return new PredictedMultiState (rh, currentPosition);
     }
 
-    private ListRuleHolder getPredictedRules (Set<String> rules, Set<String> prules) {
-	ListRuleHolder predicted = null;
-	for (String rule : rules) {
-	    ListRuleHolder pr = predictCache.getPredictedRules (rule);
-	    if (pr != null)
-		predicted = pr.merge (predicted);
-	}
-	for (String rule : prules) {
-	    ListRuleHolder pr = predictCache.getPredictedRules (rule);
-	    if (pr != null)
-		predicted = pr.merge (predicted);
-	}
-	if (predicted == null)
-	    return null;
-	return predicted;
+    private ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
+	return predictCache.getPredictedRules (rules, crules);
     }
 
     private MultiState scan (MultiState currentStates, MultiState pms, MultiState cms,

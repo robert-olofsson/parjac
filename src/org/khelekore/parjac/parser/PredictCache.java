@@ -19,6 +19,24 @@ public class PredictCache {
 	ruleToPredictRules = calculatePredictSets ();
     }
 
+    public ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
+	ListRuleHolder predicted = getPredictedRules (rules);
+	ListRuleHolder ppredicted = getPredictedRules (crules);
+	if (predicted == null)
+	    return ppredicted;
+	return predicted.merge (ppredicted);
+    }
+
+    public ListRuleHolder getPredictedRules (Set<String> rules) {
+	ListRuleHolder predicted = null;
+	for (String rule : rules) {
+	    ListRuleHolder pr = getPredictedRules (rule);
+	    if (pr != null)
+		predicted = pr.merge (predicted);
+	}
+	return predicted;
+    }
+
     public ListRuleHolder getPredictedRules (String rule) {
 	return ruleToPredictRules.get (rule);
     }
