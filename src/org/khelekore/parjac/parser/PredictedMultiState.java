@@ -39,8 +39,8 @@ class PredictedMultiState implements MultiState {
 
     class PSSIterator implements Iterator<State> {
 	Iterator<Rule> innerIterator;
-	PSSIterator (Collection<Rule> rules) {
-	    innerIterator = rules.iterator ();
+	PSSIterator (Iterator<Rule> rules) {
+	    innerIterator = rules;
 	}
 
 	public boolean hasNext () {

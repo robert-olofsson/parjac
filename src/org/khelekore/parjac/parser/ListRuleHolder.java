@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,21 +74,21 @@ class ListRuleHolder {
 	return startingRules;
     }
 
-    public Set<Rule> getCompletedRules () {
-	return completed;
+    public Iterator<Rule> getCompletedRules () {
+	return completed.iterator ();
     }
 
-    public Set<Rule> getRulesWithRuleNext (Rule r) {
+    public Iterator<Rule> getRulesWithRuleNext (Rule r) {
 	Set<Rule> ls = m.get (r.getName ());
 	if (ls == null)
-	    return Collections.emptySet ();
-	return ls;
+	    return Collections.emptyIterator ();
+	return ls.iterator ();
     }
 
-    public Set<Rule> getRulesWithTokenNext(Token t) {
+    public Iterator<Rule> getRulesWithTokenNext(Token t) {
 	Set<Rule> ls = m.get (t);
 	if (ls == null)
-	    return Collections.emptySet ();
-	return ls;
+	    return Collections.emptyIterator ();
+	return ls.iterator ();
     }
 }
