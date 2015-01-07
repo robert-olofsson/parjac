@@ -14,20 +14,17 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
-import org.khelekore.parjac.parser.LRParser;
-import org.khelekore.parjac.parser.Parser;
+import org.khelekore.parjac.parser.EarleyParser;
+import org.khelekore.parjac.parser.PredictCache;
 
 import static org.khelekore.parjac.lexer.Token.*;
 
 public class Trivial {
     private final Grammar gr;
-    private final LRParser lr;
 
     public Trivial () {
 	gr = new Grammar ();
 	addRules ();
-	lr = new LRParser (gr, true);
-	lr.build ();
     }
 
     public static void main (String[] args) throws IOException {
@@ -40,8 +37,9 @@ public class Trivial {
 	    CharsetDecoder decoder = Charset.forName ("UTF-8").newDecoder ();
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
-	    Parser p = new Parser (g.lr, path, lexer, diagnostics, false);
-	    p.parse ();
+	    PredictCache predictCache = new PredictCache (g.gr);
+	    EarleyParser ep = new EarleyParser (g.gr, path, lexer, predictCache, diagnostics, false);
+	    ep.parse ();
 	    diagnostics.getDiagnostics ().
 		forEach (d -> System.err.println (d.getMessage (locale)));
 	}

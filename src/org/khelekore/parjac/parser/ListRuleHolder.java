@@ -24,7 +24,7 @@ class ListRuleHolder {
 
     ListRuleHolder (Collection<Rule> rr) {
 	for (Rule r : rr) {
-	    if (r.size () == 0) {
+	    if (r.isEmpty ()) {
 		if (completed.isEmpty ())
 		    completed = new HashSet<> ();
 		completed.add (r);

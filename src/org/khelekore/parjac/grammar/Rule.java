@@ -51,6 +51,10 @@ public class Rule {
 	return parts.size ();
     }
 
+    public boolean isEmpty () {
+	return parts.isEmpty ();
+    }
+
     @Override public boolean equals (Object o) {
 	if (o == this)
 	    return true;

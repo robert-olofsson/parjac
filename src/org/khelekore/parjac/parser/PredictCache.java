@@ -57,7 +57,7 @@ public class PredictCache {
 	do {
 	    thereWasChange = false;
 	    for (Rule rule : grammar.getRules ()) {
-		if (rule.size () == 0)
+		if (rule.isEmpty ())
 		    continue;
 		String rulename = rule.getName ();
 		Set<Rule> predictions = ruleToPredictRules.get (rulename);
