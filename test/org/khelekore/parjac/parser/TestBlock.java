@@ -75,6 +75,7 @@ public class TestBlock {
 	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {}}");
 	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {}}");
 	testSuccessfulParse ("{ for (int i = 0, j = 0, k = a; bar1.b; i++) {}}");
+	testSuccessfulParse ("{ for ( ; true; ) {}}");
     }
 
     @Test
