@@ -97,8 +97,8 @@ public class EarleyParser {
 	MultiState pms = predict (currentStates, cms, currentPosition);
 	MultiState sms = scan (currentStates, pms, cms, currentPosition, nextToken);
 	if (debug)
-	    System.err.println ("current: " + currentStates + ", pms: " + pms +
-				", cms: " + cms + ", sms: " + sms);
+	    System.err.println (currentPosition + ": current: " + currentStates +
+				", pms: " + pms + ", cms: " + cms);
 	states.set (currentPosition, MergedMultiState.get (currentStates, pms, cms));
 	if (sms != null)
 	    states.add (sms);
