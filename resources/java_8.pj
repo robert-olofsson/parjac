@@ -804,33 +804,48 @@ AndExpression:
 
 EqualityExpression:
 	RelationalExpression
-	EqualityExpression '==' RelationalExpression
-	EqualityExpression '!=' RelationalExpression
+	EqualityExpression EqualOp RelationalExpression
+
+EqualOp:
+	'=='
+	'!='
 
 RelationalExpression:
 	ShiftExpression
-	RelationalExpression '<' ShiftExpression
-	RelationalExpression '>' ShiftExpression
-	RelationalExpression '<=' ShiftExpression
-	RelationalExpression '>=' ShiftExpression
+	RelationalExpression RelationalOp ShiftExpression
 	RelationalExpression 'instanceof' ReferenceType
+
+RelationalOp:
+	'<'
+	'>'
+	'<='
+	'>='
 
 ShiftExpression:
 	AdditiveExpression
-	ShiftExpression '<<' AdditiveExpression
-	ShiftExpression '>' '>' AdditiveExpression
-	ShiftExpression '>' '>' '>' AdditiveExpression
+	ShiftExpression ShiftOp AdditiveExpression
+
+ShiftOp:
+	'<<'
+	'>' '>'
+	'>' '>' '>'
 
 AdditiveExpression:
 	MultiplicativeExpression
-	AdditiveExpression '+' MultiplicativeExpression
-	AdditiveExpression '-' MultiplicativeExpression
+	AdditiveExpression AdditiveOp MultiplicativeExpression
+
+AdditiveOp:
+	'+'
+	'-'
 
 MultiplicativeExpression:
 	UnaryExpression
-	MultiplicativeExpression '*' UnaryExpression
-	MultiplicativeExpression '/' UnaryExpression
-	MultiplicativeExpression '%' UnaryExpression
+	MultiplicativeExpression MultiplicativeOp UnaryExpression
+
+MultiplicativeOp:
+	'*'
+	'/'
+	'%'
 
 UnaryExpression:
 	PreIncrementExpression
