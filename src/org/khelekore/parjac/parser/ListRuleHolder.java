@@ -46,7 +46,7 @@ class ListRuleHolder {
 	    Object key = me.getKey ();
 	    Set<Rule> ls = m.get (key);
 	    if (ls == null) {
-		m.put (key, me.getValue ());
+		m.put (key, new HashSet<> (me.getValue ()));
 	    } else {
 		ls.addAll (me.getValue ());
 	    }
