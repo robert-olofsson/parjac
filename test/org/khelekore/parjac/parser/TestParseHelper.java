@@ -43,21 +43,6 @@ public class TestParseHelper {
 	return g;
     }
 
-    public static void parse (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
-	Parser p = getParser (lr, s, diagnostics);
-	if (lr.getDebug ())
-	    System.out.println ("Trying to parse: " + s);
-	p.parse ();
-    }
-
-    private static Parser getParser (LRParser lr, String s, CompilerDiagnosticCollector diagnostics) {
-	CharBuffer charBuf = CharBuffer.wrap (s);
-	Path path = Paths.get ("TestParseHelper.getParser");
-	Lexer lexer = new CharBufferLexer (charBuf);
-	Parser p = new Parser (lr, path, lexer, diagnostics, lr.getDebug ());
-	return p;
-    }
-
     public static void earleyParse (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
 	Path path = Paths.get ("TestParseHelper.getParser");
