@@ -18,10 +18,6 @@ class ListRuleHolder {
     // (Token | rulename) -> rules
     private final Map<Object, Set<Rule>> m = new HashMap<> ();
 
-    private ListRuleHolder () {
-	// hidden
-    }
-
     ListRuleHolder (Collection<Rule> rr) {
 	for (Rule r : rr) {
 	    if (r.isEmpty ()) {
@@ -40,25 +36,21 @@ class ListRuleHolder {
 	}
     }
 
-    public ListRuleHolder merge (ListRuleHolder other) {
-	if (other == null)
-	    return this;
-	ListRuleHolder ret = new ListRuleHolder ();
-	if (!completed.isEmpty () || !other.completed.isEmpty ()) {
-	    ret.completed = new HashSet<> ();
-	    ret.completed.addAll (completed);
-	    ret.completed.addAll (other.completed);
+    public void add (ListRuleHolder other) {
+	if (completed.isEmpty () && !other.completed.isEmpty ()) {
+	    completed = new HashSet<> ();
+	    completed.addAll (other.completed);
 	}
-	ret.m.putAll (m);
+
 	for (Map.Entry<Object, Set<Rule>> me : other.m.entrySet ()) {
-	    Set<Rule> ls = ret.m.get (me.getKey ());
+	    Object key = me.getKey ();
+	    Set<Rule> ls = m.get (key);
 	    if (ls == null) {
-		ret.m.put (me.getKey (), me.getValue ());
+		m.put (key, me.getValue ());
 	    } else {
 		ls.addAll (me.getValue ());
 	    }
 	}
-	return ret;
     }
 
     @Override public String toString () {

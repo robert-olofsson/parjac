@@ -22,24 +22,25 @@ public class PredictCache {
 
     public ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
 	if (crules.isEmpty ())
-	    return getPredictedRules (rules);
+	    return getPredictedRulesS (rules);
 	if (rules.isEmpty ())
-	    return getPredictedRules (crules);
+	    return getPredictedRulesS (crules);
 	Set<String> rr = new HashSet<> ();
 	rr.addAll (rules);
 	rr.addAll (crules);
-	return getPredictedRules (rr);
+	return getPredictedRulesS (rr);
     }
 
-    public ListRuleHolder getPredictedRules (Set<String> rules) {
+    private ListRuleHolder getPredictedRulesS (Set<String> rules) {
 	ListRuleHolder predicted = cache.get (rules);
 	if (predicted != null)
 	    return predicted;
 
+	predicted = new ListRuleHolder (Collections.emptySet ());
 	for (String rule : rules) {
 	    ListRuleHolder pr = cache.get (rule);
 	    if (pr != null)
-		predicted = pr.merge (predicted);
+		predicted.add (pr);
 	}
 	cache.put (rules, predicted);
 	return predicted;
