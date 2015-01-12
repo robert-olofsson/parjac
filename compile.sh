@@ -1,3 +1,5 @@
+mkdir -p bin
+
 javac \
  -classpath libs/asm-5.0.3.jar \
  -d bin \
