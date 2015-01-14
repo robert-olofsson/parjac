@@ -9,8 +9,6 @@ import org.khelekore.parjac.grammar.Rule;
 class State extends Item {
     private final int startPos;
     private final int hc;
-    private State previousState;
-    private List<State> completed;
 
     public State (Rule r, int dotPos, int startPos) {
 	super (r, dotPos);
@@ -45,18 +43,38 @@ class State extends Item {
     }
 
     public State advance (State completed) {
-	State ret = new State (getRule (), getDotPos () + 1, startPos);
-	ret.previousState = this;
-	if (completed != null)
-	    ret.completed = Collections.singletonList (completed);
-	return ret;
+	return new StateWithPrevious (getRule (), getDotPos () + 1, startPos, this, completed);
     }
 
     public State getPrevious () {
-	return previousState;
+	return null;
     }
 
     public void addCompleted (State c) {
+	throw new IllegalStateException ("Can not add completed to: " + this);
+    }
+
+    public List<State> getCompleted () {
+	return null;
+    }
+}
+
+class StateWithPrevious extends State {
+    private State previousState;
+    private List<State> completed;
+
+    public StateWithPrevious (Rule r, int dotPos, int startPos, State previousState, State completed) {
+	super (r, dotPos, startPos);
+	this.previousState = previousState;
+	if (completed != null)
+	    this.completed = Collections.singletonList (completed);
+    }
+
+    @Override public State getPrevious () {
+	return previousState;
+    }
+
+    @Override public void addCompleted (State c) {
 	if (completed.size () == 1) {
 	    List<State> ls = new ArrayList<> ();
 	    ls.add (completed.get (0));
@@ -65,7 +83,7 @@ class State extends Item {
 	completed.add (c);
     }
 
-    public List<State> getCompleted () {
+    @Override public List<State> getCompleted () {
 	return completed;
     }
 }
