@@ -32,31 +32,19 @@ NumericType:
 	'double'
 
 ReferenceType:
-	ClassOrInterfaceType
-	TypeVariable
- 	ArrayType
-
-ClassOrInterfaceType:
 	ClassType
-	InterfaceType
+ 	ArrayType
 
 ClassType:
 	SimpleClassType
-	ClassOrInterfaceType '.' SimpleClassType
+	ClassType '.' SimpleClassType
 
 SimpleClassType:
 	Annotation* 'identifier' TypeArguments?
 
-InterfaceType:
-	ClassType
-
-TypeVariable:
-	Annotation* 'identifier'
-
 ArrayType:
 	PrimitiveType Dims
-	ClassOrInterfaceType Dims
-	TypeVariable Dims
+	ClassType Dims
 
 Dims:
 	Annotation* '[' ']' (Annotation* '[' ']')*
@@ -68,11 +56,10 @@ TypeParameterModifier:
 	Annotation
 
 TypeBound:
-	'extends' TypeVariable
-	'extends' ClassOrInterfaceType AdditionalBound*
+	'extends' ClassType AdditionalBound*
 
 AdditionalBound:
-	'&' InterfaceType
+	'&' ClassType
 
 TypeArguments:
 	'<' TypeArgumentList '>'
@@ -92,25 +79,13 @@ WildcardBounds:
 	'super' ReferenceType
 
 # Productions from §6 Names
-PackageName:
-	'identifier'
-	PackageName '.' 'identifier'
-
-TypeName:
-	'identifier'
-	PackageOrTypeName '.' 'identifier'
-
 PackageOrTypeName:
 	'identifier'
 	PackageOrTypeName '.' 'identifier'
 
-ExpressionName:
+DottedName:
 	'identifier'
-	AmbigousName '.' 'identifier'
-
-AmbigousName:
-	'identifier'
-	AmbigousName '.' 'identifier'
+	DottedName '.' 'identifier'
 
 # Productions from §7 (Packages)
 CompilationUnit:
@@ -129,16 +104,16 @@ ImportDeclaration:
 	StaticImportOnDemandDeclaration
 
 SingleTypeImportDeclaration:
-	'import' TypeName ';'
+	'import' DottedName ';'
 
 TypeImportOnDemandDeclaration:
 	'import' PackageOrTypeName '.' '*' ';'
 
 SingleStaticImportDeclaration:
-	'import' 'static' TypeName '.' 'identifier' ';'
+	'import' 'static' DottedName '.' 'identifier' ';'
 
 StaticImportOnDemandDeclaration:
-	'import' 'static' TypeName '.' '*' ';'
+	'import' 'static' DottedName '.' '*' ';'
 
 TypeDeclaration:
 	ClassDeclaration
@@ -176,7 +151,7 @@ Superinterfaces:
 	'implements' InterfaceTypeList
 
 InterfaceTypeList:
-	InterfaceType (',' ClassType)*
+	ClassType (',' ClassType)*
 
 ClassBody:
 	'{' ClassBodyDeclaration* '}'
@@ -230,28 +205,16 @@ UnannPrimitiveType:
 	'boolean'
 
 UnannReferenceType:
-	UnannClassOrInterfaceType
-	UnannTypeVariable
-	UnannArrayType
-
-UnannClassOrInterfaceType:
 	UnannClassType
-	UnannInterfaceType
+	UnannArrayType
 
 UnannClassType:
 	'identifier' TypeArguments?
-	UnannClassOrInterfaceType '.' Annotation* 'identifier' TypeArguments?
-
-UnannInterfaceType:
-	UnannClassType
-
-UnannTypeVariable:
-	'identifier'
+	UnannClassType '.' Annotation* 'identifier' TypeArguments?
 
 UnannArrayType:
 	UnannPrimitiveType Dims
-	UnannClassOrInterfaceType Dims
-	UnannTypeVariable Dims
+	UnannClassType Dims
 
 MethodDeclaration:
 	MethodModifier* MethodHeader MethodBody
@@ -284,7 +247,7 @@ MethodDeclarator:
 
 FormalParameterList:
 	ReceiverParameter (',' FormalParameterListRest)?
-	FormalParameter (',' FormalParameterListRest)?
+	FormalParameter ',' FormalParameterListRest
 	LastFormalParameter
 
 FormalParameterListRest:
@@ -312,7 +275,6 @@ ExceptionTypeList:
 
 ExceptionType:
 	ClassType
-	TypeVariable
 
 MethodBody:
 	Block
@@ -342,7 +304,7 @@ ConstructorBody:
 ExplicitConstructorInvocation:
 	TypeArguments? 'this' ConstructorArguments
 	TypeArguments? 'super' ConstructorArguments
-	ExpressionName '.' TypeArguments? 'super' ConstructorArguments
+	DottedName '.' TypeArguments? 'super' ConstructorArguments
 	Primary '.' TypeArguments? 'super' ConstructorArguments
 
 ConstructorArguments:
@@ -443,7 +405,7 @@ Annotation:
 	SingleElementAnnotation
 
 NormalAnnotation:
-	'@' TypeName '(' ElementValuePairList? ')'
+	'@' DottedName '(' ElementValuePairList? ')'
 
 ElementValuePairList:
 	ElementValuePair (',' ElementValuePair)*
@@ -463,10 +425,10 @@ ElementValueList:
 	ElementValue (',' ElementValue)*
 
 MarkerAnnotation:
-	'@' TypeName
+	'@' DottedName
 
 SingleElementAnnotation:
-	'@' TypeName '(' ElementValue ')'
+	'@' DottedName '(' ElementValue ')'
 
 # Productions from §10 (Arrays)
 ArrayInitializer:
@@ -567,8 +529,6 @@ SwitchBlockStatementGroup:
 
 SwitchLabel:
 	'case' ConstantExpression ':'
-	# enum
-	'case' 'identifier' ':'
 	'default' ':'
 
 WhileStatement:
@@ -664,11 +624,11 @@ Primary:
 
 PrimaryNoNewArray:
 	Literal
-	TypeName ('[' ']')* '.' 'class'
+	DottedName ('[' ']')* '.' 'class'
 	UnannPrimitiveType ('[' ']')* '.' 'class'
 	'void' '.' 'class'
 	'this'
-	TypeName '.' 'this'
+	DottedName '.' 'this'
 	'(' Expression ')'
 	ClassInstanceCreationExpression
 	FieldAccess
@@ -678,7 +638,7 @@ PrimaryNoNewArray:
 
 ClassInstanceCreationExpression:
 	UntypedClassInstanceCreationExpression
-	ExpressionName '.' UntypedClassInstanceCreationExpression
+	DottedName '.' UntypedClassInstanceCreationExpression
 	Primary '.' UntypedClassInstanceCreationExpression
 
 UntypedClassInstanceCreationExpression:
@@ -691,20 +651,19 @@ TypeArgumentsOrDiamond:
 FieldAccess:
 	Primary '.' 'identifier'
 	'super' '.' 'identifier'
-	TypeName '.' 'super' '.' 'identifier'
+	DottedName '.' 'super' '.' 'identifier'
 
 ArrayAccess:
-	ExpressionName '[' Expression ']'
+	DottedName '[' Expression ']'
 	PrimaryNoNewArray '[' Expression ']'
 
 
 MethodInvocation:
 	UntypedMethodInvocation
-	TypeName '.' TypeArguments? UntypedMethodInvocation
-	ExpressionName '.' TypeArguments? UntypedMethodInvocation
+	DottedName '.' TypeArguments? UntypedMethodInvocation
  	Primary '.' TypeArguments? UntypedMethodInvocation
 	'super' '.' TypeArguments? UntypedMethodInvocation
-	TypeName '.' 'super' '.' TypeArguments? UntypedMethodInvocation
+	DottedName '.' 'super' '.' TypeArguments? UntypedMethodInvocation
 
 UntypedMethodInvocation:
 	'identifier' '(' ArgumentList? ')'
@@ -713,19 +672,19 @@ ArgumentList:
 	Expression (',' Expression)*
 
 MethodReference:
-	ExpressionName '::' TypeArguments? 'identifier'
+	DottedName '::' TypeArguments? 'identifier'
 	ReferenceType '::' TypeArguments? 'identifier'
 	Primary '::' TypeArguments? 'identifier'
 	'super' '::' TypeArguments? 'identifier'
-	TypeName '.' 'super' '::' TypeArguments? 'identifier'
+	DottedName '.' 'super' '::' TypeArguments? 'identifier'
 	ClassType '::' TypeArguments? 'new'
 	ArrayType '::' 'new'
 
 ArrayCreationExpression:
 	'new' PrimitiveType DimExprs Dims?
-	'new' ClassOrInterfaceType DimExprs Dims?
+	'new' ClassType DimExprs Dims?
  	'new' PrimitiveType Dims ArrayInitializer
-	'new' ClassOrInterfaceType Dims ArrayInitializer
+	'new' ClassType Dims ArrayInitializer
 
 DimExprs:
 	DimExpr DimExpr*
@@ -760,7 +719,7 @@ Assignment:
 	LeftHandSide AssignmentOperator Expression
 
 LeftHandSide:
-	ExpressionName
+	DottedName
 	FieldAccess
 	ArrayAccess
 
@@ -868,7 +827,7 @@ UnaryExpressionNotPlusMinus:
 
 PostfixExpression:
 	Primary
-	ExpressionName
+	DottedName
 	PostIncrementExpression
 	PostDecrementExpression
 
