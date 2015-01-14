@@ -672,7 +672,6 @@ ArgumentList:
 	Expression (',' Expression)*
 
 MethodReference:
-	DottedName '::' TypeArguments? 'identifier'
 	ReferenceType '::' TypeArguments? 'identifier'
 	Primary '::' TypeArguments? 'identifier'
 	'super' '::' TypeArguments? 'identifier'
