@@ -5,9 +5,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -82,7 +83,8 @@ public class EarleyParser {
 	    addParserError ("Ended up in many states: " + finishingStates);
 	if (!isEndState (finished.get (0)))
 	    addParserError ("Ended up in wrong state: " + finishingStates);
-	return null;
+
+	return buildParseTree (finished.get (0).getPrevious ()); // skip end of file
     }
 
     private void handleToken (int currentPosition, Token nextToken) {
@@ -95,17 +97,17 @@ public class EarleyParser {
 	MultiState currentStates = states.get (currentPosition);
 	MultiState cms = complete (currentStates);
 	MultiState pms = predict (currentStates, cms, currentPosition);
-	MultiState sms = scan (currentStates, pms, cms, currentPosition, nextToken);
+	MultiState sms = scan (currentStates, cms, pms, currentPosition, nextToken);
 	if (debug)
 	    System.err.println (currentPosition + ": current: " + currentStates +
-				", pms: " + pms + ", cms: " + cms);
-	states.set (currentPosition, MergedMultiState.get (currentStates, pms, cms));
+				", cms: " + cms + ", pms: " + pms);
+	states.set (currentPosition, MergedMultiState.get (currentStates, cms, pms));
 	if (sms != null)
 	    states.add (sms);
     }
 
     private MultiState complete (MultiState currentStates) {
-	Set<State> seen = new HashSet<> ();
+	Map<State, State> seen = new HashMap<> ();
 	List<State> completed = new ArrayList<> ();
 	Deque<State> multiComplete = new ArrayDeque<> ();
 	for (Iterator<State> is = currentStates.getCompletedStates (); is.hasNext (); )
@@ -117,14 +119,19 @@ public class EarleyParser {
 	return new ListMultiState (completed);
     }
 
-    private void complete (State s, Set<State> seen, List<State> completed, Deque<State> multiComplete) {
+    private void complete (State s, Map<State, State> seen,
+			   List<State> completed, Deque<State> multiComplete) {
 	MultiState originStates = states.get (s.getStartPos ());
 	for (Iterator<State> os = originStates.getRulesWithNext (s.getRule ()); os.hasNext (); ) {
-	    State c = os.next ().advance ();
-	    if (seen.add (c)) {
-		completed.add (c);
-		if (c.dotIsLast ())
-		    multiComplete.add (c);
+	    State nextState = os.next ().advance (s);
+	    State alreadySeen = seen.get (nextState);
+	    if (alreadySeen == null) {
+		seen.put (nextState, nextState);
+		completed.add (nextState);
+		if (nextState.dotIsLast ())
+		    multiComplete.add (nextState);
+	    } else {
+		alreadySeen.addCompleted (s);
 	    }
 	}
     }
@@ -141,26 +148,46 @@ public class EarleyParser {
 	return predictCache.getPredictedRules (rules, crules);
     }
 
-    private MultiState scan (MultiState currentStates, MultiState pms, MultiState cms,
+    private MultiState scan (MultiState currentStates, MultiState cms, MultiState pms,
 			     int currentPosition, Token nextToken) {
 	List<State> scanned = new ArrayList<> ();
-	for (Iterator<State> s = currentStates.getRulesWithNext (nextToken); s.hasNext (); )
-	    scanned.add (s.next ().advance ());
-	if (pms != null) {
-	    for (Iterator<State> s = pms.getRulesWithNext (nextToken); s.hasNext (); )
-		scanned.add (s.next ().advance ());
-	}
-	if (cms != null) {
-	    for (Iterator<State> s = cms.getRulesWithNext (nextToken); s.hasNext (); )
-		scanned.add (s.next ().advance ());
-	}
+	scan (currentStates, nextToken, scanned);
+	if (cms != null)
+	    scan (cms, nextToken, scanned);
+	if (pms != null)
+	    scan (pms, nextToken, scanned);
 	if (scanned.isEmpty ())
 	    return null;
 	return new ListMultiState (scanned);
     }
 
+    private void scan (MultiState ms, Token nextToken, List<State> scanned) {
+	for (Iterator<State> i = ms.getRulesWithNext (nextToken); i.hasNext (); ) {
+	    State s = i.next ();
+	    scanned.add (s.advance (null));
+	}
+    }
+
     private boolean isEndState (State s) {
 	return s.getStartPos () == 0 && s.dotIsLast () && s.getRule ().getName ().equals ("Goal");
+    }
+
+    private SyntaxTree buildParseTree (State s) {
+	if (s.getDotPos () == 0)
+	    return null;
+	State previous;
+	// TODO: stop using recursion
+	do {
+	    List<State> completed = s.getCompleted ();
+	    previous = s.getPrevious ();
+	    if (completed != null) {
+		if (completed.size () > 1)
+		    System.err.println ("found many completed: " + completed);
+		for (State c : completed)
+		    buildParseTree (c);
+	    }
+	} while ((s = previous) != null);
+	return null;
     }
 
     private void addParserError (String error) {
