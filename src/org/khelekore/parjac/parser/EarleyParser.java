@@ -15,9 +15,11 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.grammar.TokenPart;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 
 public class EarleyParser {
     // The grammar we are using
@@ -33,6 +35,9 @@ public class EarleyParser {
 
     // The state table
     private final List<MultiState> states = new ArrayList<> ();
+
+    // The tree builder
+    private final JavaTreeBuilder treeBuilder = new JavaTreeBuilder ();
 
     public EarleyParser (Grammar grammar, Path path, Lexer lexer,
 			 PredictCache predictCache,
@@ -61,12 +66,14 @@ public class EarleyParser {
 	startStates.add (new State (goalRule, 0, currentPosition));
 	if (grammar.getRules ("Goal").canBeEmpty ())
 	    startStates.add (new State (goalRule, 1, currentPosition));
-	MultiState state = new ListMultiState (startStates);
+	MultiState state = new ListMultiState (startStates, null);
 	states.add (state);
 	Token nextToken = Token.END_OF_INPUT;
+	TreeNode currentTokenValue = null;
 	while (lexer.hasMoreTokens ()) {
 	    nextToken = lexer.nextNonWhitespaceToken ();
-	    handleToken (currentPosition, nextToken);
+	    currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
+	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    // TODO: debugPrintStates (currentPosition);
 	    currentPosition++;
 	    if (states.size () <= currentPosition) {
@@ -84,20 +91,24 @@ public class EarleyParser {
 	if (!isEndState (finished.get (0)))
 	    addParserError ("Ended up in wrong state: " + finishingStates);
 
-	return buildParseTree (finished.get (0).getPrevious ()); // skip end of file
+	SyntaxTree sn = buildTree (finished.get (0).getPrevious ()); // skip end of file
+	if (debug)
+	    System.err.println ("Build tree: " + sn);
+	return sn;
     }
 
-    private void handleToken (int currentPosition, Token nextToken) {
+    private void handleToken (int currentPosition, Token nextToken, TreeNode currentTokenValue) {
 	if (debug) {
-	    if (nextToken == Token.IDENTIFIER)
-		System.err.println ("nextToken: " + nextToken + " \"" + lexer.getIdentifier () + "\"");
+	    if (currentTokenValue != null)
+		System.err.println ("nextToken: " + nextToken + ": " + currentTokenValue);
 	    else
 		System.err.println ("nextToken: " + nextToken);
 	}
 	MultiState currentStates = states.get (currentPosition);
 	MultiState cms = complete (currentStates);
 	MultiState pms = predict (currentStates, cms, currentPosition);
-	MultiState sms = scan (currentStates, cms, pms, currentPosition, nextToken);
+	MultiState sms = scan (currentStates, cms, pms, currentPosition,
+			       nextToken, currentTokenValue);
 	if (debug)
 	    System.err.println (currentPosition + ": current: " + currentStates +
 				", cms: " + cms + ", pms: " + pms);
@@ -116,7 +127,7 @@ public class EarleyParser {
 	    complete (multiComplete.removeFirst (), seen, completed, multiComplete);
 	if (completed.isEmpty ())
 	    return null;
-	return new ListMultiState (completed);
+	return new ListMultiState (completed, null);
     }
 
     private void complete (State s, Map<State, State> seen,
@@ -149,7 +160,7 @@ public class EarleyParser {
     }
 
     private MultiState scan (MultiState currentStates, MultiState cms, MultiState pms,
-			     int currentPosition, Token nextToken) {
+			     int currentPosition, Token nextToken, TreeNode currentTokenValue) {
 	List<State> scanned = new ArrayList<> ();
 	scan (currentStates, nextToken, scanned);
 	if (cms != null)
@@ -158,7 +169,7 @@ public class EarleyParser {
 	    scan (pms, nextToken, scanned);
 	if (scanned.isEmpty ())
 	    return null;
-	return new ListMultiState (scanned);
+	return new ListMultiState (scanned, currentTokenValue);
     }
 
     private void scan (MultiState ms, Token nextToken, List<State> scanned) {
@@ -172,22 +183,42 @@ public class EarleyParser {
 	return s.getStartPos () == 0 && s.dotIsLast () && s.getRule ().getName ().equals ("Goal");
     }
 
-    private SyntaxTree buildParseTree (State s) {
-	if (s.getDotPos () == 0)
+    private int tokenPos = 0;
+
+    private SyntaxTree buildTree (State s) {
+	tokenPos = states.size () - 2; // skip <end_of_input>
+	Deque<TreeNode> parts = new ArrayDeque<> ();
+	buildTreeNode (s, parts);
+	TreeNode topNode = parts.poll ();
+	if (topNode == null)
 	    return null;
+	return new SyntaxTree (path, topNode);
+    }
+
+    private void buildTreeNode (State s, Deque<TreeNode> parts) {
+	if (s.getDotPos () == 0)
+	    return;
 	State previous;
-	// TODO: stop using recursion
+	// TODO: stop using recursion?
+	State start = s;
 	do {
 	    List<State> completed = s.getCompleted ();
 	    previous = s.getPrevious ();
 	    if (completed != null) {
 		if (completed.size () > 1)
-		    System.err.println ("found many completed: " + completed);
-		for (State c : completed)
-		    buildParseTree (c);
+		    addParserError ("Found many completed: " + completed);
+		buildTreeNode (completed.get (0), parts);
+	    }
+
+	    if (previous != null && previous.getPartAfterDot () instanceof TokenPart) {
+		MultiState ms = states.get (tokenPos);
+		TreeNode tn = ms.getParsedToken ();
+		if (tn != null)
+		    parts.push (tn);
+		tokenPos--;
 	    }
 	} while ((s = previous) != null);
-	return null;
+	treeBuilder.build (start, parts);
     }
 
     private void addParserError (String error) {

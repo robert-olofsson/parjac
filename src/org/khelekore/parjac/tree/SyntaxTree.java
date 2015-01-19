@@ -4,10 +4,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class SyntaxTree {
-    private Path origin;
+    private final Path origin;
+    private final TreeNode node;
 
-    public SyntaxTree (Path origin) {
+    public SyntaxTree (Path origin, TreeNode node) {
 	this.origin = origin;
+	this.node = node;
+    }
+
+    @Override public String toString () {
+	return getClass ().getSimpleName () + "{path: " + origin + ", tree: " + node + "}";
     }
 
     public Path getOrigin () {

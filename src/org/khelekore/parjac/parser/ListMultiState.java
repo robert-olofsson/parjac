@@ -13,13 +13,16 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.RulePart;
 import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.TreeNode;
 
 class ListMultiState implements MultiState {
     private List<State> completed = Collections.emptyList ();
     private final Map<Object, List<State>> m = new HashMap<> ();
     private Set<String> predictRules = Collections.emptySet ();
+    private final TreeNode tokenValue;
 
-    public ListMultiState (List<State> ss) {
+    public ListMultiState (List<State> ss, TreeNode tokenValue) {
+	this.tokenValue = tokenValue;
 	for (State s : ss) {
 	    if (s.dotIsLast ()) {
 		if (completed.isEmpty ())
@@ -52,7 +55,8 @@ class ListMultiState implements MultiState {
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" +
-	    "completed: " + completed + ", m: " + m + "}";
+	    "completed: " + completed + ", m: " + m +
+	    ", token value: " + tokenValue + "}";
     }
 
     public Iterator<State> getCompletedStates () {
@@ -75,5 +79,9 @@ class ListMultiState implements MultiState {
 	if (ls == null)
 	    return Collections.emptyIterator ();
 	return ls.iterator ();
+    }
+
+    public TreeNode getParsedToken () {
+	return tokenValue;
     }
 }

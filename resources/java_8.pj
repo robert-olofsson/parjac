@@ -50,10 +50,7 @@ Dims:
 	Annotation* '[' ']' (Annotation* '[' ']')*
 
 TypeParameter:
-	TypeParameterModifier* 'identifier' TypeBound?
-
-TypeParameterModifier:
-	Annotation
+	Annotation* 'identifier' TypeBound?
 
 TypeBound:
 	'extends' ClassType AdditionalBound*
@@ -79,10 +76,6 @@ WildcardBounds:
 	'super' ReferenceType
 
 # Productions from §6 Names
-PackageOrTypeName:
-	'identifier'
-	PackageOrTypeName '.' 'identifier'
-
 DottedName:
 	'identifier'
 	DottedName '.' 'identifier'
@@ -92,10 +85,7 @@ CompilationUnit:
 	PackageDeclaration? ImportDeclaration* TypeDeclaration*
 
 PackageDeclaration:
-	PackageModifier* 'package' 'identifier' ('.' 'identifier')* ';'
-
-PackageModifier:
-	Annotation
+	Annotation* 'package' DottedName ';'
 
 ImportDeclaration:
 	SingleTypeImportDeclaration
@@ -107,7 +97,7 @@ SingleTypeImportDeclaration:
 	'import' DottedName ';'
 
 TypeImportOnDemandDeclaration:
-	'import' PackageOrTypeName '.' '*' ';'
+	'import' DottedName '.' '*' ';'
 
 SingleStaticImportDeclaration:
 	'import' 'static' DottedName '.' 'identifier' ';'

@@ -193,6 +193,10 @@ public enum Token {
 	nameToToken.put (FALSE.description, FALSE);
     }
 
+    private static final EnumSet<Token> valueTokens =
+    EnumSet.of (INT_LITERAL, LONG_LITERAL, FLOAT_LITERAL, DOUBLE_LITERAL,
+		CHARACTER_LITERAL, STRING_LITERAL, TRUE, FALSE, IDENTIFIER);
+
     @Override public String toString () {
 	return description;
     }
@@ -238,5 +242,9 @@ public enum Token {
 
     public boolean isAssignmentOperator () {
 	return assignmentOperators.contains (this);
+    }
+
+    public boolean hasValue () {
+	return valueTokens.contains (this);
     }
 }

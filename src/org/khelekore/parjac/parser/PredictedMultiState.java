@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.TreeNode;
 
 class PredictedMultiState implements MultiState {
     private final ListRuleHolder rules;
@@ -34,6 +35,10 @@ class PredictedMultiState implements MultiState {
 
     public Iterator<State> getRulesWithNext (Token t) {
 	return new PSSIterator (rules.getRulesWithTokenNext (t));
+    }
+
+    public TreeNode getParsedToken () {
+	return null;
     }
 
     class PSSIterator implements Iterator<State> {

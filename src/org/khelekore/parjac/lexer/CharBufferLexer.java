@@ -477,7 +477,7 @@ public class CharBufferLexer implements Lexer {
 		res.append (c);
 	    }
 	}
-	return errorText == null ? res.toString () : null;
+	return errorText == null ? res.toString ().intern () : null;
     }
 
     private int getOctalEscape (char start) {
