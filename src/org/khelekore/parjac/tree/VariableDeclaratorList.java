@@ -20,8 +20,7 @@ public class VariableDeclaratorList implements TreeNode {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
 	    vds = new ArrayList<> (1 + ze.size ());
 	    vds.add (vd);
-	    for (TreeNode tn : ze.get ())
-		vds.add ((VariableDeclarator)tn);
+	    vds.addAll (ze.get ());
 	}
     }
 

@@ -7,7 +7,7 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 
 public class DottedName implements TreeNode {
-    List<String> parts = new ArrayList<> ();
+    private final List<String> parts = new ArrayList<> ();
 
     private DottedName () {
     }

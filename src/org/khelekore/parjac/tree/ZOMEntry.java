@@ -18,8 +18,9 @@ public class ZOMEntry implements TreeNode {
 	return getClass ().getSimpleName () + "{nodes: " + nodes + "}";
     }
 
-    public List<TreeNode> get () {
-	return nodes;
+    @SuppressWarnings("unchecked")
+    public <T> List<T> get () {
+	return (List<T>)nodes;
     }
 
     public int size () {

@@ -18,6 +18,11 @@ import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.DoubleLiteral;
+import org.khelekore.parjac.tree.EnumBody;
+import org.khelekore.parjac.tree.EnumBodyDeclarations;
+import org.khelekore.parjac.tree.EnumConstant;
+import org.khelekore.parjac.tree.EnumConstantList;
+import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.FieldDeclaration;
 import org.khelekore.parjac.tree.FloatLiteral;
 import org.khelekore.parjac.tree.Identifier;
@@ -87,11 +92,11 @@ public class JavaTreeBuilder {
 	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
 	register (g, "VariableDeclarator", constructored (VariableDeclarator::new));
 	register (g, "VariableDeclaratorId", constructored (VariableDeclaratorId::new));
-	// register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
-	// register (g, "EnumBody", constructored (EnumBody::new));
-	// register (g, "EnumConstantList", constructored (EnumConstantList::new));
-	// register (g, "EnumConstant", constructored (EnumConstant::new));
-	// register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
+	register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
+	register (g, "EnumBody", constructored (EnumBody::new));
+	register (g, "EnumConstantList", constructored (EnumConstantList::new));
+	register (g, "EnumConstant", constructored (EnumConstant::new));
+	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
 
 	// Productions from §9 (Interfaces)
 	register (g, "MarkerAnnotation", constructored (MarkerAnnotation::new));
