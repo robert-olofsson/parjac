@@ -184,6 +184,9 @@ public enum Token {
 		LEFT_BRACKET, RIGHT_BRACKET, SEMICOLON, COMMA, DOT, ELLIPSIS,
 		AT, DOUBLE_COLON);
 
+    private static final EnumSet<Token> primitives =
+    EnumSet.of (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE, BOOLEAN);
+
     private static final Map<String, Token> nameToToken = new HashMap<> ();
     static {
 	for (Token t : keywords)
@@ -238,6 +241,10 @@ public enum Token {
 
     public boolean isOperator () {
 	return operators.contains (this);
+    }
+
+    public boolean isPrimitive () {
+	return primitives.contains (this);
     }
 
     public boolean isAssignmentOperator () {

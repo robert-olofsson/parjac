@@ -5,7 +5,7 @@ import java.util.Deque;
 public class NormalClassDeclaration implements TreeNode {
     private final ZOMEntry modifiers;
     private final String id;
-    //private final ClassBody body;
+    private final ClassBody body;
 
     public NormalClassDeclaration (Deque<TreeNode> parts) {
 	TreeNode tn = parts.pop ();
@@ -17,10 +17,11 @@ public class NormalClassDeclaration implements TreeNode {
 	}
 	id = ((Identifier)tn).get ();
 	// TODO: handle the rest of the stuff
-	// parts.pop ();
+	body = (ClassBody)parts.pop ();
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{modifiers: " + modifiers + ", id: " + id + "}";
+	return getClass ().getSimpleName () + "{modifiers: " + modifiers +
+	    ", id: " + id + ", body: " + body + "}";
     }
 }

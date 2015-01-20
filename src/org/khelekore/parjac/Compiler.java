@@ -19,6 +19,7 @@ import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
+import org.khelekore.parjac.parser.JavaTreeBuilder;
 import org.khelekore.parjac.parser.PredictCache;
 import org.khelekore.parjac.tree.SyntaxTree;
 
@@ -28,6 +29,7 @@ public class Compiler {
     private final CompilerDiagnosticCollector diagnostics;
     private final Grammar g;
     private final PredictCache predictCache;
+    private final JavaTreeBuilder treeBuilder;
     private final CompilationArguments settings;
 
     public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
@@ -35,6 +37,7 @@ public class Compiler {
 	this.diagnostics = diagnostics;
 	this.g = g;
 	this.predictCache = new PredictCache (g);
+	this.treeBuilder = new JavaTreeBuilder (g);
 	this.settings = settings;
     }
 
@@ -72,8 +75,8 @@ public class Compiler {
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
-	    EarleyParser parser =
-		new EarleyParser (g, path, lexer, predictCache, diagnostics, settings.getDebug ());
+	    EarleyParser parser = new EarleyParser (g, path, lexer, predictCache, treeBuilder,
+						    diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    return tree;
 	} catch (MalformedInputException e) {

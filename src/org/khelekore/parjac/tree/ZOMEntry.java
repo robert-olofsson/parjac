@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ZOMEntry implements TreeNode {
-    private List<TreeNode> nodes = new ArrayList<> ();
+    private final List<TreeNode> nodes = new ArrayList<> ();
 
     public ZOMEntry () {
     }
@@ -18,7 +18,11 @@ public class ZOMEntry implements TreeNode {
 	return getClass ().getSimpleName () + "{nodes: " + nodes + "}";
     }
 
-    public List<TreeNode> getNodes () {
-	return Collections.unmodifiableList (nodes);
+    public List<TreeNode> get () {
+	return nodes;
+    }
+
+    public int size () {
+	return nodes.size ();
     }
 }

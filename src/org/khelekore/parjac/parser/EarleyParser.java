@@ -37,10 +37,10 @@ public class EarleyParser {
     private final List<MultiState> states = new ArrayList<> ();
 
     // The tree builder
-    private final JavaTreeBuilder treeBuilder = new JavaTreeBuilder ();
+    private final JavaTreeBuilder treeBuilder;
 
     public EarleyParser (Grammar grammar, Path path, Lexer lexer,
-			 PredictCache predictCache,
+			 PredictCache predictCache, JavaTreeBuilder treeBuilder,
 			 CompilerDiagnosticCollector diagnostics,
 			 boolean debug) {
 	this.grammar = grammar;
@@ -49,6 +49,7 @@ public class EarleyParser {
 	this.predictCache = predictCache;
 	this.diagnostics = diagnostics;
 	this.debug = debug;
+	this.treeBuilder = treeBuilder;
 	if (debug) {
 	    int i = 0;
 	    System.err.format ("%d rule names, %d rules\n",
@@ -72,7 +73,8 @@ public class EarleyParser {
 	TreeNode currentTokenValue = null;
 	while (lexer.hasMoreTokens ()) {
 	    nextToken = lexer.nextNonWhitespaceToken ();
-	    currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
+	    if (treeBuilder != null)
+		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
 	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    // TODO: debugPrintStates (currentPosition);
 	    currentPosition++;
@@ -90,6 +92,9 @@ public class EarleyParser {
 	    addParserError ("Ended up in many states: " + finishingStates);
 	if (!isEndState (finished.get (0)))
 	    addParserError ("Ended up in wrong state: " + finishingStates);
+
+	if (treeBuilder == null)
+	    return null;
 
 	SyntaxTree sn = buildTree (finished.get (0).getPrevious ()); // skip end of file
 	if (debug)
@@ -189,6 +194,8 @@ public class EarleyParser {
 	tokenPos = states.size () - 2; // skip <end_of_input>
 	Deque<TreeNode> parts = new ArrayDeque<> ();
 	buildTreeNode (s, parts);
+	if (parts.size () != 1)
+	    addParserError ("Got many parts back: " + parts);
 	TreeNode topNode = parts.poll ();
 	if (topNode == null)
 	    return null;

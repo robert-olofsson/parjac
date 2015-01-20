@@ -48,7 +48,7 @@ public class TestParseHelper {
 	Path path = Paths.get ("TestParseHelper.getParser");
 	Lexer lexer = new CharBufferLexer (charBuf);
 	PredictCache pc = new PredictCache (g); // TODO: this is pretty inefficient
-	EarleyParser ep = new EarleyParser (g, path, lexer, pc, diagnostics, false);
+	EarleyParser ep = new EarleyParser (g, path, lexer, pc, null, diagnostics, false);
 	ep.parse ();
     }
 
