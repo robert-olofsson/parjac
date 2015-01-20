@@ -31,6 +31,7 @@ import org.khelekore.parjac.tree.OperatorTokenType;
 import org.khelekore.parjac.tree.PackageDeclaration;
 import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.PrimitiveType;
+import org.khelekore.parjac.tree.ShiftOp;
 import org.khelekore.parjac.tree.SingleStaticImportDeclaration;
 import org.khelekore.parjac.tree.SingleTypeImportDeclaration;
 import org.khelekore.parjac.tree.StaticImportOnDemandDeclaration;
@@ -69,7 +70,7 @@ public class JavaTreeBuilder {
 	// register (g, "WildcardBounds", constructored (WildcardBounds::new));
 
 	// Productions from §6 Names
-	register (g, "DottedName", JavaTreeBuilder::buildDottedName);
+	register (g, "DottedName", constructored (DottedName::create));
 
 	// Productions from §7 (Packages)
 	register (g, "CompilationUnit", constructored (CompilationUnit::new));
@@ -81,19 +82,27 @@ public class JavaTreeBuilder {
 
 	// Productions from §8 (Classes)
 	register (g, "NormalClassDeclaration", constructored (NormalClassDeclaration::new));
-	// register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
 	register (g, "ClassBody", constructored (ClassBody::new));
 	register (g, "FieldDeclaration", constructored (FieldDeclaration::new));
 	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
 	register (g, "VariableDeclarator", constructored (VariableDeclarator::new));
 	register (g, "VariableDeclaratorId", constructored (VariableDeclaratorId::new));
+	// register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
+	// register (g, "EnumBody", constructored (EnumBody::new));
+	// register (g, "EnumConstantList", constructored (EnumConstantList::new));
+	// register (g, "EnumConstant", constructored (EnumConstant::new));
+	// register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
 
 	// Productions from §9 (Interfaces)
 	register (g, "MarkerAnnotation", constructored (MarkerAnnotation::new));
 
 	// Productions from §10 (Arrays)
+	// regiser (g, "VariableInitializerList", constructored (VariableInitializerList::new));
+
 	// Productions from §14 (Blocks and Statements)
+
 	// Productions from §15 (Expressions)
+	register (g, "ShiftOp", constructored (ShiftOp::create));
     }
 
     private void register (Grammar g, String rulename, Builder b) {
@@ -176,17 +185,6 @@ public class JavaTreeBuilder {
 	} else if (rule.getName ().startsWith ("ZOM_")) {
 	    buildZOM (rule, parts);
 	}
-    }
-
-    private static void buildDottedName (Rule r, Deque<TreeNode> parts) {
-	DottedName dn;
-	if (r.size () > 1)
-	    dn = (DottedName)parts.pop ();
-	else
-	    dn = new DottedName ();
-
-	dn.add (((Identifier)parts.pop ()).get ());
-	parts.push (dn);
     }
 
     private void buildZOM (Rule r, Deque<TreeNode> parts) {
