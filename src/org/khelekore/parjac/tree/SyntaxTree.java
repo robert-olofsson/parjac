@@ -20,6 +20,10 @@ public class SyntaxTree {
 	return origin;
     }
 
+    public TreeNode getRoot () {
+	return node;
+    }
+
     public Path getRelativeClassName () {
 	Path srcrelative = getSourceRelativePath ();
 	String filename = srcrelative.getFileName ().toString ();

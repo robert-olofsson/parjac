@@ -13,6 +13,7 @@ import org.khelekore.parjac.grammar.GrammarReader;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.SyntaxTree;
 
 public class TestParseHelper {
     private static final Grammar baseGrammar;
@@ -44,12 +45,21 @@ public class TestParseHelper {
     }
 
     public static void earleyParse (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
+	parse (g, s, diagnostics, null);
+    }
+
+    public static SyntaxTree earleyParseBuildTree (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
+	return parse (g, s, diagnostics, new JavaTreeBuilder (g));
+    }
+
+    private static SyntaxTree parse (Grammar g, String s, CompilerDiagnosticCollector diagnostics,
+				     JavaTreeBuilder tb) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
 	Path path = Paths.get ("TestParseHelper.getParser");
 	Lexer lexer = new CharBufferLexer (charBuf);
 	PredictCache pc = new PredictCache (g); // TODO: this is pretty inefficient
-	EarleyParser ep = new EarleyParser (g, path, lexer, pc, null, diagnostics, false);
-	ep.parse ();
+	EarleyParser ep = new EarleyParser (g, path, lexer, pc, tb, diagnostics, false);
+	return ep.parse ();
     }
 
     public static String getParseOutput (CompilerDiagnosticCollector diagnostics) {

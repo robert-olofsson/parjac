@@ -1,7 +1,14 @@
 package org.khelekore.parjac.parser;
 
+import java.util.Arrays;
+
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
+import org.khelekore.parjac.tree.DottedName;
+import org.khelekore.parjac.tree.MarkerAnnotation;
+import org.khelekore.parjac.tree.PackageDeclaration;
+import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -22,7 +29,8 @@ public class TestPackage {
 
     @Test
     public void testSinglePackage () {
-	testSuccessfulParse ("package foo;");
+	testSuccessfulParse ("package foo;",
+			     new PackageDeclaration (null, new DottedName ("foo")));
     }
 
     @Test
@@ -32,12 +40,16 @@ public class TestPackage {
 
     @Test
     public void testMultiPackage () {
-	testSuccessfulParse ("package foo.bar.baz;");
+	testSuccessfulParse ("package foo.bar.baz;",
+			     new PackageDeclaration (null, new DottedName ("foo", "bar", "baz")));
     }
 
     @Test
     public void testMarkerAnnotatedPackage () {
-	testSuccessfulParse ("@foo package foo;");
+	testSuccessfulParse ("@foo package foo;",
+			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (new DottedName ("foo"))),
+						     new DottedName ("foo")));
+	testSuccessfulParse ("@foo @Bar package foo;");
     }
 
     @Test
@@ -51,8 +63,14 @@ public class TestPackage {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.earleyParse (g, s, diagnostics);
+	testSuccessfulParse (s, null);
+    }
+
+    private void testSuccessfulParse (String s, TreeNode tn) {
+	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
+	if (tn != null)
+	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;
     }
 
     private void testFailedParse (String s) {
