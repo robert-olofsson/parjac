@@ -46,10 +46,13 @@ public class TestPackage {
 
     @Test
     public void testMarkerAnnotatedPackage () {
+	DottedName dn = new DottedName ("foo");
+	DottedName bar = new DottedName ("Bar");
 	testSuccessfulParse ("@foo package foo;",
-			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (new DottedName ("foo"))),
-						     new DottedName ("foo")));
-	testSuccessfulParse ("@foo @Bar package foo;");
+			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn)), dn));
+	testSuccessfulParse ("@foo @Bar package foo;",
+			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn),
+								    new MarkerAnnotation (bar)), dn));
     }
 
     @Test
