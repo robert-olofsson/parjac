@@ -24,11 +24,13 @@ import org.khelekore.parjac.tree.Identifier;
 import org.khelekore.parjac.tree.IntLiteral;
 import org.khelekore.parjac.tree.LongLiteral;
 import org.khelekore.parjac.tree.MarkerAnnotation;
+import org.khelekore.parjac.tree.ModifierTokenType;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NullLiteral;
 import org.khelekore.parjac.tree.OperatorTokenType;
 import org.khelekore.parjac.tree.PackageDeclaration;
 import org.khelekore.parjac.tree.PrimitiveTokenType;
+import org.khelekore.parjac.tree.PrimitiveType;
 import org.khelekore.parjac.tree.SingleStaticImportDeclaration;
 import org.khelekore.parjac.tree.SingleTypeImportDeclaration;
 import org.khelekore.parjac.tree.StaticImportOnDemandDeclaration;
@@ -51,7 +53,21 @@ public class JavaTreeBuilder {
 	    builders.add (null);
 
 	// Productions from §3 (Lexical Structure)
+
 	// Productions from §4 (Types, Values, and Variables)
+	register (g, "PrimitiveType", constructored (PrimitiveType::new));
+	// register (g, "ClassType", constructored (ClassType::new));
+	// register (g, "SimpleClassType", constructored (SimpleClassType::new));
+	// register (g, "ArrayType", constructored (ArrayType::new));
+	// register (g, "Dims", constructored (Dims::new));
+	// register (g, "TypeParameter", constructored (TypeParameter::new));
+	// register (g, "TypeBound", constructored (TypeBound::new));
+	// register (g, "AdditionalBound", constructored (AdditionalBound::new));
+	// register (g, "TypeArguments", constructored (TypeArguments::new));
+	// register (g, "TypeArgumentList", constructored (TypeArgumentList::new));
+	// register (g, "Wildcard", constructored (Wildcard::new));
+	// register (g, "WildcardBounds", constructored (WildcardBounds::new));
+
 	// Productions from §6 Names
 	register (g, "DottedName", JavaTreeBuilder::buildDottedName);
 
@@ -65,6 +81,7 @@ public class JavaTreeBuilder {
 
 	// Productions from §8 (Classes)
 	register (g, "NormalClassDeclaration", constructored (NormalClassDeclaration::new));
+	// register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
 	register (g, "ClassBody", constructored (ClassBody::new));
 	register (g, "FieldDeclaration", constructored (FieldDeclaration::new));
 	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
@@ -121,6 +138,8 @@ public class JavaTreeBuilder {
 	    return new OperatorTokenType (token);
 	else if (token.isPrimitive ())
 	    return new PrimitiveTokenType (token);
+	else if (token.isModifier ())
+	    return new ModifierTokenType (token);
 	else if (!token.hasValue ())
 	    return null;
 	switch (token) {

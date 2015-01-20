@@ -187,6 +187,10 @@ public enum Token {
     private static final EnumSet<Token> primitives =
     EnumSet.of (BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE, BOOLEAN);
 
+    private static final EnumSet<Token> modifiers =
+    EnumSet.of (PUBLIC, PROTECTED, PRIVATE, ABSTRACT, STATIC, FINAL, STRICTFP,
+		TRANSIENT, VOLATILE, SYNCHRONIZED, NATIVE, DEFAULT);
+
     private static final Map<String, Token> nameToToken = new HashMap<> ();
     static {
 	for (Token t : keywords)
@@ -245,6 +249,10 @@ public enum Token {
 
     public boolean isPrimitive () {
 	return primitives.contains (this);
+    }
+
+    public boolean isModifier () {
+	return modifiers.contains (this);
     }
 
     public boolean isAssignmentOperator () {

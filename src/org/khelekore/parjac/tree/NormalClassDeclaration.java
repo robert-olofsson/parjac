@@ -1,16 +1,17 @@
 package org.khelekore.parjac.tree;
 
 import java.util.Deque;
+import java.util.List;
 
 public class NormalClassDeclaration implements TreeNode {
-    private final ZOMEntry modifiers;
+    private final List<TreeNode> modifiers;
     private final String id;
     private final ClassBody body;
 
     public NormalClassDeclaration (Deque<TreeNode> parts) {
 	TreeNode tn = parts.pop ();
 	if (tn instanceof ZOMEntry) {
-	    modifiers = (ZOMEntry)tn;
+	    modifiers = ((ZOMEntry)tn).get ();
 	    tn = parts.pop ();
 	} else {
 	    modifiers = null;
