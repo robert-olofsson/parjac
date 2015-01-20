@@ -18,6 +18,10 @@ import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.DoubleLiteral;
+import org.khelekore.parjac.tree.ElementValueArrayInitializer;
+import org.khelekore.parjac.tree.ElementValueList;
+import org.khelekore.parjac.tree.ElementValuePair;
+import org.khelekore.parjac.tree.ElementValuePairList;
 import org.khelekore.parjac.tree.EnumBody;
 import org.khelekore.parjac.tree.EnumBodyDeclarations;
 import org.khelekore.parjac.tree.EnumConstant;
@@ -30,6 +34,7 @@ import org.khelekore.parjac.tree.IntLiteral;
 import org.khelekore.parjac.tree.LongLiteral;
 import org.khelekore.parjac.tree.MarkerAnnotation;
 import org.khelekore.parjac.tree.ModifierTokenType;
+import org.khelekore.parjac.tree.NormalAnnotation;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NullLiteral;
 import org.khelekore.parjac.tree.OperatorTokenType;
@@ -37,6 +42,7 @@ import org.khelekore.parjac.tree.PackageDeclaration;
 import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.PrimitiveType;
 import org.khelekore.parjac.tree.ShiftOp;
+import org.khelekore.parjac.tree.SingleElementAnnotation;
 import org.khelekore.parjac.tree.SingleStaticImportDeclaration;
 import org.khelekore.parjac.tree.SingleTypeImportDeclaration;
 import org.khelekore.parjac.tree.StaticImportOnDemandDeclaration;
@@ -99,7 +105,13 @@ public class JavaTreeBuilder {
 	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
 
 	// Productions from §9 (Interfaces)
+	register (g, "NormalAnnotation", constructored (NormalAnnotation::new));
+	register (g, "ElementValuePairList", constructored (ElementValuePairList::new));
+	register (g, "ElementValuePair", constructored (ElementValuePair::new));
+	register (g, "ElementValueArrayInitializer", constructored (ElementValueArrayInitializer::new));
+	register (g, "ElementValueList", constructored (ElementValueList::new));
 	register (g, "MarkerAnnotation", constructored (MarkerAnnotation::new));
+	register (g, "SingleElementAnnotation", constructored (SingleElementAnnotation::new));
 
 	// Productions from §10 (Arrays)
 	// regiser (g, "VariableInitializerList", constructored (VariableInitializerList::new));
