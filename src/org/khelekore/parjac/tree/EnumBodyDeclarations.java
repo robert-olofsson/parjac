@@ -9,8 +9,7 @@ public class EnumBodyDeclarations implements TreeNode {
     private final List<TreeNode> classBodyDeclarations;
 
     public EnumBodyDeclarations (Rule r, Deque<TreeNode> parts) {
-	ZOMEntry ze = (ZOMEntry)parts.pop ();
-	classBodyDeclarations = ze.get ();
+	classBodyDeclarations = r.size () > 1 ? ((ZOMEntry)parts.pop ()).get () : null;
     }
 
     @Override public String toString () {
