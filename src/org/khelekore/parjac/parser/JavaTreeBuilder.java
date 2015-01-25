@@ -71,7 +71,7 @@ public class JavaTreeBuilder {
 	register (g, "LastFormalParameter", constructored (LastFormalParameter::build));
 	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
 	register (g, "Throws", constructored (Throws::new));
-	register (g, "MethodBody", constructored (MethodBody::new));
+	register (g, "MethodBody", constructored (MethodBody::build));
 	// ConstructorDeclaration
 	// ConstructorDeclarator
 	// ConstructorBody
@@ -84,15 +84,15 @@ public class JavaTreeBuilder {
 	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
 
 	// Productions from §9 (Interfaces)
-	// NormalInterfaceDeclaration
-	// ExtendsInterfaces
-	// InterfaceBody
-	// ConstantDeclaration
-	// InterfaceMethodDeclaration
+	register (g, "NormalInterfaceDeclaration", constructored (NormalInterfaceDeclaration::new));
+	register (g, "ExtendsInterfaces", constructored (ExtendsInterfaces::new));
+	register (g, "InterfaceBody", constructored (InterfaceBody::new));
+	register (g, "ConstantDeclaration", constructored (ConstantDeclaration::new));
+	register (g, "InterfaceMethodDeclaration", constructored (InterfaceMethodDeclaration::new));
 	// AnnotationTypeDeclaration
 	// AnnotationTypeBody
 	// AnnotationTypeElementDeclaration
-	// DefaultValue
+	register (g, "DefaultValue", constructored (DefaultValue::new));
 	register (g, "NormalAnnotation", constructored (NormalAnnotation::new));
 	register (g, "ElementValuePairList", constructored (ElementValuePairList::new));
 	register (g, "ElementValuePair", constructored (ElementValuePair::new));

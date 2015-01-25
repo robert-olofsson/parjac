@@ -5,14 +5,36 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.Token;
 
-public class MethodBody implements TreeNode {
-    private final Block block;
+public abstract class MethodBody implements TreeNode {
+    public static final EmptyBody EMPTY_BODY = new EmptyBody ();
 
-    public MethodBody (Rule r, Deque<TreeNode> parts) {
-	block = r.getRulePart (0).getId () == Token.SEMICOLON ? null : (Block)parts.pop ();
+    public static class EmptyBody extends MethodBody {
+	@Override public String getStringDesc () {
+	    return "";
+	}
+    }
+
+    public static class BlockBody extends MethodBody {
+	private final Block block;
+
+	public BlockBody (Block block) {
+	    this.block = block;
+	}
+
+	@Override public String getStringDesc () {
+	    return block.toString ();
+	}
+    }
+
+    public static MethodBody build (Rule r, Deque<TreeNode> parts) {
+	if (r.getRulePart (0).getId () == Token.SEMICOLON)
+	    return EMPTY_BODY;
+	return new BlockBody ((Block)parts.pop ());
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + block + "}";
+	return getClass ().getSimpleName () + "{" + getStringDesc () + "}";
     }
+
+    protected abstract String getStringDesc ();
 }
