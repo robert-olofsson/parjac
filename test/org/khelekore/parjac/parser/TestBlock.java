@@ -58,6 +58,10 @@ public class TestBlock {
 	testSuccessfulParse ("{ boolean a = a.b.c < d; }");
 	testSuccessfulParse ("{ a = b < c; }");
 	testSuccessfulParse ("{ a = b + c; }");
+	testSuccessfulParse ("{ a = b == c; }");
+	testSuccessfulParse ("{ a = (b == null); }");
+	testSuccessfulParse ("{ a = null == b; }");
+	testSuccessfulParse ("{ a = b instanceof Foo; }");
     }
 
     @Test
@@ -146,6 +150,7 @@ public class TestBlock {
 	testSuccessfulParse ("{Map<D, S> work = new TreeMap<D, S> (); }");
 	testSuccessfulParse ("{Class<Boolean> c = boolean.class; }");
 	testSuccessfulParse ("{Class<Integer> c = int.class; }");
+	testSuccessfulParse ("{Foo foo = null, bar = null;}");
     }
 
     @Test
