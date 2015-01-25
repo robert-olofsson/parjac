@@ -15,9 +15,9 @@ public class NormalClassDeclaration implements TreeNode {
     private final ClassBody body;
 
     public NormalClassDeclaration (Rule r, Deque<TreeNode> parts) {
-	int pos = 3;
+	int pos = 2;
 	TreeNode tn = parts.pop ();
-	if (r.getRulePart (0).getId () != Token.IDENTIFIER) {
+	if (r.getRulePart (1).getId () != Token.IDENTIFIER) {
 	    modifiers = ((ZOMEntry)tn).get ();
 	    tn = parts.pop ();
 	    pos++;
