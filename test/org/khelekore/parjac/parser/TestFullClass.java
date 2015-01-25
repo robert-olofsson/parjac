@@ -44,6 +44,9 @@ public class TestFullClass {
 	testSuccessfulParse ("public interface I extends J, K, L { }");
 	testSuccessfulParse ("public interface I<T> extends J, K, L { }");
 	testSuccessfulParse ("interface CP { void split (Parts parts); }");
+	testSuccessfulParse ("interface CP { int i = 3; }");
+	testSuccessfulParse ("interface CP { int i = 3, j = 4; boolean b(Foo foo, Bar bar);}");
+	testSuccessfulParse ("interface CP { default void foo () { }}");
     }
 
     @Test
