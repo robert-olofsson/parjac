@@ -8,6 +8,7 @@ public class DefaultValue implements TreeNode {
     private final TreeNode value;
 
     public DefaultValue (Deque<TreeNode> parts) {
+	parts.pop (); // 'default'
 	this.value = parts.pop ();
     }
 
