@@ -144,7 +144,8 @@ public class JavaTreeBuilder {
 	register (g, "Resource", constructored (Resource::new));
 
 	// Productions from §15 (Expressions)
-	// PrimaryNoNewArray
+	register (g, "PrimaryNoNewArray", constructored (PrimaryNoNewArray::build));
+	register (g, "Brackets", constructored (Brackets::build));
 	register (g, "ClassInstanceCreationExpression", constructored (ClassInstanceCreationExpression::build));
 	register (g, "UntypedClassInstanceCreationExpression",
 		  constructored (UntypedClassInstanceCreationExpression::new));

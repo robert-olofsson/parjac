@@ -605,8 +605,8 @@ Primary:
 
 PrimaryNoNewArray:
 	Literal
-	DottedName ('[' ']')* '.' 'class'
-	UnannPrimitiveType ('[' ']')* '.' 'class'
+	DottedName Brackets* '.' 'class'
+	UnannPrimitiveType Brackets* '.' 'class'
 	'void' '.' 'class'
 	'this'
 	DottedName '.' 'this'
@@ -616,6 +616,9 @@ PrimaryNoNewArray:
 	ArrayAccess
 	MethodInvocation
 	MethodReference
+
+Brackets:
+	'[' ']'
 
 ClassInstanceCreationExpression:
 	UntypedClassInstanceCreationExpression

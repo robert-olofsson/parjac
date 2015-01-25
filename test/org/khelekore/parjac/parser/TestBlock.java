@@ -264,6 +264,19 @@ public class TestBlock {
 	testSuccessfulParse ("{ return int[]::new; }");
     }
 
+    @Test
+    public void testPrimaryNoNewArray () {
+	testSuccessfulParse ("{ return A.class; }");
+	testSuccessfulParse ("{ return A[].class; }");
+	testSuccessfulParse ("{ return A[][].class; }");
+	testSuccessfulParse ("{ return A[][][].class; }");
+	testSuccessfulParse ("{ return int.class; }");
+	testSuccessfulParse ("{ return int[].class; }");
+	testSuccessfulParse ("{ return void.class; }");
+	testSuccessfulParse ("{ return this; }");
+	testSuccessfulParse ("{ return (this); }");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }
