@@ -251,6 +251,19 @@ public class TestBlock {
 	testSuccessfulParse ("{ return new int[] {1, 2}; }");
     }
 
+    @Test
+    public void testMethodReference () {
+	testSuccessfulParse ("{ return Foo::bar; }");
+	testSuccessfulParse ("{ return Foo::<Bar>bar; }");
+	testSuccessfulParse ("{ return super::bar; }");
+	testSuccessfulParse ("{ return super::<Bar>bar; }");
+	testSuccessfulParse ("{ return a.super::<Bar>bar; }");
+	testSuccessfulParse ("{ return Foo::new; }");
+	testSuccessfulParse ("{ return Foo::<Bar>new; }");
+	testSuccessfulParse ("{ return Foo[]::new; }");
+	testSuccessfulParse ("{ return int[]::new; }");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }

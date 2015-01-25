@@ -156,7 +156,7 @@ public class JavaTreeBuilder {
 	register (g, "MethodInvocation", constructored (MethodInvocation::build));
 	register (g, "UntypedMethodInvocation", constructored (UntypedMethodInvocation::new));
 	register (g, "ArgumentList", constructored (ArgumentList::new));
-	// MethodReference
+	register (g, "MethodReference", constructored (MethodReference::build));
 	register (g, "ArrayCreationExpression", constructored (ArrayCreationExpression::new));
 	register (g, "DimExprs", constructored (DimExprs::new));
 	register (g, "DimExpr", constructored (DimExpr::new));
