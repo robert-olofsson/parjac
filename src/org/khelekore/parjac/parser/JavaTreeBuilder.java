@@ -89,9 +89,10 @@ public class JavaTreeBuilder {
 	register (g, "InterfaceBody", constructored (InterfaceBody::new));
 	register (g, "ConstantDeclaration", constructored (ConstantDeclaration::new));
 	register (g, "InterfaceMethodDeclaration", constructored (InterfaceMethodDeclaration::new));
-	// AnnotationTypeDeclaration
-	// AnnotationTypeBody
-	// AnnotationTypeElementDeclaration
+	register (g, "AnnotationTypeDeclaration", constructored (AnnotationTypeDeclaration::new));
+	register (g, "AnnotationTypeBody", constructored (AnnotationTypeBody::new));
+	register (g, "AnnotationTypeElementDeclaration",
+		  constructored (AnnotationTypeElementDeclaration::new));
 	register (g, "DefaultValue", constructored (DefaultValue::new));
 	register (g, "NormalAnnotation", constructored (NormalAnnotation::new));
 	register (g, "ElementValuePairList", constructored (ElementValuePairList::new));
@@ -108,7 +109,8 @@ public class JavaTreeBuilder {
 	// Productions from §14 (Blocks and Statements)
 	register (g, "Block", constructored (Block::new));
 	register (g, "BlockStatements", constructored (BlockStatements::new));
-	register (g, "LocalVariableDeclarationStatement", constructored (LocalVariableDeclarationStatement::new));
+	register (g, "LocalVariableDeclarationStatement",
+		  constructored (LocalVariableDeclarationStatement::new));
 	register (g, "LocalVariableDeclaration", constructored (LocalVariableDeclaration::new));
 	register (g, "EmptyStatement", constructored (EmptyStatement::build));
 	register (g, "LabeledStatement", constructored (LabeledStatement::new));
@@ -148,7 +150,8 @@ public class JavaTreeBuilder {
 	// Productions from §15 (Expressions)
 	register (g, "PrimaryNoNewArray", constructored (PrimaryNoNewArray::build));
 	register (g, "Brackets", constructored (Brackets::build));
-	register (g, "ClassInstanceCreationExpression", constructored (ClassInstanceCreationExpression::build));
+	register (g, "ClassInstanceCreationExpression",
+		  constructored (ClassInstanceCreationExpression::build));
 	register (g, "UntypedClassInstanceCreationExpression",
 		  constructored (UntypedClassInstanceCreationExpression::new));
 	register (g, "ClassInstanceName", constructored (ClassInstanceName::new));

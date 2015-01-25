@@ -67,6 +67,25 @@ public class TestFullClass {
 	testSuccessfulParse ("public final class A<T> extends B implements C {}");
     }
 
+    @Test
+    public void testAnnotation () {
+	testSuccessfulParse ("@interface A {}");
+	testSuccessfulParse ("public @interface A {}");
+	testSuccessfulParse ("public @interface A {public int a ();}");
+	testSuccessfulParse ("public @interface A {public int[] a ();}");
+	testSuccessfulParse ("public @interface A {public int a () default 1;}");
+    }
+
+    @Test
+    public void testEnum () {
+	testSuccessfulParse ("enum A {}");
+	testSuccessfulParse ("public enum A {}");
+	testSuccessfulParse ("public enum A {;}");
+	testSuccessfulParse ("public enum A {A, B, C}");
+	testSuccessfulParse ("public enum A {A, B, C;}");
+	testSuccessfulParse ("public enum A {A, B, C; void foo () {}}");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }
