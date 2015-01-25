@@ -72,11 +72,12 @@ public class JavaTreeBuilder {
 	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
 	register (g, "Throws", constructored (Throws::new));
 	register (g, "MethodBody", constructored (MethodBody::build));
-	// ConstructorDeclaration
-	// ConstructorDeclarator
-	// ConstructorBody
-	// ExplicitConstructorInvocation
-	// ConstructorArguments
+	register (g, "ConstructorDeclaration", constructored (ConstructorDeclaration::new));
+	register (g, "ConstructorDeclarator", constructored (ConstructorDeclarator::new));
+	register (g, "ConstructorBody", constructored (ConstructorBody::new));
+	register (g, "ExplicitConstructorInvocation",
+		  constructored (ExplicitConstructorInvocation::new));
+	register (g, "ConstructorArguments", constructored (ConstructorArguments::new));
 	register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
 	register (g, "EnumBody", constructored (EnumBody::new));
 	register (g, "EnumConstantList", constructored (EnumConstantList::new));

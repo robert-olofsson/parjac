@@ -86,6 +86,16 @@ public class TestFullClass {
 	testSuccessfulParse ("public enum A {A, B, C; void foo () {}}");
     }
 
+    @Test
+    public void testConstructors () {
+	testSuccessfulParse ("class A { A () { i = 1; }}");
+	testSuccessfulParse ("class A { A () { this (1); }}");
+	testSuccessfulParse ("class A { A () { super (1); }}");
+	testSuccessfulParse ("class A { public A () { i = 1; }}");
+	testSuccessfulParse ("class A { A () { this (1); j = 2; }}");
+	testSuccessfulParse ("class A { A () { super (1); j = 2; }}");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }
