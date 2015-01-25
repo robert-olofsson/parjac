@@ -5,14 +5,36 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.Token;
 
-public class Result implements TreeNode {
-    private final TreeNode type;
+public abstract class Result implements TreeNode {
+    public static final VoidResult VOID_RESULT = new VoidResult ();
 
-    public Result (Rule r, Deque<TreeNode> parts) {
-	type = r.getRulePart (0).getId () == Token.VOID ? null : parts.pop ();
+    public static final class VoidResult extends Result {
+	@Override protected String getStringDesc () {
+	    return "";
+	}
+    }
+
+    public static class TypeResult extends Result {
+	private final TreeNode type;
+
+	public TypeResult (TreeNode type) {
+	    this.type = type;
+	}
+
+	@Override protected String getStringDesc () {
+	    return type.toString ();
+	}
+    }
+
+    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+	if (r.getRulePart (0).getId () == Token.VOID)
+	    return VOID_RESULT;
+	return new TypeResult (parts.pop ());
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + type + "}";
+	return getClass ().getSimpleName () + "{" + getStringDesc () + "}";
     }
+
+    protected abstract String getStringDesc ();
 }
