@@ -1,11 +1,9 @@
 package org.khelekore.parjac.tree;
 
 import java.util.Deque;
-import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.SimplePart;
-import org.khelekore.parjac.lexer.Token;
 
 public class EnumBody implements TreeNode {
     private final EnumConstantList constants;

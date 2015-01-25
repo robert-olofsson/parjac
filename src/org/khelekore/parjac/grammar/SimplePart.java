@@ -18,4 +18,10 @@ public interface SimplePart {
 
     /** Get all the possible first tokens */
     EnumSet<Token> getFirsts ();
+
+    /** Check if this part is a rule part */
+    boolean isRulePart ();
+
+    /** Check if this part is a token part */
+    boolean isTokenPart ();
 }

@@ -2,57 +2,14 @@ package org.khelekore.parjac.parser;
 
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.RuleCollection;
-import org.khelekore.parjac.grammar.RulePart;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
-import org.khelekore.parjac.tree.BooleanLiteral;
-import org.khelekore.parjac.tree.CharLiteral;
-import org.khelekore.parjac.tree.ClassBody;
-import org.khelekore.parjac.tree.CompilationUnit;
-import org.khelekore.parjac.tree.DottedName;
-import org.khelekore.parjac.tree.DoubleLiteral;
-import org.khelekore.parjac.tree.ElementValueArrayInitializer;
-import org.khelekore.parjac.tree.ElementValueList;
-import org.khelekore.parjac.tree.ElementValuePair;
-import org.khelekore.parjac.tree.ElementValuePairList;
-import org.khelekore.parjac.tree.EnumBody;
-import org.khelekore.parjac.tree.EnumBodyDeclarations;
-import org.khelekore.parjac.tree.EnumConstant;
-import org.khelekore.parjac.tree.EnumConstantList;
-import org.khelekore.parjac.tree.EnumDeclaration;
-import org.khelekore.parjac.tree.FieldDeclaration;
-import org.khelekore.parjac.tree.FloatLiteral;
-import org.khelekore.parjac.tree.Identifier;
-import org.khelekore.parjac.tree.IntLiteral;
-import org.khelekore.parjac.tree.LongLiteral;
-import org.khelekore.parjac.tree.MarkerAnnotation;
-import org.khelekore.parjac.tree.ModifierTokenType;
-import org.khelekore.parjac.tree.NormalAnnotation;
-import org.khelekore.parjac.tree.NormalClassDeclaration;
-import org.khelekore.parjac.tree.NullLiteral;
-import org.khelekore.parjac.tree.OperatorTokenType;
-import org.khelekore.parjac.tree.PackageDeclaration;
-import org.khelekore.parjac.tree.PrimitiveTokenType;
-import org.khelekore.parjac.tree.PrimitiveType;
-import org.khelekore.parjac.tree.ShiftOp;
-import org.khelekore.parjac.tree.SingleElementAnnotation;
-import org.khelekore.parjac.tree.SingleStaticImportDeclaration;
-import org.khelekore.parjac.tree.SingleTypeImportDeclaration;
-import org.khelekore.parjac.tree.StaticImportOnDemandDeclaration;
-import org.khelekore.parjac.tree.StringLiteral;
-import org.khelekore.parjac.tree.TreeNode;
-import org.khelekore.parjac.tree.TypeImportOnDemandDeclaration;
-import org.khelekore.parjac.tree.VariableDeclarator;
-import org.khelekore.parjac.tree.VariableDeclaratorId;
-import org.khelekore.parjac.tree.VariableDeclaratorList;
-import org.khelekore.parjac.tree.ZOMEntry;
+import org.khelekore.parjac.tree.*;
 
 public class JavaTreeBuilder {
 
@@ -68,17 +25,18 @@ public class JavaTreeBuilder {
 
 	// Productions from §4 (Types, Values, and Variables)
 	register (g, "PrimitiveType", constructored (PrimitiveType::new));
-	// register (g, "ClassType", constructored (ClassType::new));
-	// register (g, "SimpleClassType", constructored (SimpleClassType::new));
-	// register (g, "ArrayType", constructored (ArrayType::new));
-	// register (g, "Dims", constructored (Dims::new));
-	// register (g, "TypeParameter", constructored (TypeParameter::new));
-	// register (g, "TypeBound", constructored (TypeBound::new));
-	// register (g, "AdditionalBound", constructored (AdditionalBound::new));
-	// register (g, "TypeArguments", constructored (TypeArguments::new));
-	// register (g, "TypeArgumentList", constructored (TypeArgumentList::new));
-	// register (g, "Wildcard", constructored (Wildcard::new));
-	// register (g, "WildcardBounds", constructored (WildcardBounds::new));
+	register (g, "ClassType", constructored (ClassType::build));
+	register (g, "SimpleClassType", constructored (SimpleClassType::new));
+	register (g, "ArrayType", constructored (ArrayType::new));
+	register (g, "Dims", constructored (Dims::build));
+	register (g, "OneDim", constructored (OneDim::new));
+	register (g, "TypeParameter", constructored (TypeParameter::new));
+	register (g, "TypeBound", constructored (TypeBound::new));
+	register (g, "AdditionalBound", constructored (AdditionalBound::new));
+	register (g, "TypeArguments", constructored (TypeArguments::new));
+	register (g, "TypeArgumentList", constructored (TypeArgumentList::new));
+	register (g, "Wildcard", constructored (Wildcard::new));
+	register (g, "WildcardBounds", constructored (WildcardBounds::new));
 
 	// Productions from §6 Names
 	register (g, "DottedName", constructored (DottedName::create));
@@ -93,11 +51,30 @@ public class JavaTreeBuilder {
 
 	// Productions from §8 (Classes)
 	register (g, "NormalClassDeclaration", constructored (NormalClassDeclaration::new));
+	register (g, "TypeParameters", constructored (TypeParameters::new));
+	register (g, "InterfaceTypeList", constructored (InterfaceTypeList::new));
 	register (g, "ClassBody", constructored (ClassBody::new));
 	register (g, "FieldDeclaration", constructored (FieldDeclaration::new));
 	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
 	register (g, "VariableDeclarator", constructored (VariableDeclarator::new));
 	register (g, "VariableDeclaratorId", constructored (VariableDeclaratorId::new));
+	register (g, "UnannClassType", constructored (UnannClassType::build));
+	register (g, "UnannArrayType", constructored (UnannArrayType::new));
+	register (g, "MethodDeclaration", constructored (MethodDeclaration::new));
+	register (g, "MethodHeader", constructored (MethodHeader::new));
+	register (g, "UntypedMethodHeader", constructored (UntypedMethodHeader::new));
+	register (g, "MethodDeclarator", constructored (MethodDeclarator::new));
+	register (g, "FormalParameterList", constructored (FormalParameterList::new));
+	register (g, "NormalFormalParameterList", constructored (NormalFormalParameterList::new));
+	register (g, "FormalParameter", constructored (FormalParameter::new));
+	register (g, "LastFormalParameter", constructored (LastFormalParameter::build));
+	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
+	register (g, "Throws", constructored (Throws::new));
+	// ConstructorDeclaration
+	// ConstructorDeclarator
+	// ConstructorBody
+	// ExplicitConstructorInvocation
+	// ConstructorArguments
 	register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
 	register (g, "EnumBody", constructored (EnumBody::new));
 	register (g, "EnumConstantList", constructored (EnumConstantList::new));
@@ -105,6 +82,15 @@ public class JavaTreeBuilder {
 	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
 
 	// Productions from §9 (Interfaces)
+	// NormalInterfaceDeclaration
+	// ExtendsInterfaces
+	// InterfaceBody
+	// ConstantDeclaration
+	// InterfaceMethodDeclaration
+	// AnnotationTypeDeclaration
+	// AnnotationTypeBody
+	// AnnotationTypeElementDeclaration
+	// DefaultValue
 	register (g, "NormalAnnotation", constructored (NormalAnnotation::new));
 	register (g, "ElementValuePairList", constructored (ElementValuePairList::new));
 	register (g, "ElementValuePair", constructored (ElementValuePair::new));
@@ -114,12 +100,89 @@ public class JavaTreeBuilder {
 	register (g, "SingleElementAnnotation", constructored (SingleElementAnnotation::new));
 
 	// Productions from §10 (Arrays)
-	// regiser (g, "VariableInitializerList", constructored (VariableInitializerList::new));
+	register (g, "ArrayInitializer", constructored (ArrayInitializer::new));
+	register (g, "VariableInitializerList", constructored (VariableInitializerList::new));
 
 	// Productions from §14 (Blocks and Statements)
+	register (g, "Block", constructored (Block::new));
+	register (g, "BlockStatements", constructored (BlockStatements::new));
+	register (g, "LocalVariableDeclarationStatement", constructored (LocalVariableDeclarationStatement::new));
+	register (g, "LocalVariableDeclaration", constructored (LocalVariableDeclaration::new));
+	register (g, "EmptyStatement", constructored (EmptyStatement::build));
+	register (g, "LabeledStatement", constructored (LabeledStatement::new));
+	register (g, "LabeledStatementNoShortIf", constructored (LabeledStatement::new));
+	register (g, "ExpressionStatement", constructored (ExpressionStatement::new));
+	register (g, "IfThenStatement", constructored (IfThenStatement::new));
+	register (g, "IfThenElseStatement", constructored (IfThenStatement::new));
+	register (g, "IfThenElseStatementNoShortIf", constructored (IfThenStatement::new));
+	register (g, "AssertStatement", constructored (AssertStatement::new));
+	register (g, "SwitchStatement", constructored (SwitchStatement::new));
+	register (g, "SwitchBlock", constructored (SwitchBlock::new));
+	register (g, "SwitchBlockStatementGroup", constructored (SwitchBlockStatementGroup::new));
+	register (g, "SwitchLabel", constructored (SwitchLabel::build));
+	register (g, "WhileStatement", constructored (WhileStatement::new));
+	register (g, "WhileStatementNoShortIf", constructored (WhileStatement::new));
+	register (g, "DoStatement", constructored (DoStatement::new));
+	register (g, "BasicForStatement", constructored (BasicForStatement::new));
+	register (g, "BasicForStatementNoShortIf", constructored (BasicForStatement::new));
+	register (g, "StatementExpressionList", constructored (StatementExpressionList::new));
+	register (g, "EnhancedForStatement", constructored (EnhancedForStatement::new));
+	register (g, "EnhancedForStatementNoShortIf", constructored (EnhancedForStatement::new));
+	register (g, "BreakStatement", constructored (BreakStatement::new));
+	register (g, "ContinueStatement", constructored (ContinueStatement::new));
+	register (g, "ReturnStatement", constructored (ReturnStatement::new));
+	register (g, "ThrowStatement", constructored (ThrowStatement::new));
+	register (g, "SynchronizedStatement", constructored (SynchronizedStatement::new));
+	register (g, "TryStatement", constructored (TryStatement::new));
+	register (g, "Catches", constructored (Catches::new));
+	register (g, "CatchClause", constructored (CatchClause::new));
+	register (g, "CatchFormalParameter", constructored (CatchFormalParameter::new));
+	register (g, "CatchType", constructored (CatchType::new));
+	register (g, "ExtraCatchType", constructored (ExtraCatchType::new));
+	register (g, "Finally", constructored (Finally::new));
+	register (g, "ResourceList", constructored (ResourceList::new));
+	register (g, "Resource", constructored (Resource::new));
 
 	// Productions from §15 (Expressions)
+	// PrimaryNoNewArray
+	register (g, "ClassInstanceCreationExpression", constructored (ClassInstanceCreationExpression::build));
+	register (g, "UntypedClassInstanceCreationExpression",
+		  constructored (UntypedClassInstanceCreationExpression::new));
+	register (g, "ClassInstanceName", constructored (ClassInstanceName::new));
+	register (g, "ExtraName", constructored (ExtraName::new));
+	register (g, "Diamond", constructored (Diamond::build));
+	register (g, "FieldAccess", constructored (FieldAccess::new));
+	register (g, "ArrayAccess", constructored (ArrayAccess::new));
+	register (g, "MethodInvocation", constructored (MethodInvocation::build));
+	register (g, "UntypedMethodInvocation", constructored (UntypedMethodInvocation::new));
+	register (g, "ArgumentList", constructored (ArgumentList::new));
+	// MethodReference
+	register (g, "ArrayCreationExpression", constructored (ArrayCreationExpression::new));
+	register (g, "DimExprs", constructored (DimExprs::new));
+	register (g, "DimExpr", constructored (DimExpr::new));
+	register (g, "LambdaExpression", constructored (LambdaExpression::new));
+	register (g, "LambdaParameters", constructored (LambdaParameters::new));
+	register (g, "InferredFormalParameterList", constructored (InferredFormalParameterList::new));
+	register (g, "Assignment", constructored (Assignment::new));
+	register (g, "ConditionalExpression", constructored (TernaryExpression::build));
+	register (g, "ConditionalOrExpression", constructored (TwoPartExpression::build));
+	register (g, "ConditionalAndExpression", constructored (TwoPartExpression::build));
+	register (g, "InclusiveOrExpression", constructored (TwoPartExpression::build));
+	register (g, "ExclusiveOrExpression", constructored (TwoPartExpression::build));
+	register (g, "AndExpression", constructored (TwoPartExpression::build));
+	register (g, "EqualityExpression", constructored (TwoPartExpression::build));
+	register (g, "RelationalExpression", constructored (TwoPartExpression::build));
+	register (g, "ShiftExpression", constructored (TwoPartExpression::build));
 	register (g, "ShiftOp", constructored (ShiftOp::create));
+	register (g, "AdditiveExpression", constructored (TwoPartExpression::build));
+	register (g, "MultiplicativeExpression", constructored (TwoPartExpression::build));
+	register (g, "UnaryExpression", constructored (UnaryExpression::build));
+	register (g, "PreIncrementExpression", constructored (PreIncrementExpression::new));
+	register (g, "PreDecrementExpression", constructored (PreDecrementExpression::new));
+	register (g, "UnaryExpressionNotPlusMinus", constructored (UnaryExpression::build));
+	register (g, "PostIncrementExpression", constructored (PostIncrementExpression::new));
+	register (g, "PostDecrementExpression", constructored (PostDecrementExpression::new));
+	register (g, "CastExpression", constructored (CastExpression::new));
     }
 
     private void register (Grammar g, String rulename, Builder b) {
@@ -210,7 +273,7 @@ public class JavaTreeBuilder {
 	if (r.size () > 1 && r.getRulePart (0).getId () == name) {
 	    z = (ZOMEntry)parts.pop ();
 	} else {
-	    z = new ZOMEntry ();
+	    z = new ZOMEntry (r.getRulePart (0).getId ().toString ());
 	}
 	// We should not have ',' or similar in the parts so no need to pop those
 	// TODO: this will break for some "ZOM_34 -> [ZOM_34, [, ]]"

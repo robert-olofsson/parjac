@@ -1,12 +1,10 @@
 package org.khelekore.parjac.tree;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
-import org.khelekore.parjac.tree.VariableDeclarator;
 import org.khelekore.parjac.tree.ZOMEntry;
 
 public abstract class ListBase<T extends TreeNode> implements TreeNode {
@@ -18,9 +16,8 @@ public abstract class ListBase<T extends TreeNode> implements TreeNode {
 	    ls = Collections.singletonList (vd);
 	} else {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
-	    ls = new ArrayList<> (1 + ze.size ());
-	    ls.add (vd);
-	    ls.addAll (ze.get ());
+	    ls = ze.get ();
+	    ls.add (0, vd);
 	}
     }
 

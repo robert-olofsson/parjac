@@ -25,4 +25,12 @@ public class RulePart extends PartBase<String> {
     @Override public EnumSet<Token> getFirsts () {
 	return g.getRules (data).getFirsts ();
     }
+
+    @Override public boolean isRulePart () {
+	return true;
+    }
+
+    @Override public boolean isTokenPart () {
+	return false;
+    }
 }

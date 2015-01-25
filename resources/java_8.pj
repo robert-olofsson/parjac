@@ -47,7 +47,11 @@ ArrayType:
 	ClassType Dims
 
 Dims:
-	Annotation* '[' ']' (Annotation* '[' ']')*
+	OneDim
+	Dims OneDim
+
+OneDim:
+	Annotation* '[' ']'
 
 TypeParameter:
 	Annotation* 'identifier' TypeBound?
@@ -129,10 +133,7 @@ ClassModifier:
 	'strictfp'
 
 TypeParameters:
-	'<' TypeParameterList '>'
-
-TypeParameterList:
-	TypeParameter (',' TypeParameter)*
+	'<' TypeParameter (',' TypeParameter)* '>'
 
 Superclass:
 	'extends' ClassType
@@ -200,7 +201,7 @@ UnannReferenceType:
 
 UnannClassType:
 	'identifier' TypeArguments?
-	UnannClassType '.' Annotation* 'identifier' TypeArguments?
+	UnannClassType '.' SimpleClassType
 
 UnannArrayType:
 	UnannPrimitiveType Dims
@@ -236,11 +237,10 @@ MethodDeclarator:
 	'identifier' '(' FormalParameterList? ')' Dims?
 
 FormalParameterList:
-	ReceiverParameter (',' FormalParameterListRest)?
-	FormalParameter ',' FormalParameterListRest
-	LastFormalParameter
+	NormalFormalParameterList
+	ReceiverParameter (',' NormalFormalParameterList)?
 
-FormalParameterListRest:
+NormalFormalParameterList:
 	(FormalParameter ',')* LastFormalParameter
 
 FormalParameter:
@@ -258,13 +258,7 @@ ReceiverParameter:
 	Annotation* UnannType ('identifier' '.')? 'this'
 
 Throws:
-	'throws' ExceptionTypeList
-
-ExceptionTypeList:
-	ExceptionType (',' ExceptionType)*
-
-ExceptionType:
-	ClassType
+	'throws' ClassType (',' ClassType)*
 
 MethodBody:
 	Block
@@ -578,7 +572,7 @@ SynchronizedStatement:
 TryStatement:
 	'try' Block Catches
 	'try' Block Catches? Finally
-	TryWithResourcesStatement
+	'try' '(' ResourceList ';'? ')' Block Catches? Finally?
 
 Catches:
 	CatchClause CatchClause*
@@ -590,16 +584,13 @@ CatchFormalParameter:
 	VariableModifier* CatchType VariableDeclaratorId
 
 CatchType:
-	UnannClassType ('|' ClassType)*
+	UnannClassType ExtraCatchType*
+
+ExtraCatchType:
+	'|' ClassType
 
 Finally:
 	'finally' Block
-
-TryWithResourcesStatement:
-	'try' ResourceSpecification Block Catches? Finally?
-
-ResourceSpecification:
-	'(' ResourceList ';'? ')'
 
 ResourceList:
 	Resource (';' Resource)*
@@ -632,10 +623,20 @@ ClassInstanceCreationExpression:
 	Primary '.' UntypedClassInstanceCreationExpression
 
 UntypedClassInstanceCreationExpression:
-	'new' TypeArguments? Annotation* 'identifier' ('.' Annotation* 'identifier')* TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
+	'new' TypeArguments? Annotation* ClassInstanceName TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
+
+ClassInstanceName:
+	'identifier'
+	'identifier' ExtraName*
+
+ExtraName:
+	'.' Annotation* 'identifier'
 
 TypeArgumentsOrDiamond:
 	TypeArguments
+	Diamond
+
+Diamond:
 	'<' '>'
 
 FieldAccess:
@@ -646,7 +647,6 @@ FieldAccess:
 ArrayAccess:
 	DottedName '[' Expression ']'
 	PrimaryNoNewArray '[' Expression ']'
-
 
 MethodInvocation:
 	UntypedMethodInvocation
@@ -694,7 +694,10 @@ LambdaExpression:
 LambdaParameters:
 	'identifier'
 	'(' FormalParameterList? ')'
-	'(' 'identifier' (',' 'identifier')* ')'
+	'(' InferredFormalParameterList ')'
+
+InferredFormalParameterList:
+	'identifier' (',' 'identifier')*
 
 LambdaBody:
 	Expression
@@ -830,4 +833,3 @@ CastExpression:
 	'(' PrimitiveType ')' UnaryExpression
 	'(' ReferenceType AdditionalBound* ')' UnaryExpressionNotPlusMinus
 	'(' ReferenceType AdditionalBound* ')' LambdaExpression
-

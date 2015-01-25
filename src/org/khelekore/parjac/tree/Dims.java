@@ -1,20 +1,19 @@
 package org.khelekore.parjac.tree;
 
-import java.util.Collections;
 import java.util.Deque;
-import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 
-public class Dims implements TreeNode {
-    private final List<List<TreeNode>> annotations;
-
-    public Dims (Rule r, Deque<TreeNode> parts) {
-	// TODO: implement correctly
-	annotations = Collections.emptyList ();
+public class Dims extends Multipart<OneDim> {
+    public Dims (OneDim od) {
+	super (od);
     }
 
-    @Override public String toString () {
-	return getClass ().getSimpleName () + "{annotations: " + annotations + "}";
+    public static Dims build (Rule r, Deque<TreeNode> parts) {
+	if (r.size () == 1)
+	    return new Dims ((OneDim)parts.pop ());
+	Dims d = (Dims)parts.pop ();
+	d.add ((OneDim)parts.pop ());
+	return d;
     }
 }

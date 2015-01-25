@@ -22,4 +22,12 @@ public class TokenPart extends PartBase<Token> {
     @Override public EnumSet<Token> getFirsts () {
 	return EnumSet.of (data);
     }
+
+    @Override public boolean isRulePart () {
+	return false;
+    }
+
+    @Override public boolean isTokenPart () {
+	return true;
+    }
 }

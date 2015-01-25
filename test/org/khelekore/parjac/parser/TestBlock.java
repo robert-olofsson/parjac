@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
+import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -64,18 +66,19 @@ public class TestBlock {
 	testSuccessfulParse ("{ int a = foo (); }");
 	testSuccessfulParse ("{ a.foo (); }");
 	testSuccessfulParse ("{ a.b.foo (); }");
+	testSuccessfulParse ("{ super.foo (); }");
+	testSuccessfulParse ("{ a.super.foo (); }");
     }
 
     @Test
     public void testFor () {
-	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {\n" +
-			     "System.out.println (\"foo: \"+ foo);\n" +
-			     "}\n}");
+	testSuccessfulParse ("{ for (Foo foo : listOfFoo) {}\n}");
 	testSuccessfulParse ("{ for (int i = CONSTANT; i >= 0; i--) {}}");
 	testSuccessfulParse ("{ for (int i = 0; i < CONSTANT; i++) {}}");
 	testSuccessfulParse ("{ for (int i = 0; i < 10; i++) {}}");
 	testSuccessfulParse ("{ for (int i = 0, j = 0, k = a; bar1.b; i++) {}}");
 	testSuccessfulParse ("{ for ( ; true; ) {}}");
+	testSuccessfulParse ("{ for ( ; ; ) {}}");
     }
 
     @Test
@@ -151,6 +154,10 @@ public class TestBlock {
 	testSuccessfulParse ("{Bar bar = new foo.Bar ();}");
 	testSuccessfulParse ("{Baz baz = new foo.bar.Baz ();}");
 	testSuccessfulParse ("{rules = new ArrayList<> ();}");
+	testSuccessfulParse ("{return new <T> @Foo Foo.Bar<> (1, 2, 3);}");
+	testSuccessfulParse ("{return new <T> @Foo Foo.@Bar Bar<> (1, 2, 3);}");
+	testSuccessfulParse ("{return new <T> @Foo Foo.Bar<> (1, 2, 3) {};}");
+	testSuccessfulParse ("{return a.new Foo ();}");
     }
 
     @Test
@@ -166,9 +173,11 @@ public class TestBlock {
 
     @Test
     public void testTry () {
+	testSuccessfulParse ("{try { a = b; } catch (A ex) {}}");
 	testSuccessfulParse ("{try { a = b; } finally { c = d; }}");
 	testSuccessfulParse ("{try { a = b; } catch (AException a) { } finally { c = d; }}");
 	testSuccessfulParse ("{try { a = b; } catch (A | B ex) { } finally { c = d; }}");
+	testSuccessfulParse ("{try { a = b; } catch (A | B | C ex) { } finally { c = d; }}");
 
 	testSuccessfulParse ("{try (Foo foo = new Foo()) { a = b; } }");
 	testSuccessfulParse ("{try (Foo foo = new Foo(); Bar bar = new Bar(foo)) { a = b; } }");
@@ -187,6 +196,7 @@ public class TestBlock {
 	testSuccessfulParse("{ IntegerMath addition = (a, b) -> a + b; }");
 	testSuccessfulParse("{ String s = invoke(() -> \"done\"); }");
 	testSuccessfulParse("{ btn.foo((int i) -> i + 2); }");
+	testSuccessfulParse("{ btn.foo((int i, int j) -> i + j); }");
 	testSuccessfulParse("{ Consumer<Integer>  c = (int x) -> { System.out.println(x); }; }");
     }
 
@@ -213,11 +223,42 @@ public class TestBlock {
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.bleh<S>)bar; }");
 	testSuccessfulParse ("{ foo = (@Foo Bla<T>.@Bar bleh<S>)bar; }");
 	testSuccessfulParse ("{ NCacheEntry<K, V> nent = (NCacheEntry<K, V>)ent; }");
+    }
 
+    @Test
+    public void testFieldAccess () {
+	testSuccessfulParse ("{ return a.b; }");
+	testSuccessfulParse ("{ return super.b; }");
+	testSuccessfulParse ("{ return a.super.b; }");
+    }
+
+    @Test
+    public void testArrayAccess () {
+	testSuccessfulParse ("{ return a[0]; }");
+	testSuccessfulParse ("{ return a[b]; }");
+	testSuccessfulParse ("{ return a.b[0]; }");
+    }
+
+    @Test
+    public void testArrayCreationExpression () {
+	testSuccessfulParse ("{ return new int[3]; }");
+	testSuccessfulParse ("{ return new int[3][4]; }");
+	testSuccessfulParse ("{ return new int[a][4]; }");
+	testSuccessfulParse ("{ return new int[a][b]; }");
+	testSuccessfulParse ("{ return new int[a][]; }");
+	testSuccessfulParse ("{ return new int[] {}; }");
+	testSuccessfulParse ("{ return new int[] {1}; }");
+	testSuccessfulParse ("{ return new int[] {1, 2}; }");
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.earleyParse (g, s, diagnostics);
+	testSuccessfulParse (s, null);
+    }
+
+    private void testSuccessfulParse (String s, TreeNode tn) {
+	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
+	if (tn != null)
+	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;
     }
 }

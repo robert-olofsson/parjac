@@ -1,0 +1,11 @@
+package org.khelekore.parjac.tree;
+
+import java.util.Deque;
+
+import org.khelekore.parjac.grammar.Rule;
+
+public class VariableInitializerList extends ListBase<TreeNode>  {
+    public VariableInitializerList (Rule r, Deque<TreeNode> parts) {
+	super (r, parts);
+    }
+}
