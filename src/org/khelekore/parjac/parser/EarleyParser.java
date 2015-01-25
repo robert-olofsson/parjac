@@ -194,6 +194,8 @@ public class EarleyParser {
 	tokenPos = states.size () - 2; // skip <end_of_input>
 	Deque<TreeNode> parts = new ArrayDeque<> ();
 	buildTreeNode (s, parts);
+	if (parts.size () == 0)
+	    return null;
 	if (parts.size () != 1)
 	    addParserError ("Got many parts back: " + parts);
 	TreeNode topNode = parts.poll ();
