@@ -5,15 +5,35 @@ import java.util.Collections;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.grammar.SimplePart;
 
-class State extends Item {
+class State {
+    private final Rule r;
+    private final int dotPos;
     private final int startPos;
     private final int hc;
 
     public State (Rule r, int dotPos, int startPos) {
-	super (r, dotPos);
+	this.r = r;
+	this.dotPos = dotPos;
 	this.startPos = startPos;
-	hc = startPos * 31 + super.hashCode ();
+	hc = (startPos << 16) | (dotPos << 8) | r.getId ();
+    }
+
+    public Rule getRule () {
+	return r;
+    }
+
+    public int getDotPos () {
+	return dotPos;
+    }
+
+    public SimplePart getPartAfterDot () {
+	return r.getParts ().get (dotPos);
+    }
+
+    public boolean dotIsLast () {
+	return dotPos == r.getParts ().size ();
     }
 
     public int getStartPos () {
