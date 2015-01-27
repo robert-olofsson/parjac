@@ -2,8 +2,6 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
-import org.khelekore.parjac.grammar.Rule;
-
 public class ExtendsInterfaces implements TreeNode {
     private final InterfaceTypeList ls;
 

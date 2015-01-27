@@ -1,8 +1,6 @@
 package org.khelekore.parjac.tree;
 
-import java.util.Collections;
 import java.util.Deque;
-import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 
