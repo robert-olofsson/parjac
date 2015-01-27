@@ -2,6 +2,8 @@ package org.khelekore.parjac.parser;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
+import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -79,8 +81,14 @@ public class TestImports {
     }
 
     private void testSuccessfulParse (String s) {
-	TestParseHelper.earleyParse (g, s, diagnostics);
+	testSuccessfulParse (s, null);
+    }
+
+    private void testSuccessfulParse (String s, TreeNode tn) {
+	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
+	if (tn != null)
+	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;
     }
 
     private void testFailedParse (String s) {

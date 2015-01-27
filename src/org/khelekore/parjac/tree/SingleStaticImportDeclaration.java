@@ -3,11 +3,17 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 public class SingleStaticImportDeclaration extends NamedNode implements ImportDeclaration {
-    private final Identifier id;
+    private final String id;
 
-    public SingleStaticImportDeclaration (Deque<TreeNode> parts) {
-	super (parts);
-	this.id = (Identifier)parts.pop ();
+    public SingleStaticImportDeclaration (DottedName name, String id) {
+	super (name);
+	this.id = id;
+    }
+
+    public static SingleStaticImportDeclaration build (Deque<TreeNode> parts) {
+	parts.pop (); // 'static'
+	return new SingleStaticImportDeclaration ((DottedName)parts.pop (),
+						  ((Identifier)parts.pop ()).get ());
     }
 
     @Override public String toString () {

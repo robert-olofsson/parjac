@@ -44,10 +44,14 @@ public class JavaTreeBuilder {
 	// Productions from §7 (Packages)
 	register (g, "CompilationUnit", constructored (CompilationUnit::new));
 	register (g, "PackageDeclaration", constructored (PackageDeclaration::new));
-	register (g, "SingleTypeImportDeclaration", constructored (SingleTypeImportDeclaration::new));
-	register (g, "TypeImportOnDemandDeclaration", constructored (TypeImportOnDemandDeclaration::new));
-	register (g, "SingleStaticImportDeclaration", constructored (SingleStaticImportDeclaration::new));
-	register (g, "StaticImportOnDemandDeclaration", constructored (StaticImportOnDemandDeclaration::new));
+	register (g, "SingleTypeImportDeclaration",
+		  constructored (SingleTypeImportDeclaration::new));
+	register (g, "TypeImportOnDemandDeclaration",
+		  constructored (TypeImportOnDemandDeclaration::new));
+	register (g, "SingleStaticImportDeclaration",
+		  constructored (SingleStaticImportDeclaration::build));
+	register (g, "StaticImportOnDemandDeclaration",
+		  constructored (StaticImportOnDemandDeclaration::build));
 
 	// Productions from §8 (Classes)
 	register (g, "NormalClassDeclaration", constructored (NormalClassDeclaration::new));
