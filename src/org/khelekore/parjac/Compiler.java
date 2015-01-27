@@ -67,6 +67,7 @@ public class Compiler {
 
     private SyntaxTree parse (Path path) {
 	try {
+	    long start = System.nanoTime ();
 	    //if (settings.getDebug ())
 		System.out.println ("parsing: " + path);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
@@ -78,6 +79,10 @@ public class Compiler {
 	    EarleyParser parser = new EarleyParser (g, path, lexer, predictCache, treeBuilder,
 						    diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
+	    long end = System.nanoTime ();
+	    //if (settings.getDebug ())
+	    System.out.println (String.format ("parsed: %s in: %.3f millis",
+					       path, (end - start) / 1.0e6));
 	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
