@@ -75,8 +75,7 @@ public class Compiler {
 	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
 	    CharBuffer charBuf = decoder.decode (buf);
 	    Lexer lexer = new CharBufferLexer (charBuf);
-	    // TODO: build tree
-	    EarleyParser parser = new EarleyParser (g, path, lexer, predictCache, null /*treeBuilder*/,
+	    EarleyParser parser = new EarleyParser (g, path, lexer, predictCache, treeBuilder,
 						    diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    return tree;

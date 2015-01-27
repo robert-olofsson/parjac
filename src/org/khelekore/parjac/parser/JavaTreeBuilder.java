@@ -76,6 +76,8 @@ public class JavaTreeBuilder {
 	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
 	register (g, "Throws", constructored (Throws::new));
 	register (g, "MethodBody", constructored (MethodBody::build));
+	register (g, "InstanceInitializer", constructored (InstanceInitializer::new));
+	register (g, "StaticInitializer", constructored (StaticInitializer::new));
 	register (g, "ConstructorDeclaration", constructored (ConstructorDeclaration::new));
 	register (g, "ConstructorDeclarator", constructored (ConstructorDeclarator::new));
 	register (g, "ConstructorBody", constructored (ConstructorBody::new));

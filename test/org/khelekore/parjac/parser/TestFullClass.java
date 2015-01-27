@@ -116,6 +116,19 @@ public class TestFullClass {
 	testSuccessfulParse ("@interface A { ; }");
     }
 
+    @Test
+    public void testInitializer () {
+	testSuccessfulParse ("class A { { i = 1; } }");
+	testSuccessfulParse ("class A { { i = 1; } { j = 2; } }");
+    }
+
+    @Test
+    public void testStaticInitializer () {
+	testSuccessfulParse ("class A { static { i = 1; } }");
+	testSuccessfulParse ("class A { static { i = 1; } }");
+	testSuccessfulParse ("class A { static { i = 1; } static { j = 1; } }");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }
