@@ -87,6 +87,15 @@ public class TestFullClass {
     }
 
     @Test
+    public void testEnumMemberConstructors () {
+ 	testSuccessfulParse ("enum A { I }");
+ 	testSuccessfulParse ("enum A { I () }");
+ 	testSuccessfulParse ("enum A { I, J }");
+ 	testSuccessfulParse ("enum A { I (), J () }");
+ 	testSuccessfulParse ("enum A { I (1, 2, 3), J (4, 5, 6, 7) }");
+    }
+
+    @Test
     public void testEnumWithSuperinterfaces () {
 	testSuccessfulParse ("enum A implements B {}");
 	testSuccessfulParse ("public enum A implements B {}");

@@ -9,7 +9,7 @@ import org.khelekore.parjac.lexer.Token;
 public class EnumConstant implements TreeNode {
     private final List<TreeNode> annotations;
     private final String id;
-    //private final ArgumentList arguments
+    private final ArgumentList arguments;
     private final ClassBody classBody;
 
     public EnumConstant (Rule r, Deque<TreeNode> parts) {
@@ -24,21 +24,23 @@ public class EnumConstant implements TreeNode {
 	}
 	id = ((Identifier)tn).get ();
 	pos++;
-	if (r.size () > pos) {
-	    if (r.getRulePart (pos).getId () == Token.LEFT_PARENTHESIS) {
-		if (r.getRulePart (pos + 1).getId () != Token.LEFT_PARENTHESIS) {
-		    parts.pop (); // TODO: handle arguments
-		    pos += 3;
-		} else {
-		    pos += 2;
-		}
+	if (r.size () > pos && r.getRulePart (pos).getId () == Token.LEFT_PARENTHESIS) {
+	    pos++; // '('
+	    if (r.getRulePart (pos).getId () != Token.RIGHT_PARENTHESIS) {
+		arguments = (ArgumentList)parts.pop ();
+		pos++;
+	    } else {
+		arguments = null;
 	    }
+	    pos++; // ')'
+	} else {
+	    arguments = null;
 	}
 	classBody = r.size () > pos ? (ClassBody)parts.pop () : null;
     }
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{annotations: " + annotations +
-	    ", id: " + id + ", classBody: " + classBody + "}";
+	    ", id: " + id + ", arguments: " + arguments + ", classBody: " + classBody + "}";
     }
 }
