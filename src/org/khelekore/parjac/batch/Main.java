@@ -113,8 +113,10 @@ public class Main {
 	}
 	CompilationArguments ca = new CompilationArguments (srcDirs, outputDir, encoding, debug);
 	ca.validate (diagnostics);
-	if (diagnostics.hasError ())
+	if (diagnostics.hasError ()) {
+	    System.err.println ("Invalid arguments, use \"--help\" for usage.\nProblems found:");
 	    return null;
+	}
 	return ca;
     }
 
