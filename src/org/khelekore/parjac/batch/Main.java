@@ -24,6 +24,11 @@ public class Main {
     private final CompilerDiagnosticCollector diagnostics;
 
     public static void main (String[] args) throws IOException {
+	if (args.length == 0) {
+	    usage ();
+	    return;
+	}
+
 	CompilerDiagnosticCollector collector = new CompilerDiagnosticCollector ();
 
 	Main main = new Main (collector);
@@ -116,8 +121,8 @@ public class Main {
 	return true;
     }
 
-    private void usage () {
-	System.err.println ("usage: java " + getClass () +
+    private static void usage () {
+	System.err.println ("usage: java " + Main.class.getName () +
 			    " [-i|--input srcdir]+ [-d|--destination dir]" +
 			    " [--debug] [-h|--help]");
     }
