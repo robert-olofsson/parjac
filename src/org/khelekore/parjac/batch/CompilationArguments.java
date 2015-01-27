@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
+
 /** Batch compiler command line arguments */
 public class CompilationArguments {
     private final List<Path> srcDirs;
@@ -15,12 +18,6 @@ public class CompilationArguments {
 
     public CompilationArguments (List<Path> srcDirs, Path outputDir,
 				 Charset encoding, boolean debug) {
-	if (srcDirs == null)
-	    throw new NullPointerException ("srcDirs may not be null");
-	if (srcDirs.isEmpty ())
-	    throw new IllegalArgumentException ("srcDirs may not be empty");
-	if (outputDir == null)
-	    throw new NullPointerException ("outputDir may not be null");
 	this.srcDirs = new ArrayList<> (srcDirs);
 	this.outputDir = outputDir;
 	this.encoding = encoding;
@@ -41,5 +38,14 @@ public class CompilationArguments {
 
     public boolean getDebug () {
 	return debug;
+    }
+
+    public void validate (CompilerDiagnosticCollector diagnostics) {
+    	if (srcDirs == null)
+	    diagnostics.report (new NoSourceDiagnostics ("Source dirs may not be null"));
+	else if (srcDirs.isEmpty ())
+	    diagnostics.report (new NoSourceDiagnostics ("Source dirs may not be empty"));
+	if (outputDir == null)
+	    diagnostics.report (new NoSourceDiagnostics ("Output dir may not be null"));
     }
 }

@@ -106,10 +106,16 @@ public class Main {
 		usage ();
 	        return null;
 	    default:
-		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: %s", args[i]));
+		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: \"%s\" " +
+							     "add \"--help\" for usage", args[i]));
+		return null;
 	    }
 	}
-	return new CompilationArguments (srcDirs, outputDir, encoding, debug);
+	CompilationArguments ca = new CompilationArguments (srcDirs, outputDir, encoding, debug);
+	ca.validate (diagnostics);
+	if (diagnostics.hasError ())
+	    return null;
+	return ca;
     }
 
     private boolean hasFollowingArgExists (String[] args, int pos) {
