@@ -76,7 +76,6 @@ public class EarleyParser {
 	    if (treeBuilder != null)
 		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
 	    handleToken (currentPosition, nextToken, currentTokenValue);
-	    // TODO: debugPrintStates (currentPosition);
 	    currentPosition++;
 	    if (states.size () <= currentPosition) {
 		addParserError ("No possible next state");
