@@ -154,14 +154,10 @@ public class EarleyParser {
 
     private MultiState predict (MultiState currentStates, MultiState cms, int currentPosition) {
 	Set<String> crules = cms != null ? cms.getPredictRules () : Collections.emptySet ();
-	ListRuleHolder rh = getPredictedRules (currentStates.getPredictRules (), crules);
+	ListRuleHolder rh = predictCache.getPredictedRules (currentStates.getPredictRules (), crules);
 	if (rh == null)
 	    return null;
 	return new PredictedMultiState (rh, currentPosition);
-    }
-
-    private ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
-	return predictCache.getPredictedRules (rules, crules);
     }
 
     private MultiState scan (MultiState currentStates, MultiState cms, MultiState pms,
