@@ -83,6 +83,7 @@ public class JavaTreeBuilder {
 	register (g, "EnumConstantList", constructored (EnumConstantList::new));
 	register (g, "EnumConstant", constructored (EnumConstant::new));
 	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
+	register (g, "EmptyDeclaration", constructored (EmptyDeclaration::build));
 
 	// Productions from §9 (Interfaces)
 	register (g, "NormalInterfaceDeclaration", constructored (NormalInterfaceDeclaration::new));

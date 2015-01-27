@@ -96,6 +96,26 @@ public class TestFullClass {
 	testSuccessfulParse ("class A { A () { super (1); j = 2; }}");
     }
 
+    @Test
+    public void testEmptyClassMember () {
+	testSuccessfulParse ("class A { ; }");
+    }
+
+    @Test
+    public void testEmptyEnumMember () {
+	testSuccessfulParse ("enum A { ; ; }");
+    }
+
+    @Test
+    public void testEmptyInterfaceMember () {
+	testSuccessfulParse ("interface A { ; }");
+    }
+
+    @Test
+    public void testEmptyAnnotationTypeMember () {
+	testSuccessfulParse ("@interface A { ; }");
+    }
+
     private void testSuccessfulParse (String s) {
 	testSuccessfulParse (s, null);
     }

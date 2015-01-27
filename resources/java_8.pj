@@ -112,7 +112,7 @@ StaticImportOnDemandDeclaration:
 TypeDeclaration:
 	ClassDeclaration
 	InterfaceDeclaration
-	';'
+	EmptyDeclaration
 
 # Productions from §8 (Classes)
 ClassDeclaration:
@@ -158,7 +158,7 @@ ClassMemberDeclaration:
 	MethodDeclaration
 	ClassDeclaration
 	InterfaceDeclaration
-	';'
+	EmptyDeclaration
 
 FieldDeclaration:
 	FieldModifier* UnannType VariableDeclaratorList ';'
@@ -309,6 +309,9 @@ EnumConstant:
 EnumBodyDeclarations:
 	';' ClassBodyDeclaration*
 
+EmptyDeclaration:
+	';'
+
 # Productions from §9 (Interfaces)
 InterfaceDeclaration:
 	NormalInterfaceDeclaration
@@ -337,7 +340,7 @@ InterfaceMemberDeclaration:
 	InterfaceMethodDeclaration
 	ClassDeclaration
 	InterfaceDeclaration
-	';'
+	EmptyDeclaration
 
 ConstantDeclaration:
 	ConstantModifier* UnannType VariableDeclaratorList ';'
@@ -370,7 +373,7 @@ AnnotationTypeMemberDeclaration:
 	ConstantDeclaration
 	ClassDeclaration
 	InterfaceDeclaration
-	';'
+	EmptyDeclaration
 
 AnnotationTypeElementDeclaration:
 	AnnotationTypeElementModifier* UnannType 'identifier' '(' ')' Dims? DefaultValue? ';'
