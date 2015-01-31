@@ -290,7 +290,6 @@ public class JavaTreeBuilder {
 	    z = new ZOMEntry (r.getRulePart (0).getId ().toString ());
 	}
 	// We should not have ',' or similar in the parts so no need to pop those
-	// TODO: this will break for some "ZOM_34 -> [ZOM_34, [, ]]"
 	z.add (parts.pop ());
 	parts.push (z);
     }
