@@ -187,8 +187,10 @@ public class EarleyParser {
 
     private SyntaxTree buildTree (State s) {
 	tokenPos = states.size () - 2; // skip <end_of_input>
+	Deque<State> toVisit = new ArrayDeque<> ();
+	toVisit.push (s);
 	Deque<TreeNode> parts = new ArrayDeque<> ();
-	buildTreeNode (s, parts);
+	buildTreeNode (toVisit, parts);
 	if (parts.size () == 0)
 	    return null;
 	if (parts.size () != 1)
@@ -199,30 +201,29 @@ public class EarleyParser {
 	return new SyntaxTree (path, topNode);
     }
 
-    private void buildTreeNode (State s, Deque<TreeNode> parts) {
-	if (s.getDotPos () == 0)
-	    return;
-	State previous;
-	// TODO: stop using recursion?
-	State start = s;
-	do {
-	    List<State> completed = s.getCompleted ();
-	    previous = s.getPrevious ();
-	    if (completed != null) {
-		if (completed.size () > 1)
-		    addParserError ("Found many completed: " + completed);
-		buildTreeNode (completed.get (0), parts);
-	    }
+    private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts) {
+	while (!toVisit.isEmpty ()) {
+	    State s = toVisit.pop ();
 
-	    if (previous != null && previous.getPartAfterDot () instanceof TokenPart) {
-		MultiState ms = states.get (tokenPos);
-		TreeNode tn = ms.getParsedToken ();
-		if (tn != null)
-		    parts.push (tn);
-		tokenPos--;
+	    State previous = s.getPrevious ();
+	    if (previous == null) {
+		treeBuilder.build (s, parts);
+		continue;
+	    } else {
+		toVisit.push (previous);
+		if (previous.getPartAfterDot () instanceof TokenPart) {
+		    MultiState ms = states.get (tokenPos);
+		    TreeNode tn = ms.getParsedToken ();
+		    if (tn != null)
+			parts.push (tn);
+		    tokenPos--;
+		}
+		List<State> completed = s.getCompleted ();
+		if (completed != null)
+		    for (State c : completed)
+			toVisit.push (c);
 	    }
-	} while ((s = previous) != null);
-	treeBuilder.build (start, parts);
+	}
     }
 
     private void addParserError (String error) {
