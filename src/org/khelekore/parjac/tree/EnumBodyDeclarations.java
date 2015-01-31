@@ -15,4 +15,8 @@ public class EnumBodyDeclarations implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + classBodyDeclarations + "}";
     }
+
+    public List<TreeNode> getDeclarations () {
+	return classBodyDeclarations;
+    }
 }

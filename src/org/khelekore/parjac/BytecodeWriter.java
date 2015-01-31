@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
@@ -15,34 +16,59 @@ public class BytecodeWriter extends ClassLoader {
 
     public void write (TreeNode tn, Path destinationDir, DottedName packageName) {
 	if (tn instanceof NormalClassDeclaration) {
-	    writeClass ((NormalClassDeclaration)tn, destinationDir, packageName);
+	    writeClass ("", (NormalClassDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof EnumDeclaration) {
-	    writeEnum ((EnumDeclaration)tn, destinationDir, packageName);
+	    writeEnum ("", (EnumDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof NormalInterfaceDeclaration) {
-	    writeInterface ((NormalInterfaceDeclaration)tn, destinationDir, packageName);
+	    writeInterface ("", (NormalInterfaceDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof AnnotationTypeDeclaration) {
-	    writeAnnotation ((AnnotationTypeDeclaration)tn, destinationDir, packageName);
+	    writeAnnotation ("", (AnnotationTypeDeclaration)tn, destinationDir, packageName);
 	} else {
 	    throw new IllegalStateException ("Unknown type: " + tn);
 	}
     }
 
-    private void writeClass (NormalClassDeclaration cd, Path destinationDir, DottedName packageName) {
-	writeDummyClass (cd.getId (), destinationDir, packageName);
+    private void writeClass (String prefix, NormalClassDeclaration cd,
+			     Path destinationDir, DottedName packageName) {
+	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
+	writeDummyClass (id, destinationDir, packageName);
+	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
     }
 
-    private void writeEnum (EnumDeclaration cd, Path destinationDir, DottedName packageName) {
-	writeDummyClass (cd.getId (), destinationDir, packageName);
+    private void writeEnum (String prefix, EnumDeclaration cd,
+			    Path destinationDir, DottedName packageName) {
+	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
+	writeDummyClass (id, destinationDir, packageName);
+	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
     }
 
-    private void writeInterface (NormalInterfaceDeclaration cd,
+    private void writeInterface (String prefix, NormalInterfaceDeclaration cd,
 				 Path destinationDir, DottedName packageName) {
-	writeDummyClass (cd.getId (), destinationDir, packageName);
+	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
+	writeDummyClass (id, destinationDir, packageName);
+	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
     }
 
-    private void writeAnnotation (AnnotationTypeDeclaration cd,
+    private void writeAnnotation (String prefix, AnnotationTypeDeclaration cd,
 				  Path destinationDir, DottedName packageName) {
-	writeDummyClass (cd.getId (), destinationDir, packageName);
+	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
+	writeDummyClass (id, destinationDir, packageName);
+	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
+    }
+
+    private void writeInnerClasses (String prefix, List<TreeNode> members,
+				    Path destinationDir, DottedName packageName) {
+	for (TreeNode tn : members) {
+	    if (tn instanceof NormalClassDeclaration) {
+		writeClass (prefix, (NormalClassDeclaration)tn, destinationDir, packageName);
+	    } else if (tn instanceof EnumDeclaration) {
+		writeEnum (prefix, (EnumDeclaration)tn, destinationDir, packageName);
+	    } else if (tn instanceof NormalInterfaceDeclaration) {
+		writeInterface (prefix, (NormalInterfaceDeclaration)tn, destinationDir, packageName);
+	    } else if (tn instanceof AnnotationTypeDeclaration) {
+		writeAnnotation (prefix, (AnnotationTypeDeclaration)tn, destinationDir, packageName);
+	    }
+	}
     }
 
     private void writeDummyClass (String id, Path destinationDir, DottedName packageName) {

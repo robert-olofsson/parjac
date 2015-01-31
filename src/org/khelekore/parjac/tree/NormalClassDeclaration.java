@@ -53,4 +53,8 @@ public class NormalClassDeclaration implements TreeNode {
     public String getId () {
 	return id;
     }
+
+    public ClassBody getBody () {
+	return body;
+    }
 }

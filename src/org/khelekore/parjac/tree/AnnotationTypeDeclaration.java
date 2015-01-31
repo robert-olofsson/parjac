@@ -23,4 +23,8 @@ public class AnnotationTypeDeclaration implements TreeNode {
     public String getId () {
 	return id;
     }
+
+    public AnnotationTypeBody getBody () {
+	return body;
+    }
 }

@@ -22,4 +22,8 @@ public abstract class BodyBase implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{declarations: " + declarations + "}";
     }
+
+    public List<TreeNode> getDeclarations () {
+	return declarations;
+    }
 }

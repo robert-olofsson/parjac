@@ -33,4 +33,8 @@ public class EnumDeclaration implements TreeNode {
     public String getId () {
 	return id;
     }
+
+    public EnumBody getBody () {
+	return body;
+    }
 }

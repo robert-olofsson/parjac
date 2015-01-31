@@ -45,4 +45,8 @@ public class NormalInterfaceDeclaration implements TreeNode {
     public String getId () {
 	return id;
     }
+
+    public InterfaceBody getBody () {
+	return body;
+    }
 }

@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.SimplePart;
@@ -25,5 +26,9 @@ public class EnumBody implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + constants +
 	    ", enumBodyDeclarations: " + enumBodyDeclarations + "}";
+    }
+
+    public List<TreeNode> getDeclarations () {
+	return enumBodyDeclarations.getDeclarations ();
     }
 }
