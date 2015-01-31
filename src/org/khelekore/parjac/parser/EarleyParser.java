@@ -199,7 +199,7 @@ public class EarleyParser {
 	TreeNode topNode = parts.poll ();
 	if (topNode == null)
 	    return null;
-	return new SyntaxTree (path, (CompilationUnit)topNode);
+	return new SyntaxTree (path, topNode);
     }
 
     private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts) {

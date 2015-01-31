@@ -4,22 +4,26 @@ import java.nio.file.Path;
 
 public class SyntaxTree {
     private final Path origin;
-    private final CompilationUnit cu;
+    private final TreeNode node;
 
-    public SyntaxTree (Path origin, CompilationUnit cu) {
+    public SyntaxTree (Path origin, TreeNode node) {
 	this.origin = origin;
-	this.cu = cu;
+	this.node = node;
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{path: " + origin + ", cu: " + cu + "}";
+	return getClass ().getSimpleName () + "{path: " + origin + ", node: " + node + "}";
     }
 
     public Path getOrigin () {
 	return origin;
     }
 
+    public TreeNode getRoot () {
+	return node;
+    }
+
     public CompilationUnit getCompilationUnit () {
-	return cu;
+	return (CompilationUnit)node;
     }
 }

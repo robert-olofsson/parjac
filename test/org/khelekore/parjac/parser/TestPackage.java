@@ -73,8 +73,7 @@ public class TestPackage {
 	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
 	if (tn != null)
-	    assert tn.equals (t.getCompilationUnit ()) :
-	    "Got unexpected tree: " + t.getCompilationUnit () + ", expected: " + tn;
+	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;
     }
 
     private void testFailedParse (String s) {
