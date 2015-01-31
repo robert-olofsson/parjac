@@ -13,22 +13,40 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeWriter extends ClassLoader {
 
-    public void write (TreeNode tn, Path destinationDir, DottedName packagePath) {
+    public void write (TreeNode tn, Path destinationDir, DottedName packageName) {
 	if (tn instanceof NormalClassDeclaration) {
-	    writeClass ((NormalClassDeclaration)tn, destinationDir, packagePath);
+	    writeClass ((NormalClassDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof EnumDeclaration) {
-	    writeEnum ((EnumDeclaration)tn, destinationDir, packagePath);
+	    writeEnum ((EnumDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof NormalInterfaceDeclaration) {
-	    writeInterface ((NormalInterfaceDeclaration)tn, destinationDir, packagePath);
+	    writeInterface ((NormalInterfaceDeclaration)tn, destinationDir, packageName);
 	} else if (tn instanceof AnnotationTypeDeclaration) {
-	    writeAnnotation ((AnnotationTypeDeclaration)tn, destinationDir, packagePath);
+	    writeAnnotation ((AnnotationTypeDeclaration)tn, destinationDir, packageName);
 	} else {
 	    throw new IllegalStateException ("Unknown type: " + tn);
 	}
     }
 
     private void writeClass (NormalClassDeclaration cd, Path destinationDir, DottedName packageName) {
-	String fqn = getFQN (packageName, cd.getId ());
+	writeDummyClass (cd.getId (), destinationDir, packageName);
+    }
+
+    private void writeEnum (EnumDeclaration cd, Path destinationDir, DottedName packageName) {
+	writeDummyClass (cd.getId (), destinationDir, packageName);
+    }
+
+    private void writeInterface (NormalInterfaceDeclaration cd,
+				 Path destinationDir, DottedName packageName) {
+	writeDummyClass (cd.getId (), destinationDir, packageName);
+    }
+
+    private void writeAnnotation (AnnotationTypeDeclaration cd,
+				  Path destinationDir, DottedName packageName) {
+	writeDummyClass (cd.getId (), destinationDir, packageName);
+    }
+
+    private void writeDummyClass (String id, Path destinationDir, DottedName packageName) {
+	String fqn = getFQN (packageName, id);
 
         // creates a ClassWriter for the Example public class,
         // which inherits from Object
@@ -64,23 +82,12 @@ public class BytecodeWriter extends ClassLoader {
         mw.visitMaxs(2, 2);
         mw.visitEnd();
 
-	Path path = getPath (destinationDir, packageName, cd.getId ());
+	Path path = getPath (destinationDir, packageName, id);
 	try {
 	    Files.write (path, cw.toByteArray());
 	} catch (IOException e) {
 	    System.err.println ("Failed to create class file: " + path);
 	}
-    }
-
-    private void writeEnum (EnumDeclaration cd, Path destinationDir, DottedName packagePath) {
-    }
-
-    private void writeInterface (NormalInterfaceDeclaration cd,
-				 Path destinationDir, DottedName packagePath) {
-    }
-
-    private void writeAnnotation (AnnotationTypeDeclaration cd,
-				  Path destinationDir, DottedName packagePath) {
     }
 
     public String getFQN (DottedName packageName, String id) {
