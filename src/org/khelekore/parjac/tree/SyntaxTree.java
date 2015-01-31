@@ -1,45 +1,25 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class SyntaxTree {
     private final Path origin;
-    private final TreeNode node;
+    private final CompilationUnit cu;
 
-    public SyntaxTree (Path origin, TreeNode node) {
+    public SyntaxTree (Path origin, CompilationUnit cu) {
 	this.origin = origin;
-	this.node = node;
+	this.cu = cu;
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{path: " + origin + ", tree: " + node + "}";
+	return getClass ().getSimpleName () + "{path: " + origin + ", cu: " + cu + "}";
     }
 
     public Path getOrigin () {
 	return origin;
     }
 
-    public TreeNode getRoot () {
-	return node;
-    }
-
-    public Path getRelativeClassName () {
-	Path srcrelative = getSourceRelativePath ();
-	String filename = srcrelative.getFileName ().toString ();
-	String classname = filename.replaceAll ("(?i).java$", ".class");
-	return Paths.get (srcrelative.getParent ().toString (), classname);
-    }
-
-    public String getFQN () {
-	Path srcrelative = getSourceRelativePath ();
-	String filename = srcrelative.getFileName ().toString ();
-	String classname = filename.replaceAll ("(?i).java$", "");
-	Path cn = Paths.get (srcrelative.getParent ().toString (), classname);
-	return cn.toString ();
-    }
-
-    private Path getSourceRelativePath () {
-	return origin.subpath (1, origin.getNameCount ());
+    public CompilationUnit getCompilationUnit () {
+	return cu;
     }
 }

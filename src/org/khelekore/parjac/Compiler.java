@@ -21,7 +21,10 @@ import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
 import org.khelekore.parjac.parser.JavaTreeBuilder;
 import org.khelekore.parjac.parser.PredictCache;
+import org.khelekore.parjac.tree.CompilationUnit;
+import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TreeNode;
 
 /** The actual compiler
  */
@@ -102,9 +105,16 @@ public class Compiler {
 					  Path destinationDir) {
 	Set<Path> dirs = new HashSet<> ();
 	trees.stream ().
-	    forEach (t -> dirs.add (Paths.get (destinationDir.toString (),
-					       t.getRelativeClassName ().getParent ().toString ())));
+	    forEach (t -> dirs.add (getPath (destinationDir, t)));
 	dirs.forEach (p -> createDirectory (p));
+    }
+
+    private Path getPath (Path dest, SyntaxTree t) {
+	CompilationUnit cu = t.getCompilationUnit ();
+	DottedName packageName = cu.getPackage ();
+	if (packageName == null)
+	    return dest;
+	return Paths.get (dest.toString (), packageName.getPathName ());
     }
 
     private void createDirectory (Path p) {
@@ -117,11 +127,15 @@ public class Compiler {
 
     private void writeClasses (List<SyntaxTree> trees, Path destinationDir) {
 	trees.parallelStream ().
-	    forEach (t -> writeClass (t, destinationDir));
+	    forEach (t -> writeClasses (t, destinationDir));
     }
 
-    private void writeClass (SyntaxTree tree, Path destinationDir) {
-	BytecodeWriter w = new BytecodeWriter ();
-	w.write (tree, destinationDir);
+    private void writeClasses (SyntaxTree tree, Path destinationDir) {
+	CompilationUnit cu = tree.getCompilationUnit ();
+	DottedName packagePath = cu.getPackage ();
+	for (TreeNode type : cu.getTypes ()) {
+	    BytecodeWriter w = new BytecodeWriter ();
+	    w.write (type, destinationDir, packagePath);
+	}
     }
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.khelekore.parjac.grammar.Rule;
 
@@ -42,5 +43,13 @@ public class DottedName implements TreeNode {
 	    return false;
 	DottedName dn = (DottedName)o;
 	return parts.equals (dn.parts);
+    }
+
+    public String getPathName () {
+	return parts.stream ().collect (Collectors.joining ("/"));
+    }
+
+    public String getDotName () {
+	return parts.stream ().collect (Collectors.joining ("."));
     }
 }

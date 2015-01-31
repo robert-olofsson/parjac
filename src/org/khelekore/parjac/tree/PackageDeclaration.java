@@ -20,6 +20,10 @@ public class PackageDeclaration implements TreeNode {
 	name = (DottedName)parts.pop ();
     }
 
+    public DottedName getPackageName () {
+	return name;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{annotations: " + annotations +
 	    ", name: " + name + "}";

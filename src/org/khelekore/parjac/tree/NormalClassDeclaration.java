@@ -49,4 +49,8 @@ public class NormalClassDeclaration implements TreeNode {
 	return getClass ().getSimpleName () + "{" + modifiers + " " + id +
 	    " " + types + " " + superclass + " " + superinterfaces + " " + body + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }

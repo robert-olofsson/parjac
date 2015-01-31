@@ -35,13 +35,21 @@ public class CompilationUnit implements TreeNode {
 	this.types = types;
     }
 
+    @Override public String toString () {
+	return getClass ().getSimpleName () + "{package: " +  pd +
+	    ", imports: " + imports + ", types: " + types + "}";
+    }
+
     private final boolean hasImports (ZOMEntry z) {
 	List<TreeNode> ls = z.get ();
 	return ls.get (0) instanceof ImportDeclaration;
     }
 
-    @Override public String toString () {
-	return getClass ().getSimpleName () + "{package: " +  pd +
-	    ", imports: " + imports + ", types: " + types + "}";
+    public DottedName getPackage () {
+	return pd == null ? null : pd.getPackageName ();
+    }
+
+    public List<TreeNode> getTypes () {
+	return types;
     }
 }

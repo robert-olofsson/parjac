@@ -41,4 +41,8 @@ public class NormalInterfaceDeclaration implements TreeNode {
 	return getClass ().getSimpleName () + "{" + modifiers + " " + id + " " +
 	    types + " " + extendsInterfaces + " " + body + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }

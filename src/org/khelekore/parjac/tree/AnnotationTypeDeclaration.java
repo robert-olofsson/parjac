@@ -19,4 +19,8 @@ public class AnnotationTypeDeclaration implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + modifiers + " " + id + " " + body + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }

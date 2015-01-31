@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.khelekore.parjac.tree.SyntaxTree;
+
+import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
@@ -12,8 +13,22 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeWriter extends ClassLoader {
 
-    public void write (SyntaxTree tree, Path destinationDir) {
-	String fqn = tree.getFQN ();
+    public void write (TreeNode tn, Path destinationDir, DottedName packagePath) {
+	if (tn instanceof NormalClassDeclaration) {
+	    writeClass ((NormalClassDeclaration)tn, destinationDir, packagePath);
+	} else if (tn instanceof EnumDeclaration) {
+	    writeEnum ((EnumDeclaration)tn, destinationDir, packagePath);
+	} else if (tn instanceof NormalInterfaceDeclaration) {
+	    writeInterface ((NormalInterfaceDeclaration)tn, destinationDir, packagePath);
+	} else if (tn instanceof AnnotationTypeDeclaration) {
+	    writeAnnotation ((AnnotationTypeDeclaration)tn, destinationDir, packagePath);
+	} else {
+	    throw new IllegalStateException ("Unknown type: " + tn);
+	}
+    }
+
+    private void writeClass (NormalClassDeclaration cd, Path destinationDir, DottedName packageName) {
+	String fqn = getFQN (packageName, cd.getId ());
 
         // creates a ClassWriter for the Example public class,
         // which inherits from Object
@@ -49,15 +64,35 @@ public class BytecodeWriter extends ClassLoader {
         mw.visitMaxs(2, 2);
         mw.visitEnd();
 
-	// TODO: when we know the class name we do not need this silly thing
-	Path relative = tree.getRelativeClassName ();
-	Path path =
-	    Paths.get (destinationDir.toString (), relative.toString ());
-
+	Path path = getPath (destinationDir, packageName, cd.getId ());
 	try {
 	    Files.write (path, cw.toByteArray());
 	} catch (IOException e) {
 	    System.err.println ("Failed to create class file: " + path);
 	}
+    }
+
+    private void writeEnum (EnumDeclaration cd, Path destinationDir, DottedName packagePath) {
+    }
+
+    private void writeInterface (NormalInterfaceDeclaration cd,
+				 Path destinationDir, DottedName packagePath) {
+    }
+
+    private void writeAnnotation (AnnotationTypeDeclaration cd,
+				  Path destinationDir, DottedName packagePath) {
+    }
+
+    public String getFQN (DottedName packageName, String id) {
+	if (packageName == null)
+	    return id;
+	return packageName.getDotName () + "." + id;
+    }
+
+    private Path getPath (Path destinationDir, DottedName packageName, String id) {
+	String cid = id + ".class";
+	if (packageName == null)
+	    return Paths.get (destinationDir.toString (), cid);
+	return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);
     }
 }

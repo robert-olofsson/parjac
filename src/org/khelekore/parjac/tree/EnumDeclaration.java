@@ -29,4 +29,8 @@ public class EnumDeclaration implements TreeNode {
 	return getClass ().getSimpleName () + "{" + modifiers +
 	    ", id: " +  id + ", superInterfaces: " + superInterfaces + ", body: " + body + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }

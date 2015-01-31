@@ -18,6 +18,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.TokenPart;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 
@@ -198,7 +199,7 @@ public class EarleyParser {
 	TreeNode topNode = parts.poll ();
 	if (topNode == null)
 	    return null;
-	return new SyntaxTree (path, topNode);
+	return new SyntaxTree (path, (CompilationUnit)topNode);
     }
 
     private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts) {
