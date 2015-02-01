@@ -2,6 +2,7 @@ package org.khelekore.parjac.parser;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -64,6 +65,14 @@ class ListRuleHolder {
 	    if (o instanceof String)
 		startingRules.add ((String)o);
 	return startingRules;
+    }
+
+    public EnumSet<Token> getStartingTokens () {
+	EnumSet<Token> et = EnumSet.noneOf (Token.class);
+	for (Object o : m.keySet ())
+	    if (o instanceof Token)
+		et.add ((Token)o);
+	return et;
     }
 
     public Iterator<Rule> getCompletedRules () {

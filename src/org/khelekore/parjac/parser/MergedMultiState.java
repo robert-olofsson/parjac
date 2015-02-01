@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -83,6 +84,17 @@ class MergedMultiState implements MultiState {
 	if (ms == null)
 	    return Collections.emptyIterator ();
 	return ms.getRulesWithNext (t);
+    }
+
+    public EnumSet<Token> getPossibleNextToken () {
+	EnumSet<Token> et = EnumSet.noneOf (Token.class);
+	if (m1 != null)
+	    et.addAll (m1.getPossibleNextToken ());
+	if (m2 != null)
+	    et.addAll (m2.getPossibleNextToken ());
+	if (m3 != null)
+	    et.addAll (m3.getPossibleNextToken ());
+	return et;
     }
 
     public TreeNode getParsedToken () {

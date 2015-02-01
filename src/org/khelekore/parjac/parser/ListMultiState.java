@@ -2,6 +2,7 @@ package org.khelekore.parjac.parser;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,6 +80,14 @@ class ListMultiState implements MultiState {
 	if (ls == null)
 	    return Collections.emptyIterator ();
 	return ls.iterator ();
+    }
+
+    public EnumSet<Token> getPossibleNextToken () {
+	EnumSet<Token> et = EnumSet.noneOf (Token.class);
+	for (Object o : m.keySet ())
+	    if (o instanceof Token)
+		et.add ((Token)o);
+	return et;
     }
 
     public TreeNode getParsedToken () {

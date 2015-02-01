@@ -1,5 +1,6 @@
 package org.khelekore.parjac.parser;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -12,6 +13,7 @@ public interface MultiState {
     Set<String> getPredictRules ();
     Iterator<State> getRulesWithNext (Rule r);
     Iterator<State> getRulesWithNext (Token t);
+    EnumSet<Token> getPossibleNextToken ();
 
     /** Get the token value that we scanned to get into this state.
      *  May be null if no token was scanned

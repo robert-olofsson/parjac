@@ -1,5 +1,6 @@
 package org.khelekore.parjac.parser;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -35,6 +36,10 @@ class PredictedMultiState implements MultiState {
 
     public Iterator<State> getRulesWithNext (Token t) {
 	return new PSSIterator (rules.getRulesWithTokenNext (t));
+    }
+
+    public EnumSet<Token> getPossibleNextToken () {
+	return rules.getStartingTokens ();
     }
 
     public TreeNode getParsedToken () {

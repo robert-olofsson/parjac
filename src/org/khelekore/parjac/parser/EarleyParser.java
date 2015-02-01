@@ -18,7 +18,6 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.TokenPart;
 import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.lexer.Token;
-import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 
@@ -79,7 +78,10 @@ public class EarleyParser {
 	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    currentPosition++;
 	    if (states.size () <= currentPosition) {
-		addParserError ("No possible next state");
+		ParseErrorSolution pe = findBestSolution ();
+		addParserError ("No possible next state, expected " + pe.getWantedToken() +
+				" in order to complete " + pe.getRule ().getName () + "\n" +
+				lexer.getCurrentLine ());
 		return null;
 	    }
 	}
@@ -180,14 +182,37 @@ public class EarleyParser {
 	}
     }
 
+    private ParseErrorSolution findBestSolution () {
+	Token bestToken = Token.END_OF_INPUT;
+	Rule rule = null;
+	int minLength = Integer.MAX_VALUE;
+
+	MultiState ms = states.get (states.size () - 1);
+	for (Token t : ms.getPossibleNextToken ()) {
+	    for (Iterator<State> is = ms.getRulesWithNext (t); is.hasNext (); ) {
+		State s = is.next ();
+		int lengthToComplete = getLengthToComplete (s);
+		if (lengthToComplete < minLength) {
+		    bestToken = t;
+		    rule = s.getRule ();
+		    minLength = lengthToComplete;
+		}
+	    }
+	}
+	return new ParseErrorSolution (bestToken, rule);
+    }
+
+    private int getLengthToComplete (State s) {
+	// TODO: probably want something better here
+	// TODO: probably want to count minimum tokens for the rule
+	return s.getRule ().size () - s.getDotPos ();
+    }
+
     private boolean isEndState (State s) {
 	return s.getStartPos () == 0 && s.dotIsLast () && s.getRule ().getName ().equals ("Goal");
     }
 
-    private int tokenPos = 0;
-
     private SyntaxTree buildTree (State s) {
-	tokenPos = states.size () - 2; // skip <end_of_input>
 	Deque<State> toVisit = new ArrayDeque<> ();
 	toVisit.push (s);
 	Deque<TreeNode> parts = new ArrayDeque<> ();
@@ -203,6 +228,7 @@ public class EarleyParser {
     }
 
     private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts) {
+	int tokenPos = states.size () - 2; // skip <end_of_input>
 	while (!toVisit.isEmpty ()) {
 	    State s = toVisit.pop ();
 
