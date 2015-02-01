@@ -99,6 +99,11 @@ public class Compiler {
 
     private void checkSemantics (List<SyntaxTree> trees) {
 	// TODO: implement
+	// Fill in correct classes
+	// Check modifiers
+	// Check types of fields and assignments
+	// Check matching methods
+	// Check generics
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,
