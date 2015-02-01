@@ -31,4 +31,8 @@ public class EnumBody implements TreeNode {
     public List<TreeNode> getDeclarations () {
 	return enumBodyDeclarations.getDeclarations ();
     }
+
+    public void visit (TreeVisitor visitor) {
+	enumBodyDeclarations.visit (visitor);
+    }
 }

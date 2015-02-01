@@ -49,4 +49,10 @@ public class NormalInterfaceDeclaration implements TreeNode {
     public InterfaceBody getBody () {
 	return body;
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	body.visit (visitor);
+	visitor.endType ();
+    }
 }

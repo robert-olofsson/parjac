@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.stream.Collectors;
 
 import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
@@ -12,66 +14,54 @@ import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class BytecodeWriter extends ClassLoader {
+public class BytecodeWriter implements TreeVisitor {
+    private final Path destinationDir;
+    private DottedName packageName;
+    private final Deque<String> names = new ArrayDeque<> ();
 
-    public void write (TreeNode tn, Path destinationDir, DottedName packageName) {
-	if (tn instanceof NormalClassDeclaration) {
-	    writeClass ("", (NormalClassDeclaration)tn, destinationDir, packageName);
-	} else if (tn instanceof EnumDeclaration) {
-	    writeEnum ("", (EnumDeclaration)tn, destinationDir, packageName);
-	} else if (tn instanceof NormalInterfaceDeclaration) {
-	    writeInterface ("", (NormalInterfaceDeclaration)tn, destinationDir, packageName);
-	} else if (tn instanceof AnnotationTypeDeclaration) {
-	    writeAnnotation ("", (AnnotationTypeDeclaration)tn, destinationDir, packageName);
-	} else {
-	    throw new IllegalStateException ("Unknown type: " + tn);
-	}
+    public BytecodeWriter (Path destinationDir) {
+	this.destinationDir = destinationDir;
     }
 
-    private void writeClass (String prefix, NormalClassDeclaration cd,
-			     Path destinationDir, DottedName packageName) {
-	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
-	writeDummyClass (id, destinationDir, packageName);
-	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
+    public void visit (CompilationUnit cu) {
+	packageName = cu.getPackage ();
     }
 
-    private void writeEnum (String prefix, EnumDeclaration cd,
-			    Path destinationDir, DottedName packageName) {
-	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
-	writeDummyClass (id, destinationDir, packageName);
-	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
+    public void visit (NormalClassDeclaration c) {
+	names.add (c.getId ());
+	String id = names.stream ().collect (Collectors.joining ("$"));
+	writeDummyClass (id);
     }
 
-    private void writeInterface (String prefix, NormalInterfaceDeclaration cd,
-				 Path destinationDir, DottedName packageName) {
-	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
-	writeDummyClass (id, destinationDir, packageName);
-	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
+    public void visit (EnumDeclaration e) {
+	names.add (e.getId ());
+	String id = names.stream ().collect (Collectors.joining ("$"));
+	writeDummyClass (id);
     }
 
-    private void writeAnnotation (String prefix, AnnotationTypeDeclaration cd,
-				  Path destinationDir, DottedName packageName) {
-	String id = prefix.isEmpty () ? cd.getId () : prefix + "$" + cd.getId ();
-	writeDummyClass (id, destinationDir, packageName);
-	writeInnerClasses (id, cd.getBody ().getDeclarations (), destinationDir, packageName);
+    public void visit (NormalInterfaceDeclaration i) {
+	names.add (i.getId ());
+	String id = names.stream ().collect (Collectors.joining ("$"));
+	writeDummyClass (id);
     }
 
-    private void writeInnerClasses (String prefix, List<TreeNode> members,
-				    Path destinationDir, DottedName packageName) {
-	for (TreeNode tn : members) {
-	    if (tn instanceof NormalClassDeclaration) {
-		writeClass (prefix, (NormalClassDeclaration)tn, destinationDir, packageName);
-	    } else if (tn instanceof EnumDeclaration) {
-		writeEnum (prefix, (EnumDeclaration)tn, destinationDir, packageName);
-	    } else if (tn instanceof NormalInterfaceDeclaration) {
-		writeInterface (prefix, (NormalInterfaceDeclaration)tn, destinationDir, packageName);
-	    } else if (tn instanceof AnnotationTypeDeclaration) {
-		writeAnnotation (prefix, (AnnotationTypeDeclaration)tn, destinationDir, packageName);
-	    }
-	}
+    public void visit (AnnotationTypeDeclaration a) {
+	names.add (a.getId ());
+	String id = names.stream ().collect (Collectors.joining ("$"));
+	writeDummyClass (id);
     }
 
-    private void writeDummyClass (String id, Path destinationDir, DottedName packageName) {
+    public void endType () {
+	names.removeLast ();
+    }
+
+    public void visit (FieldDeclaration f) {
+    }
+
+    public void visit (MethodDeclaration m) {
+    }
+
+    private void writeDummyClass (String id) {
 	String fqn = getFQN (packageName, id);
 
         // creates a ClassWriter for the Example public class,
@@ -108,7 +98,7 @@ public class BytecodeWriter extends ClassLoader {
         mw.visitMaxs(2, 2);
         mw.visitEnd();
 
-	Path path = getPath (destinationDir, packageName, id);
+	Path path = getPath (id);
 	try {
 	    Files.write (path, cw.toByteArray());
 	} catch (IOException e) {
@@ -122,7 +112,7 @@ public class BytecodeWriter extends ClassLoader {
 	return packageName.getDotName () + "." + id;
     }
 
-    private Path getPath (Path destinationDir, DottedName packageName, String id) {
+    private Path getPath (String id) {
 	String cid = id + ".class";
 	if (packageName == null)
 	    return Paths.get (destinationDir.toString (), cid);

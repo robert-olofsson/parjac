@@ -31,4 +31,8 @@ public class ZOMEntry implements TreeNode {
     public int size () {
 	return nodes.size ();
     }
+
+    public void visit (TreeVisitor visitor) {
+	// empty
+    }
 }

@@ -136,11 +136,7 @@ public class Compiler {
     }
 
     private void writeClasses (SyntaxTree tree, Path destinationDir) {
-	CompilationUnit cu = tree.getCompilationUnit ();
-	DottedName packagePath = cu.getPackage ();
-	for (TreeNode type : cu.getTypes ()) {
-	    BytecodeWriter w = new BytecodeWriter ();
-	    w.write (type, destinationDir, packagePath);
-	}
+	BytecodeWriter w = new BytecodeWriter (destinationDir);
+	tree.getCompilationUnit ().visit (w);
     }
 }

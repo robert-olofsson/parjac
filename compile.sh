@@ -6,4 +6,5 @@ javac \
  -sourcepath src \
  -Xdiags:verbose \
  -Xlint:unchecked \
+ -Xmaxerrs 1000 \
  $(find src/ -name \*.java)

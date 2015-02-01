@@ -26,4 +26,8 @@ public abstract class BodyBase implements TreeNode {
     public List<TreeNode> getDeclarations () {
 	return declarations;
     }
+
+    public void visit (TreeVisitor visitor) {
+	declarations.forEach (d -> d.visit (visitor));
+    }
 }

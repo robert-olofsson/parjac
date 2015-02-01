@@ -37,4 +37,10 @@ public class EnumDeclaration implements TreeNode {
     public EnumBody getBody () {
 	return body;
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	body.visit (visitor);
+	visitor.endType ();
+    }
 }

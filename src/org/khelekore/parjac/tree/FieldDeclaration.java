@@ -21,4 +21,8 @@ public class FieldDeclaration implements TreeNode {
 	return getClass ().getSimpleName () + "{modifiers: " + modifiers +
 	    ", type: " + type + ", variables: " + variables + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
 }

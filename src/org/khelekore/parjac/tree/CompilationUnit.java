@@ -52,4 +52,10 @@ public class CompilationUnit implements TreeNode {
     public List<TreeNode> getTypes () {
 	return types;
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	if (types != null)
+	    types.forEach (t -> t.visit (visitor));
+    }
 }

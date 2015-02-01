@@ -57,4 +57,10 @@ public class NormalClassDeclaration implements TreeNode {
     public ClassBody getBody () {
 	return body;
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	body.visit (visitor);
+	visitor.endType ();
+    }
 }

@@ -19,4 +19,8 @@ public class EnumBodyDeclarations implements TreeNode {
     public List<TreeNode> getDeclarations () {
 	return classBodyDeclarations;
     }
+
+    public void visit (TreeVisitor visitor) {
+	classBodyDeclarations.forEach (d -> d.visit (visitor));
+    }
 }

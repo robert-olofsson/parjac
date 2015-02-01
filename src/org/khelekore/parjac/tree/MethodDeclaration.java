@@ -19,4 +19,8 @@ public class MethodDeclaration implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + modifiers + " " + header + " " + body + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
 }
