@@ -1,5 +1,6 @@
 libs/*
 bin/*
 test-output/*
+javadoc/*
 .classpath
 .project
