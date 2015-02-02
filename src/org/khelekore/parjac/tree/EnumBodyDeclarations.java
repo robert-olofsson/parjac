@@ -21,6 +21,7 @@ public class EnumBodyDeclarations implements TreeNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	classBodyDeclarations.forEach (d -> d.visit (visitor));
+	if (classBodyDeclarations != null)
+	    classBodyDeclarations.forEach (d -> d.visit (visitor));
     }
 }

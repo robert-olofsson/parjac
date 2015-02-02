@@ -33,6 +33,7 @@ public class EnumBody implements TreeNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	enumBodyDeclarations.visit (visitor);
+	if (enumBodyDeclarations != null)
+	    enumBodyDeclarations.visit (visitor);
     }
 }
