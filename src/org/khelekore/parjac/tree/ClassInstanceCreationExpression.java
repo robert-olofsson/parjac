@@ -22,4 +22,8 @@ public class ClassInstanceCreationExpression implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + from + "." + ucice + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	ucice.visit (visitor);
+    }
 }

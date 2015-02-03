@@ -24,6 +24,10 @@ public abstract class MethodBody implements TreeNode {
 	@Override public String getStringDesc () {
 	    return block.toString ();
 	}
+
+	public void visit (TreeVisitor visitor) {
+	    block.visit (visitor);
+	}
     }
 
     public static MethodBody build (Rule r, Deque<TreeNode> parts) {

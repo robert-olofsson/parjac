@@ -26,4 +26,11 @@ public class ConstructorBody implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + eci + " " + statements + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (eci != null)
+	    eci.visit (visitor);
+	if (statements != null)
+	    statements.visit (visitor);
+    }
 }

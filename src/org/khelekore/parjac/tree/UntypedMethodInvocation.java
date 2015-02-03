@@ -16,4 +16,9 @@ public class UntypedMethodInvocation implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "(" + args + ")}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	if (args != null)
+	    args.visit (visitor);
+    }
 }

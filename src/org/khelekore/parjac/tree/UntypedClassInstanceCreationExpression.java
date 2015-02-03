@@ -51,4 +51,14 @@ public class UntypedClassInstanceCreationExpression implements TreeNode {
 	return getClass ().getSimpleName () + "{new " + typeArguments + " " + annotations + " " +
 	    id + " " + typeArgumentsOrDiamond + "(" + args + ") " + body + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (args != null)
+	    args.visit (visitor);
+	if (body != null) {
+	    visitor.anonymousClass (body);
+	    body.visit (visitor);
+	    visitor.endType ();
+	}
+    }
 }

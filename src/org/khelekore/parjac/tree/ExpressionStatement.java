@@ -14,4 +14,8 @@ public class ExpressionStatement implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + ";}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	exp.visit (visitor);
+    }
 }

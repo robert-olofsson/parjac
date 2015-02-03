@@ -22,5 +22,6 @@ public class MethodDeclaration implements TreeNode {
 
     public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
+	body.visit (visitor);
     }
 }

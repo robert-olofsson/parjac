@@ -16,4 +16,8 @@ public class Assignment implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + lhs + " " + op + " " + rhs + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	rhs.visit (visitor);
+    }
 }

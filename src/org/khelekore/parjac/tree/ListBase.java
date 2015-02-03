@@ -24,4 +24,8 @@ public abstract class ListBase<T extends TreeNode> implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{ls: " + ls + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	ls.forEach (t -> t.visit (visitor));
+    }
 }

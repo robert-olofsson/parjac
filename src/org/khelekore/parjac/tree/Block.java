@@ -15,4 +15,11 @@ public class Block implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + statements + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	if (statements != null)
+	    statements.forEach (s -> s.visit (visitor));
+	visitor.endBlock ();
+    }
 }

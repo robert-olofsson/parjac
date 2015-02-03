@@ -24,5 +24,6 @@ public class FieldDeclaration implements TreeNode {
 
     public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
+	variables.visit (visitor);
     }
 }

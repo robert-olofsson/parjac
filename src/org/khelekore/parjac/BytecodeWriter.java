@@ -17,7 +17,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class BytecodeWriter implements TreeVisitor {
     private final Path destinationDir;
     private DottedName packageName;
-    private final Deque<String> names = new ArrayDeque<> ();
+    private final Deque<ClassId> names = new ArrayDeque<> ();
 
     public BytecodeWriter (Path destinationDir) {
 	this.destinationDir = destinationDir;
@@ -28,27 +28,39 @@ public class BytecodeWriter implements TreeVisitor {
     }
 
     public void visit (NormalClassDeclaration c) {
-	names.add (c.getId ());
-	String id = names.stream ().collect (Collectors.joining ("$"));
+	String id = getId (c.getId ());
 	writeDummyClass (id);
     }
 
     public void visit (EnumDeclaration e) {
-	names.add (e.getId ());
-	String id = names.stream ().collect (Collectors.joining ("$"));
+	String id = getId (e.getId ());
 	writeDummyClass (id);
     }
 
     public void visit (NormalInterfaceDeclaration i) {
-	names.add (i.getId ());
-	String id = names.stream ().collect (Collectors.joining ("$"));
+	String id = getId (i.getId ());
 	writeDummyClass (id);
     }
 
     public void visit (AnnotationTypeDeclaration a) {
-	names.add (a.getId ());
-	String id = names.stream ().collect (Collectors.joining ("$"));
+	String id = getId (a.getId ());
 	writeDummyClass (id);
+    }
+
+    public void anonymousClass (ClassBody b) {
+	String id = getId (generateAnonId ());
+	writeDummyClass (id);
+    }
+
+    private String getId (String id) {
+	names.addLast (new ClassId (id));
+	return names.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
+    }
+
+    private String generateAnonId () {
+	ClassId cid = names.peekLast ();
+	cid.anonId++;
+	return Integer.toString (cid.anonId);
     }
 
     public void endType () {
@@ -59,6 +71,12 @@ public class BytecodeWriter implements TreeVisitor {
     }
 
     public void visit (MethodDeclaration m) {
+    }
+
+    public void visit (Block b) {
+    }
+
+    public void endBlock () {
     }
 
     private void writeDummyClass (String id) {
@@ -117,5 +135,14 @@ public class BytecodeWriter implements TreeVisitor {
 	if (packageName == null)
 	    return Paths.get (destinationDir.toString (), cid);
 	return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);
+    }
+
+    private static class ClassId {
+	private final String id;
+	private int anonId;
+
+	public ClassId (String id) {
+	    this.id = id;
+	}
     }
 }

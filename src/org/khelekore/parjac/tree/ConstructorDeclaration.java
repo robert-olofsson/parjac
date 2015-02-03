@@ -32,4 +32,8 @@ public class ConstructorDeclaration implements TreeNode {
 	return getClass ().getSimpleName () + "{" + modifiers + " " +
 	    declarator + " " + throwsClause + " " + body + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	body.visit (visitor);
+    }
 }

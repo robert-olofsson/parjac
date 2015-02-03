@@ -39,14 +39,10 @@ public class MethodInvocation implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + on + " " + isSuper + " " + types + " " + mi + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	if (on != null)
+	    on.visit (visitor);
+	mi.visit (visitor);
+    }
 }
-
-
-
-
-
-
-
-
-
-

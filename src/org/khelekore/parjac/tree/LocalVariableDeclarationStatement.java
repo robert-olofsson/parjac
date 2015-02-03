@@ -14,4 +14,8 @@ public class LocalVariableDeclarationStatement implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + lvd + ";}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	lvd.visit (visitor);
+    }
 }

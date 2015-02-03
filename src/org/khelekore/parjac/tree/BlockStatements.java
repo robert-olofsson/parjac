@@ -27,4 +27,8 @@ public class BlockStatements implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + statements + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	statements.forEach (s -> s.visit (visitor));
+    }
 }

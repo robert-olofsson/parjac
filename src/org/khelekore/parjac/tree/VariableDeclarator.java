@@ -21,4 +21,9 @@ public class VariableDeclarator implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{vdi: " + vdi + " = " + initializer + "}";
     }
+
+    public void visit (TreeVisitor visitor) {
+	if (initializer != null)
+	    initializer.visit (visitor);
+    }
 }
