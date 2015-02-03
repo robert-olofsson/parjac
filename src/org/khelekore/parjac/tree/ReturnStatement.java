@@ -14,4 +14,8 @@ public class ReturnStatement implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	exp.visit (visitor);
+    }
 }

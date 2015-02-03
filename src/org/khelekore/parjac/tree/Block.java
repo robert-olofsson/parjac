@@ -16,7 +16,7 @@ public class Block implements TreeNode {
 	return getClass ().getSimpleName () + "{" + statements + "}";
     }
 
-    public void visit (TreeVisitor visitor) {
+    @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	if (statements != null)
 	    statements.forEach (s -> s.visit (visitor));

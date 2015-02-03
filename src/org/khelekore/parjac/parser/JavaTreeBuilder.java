@@ -245,6 +245,7 @@ public class JavaTreeBuilder {
 	    return new ModifierTokenType (token);
 	else if (!token.hasValue ())
 	    return null;
+
 	switch (token) {
 	case INT_LITERAL:
 	    return new IntLiteral (lexer.getIntValue ());
