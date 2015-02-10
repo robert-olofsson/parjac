@@ -25,6 +25,10 @@ public class MethodDeclaration implements TreeNode {
 	body.visit (visitor);
     }
 
+    public List<TreeNode> getModifiers () {
+	return modifiers;
+    }
+
     public String getMethodName () {
 	return header.getMethodName ();
     }

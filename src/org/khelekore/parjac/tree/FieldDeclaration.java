@@ -27,6 +27,10 @@ public class FieldDeclaration implements TreeNode {
 	variables.visit (visitor);
     }
 
+    public List<TreeNode> getModifiers () {
+	return modifiers;
+    }
+
     public VariableDeclaratorList getVariables () {
 	return variables;
     }

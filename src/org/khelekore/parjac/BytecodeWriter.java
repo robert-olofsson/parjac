@@ -6,8 +6,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -67,9 +69,10 @@ public class BytecodeWriter implements TreeVisitor {
 
     public void visit (FieldDeclaration f) {
 	ClassWriter cw = classes.peekLast ().cw;
+	int mods = getModifiers (f.getModifiers ());
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    // int access, String name, String desc, String signature, Object value)
-	    FieldVisitor fw = cw.visitField (ACC_PRIVATE, vd.getId (), "I", null, null);
+	    FieldVisitor fw = cw.visitField (mods, vd.getId (), "I", null, null);
 	    fw.visitEnd ();
 	}
     }
@@ -77,8 +80,9 @@ public class BytecodeWriter implements TreeVisitor {
     public void visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
-        MethodVisitor mw = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, m.getMethodName (),
-                "([Ljava/lang/String;)V", null, null);
+        MethodVisitor mw = cw.visitMethod(getModifiers (m.getModifiers ()),
+					  m.getMethodName (),
+					  "([Ljava/lang/String;)V", null, null);
         // pushes the 'out' field (of type PrintStream) of the System class
         mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
                 "Ljava/io/PrintStream;");
@@ -92,6 +96,49 @@ public class BytecodeWriter implements TreeVisitor {
         // variables
         mw.visitMaxs(2, 2);
         mw.visitEnd();
+    }
+
+    private int getModifiers (List<TreeNode> modifiers) {
+	int ret = 0;
+	if (modifiers != null) {
+	    for (TreeNode tn : modifiers) {
+		if (tn instanceof ModifierTokenType) {
+		    ret += getModifier (((ModifierTokenType)tn).get ());
+		}
+	    }
+	}
+	return ret;
+    }
+
+    private int getModifier (Token t) {
+	switch (t) {
+	case PUBLIC:
+	    return ACC_PUBLIC;
+	case PROTECTED:
+	    return ACC_PROTECTED;
+	case PRIVATE:
+	    return ACC_PRIVATE;
+	case ABSTRACT:
+	    return ACC_ABSTRACT;
+	case STATIC:
+	    return ACC_STATIC;
+	case FINAL:
+	    return ACC_FINAL;
+	case STRICTFP:
+	    return ACC_STRICT;
+	case TRANSIENT:
+	    return ACC_TRANSIENT;
+	case VOLATILE:
+	    return ACC_VOLATILE;
+	case SYNCHRONIZED:
+	    return ACC_SYNCHRONIZED;
+	case NATIVE:
+	    return ACC_NATIVE;
+	case DEFAULT:
+	    // hmm?
+	default:
+	    throw new IllegalStateException ("Got unexpected token: " + t);
+	}
     }
 
     public void visit (Block b) {
