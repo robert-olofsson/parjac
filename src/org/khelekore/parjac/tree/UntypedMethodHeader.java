@@ -19,6 +19,10 @@ public class UntypedMethodHeader implements TreeNode {
 	return getClass ().getSimpleName () + "{" + result + " " + declarator + " " + thrown + "}";
     }
 
+    public TreeNode getResult () {
+	return result;
+    }
+
     public String getMethodName () {
 	return declarator.getId ();
     }

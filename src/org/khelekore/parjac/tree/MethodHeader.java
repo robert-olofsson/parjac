@@ -21,6 +21,10 @@ public class MethodHeader implements TreeNode {
 	    annotations + " " + untypedHeader + "}";
     }
 
+    public TreeNode getResult () {
+	return untypedHeader.getResult ();
+    }
+
     public String getMethodName () {
 	return untypedHeader.getMethodName ();
     }

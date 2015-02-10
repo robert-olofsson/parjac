@@ -24,6 +24,10 @@ public abstract class Result implements TreeNode {
 	@Override protected String getStringDesc () {
 	    return type.toString ();
 	}
+
+	public TreeNode get () {
+	    return type;
+	}
     }
 
     public static TreeNode build (Rule r, Deque<TreeNode> parts) {

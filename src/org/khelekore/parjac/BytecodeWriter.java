@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.*;
+import org.khelekore.parjac.tree.Result.TypeResult;
+import org.khelekore.parjac.tree.Result.VoidResult;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -82,7 +84,8 @@ public class BytecodeWriter implements TreeVisitor {
         // creates a MethodWriter for the method
         MethodVisitor mw = cw.visitMethod(getModifiers (m.getModifiers ()),
 					  m.getMethodName (),
-					  "([Ljava/lang/String;)V", null, null);
+					  "([Ljava/lang/String;)" + getResultType (m.getResult ()),
+					  null, null);
         // pushes the 'out' field (of type PrintStream) of the System class
         mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
                 "Ljava/io/PrintStream;");
@@ -139,6 +142,15 @@ public class BytecodeWriter implements TreeVisitor {
 	default:
 	    throw new IllegalStateException ("Got unexpected token: " + t);
 	}
+    }
+
+    private String getResultType (TreeNode tn) {
+	if (tn instanceof Result.VoidResult) {
+	    return "V";
+	} else if (tn instanceof Result.TypeResult) {
+	    return getType (((Result.TypeResult)tn).get ());
+	}
+	throw new IllegalStateException ("Unhandled result type: " + tn);
     }
 
     private String getType (TreeNode tn) {

@@ -29,6 +29,10 @@ public class MethodDeclaration implements TreeNode {
 	return modifiers;
     }
 
+    public TreeNode getResult () {
+	return header.getResult ();
+    }
+
     public String getMethodName () {
 	return header.getMethodName ();
     }
