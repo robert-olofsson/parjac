@@ -23,13 +23,3 @@ public class UntypedMethodHeader implements TreeNode {
 	return declarator.getId ();
     }
 }
-
-
-
-
-
-
-
-
-
-
