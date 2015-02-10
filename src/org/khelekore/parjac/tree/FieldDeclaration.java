@@ -31,6 +31,10 @@ public class FieldDeclaration implements TreeNode {
 	return modifiers;
     }
 
+    public TreeNode getType () {
+	return type;
+    }
+
     public VariableDeclaratorList getVariables () {
 	return variables;
     }

@@ -72,7 +72,7 @@ public class BytecodeWriter implements TreeVisitor {
 	int mods = getModifiers (f.getModifiers ());
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    // int access, String name, String desc, String signature, Object value)
-	    FieldVisitor fw = cw.visitField (mods, vd.getId (), "I", null, null);
+	    FieldVisitor fw = cw.visitField (mods, vd.getId (), getType (f.getType ()), null, null);
 	    fw.visitEnd ();
 	}
     }
@@ -138,6 +138,39 @@ public class BytecodeWriter implements TreeVisitor {
 	    // hmm?
 	default:
 	    throw new IllegalStateException ("Got unexpected token: " + t);
+	}
+    }
+
+    private String getType (TreeNode tn) {
+	if (tn instanceof PrimitiveTokenType) {
+	    return getPrimitiveType (((PrimitiveTokenType)tn).get ());
+	}
+	// TODO: correct class type
+	return "Ljava.lang.String;";
+    }
+
+    private String getPrimitiveType (Token t) {
+	switch (t) {
+	case BYTE:
+	    return "B";
+	case SHORT:
+	    return "S";
+	case INT:
+	    return "I";
+	case LONG:
+	    return "J";
+	case CHAR:
+	    return "C";
+	case FLOAT:
+	    return "F";
+	case DOUBLE:
+	    return "D";
+	case BOOLEAN:
+	    return "Z";
+	case VOID:
+	    return "V";
+	default:
+	    throw new IllegalStateException ("Not a primitive type: " + t);
 	}
     }
 
