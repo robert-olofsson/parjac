@@ -18,6 +18,10 @@ public class UntypedMethodHeader implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + result + " " + declarator + " " + thrown + "}";
     }
+
+    public String getMethodName () {
+	return declarator.getId ();
+    }
 }
 
 

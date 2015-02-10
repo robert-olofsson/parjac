@@ -25,4 +25,8 @@ public class MethodDeclarator implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "(" + parameterList + ")" + dims + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }

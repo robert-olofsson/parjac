@@ -24,4 +24,8 @@ public class MethodDeclaration implements TreeNode {
 	visitor.visit (this);
 	body.visit (visitor);
     }
+
+    public String getMethodName () {
+	return header.getMethodName ();
+    }
 }

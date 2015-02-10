@@ -20,4 +20,8 @@ public class MethodHeader implements TreeNode {
 	return getClass ().getSimpleName () + "{" + typeParameters + " " +
 	    annotations + " " + untypedHeader + "}";
     }
+
+    public String getMethodName () {
+	return untypedHeader.getMethodName ();
+    }
 }
