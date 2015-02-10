@@ -16,6 +16,7 @@ public class ReturnStatement implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	exp.visit (visitor);
+	if (exp != null)
+	    exp.visit (visitor);
     }
 }
