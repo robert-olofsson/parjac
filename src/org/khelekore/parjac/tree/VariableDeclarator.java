@@ -26,4 +26,8 @@ public class VariableDeclarator implements TreeNode {
 	if (initializer != null)
 	    initializer.visit (visitor);
     }
+
+    public String getId () {
+	return vdi.getId ();
+    }
 }

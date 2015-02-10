@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -65,6 +66,12 @@ public class BytecodeWriter implements TreeVisitor {
     }
 
     public void visit (FieldDeclaration f) {
+	ClassWriter cw = classes.peekLast ().cw;
+	for (VariableDeclarator vd : f.getVariables ().get ()) {
+	    // int access, String name, String desc, String signature, Object value)
+	    FieldVisitor fw = cw.visitField (ACC_PRIVATE, vd.getId (), "I", null, null);
+	    fw.visitEnd ();
+	}
     }
 
     public void visit (MethodDeclaration m) {

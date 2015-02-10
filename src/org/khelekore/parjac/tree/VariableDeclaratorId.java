@@ -16,4 +16,8 @@ public class VariableDeclaratorId implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{id: " + id + ", dims: " + dims + "}";
     }
+
+    public String getId () {
+	return id;
+    }
 }
