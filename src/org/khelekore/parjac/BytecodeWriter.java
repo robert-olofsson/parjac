@@ -294,6 +294,5 @@ public class BytecodeWriter implements TreeVisitor {
 		return Paths.get (destinationDir.toString (), cid);
 	    return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);
 	}
-
     }
 }
