@@ -8,6 +8,7 @@ Some things:
 *) Every step should be internally time logged so that it is easy to
    inspect performance.
 *) The lexer is hand written.
+*) The parser is basically a earley parser, but uses a cache for
+   the predicted states.
 *) Tests are done with testng.
-
-Use asm for bytecode handling.
+*) Uses asm for bytecode handling.
