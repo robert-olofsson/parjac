@@ -85,10 +85,9 @@ public class BytecodeWriter implements TreeVisitor {
 	int mods = getModifiers (m.getModifiers ());
 	if (hasVarargs (m))
 	    mods += ACC_VARARGS;
-        MethodVisitor mw = cw.visitMethod(mods,
-					  m.getMethodName (),
-					  getParameters (m.getParameters ()) + getResultType (m.getResult ()),
-					  null, null);
+	StringBuilder sb = new StringBuilder ();
+	appendSignature (m, sb);
+        MethodVisitor mw = cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null);
         // pushes the 'out' field (of type PrintStream) of the System class
         mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
                 "Ljava/io/PrintStream;");
@@ -157,8 +156,12 @@ public class BytecodeWriter implements TreeVisitor {
 	return false;
     }
 
-    private String getParameters (FormalParameterList ls) {
-	StringBuilder sb = new StringBuilder ();
+    private void appendSignature (MethodDeclaration m, StringBuilder sb) {
+	appendParameters (m.getParameters (), sb);
+	appendResultType (m.getResult (), sb);
+    }
+
+    private void appendParameters (FormalParameterList ls, StringBuilder sb) {
 	sb.append ("(");
 	if (ls != null) {
 	    NormalFormalParameterList fps = ls.getParameters ();
@@ -170,20 +173,20 @@ public class BytecodeWriter implements TreeVisitor {
 	    LastFormalParameter lfp = fps.getLastFormalParameter ();
 	    if (lfp != null) {
 		sb.append ("[");
-		sb.append (getType (lfp.getType ())); // TODO: varargs
+		sb.append (getType (lfp.getType ()));
 	    }
 	}
 	sb.append (")");
-	return sb.toString ();
     }
 
-    private String getResultType (TreeNode tn) {
+    private void appendResultType (TreeNode tn, StringBuilder sb) {
 	if (tn instanceof Result.VoidResult) {
-	    return "V";
+	    sb.append ("V");
 	} else if (tn instanceof Result.TypeResult) {
-	    return getType (((Result.TypeResult)tn).get ());
+	    sb.append (getType (((Result.TypeResult)tn).get ()));
+	} else {
+	    throw new IllegalStateException ("Unhandled result type: " + tn);
 	}
-	throw new IllegalStateException ("Unhandled result type: " + tn);
     }
 
     private String getType (TreeNode tn) {
