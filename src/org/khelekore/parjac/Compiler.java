@@ -24,7 +24,6 @@ import org.khelekore.parjac.parser.PredictCache;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.SyntaxTree;
-import org.khelekore.parjac.tree.TreeNode;
 
 /** The actual compiler
  */
