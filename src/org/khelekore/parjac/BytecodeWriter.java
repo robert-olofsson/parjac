@@ -72,7 +72,7 @@ public class BytecodeWriter implements TreeVisitor {
 
 	int mods = getModifiers (c.getModifiers ());
 	if (hasVarargs (c.getParameters ()))
-	    mods += ACC_VARARGS;
+	    mods |= ACC_VARARGS;
 
 	StringBuilder sb = new StringBuilder ();
 	appendParameters (c.getParameters (), sb);
@@ -105,7 +105,7 @@ public class BytecodeWriter implements TreeVisitor {
         // creates a MethodWriter for the method
 	int mods = getModifiers (m.getModifiers ());
 	if (hasVarargs (m.getParameters ()))
-	    mods += ACC_VARARGS;
+	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
         MethodVisitor mw = cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null);
@@ -129,7 +129,7 @@ public class BytecodeWriter implements TreeVisitor {
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
 		if (tn instanceof ModifierTokenType) {
-		    ret += getModifier (((ModifierTokenType)tn).get ());
+		    ret |= getModifier (((ModifierTokenType)tn).get ());
 		}
 	    }
 	}
