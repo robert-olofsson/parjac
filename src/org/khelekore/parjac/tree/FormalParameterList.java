@@ -16,4 +16,8 @@ public class FormalParameterList implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + rp + " " + fps + "}";
     }
+
+    public NormalFormalParameterList getParameters () {
+	return fps;
+    }
 }

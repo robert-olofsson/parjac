@@ -36,4 +36,8 @@ public class MethodDeclaration implements TreeNode {
     public String getMethodName () {
 	return header.getMethodName ();
     }
+
+    public FormalParameterList getParameters () {
+	return header.getParameters ();
+    }
 }

@@ -36,4 +36,8 @@ public class LastFormalParameter implements TreeNode {
 	return getClass ().getSimpleName () + "{" + modifiers + " " +
 	    type + " " + annotations + " " + vdi + "}";
     }
+
+    public TreeNode getType () {
+	return type;
+    }
 }

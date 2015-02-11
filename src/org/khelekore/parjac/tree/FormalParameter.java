@@ -19,4 +19,8 @@ public class FormalParameter implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + annotations + " " + type + " " + vdi + "}";
     }
+
+    public TreeNode getType () {
+	return type;
+    }
 }

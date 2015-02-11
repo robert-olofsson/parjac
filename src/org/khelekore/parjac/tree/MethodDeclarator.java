@@ -29,4 +29,8 @@ public class MethodDeclarator implements TreeNode {
     public String getId () {
 	return id;
     }
+
+    public FormalParameterList getParameters () {
+	return parameterList;
+    }
 }

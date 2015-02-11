@@ -28,4 +28,8 @@ public class MethodHeader implements TreeNode {
     public String getMethodName () {
 	return untypedHeader.getMethodName ();
     }
+
+    public FormalParameterList getParameters () {
+	return untypedHeader.getParameters ();
+    }
 }

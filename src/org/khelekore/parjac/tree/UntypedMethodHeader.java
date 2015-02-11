@@ -26,4 +26,8 @@ public class UntypedMethodHeader implements TreeNode {
     public String getMethodName () {
 	return declarator.getId ();
     }
+
+    public FormalParameterList getParameters () {
+	return declarator.getParameters ();
+    }
 }

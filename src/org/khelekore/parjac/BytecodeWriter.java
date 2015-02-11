@@ -82,9 +82,12 @@ public class BytecodeWriter implements TreeVisitor {
     public void visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
-        MethodVisitor mw = cw.visitMethod(getModifiers (m.getModifiers ()),
+	int mods = getModifiers (m.getModifiers ());
+	if (hasVarargs (m))
+	    mods += ACC_VARARGS;
+        MethodVisitor mw = cw.visitMethod(mods,
 					  m.getMethodName (),
-					  "([Ljava/lang/String;)" + getResultType (m.getResult ()),
+					  getParameters (m.getParameters ()) + getResultType (m.getResult ()),
 					  null, null);
         // pushes the 'out' field (of type PrintStream) of the System class
         mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
@@ -142,6 +145,36 @@ public class BytecodeWriter implements TreeVisitor {
 	default:
 	    throw new IllegalStateException ("Got unexpected token: " + t);
 	}
+    }
+
+    private boolean hasVarargs (MethodDeclaration m) {
+	FormalParameterList ls = m.getParameters ();
+	if (ls != null) {
+	    NormalFormalParameterList fps = ls.getParameters ();
+	    LastFormalParameter lfp = fps.getLastFormalParameter ();
+	    return lfp != null;
+	}
+	return false;
+    }
+
+    private String getParameters (FormalParameterList ls) {
+	StringBuilder sb = new StringBuilder ();
+	sb.append ("(");
+	if (ls != null) {
+	    NormalFormalParameterList fps = ls.getParameters ();
+	    List<FormalParameter> args = fps.getFormalParameters ();
+	    if (args != null) {
+		for (FormalParameter fp : args)
+		    sb.append (getType (fp.getType ()));
+	    }
+	    LastFormalParameter lfp = fps.getLastFormalParameter ();
+	    if (lfp != null) {
+		sb.append ("[");
+		sb.append (getType (lfp.getType ())); // TODO: varargs
+	    }
+	}
+	sb.append (")");
+	return sb.toString ();
     }
 
     private String getResultType (TreeNode tn) {

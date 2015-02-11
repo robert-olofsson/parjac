@@ -29,4 +29,12 @@ public class NormalFormalParameterList implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + fps + " " + lfp + "}";
     }
+
+    public List<FormalParameter> getFormalParameters () {
+	return fps;
+    }
+
+    public LastFormalParameter getLastFormalParameter () {
+	return lfp;
+    }
 }
