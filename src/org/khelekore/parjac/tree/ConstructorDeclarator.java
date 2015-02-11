@@ -29,4 +29,8 @@ public class ConstructorDeclarator implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + types + " " + id + "(" + params + ")}";
     }
+
+    public FormalParameterList getParameters () {
+	return params;
+    }
 }

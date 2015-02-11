@@ -34,6 +34,15 @@ public class ConstructorDeclaration implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
 	body.visit (visitor);
+    }
+
+    public List<TreeNode> getModifiers () {
+	return modifiers;
+    }
+
+    public FormalParameterList getParameters () {
+	return declarator.getParameters ();
     }
 }

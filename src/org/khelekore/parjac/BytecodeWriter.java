@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.*;
-import org.khelekore.parjac.tree.Result.TypeResult;
-import org.khelekore.parjac.tree.Result.VoidResult;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -69,6 +67,29 @@ public class BytecodeWriter implements TreeVisitor {
 	cid.write ();
     }
 
+    public void visit (ConstructorDeclaration c) {
+	ClassWriter cw = classes.peekLast ().cw;
+
+	int mods = getModifiers (c.getModifiers ());
+	if (hasVarargs (c.getParameters ()))
+	    mods += ACC_VARARGS;
+
+	StringBuilder sb = new StringBuilder ();
+	appendParameters (c.getParameters (), sb);
+	sb.append ("V");
+	MethodVisitor mw =
+	    cw.visitMethod (mods, "<init>", sb.toString (), null, null);
+
+	// pushes the 'this' variable
+	mw.visitVarInsn(ALOAD, 0);
+	// invokes the super class constructor
+	mw.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	mw.visitInsn(RETURN);
+	// this code uses a maximum of one stack element and one local variable
+	mw.visitMaxs(1, 1);
+	mw.visitEnd();
+    }
+
     public void visit (FieldDeclaration f) {
 	ClassWriter cw = classes.peekLast ().cw;
 	int mods = getModifiers (f.getModifiers ());
@@ -83,7 +104,7 @@ public class BytecodeWriter implements TreeVisitor {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
 	int mods = getModifiers (m.getModifiers ());
-	if (hasVarargs (m))
+	if (hasVarargs (m.getParameters ()))
 	    mods += ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
@@ -146,8 +167,7 @@ public class BytecodeWriter implements TreeVisitor {
 	}
     }
 
-    private boolean hasVarargs (MethodDeclaration m) {
-	FormalParameterList ls = m.getParameters ();
+    private boolean hasVarargs (FormalParameterList ls) {
 	if (ls != null) {
 	    NormalFormalParameterList fps = ls.getParameters ();
 	    LastFormalParameter lfp = fps.getLastFormalParameter ();
@@ -247,8 +267,6 @@ public class BytecodeWriter implements TreeVisitor {
 	    fullId = getFullId ();
 	    String fqn = getFQN (packageName);
 	    cw.visit (V1_8, ACC_PUBLIC, fqn, null, "java/lang/Object", null);
-	    addConstructor ();
-
 	}
 
 	public String getFQN (DottedName packageName) {
@@ -259,20 +277,6 @@ public class BytecodeWriter implements TreeVisitor {
 
 	public String getFullId () {
 	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
-	}
-
-	private void addConstructor () {
-	    MethodVisitor mw =
-		cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-
-	    // pushes the 'this' variable
-	    mw.visitVarInsn(ALOAD, 0);
-	    // invokes the super class constructor
-	    mw.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-	    mw.visitInsn(RETURN);
-	    // this code uses a maximum of one stack element and one local variable
-	    mw.visitMaxs(1, 1);
-	    mw.visitEnd();
 	}
 
 	public void write () {

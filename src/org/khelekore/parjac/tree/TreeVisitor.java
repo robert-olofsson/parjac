@@ -13,6 +13,7 @@ public interface TreeVisitor {
     /** Ends the visit of the current type */
     void endType ();
 
+    void visit (ConstructorDeclaration c);
     void visit (FieldDeclaration f);
     void visit (MethodDeclaration m);
 
