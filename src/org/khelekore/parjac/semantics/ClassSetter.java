@@ -12,15 +12,17 @@ import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.tree.*;
 
 public class ClassSetter implements TreeVisitor {
-    private final CompilerDiagnosticCollector diagnostics;
     private final CompiledTypesHolder cth;
+    private final ClassResourceHolder crh;
     private final SyntaxTree tree;
+    private final CompilerDiagnosticCollector diagnostics;
     private final DottedName packageName;
     private final InterfaceHandler ih = new InterfaceHandler ();
 
-    public ClassSetter (CompiledTypesHolder cth, SyntaxTree tree,
-			CompilerDiagnosticCollector diagnostics) {
+    public ClassSetter (CompiledTypesHolder cth, ClassResourceHolder crh,
+			SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	this.cth = cth;
+	this.crh = crh;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
 	CompilationUnit cu = tree.getCompilationUnit ();
@@ -106,16 +108,10 @@ public class ClassSetter implements TreeVisitor {
     private String tryTypeImportOnDemand (String id) {
 	for (String p : ih.tiod) {
 	    String fqn = p + "." + id;
-	    if (hasType (fqn))
+	    if (crh.hasType (fqn))
 		return fqn;
 	}
 	return null;
-    }
-
-    private boolean hasType (String fqn) {
-	String name = "/" + fqn.replaceAll ("\\.", "/") + ".class";
-	URL u = ClassSetter.class.getResource (name);
-	return u != null;
     }
 
     private class InterfaceHandler implements InterfaceVisitor {

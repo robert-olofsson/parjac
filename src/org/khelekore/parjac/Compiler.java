@@ -21,6 +21,7 @@ import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
 import org.khelekore.parjac.parser.JavaTreeBuilder;
 import org.khelekore.parjac.parser.PredictCache;
+import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -37,6 +38,7 @@ public class Compiler {
     private final CompilationArguments settings;
 
     private CompiledTypesHolder cth;
+    private ClassResourceHolder crh;
 
     public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
 		     CompilationArguments settings) {
@@ -102,6 +104,7 @@ public class Compiler {
 
     private void checkSemantics (List<SyntaxTree> trees) {
 	cth = new CompiledTypesHolder ();
+	crh = new ClassResourceHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
 	trees.parallelStream ().forEach (this::fillInClasses);
 	// TODO: implement
@@ -113,7 +116,7 @@ public class Compiler {
     }
 
     private void fillInClasses (SyntaxTree tree) {
-	ClassSetter cs = new ClassSetter (cth, tree, diagnostics);
+	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics);
 	cs.fillIn ();
     }
 
