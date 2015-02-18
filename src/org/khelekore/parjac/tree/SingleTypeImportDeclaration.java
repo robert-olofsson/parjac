@@ -6,4 +6,8 @@ public class SingleTypeImportDeclaration extends NamedNode implements ImportDecl
     public SingleTypeImportDeclaration (Deque<TreeNode> parts) {
 	super (parts);
     }
+
+    public void visit (InterfaceVisitor iv) {
+	iv.visit (this);
+    }
 }

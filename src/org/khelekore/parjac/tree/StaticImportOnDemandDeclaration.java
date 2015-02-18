@@ -7,6 +7,10 @@ public class StaticImportOnDemandDeclaration extends NamedNode implements Import
 	super (name);
     }
 
+    public void visit (InterfaceVisitor iv) {
+	iv.visit (this);
+    }
+
     public static StaticImportOnDemandDeclaration build (Deque<TreeNode> parts) {
 	parts.pop (); // static
 	DottedName name = (DottedName)parts.pop ();

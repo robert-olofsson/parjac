@@ -14,4 +14,12 @@ public class UnannArrayType implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + dims + "}";
     }
+
+    public TreeNode getType () {
+	return type;
+    }
+
+    public Dims getDims () {
+	return dims;
+    }
 }

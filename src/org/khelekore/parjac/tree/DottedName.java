@@ -52,4 +52,8 @@ public class DottedName implements TreeNode {
     public String getDotName () {
 	return parts.stream ().collect (Collectors.joining ("."));
     }
+
+    public String getLastPart () {
+	return parts.get (parts.size () - 1);
+    }
 }

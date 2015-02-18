@@ -10,6 +10,10 @@ public class SingleStaticImportDeclaration extends NamedNode implements ImportDe
 	this.id = id;
     }
 
+    public void visit (InterfaceVisitor iv) {
+	iv.visit (this);
+    }
+
     public static SingleStaticImportDeclaration build (Deque<TreeNode> parts) {
 	parts.pop (); // 'static'
 	return new SingleStaticImportDeclaration ((DottedName)parts.pop (),

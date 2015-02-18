@@ -7,4 +7,8 @@ public class TypeImportOnDemandDeclaration extends NamedNode implements ImportDe
 	super (parts);
 	parts.pop (); // '*'
     }
+
+    public void visit (InterfaceVisitor iv) {
+	iv.visit (this);
+    }
 }

@@ -1,5 +1,6 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -7,12 +8,12 @@ import org.khelekore.parjac.grammar.Rule;
 
 public class CompilationUnit implements TreeNode {
     private final PackageDeclaration pd;
-    private final List<TreeNode> imports;
+    private final List<ImportDeclaration> imports;
     private final List<TreeNode> types;
 
     public CompilationUnit (Rule r, Deque<TreeNode> parts) {
 	PackageDeclaration pd = null;
-	List<TreeNode> imports = null;
+	List<ImportDeclaration> imports = null;
 	List<TreeNode> types = null;
 
 	if (!parts.isEmpty ()) {
@@ -49,8 +50,12 @@ public class CompilationUnit implements TreeNode {
 	return pd == null ? null : pd.getPackageName ();
     }
 
+    public List<ImportDeclaration> getImports () {
+	return imports == null ? Collections.emptyList () : imports;
+    }
+
     public List<TreeNode> getTypes () {
-	return types;
+	return types == null ? Collections.emptyList () : types;
     }
 
     public void visit (TreeVisitor visitor) {

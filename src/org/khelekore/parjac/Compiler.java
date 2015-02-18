@@ -21,6 +21,8 @@ import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
 import org.khelekore.parjac.parser.JavaTreeBuilder;
 import org.khelekore.parjac.parser.PredictCache;
+import org.khelekore.parjac.semantics.ClassSetter;
+import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -33,6 +35,8 @@ public class Compiler {
     private final PredictCache predictCache;
     private final JavaTreeBuilder treeBuilder;
     private final CompilationArguments settings;
+
+    private CompiledTypesHolder cth;
 
     public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
 		     CompilationArguments settings) {
@@ -97,12 +101,20 @@ public class Compiler {
     }
 
     private void checkSemantics (List<SyntaxTree> trees) {
+	cth = new CompiledTypesHolder ();
+	trees.parallelStream ().forEach (t -> cth.addTypes (t));
+	trees.parallelStream ().forEach (this::fillInClasses);
 	// TODO: implement
 	// Fill in correct classes
 	// Check modifiers
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
+    }
+
+    private void fillInClasses (SyntaxTree tree) {
+	ClassSetter cs = new ClassSetter (cth, tree, diagnostics);
+	cs.fillIn ();
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,
@@ -135,7 +147,7 @@ public class Compiler {
     }
 
     private void writeClasses (SyntaxTree tree, Path destinationDir) {
-	BytecodeWriter w = new BytecodeWriter (destinationDir);
+	BytecodeWriter w = new BytecodeWriter (destinationDir, cth);
 	tree.getCompilationUnit ().visit (w);
     }
 }

@@ -7,9 +7,9 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -19,11 +19,13 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeWriter implements TreeVisitor {
     private final Path destinationDir;
+    private final CompiledTypesHolder cth;
     private DottedName packageName;
-    private final Deque<ClassId> classes = new ArrayDeque<> ();
+    private final Deque<ClassWriterHolder> classes = new ArrayDeque<> ();
 
-    public BytecodeWriter (Path destinationDir) {
+    public BytecodeWriter (Path destinationDir, CompiledTypesHolder cth) {
 	this.destinationDir = destinationDir;
+	this.cth = cth;
     }
 
     public void visit (CompilationUnit cu) {
@@ -31,39 +33,33 @@ public class BytecodeWriter implements TreeVisitor {
     }
 
     public void visit (NormalClassDeclaration c) {
-	pushClass (c.getId ());
+	pushClass (c);
     }
 
     public void visit (EnumDeclaration e) {
-	pushClass (e.getId ());
+	pushClass (e);
     }
 
     public void visit (NormalInterfaceDeclaration i) {
-	pushClass (i.getId ());
+	pushClass (i);
     }
 
     public void visit (AnnotationTypeDeclaration a) {
-	pushClass (a.getId ());
+	pushClass (a);
     }
 
     public void anonymousClass (ClassBody b) {
-	pushClass (generateAnonId ());
+	pushClass (b);
     }
 
-    private void pushClass (String id) {
-	ClassId cid = new ClassId (id);
+    private void pushClass (TreeNode tn) {
+	ClassWriterHolder cid = new ClassWriterHolder (tn);
 	classes.addLast (cid);
 	cid.start ();
     }
 
-    private String generateAnonId () {
-	ClassId cid = classes.peekLast ();
-	cid.anonId++;
-	return Integer.toString (cid.anonId);
-    }
-
     public void endType () {
-	ClassId cid = classes.removeLast ();
+	ClassWriterHolder cid = classes.removeLast ();
 	cid.write ();
     }
 
@@ -188,12 +184,12 @@ public class BytecodeWriter implements TreeVisitor {
 	    List<FormalParameter> args = fps.getFormalParameters ();
 	    if (args != null) {
 		for (FormalParameter fp : args)
-		    sb.append (getType (fp.getType ()));
+		    appendType (fp.getType (), sb);
 	    }
 	    LastFormalParameter lfp = fps.getLastFormalParameter ();
 	    if (lfp != null) {
 		sb.append ("[");
-		sb.append (getType (lfp.getType ()));
+		appendType (lfp.getType (), sb);
 	    }
 	}
 	sb.append (")");
@@ -203,18 +199,33 @@ public class BytecodeWriter implements TreeVisitor {
 	if (tn instanceof Result.VoidResult) {
 	    sb.append ("V");
 	} else if (tn instanceof Result.TypeResult) {
-	    sb.append (getType (((Result.TypeResult)tn).get ()));
+	    appendType (((Result.TypeResult)tn).get (), sb);
 	} else {
 	    throw new IllegalStateException ("Unhandled result type: " + tn);
 	}
     }
 
     private String getType (TreeNode tn) {
+	StringBuilder sb = new StringBuilder ();
+	appendType (tn, sb);
+	return sb.toString ();
+    }
+
+    private void appendType (TreeNode tn, StringBuilder sb) {
 	if (tn instanceof PrimitiveTokenType) {
-	    return getPrimitiveType (((PrimitiveTokenType)tn).get ());
+	    sb.append (getPrimitiveType (((PrimitiveTokenType)tn).get ()));
+	} else if (tn instanceof ClassType) {
+	    ClassType ct = (ClassType)tn;
+	    sb.append ("L");
+	    String fqn = ct.getFullName ();
+	    sb.append (fqn != null ? fqn : "java.lang.String"); // TODO: remove null check
+	    sb.append (";");
+	} else {
+	    UnannArrayType at = (UnannArrayType)tn;
+	    for (int i = 0, s = at.getDims ().get ().size (); i < s; i++)
+		sb.append ("[");
+	    appendType (at.getType (), sb);
 	}
-	// TODO: correct class type
-	return "Ljava.lang.String;";
     }
 
     private String getPrimitiveType (Token t) {
@@ -248,35 +259,18 @@ public class BytecodeWriter implements TreeVisitor {
     public void endBlock () {
     }
 
-    private class ClassId {
-	private final String id;
-	private String fullId;
+    private class ClassWriterHolder {
+	private final TreeNode tn;
 	private final ClassWriter cw;
-	private int anonId;
 
-	public ClassId (String id) {
-	    this.id = id;
+	public ClassWriterHolder (TreeNode tn) {
+	    this.tn = tn;
 	    cw = new ClassWriter (0);
 	}
 
-	@Override public String toString () {
-	    return getClass ().getSimpleName () + "{id: " + id + ", anonId: " + anonId + "}";
-	}
-
 	public void start () {
-	    fullId = getFullId ();
-	    String fqn = getFQN (packageName);
+	    String fqn = cth.getFullName (tn);
 	    cw.visit (V1_8, ACC_PUBLIC, fqn, null, "java/lang/Object", null);
-	}
-
-	public String getFQN (DottedName packageName) {
-	    if (packageName == null)
-		return fullId;
-	    return packageName.getDotName () + "." + fullId;
-	}
-
-	public String getFullId () {
-	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
 	}
 
 	public void write () {
@@ -289,7 +283,7 @@ public class BytecodeWriter implements TreeVisitor {
 	}
 
 	private Path getPath () {
-	    String cid = fullId + ".class";
+	    String cid = cth.getId (tn) + ".class";
 	    if (packageName == null)
 		return Paths.get (destinationDir.toString (), cid);
 	    return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);

@@ -1,5 +1,5 @@
 package org.khelekore.parjac.tree;
 
-/** Empty marker interface */
 public interface ImportDeclaration {
+    void visit (InterfaceVisitor iv);
 }
