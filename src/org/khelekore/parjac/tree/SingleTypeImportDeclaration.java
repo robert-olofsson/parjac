@@ -7,7 +7,7 @@ public class SingleTypeImportDeclaration extends NamedNode implements ImportDecl
 	super (parts);
     }
 
-    public void visit (InterfaceVisitor iv) {
+    public void visit (ImportVisitor iv) {
 	iv.visit (this);
     }
 }

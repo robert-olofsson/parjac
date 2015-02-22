@@ -25,4 +25,8 @@ public class TypeParameters implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + types + "}";
     }
+
+    public List<TypeParameter> get () {
+	return types;
+    }
 }

@@ -46,6 +46,10 @@ public class NormalInterfaceDeclaration implements TreeNode {
 	return id;
     }
 
+    public TypeParameters getTypeParameters () {
+	return types;
+    }
+
     public InterfaceBody getBody () {
 	return body;
     }

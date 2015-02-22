@@ -1,6 +1,6 @@
 package org.khelekore.parjac.tree;
 
-public interface InterfaceVisitor {
+public interface ImportVisitor {
     void visit (SingleTypeImportDeclaration i);
     void visit (TypeImportOnDemandDeclaration i);
     void visit (SingleStaticImportDeclaration i);

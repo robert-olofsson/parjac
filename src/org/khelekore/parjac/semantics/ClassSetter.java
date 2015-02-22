@@ -1,10 +1,13 @@
 package org.khelekore.parjac.semantics;
 
-import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -17,7 +20,9 @@ public class ClassSetter implements TreeVisitor {
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private final DottedName packageName;
-    private final InterfaceHandler ih = new InterfaceHandler ();
+    private final ImportHandler ih = new ImportHandler ();
+    private final Deque<String> containingTypeName = new ArrayDeque<> ();
+    private final Deque<Set<String>> types = new ArrayDeque<> ();
 
     public ClassSetter (CompiledTypesHolder cth, ClassResourceHolder crh,
 			SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
@@ -33,6 +38,44 @@ public class ClassSetter implements TreeVisitor {
 
     public void fillIn () {
 	tree.getCompilationUnit ().visit (this);
+    }
+
+    @Override public void visit (NormalClassDeclaration c) {
+	containingTypeName.push (cth.getId (c));
+	registerTypeParameters (c.getTypeParameters ());
+    }
+
+    @Override public void visit (EnumDeclaration e) {
+	containingTypeName.push (cth.getId (e));
+	registerTypeParameters (null);
+    }
+
+    @Override public void visit (NormalInterfaceDeclaration i) {
+	containingTypeName.push (cth.getId (i));
+	registerTypeParameters (i.getTypeParameters ());
+    }
+
+    @Override public void visit (AnnotationTypeDeclaration a) {
+	containingTypeName.push (cth.getId (a));
+	registerTypeParameters (null);
+    }
+
+    @Override public void anonymousClass (ClassBody b) {
+	containingTypeName.push (cth.getId (b));
+	registerTypeParameters (null);
+    }
+
+    @Override public void endType () {
+	containingTypeName.pop ();
+	types.pop ();
+    }
+
+    private void registerTypeParameters (TypeParameters tps) {
+	if (tps != null) {
+	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
+	} else {
+	    types.push (Collections.emptySet ());
+	}
     }
 
     @Override public void visit (ConstructorDeclaration c) {
@@ -83,8 +126,24 @@ public class ClassSetter implements TreeVisitor {
 	if (type != null)
 	    return id;
 
+	if (isTypeParameter (id)) {
+	    return id;
+	}
+
+	if (crh.hasType (id)) {
+	    return id;
+	}
+
+	// check for inner class
+	String icn = packageName == null ?
+	    containingTypeName.peek () + "$" + id :
+	    packageName.getDotName () + "." + containingTypeName.peek () + "$" + id;
+	type = cth.getType (icn);
+	if (type != null)
+	    return id;
+
 	String fqn = ih.stid.get (id);
-	if (fqn != null)
+	if (fqn != null && validFullName (fqn))
 	    return fqn;
 	fqn = tryTypeImportOnDemand (id);
 	if (fqn != null)
@@ -98,23 +157,38 @@ public class ClassSetter implements TreeVisitor {
 	    return fqn;
 	*/
 
-	/*
 	diagnostics.report (new NoSourceDiagnostics (tree.getOrigin () +
 						     ": Failed to find class: " + id));
-	*/
 	return null;
+    }
+
+    private boolean isTypeParameter (String id) {
+	for (Set<String> names : types)
+	    if (names.contains (id))
+		return true;
+	return false;
     }
 
     private String tryTypeImportOnDemand (String id) {
 	for (String p : ih.tiod) {
 	    String fqn = p + "." + id;
-	    if (crh.hasType (fqn))
+	    if (validFullName (fqn))
 		return fqn;
 	}
 	return null;
     }
 
-    private class InterfaceHandler implements InterfaceVisitor {
+    private boolean validFullName (String fqn) {
+	if (cth.getType (fqn) != null)
+	    return true;
+
+	if (crh.hasType (fqn))
+	    return true;
+
+	return false;
+    }
+
+    private class ImportHandler implements ImportVisitor {
 	private final Map<String, String> stid = new HashMap<> ();
 	private final List<String> tiod = new ArrayList<> ();
 	private final List<SingleStaticImportDeclaration> ssid = new ArrayList<> ();
@@ -138,7 +212,8 @@ public class ClassSetter implements TreeVisitor {
 	}
 
 	private void addDefaultPackages () {
-	    tiod.add (packageName.getDotName ());
+	    if (packageName != null)
+		tiod.add (packageName.getDotName ());
 	    tiod.add ("java.lang");
 	}
     }

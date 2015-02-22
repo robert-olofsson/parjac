@@ -7,7 +7,7 @@ public class StaticImportOnDemandDeclaration extends NamedNode implements Import
 	super (name);
     }
 
-    public void visit (InterfaceVisitor iv) {
+    public void visit (ImportVisitor iv) {
 	iv.visit (this);
     }
 

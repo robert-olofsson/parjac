@@ -54,6 +54,10 @@ public class NormalClassDeclaration implements TreeNode {
 	return id;
     }
 
+    public TypeParameters getTypeParameters () {
+	return types;
+    }
+
     public ClassBody getBody () {
 	return body;
     }
