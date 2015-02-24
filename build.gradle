@@ -1,0 +1,39 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+version = '1.0'
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/'
+        }
+        resources {
+            srcDir 'resources'
+        }
+    }
+    test {
+    	 java {
+	    srcDir 'test/'
+	}
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+//    compile group: 'asm', name: 'asm', version: '5.0.3'
+    compile files('libs/asm-5.0.3.jar')
+    testCompile 'org.testng:testng:6.8+'
+}
+
+test {
+  // enable TestNG support (default is JUnit)
+  useTestNG()
+  include 'org/khelekore/parjac/**'
+  beforeTest { descriptor ->
+     logger.lifecycle("Running test: " + descriptor)
+  }
+}

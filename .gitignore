@@ -4,3 +4,5 @@ test-output/*
 javadoc/*
 .classpath
 .project
+.gradle/
+build/
