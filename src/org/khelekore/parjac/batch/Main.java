@@ -131,6 +131,7 @@ public class Main {
 
     private static void usage () {
 	System.err.println ("usage: java " + Main.class.getName () +
+			    " [--encoding encoding]" +
 			    " [-i|--input srcdir]+ [-d|--destination dir]" +
 			    " [--debug] [-h|--help]");
     }
