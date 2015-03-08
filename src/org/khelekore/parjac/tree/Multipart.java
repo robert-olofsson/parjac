@@ -24,6 +24,10 @@ public class Multipart<T extends TreeNode> implements TreeNode {
 	return data;
     }
 
+    public int size () {
+	return data.size ();
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + data + "}";
     }

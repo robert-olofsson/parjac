@@ -5,7 +5,7 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 
 public class UntypedMethodHeader implements TreeNode {
-    private final TreeNode result;
+    private final Result result;
     private final MethodDeclarator declarator;
     private final Throws thrown;
 
@@ -19,7 +19,7 @@ public class UntypedMethodHeader implements TreeNode {
 	return getClass ().getSimpleName () + "{" + result + " " + declarator + " " + thrown + "}";
     }
 
-    public TreeNode getResult () {
+    public Result getResult () {
 	return result;
     }
 

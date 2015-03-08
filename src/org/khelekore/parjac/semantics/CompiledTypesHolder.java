@@ -11,23 +11,32 @@ import org.khelekore.parjac.tree.*;
 public class CompiledTypesHolder {
     private Map<String, TreeNode> name2node = new HashMap<> ();
     private Map<TreeNode, String> node2id = new HashMap<> ();
+    private Map<TreeNode, String> node2filename = new HashMap<> ();
     private Map<TreeNode, String> node2fqn = new HashMap<> ();
 
     public void addTypes (SyntaxTree tree) {
 	tree.getCompilationUnit ().visit (new ClassMapper ());
     }
 
-    /** Get the outer tree node for a given fully qualified name, that is "some.package.Foo$Bar" */
+    /** Get the outer tree node for a given fully qualified name,
+     *  that is "some.package.Foo.Bar".
+     */
     public TreeNode getType (String name) {
 	return name2node.get (name);
     }
 
-    /** Get the class id, something like "Foo$Bar$1". */
+    /** Get the class id, something like "Foo.Bar.1".
+     *  Inner classes are use dot as separator, filename use dollar as separator.
+     */
     public String getId (TreeNode tn) {
 	return node2id.get (tn);
     }
 
-    /** Get the class id, something like "some.package.Foo$Bar$1". */
+    public String getFilename (TreeNode tn) {
+	return node2filename.get (tn);
+    }
+
+    /** Get the class id, something like "some.package.Foo.Bar.1". */
     public String getFullName (TreeNode tn) {
 	return node2fqn.get (tn);
     }
@@ -74,15 +83,21 @@ public class CompiledTypesHolder {
 	    ClassId cid = new ClassId (id);
 	    classes.addLast (cid);
 	    String fullId = getFullId ();
+	    String filename = getFullFilename ();
 	    String name = getFQN (packageName, fullId);
 	    synchronized (name2node) {
 		name2node.put (name, tn);
 		node2id.put (tn, fullId);
+		node2filename.put (tn, filename);
 		node2fqn.put (tn, name);
 	    }
 	}
 
 	private String getFullId () {
+	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("."));
+	}
+
+	private String getFullFilename () {
 	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
 	}
 

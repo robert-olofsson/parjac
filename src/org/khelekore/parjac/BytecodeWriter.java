@@ -283,7 +283,7 @@ public class BytecodeWriter implements TreeVisitor {
 	}
 
 	private Path getPath () {
-	    String cid = cth.getId (tn) + ".class";
+	    String cid = cth.getFilename (tn) + ".class";
 	    if (packageName == null)
 		return Paths.get (destinationDir.toString (), cid);
 	    return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);

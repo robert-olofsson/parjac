@@ -21,7 +21,7 @@ public class MethodHeader implements TreeNode {
 	    annotations + " " + untypedHeader + "}";
     }
 
-    public TreeNode getResult () {
+    public Result getResult () {
 	return untypedHeader.getResult ();
     }
 

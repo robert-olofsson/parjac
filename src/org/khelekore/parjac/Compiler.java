@@ -54,6 +54,7 @@ public class Compiler {
 	if (diagnostics.hasError ())
 	    return;
 
+	scanClassPaths ();
 	checkSemantics (trees);
 	if (diagnostics.hasError ())
 	    return;
@@ -102,9 +103,17 @@ public class Compiler {
 	}
     }
 
+    private void scanClassPaths () {
+	try {
+	    crh = new ClassResourceHolder ();
+	    crh.scanClassPath ();
+	} catch (IOException e) {
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to scan classpath: %s", e));
+	}
+    }
+
     private void checkSemantics (List<SyntaxTree> trees) {
 	cth = new CompiledTypesHolder ();
-	crh = new ClassResourceHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
 	trees.parallelStream ().forEach (this::fillInClasses);
 	// TODO: implement

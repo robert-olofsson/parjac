@@ -29,7 +29,7 @@ public class MethodDeclaration implements TreeNode {
 	return modifiers;
     }
 
-    public TreeNode getResult () {
+    public Result getResult () {
 	return header.getResult ();
     }
 

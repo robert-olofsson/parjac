@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.tree.*;
+import org.khelekore.parjac.tree.Result.TypeResult;
 
 public class ClassSetter implements TreeVisitor {
     private final CompiledTypesHolder cth;
@@ -87,7 +88,9 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (MethodDeclaration m) {
-	setType (m.getResult ());
+	Result r = m.getResult ();
+	if (r instanceof Result.TypeResult)
+	    setType (((TypeResult)r).get ());
 	setTypes (m.getParameters ());
     }
 
@@ -108,17 +111,37 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private void setType (TreeNode type) {
+	if (type instanceof PrimitiveTokenType) {
+	    return;
+	}
 	if (type instanceof ClassType) {
 	    ClassType ct = (ClassType)type;
-	    String id = getId (ct);
-	    String fqn = resolve (id);
+	    String id1 = getId (ct, ".");
+	    String fqn = resolve (id1);
+	    if (fqn == null && ct.size () > 1) {
+		String firstName = ct.get ().get (0).getId ();
+		String outerName = ih.stid.get (firstName);
+		if (outerName != null) {
+		    List<SimpleClassType> ls = ct.get ();
+		    fqn = outerName + "." +
+			ls.subList (1, ls.size ()).stream ().
+			map (s -> s.getId ()).collect (Collectors.joining ("."));
+		    if (!validFullName (fqn))
+			fqn = null;
+		}
+	    }
+	    if (fqn == null)
+		diagnostics.report (new NoSourceDiagnostics (tree.getOrigin () +
+							     ": Failed to find class: " + id1));
 	    ct.setFullName (fqn);
+	} else {
+	    System.err.println ("Unhandled type: " + type.getClass ().getName () + ", " + type);
 	}
 	// TODO: handle arrays
     }
 
-    private String getId (ClassType ct) {
-	return ct.get ().stream ().map (s -> s.getId ()).collect (Collectors.joining ("."));
+    private String getId (ClassType ct, String join) {
+	return ct.get ().stream ().map (s -> s.getId ()).collect (Collectors.joining (join));
     }
 
     private String resolve (String id) {
@@ -136,12 +159,15 @@ public class ClassSetter implements TreeVisitor {
 
 	// check for inner class
 	String icn = packageName == null ?
-	    containingTypeName.peek () + "$" + id :
-	    packageName.getDotName () + "." + containingTypeName.peek () + "$" + id;
+	    containingTypeName.peek () + "." + id :
+	    packageName.getDotName () + "." + containingTypeName.peek () + "." + id;
 	type = cth.getType (icn);
 	if (type != null)
 	    return id;
+	return resolveUsingImports (id);
+    }
 
+    private String resolveUsingImports (String id) {
 	String fqn = ih.stid.get (id);
 	if (fqn != null && validFullName (fqn))
 	    return fqn;
@@ -157,8 +183,6 @@ public class ClassSetter implements TreeVisitor {
 	    return fqn;
 	*/
 
-	diagnostics.report (new NoSourceDiagnostics (tree.getOrigin () +
-						     ": Failed to find class: " + id));
 	return null;
     }
 
