@@ -45,20 +45,22 @@ public class ClassSetter implements TreeVisitor {
 	ClassType superclass = c.getSuperClass ();
 	if (superclass != null)
 	    setType (superclass);
-	InterfaceTypeList superInterfaces = c.getSuperInterfaces ();
-	if (superInterfaces != null)
-	    setTypes (superInterfaces);
+	visitSuperInterfaces (c.getSuperInterfaces ());
 	containingTypeName.push (cth.getId (c));
 	registerTypeParameters (c.getTypeParameters ());
     }
 
     @Override public void visit (EnumDeclaration e) {
 	containingTypeName.push (cth.getId (e));
+	visitSuperInterfaces (e.getSuperInterfaces ());
 	registerTypeParameters (null);
     }
 
     @Override public void visit (NormalInterfaceDeclaration i) {
 	containingTypeName.push (cth.getId (i));
+	ExtendsInterfaces ei = i.getExtendsInterfaces ();
+	if (ei != null)
+	    visitSuperInterfaces (ei.get ());
 	registerTypeParameters (i.getTypeParameters ());
     }
 
@@ -75,6 +77,11 @@ public class ClassSetter implements TreeVisitor {
     @Override public void endType () {
 	containingTypeName.pop ();
 	types.pop ();
+    }
+
+    private void visitSuperInterfaces (InterfaceTypeList superInterfaces) {
+	if (superInterfaces != null)
+	    setTypes (superInterfaces);
     }
 
     private void registerTypeParameters (TypeParameters tps) {

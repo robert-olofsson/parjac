@@ -1,6 +1,8 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -8,8 +10,12 @@ import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.TestParseHelper;
 import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
+import org.khelekore.parjac.tree.EnumDeclaration;
+import org.khelekore.parjac.tree.ExtendsInterfaces;
 import org.khelekore.parjac.tree.FieldDeclaration;
+import org.khelekore.parjac.tree.InterfaceTypeList;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
+import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -86,8 +92,27 @@ public class TestClassSetter {
 	checkField ("foo.bar.Foo", 1, "foo.bar.Foo.Bar");
     }
 
+    @Test
+    public void testEnumExtends () throws IOException {
+	parseAndSetClasses ("package foo.bar; interface Foo {} enum E implements Foo {A, B}");
+	assertNoErrors ();
+	EnumDeclaration ed = (EnumDeclaration)cth.getType ("foo.bar.E");
+	checkOneInterface (ed.getSuperInterfaces (), "foo.bar.Foo");
+    }
+
+    @Test
+    public void testInterfaceExtends () throws IOException {
+	parseAndSetClasses ("package foo.bar; interface Foo {} interface Bar extends Foo {}");
+	assertNoErrors ();
+	NormalInterfaceDeclaration id = (NormalInterfaceDeclaration)cth.getType ("foo.bar.Bar");
+	ExtendsInterfaces ei = id.getExtendsInterfaces ();
+	assert ei != null;
+	checkOneInterface (ei.get (), "foo.bar.Foo");
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
+	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
 	cth.addTypes (st);
 	ClassSetter cs = new ClassSetter (cth, crh, st, diagnostics);
 	cs.fillIn ();
@@ -96,6 +121,14 @@ public class TestClassSetter {
     private void checkSuperTypeName (String classToCheck, String expectedSuperType) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (classToCheck);
 	assertClassType (cd.getSuperClass (), expectedSuperType);
+    }
+
+    private void checkOneInterface (InterfaceTypeList ifs, String type) {
+	assert ifs != null;
+	List<ClassType> cts = ifs.get ();
+	assert cts != null;
+	assert cts.size () == 1;
+	assert cts.get (0).getFullName ().equals (type);
     }
 
     private void checkField (String className, int bodyPosition, String expectedType) {
@@ -111,7 +144,13 @@ public class TestClassSetter {
     }
 
     private void assertNoErrors () {
-	assert !diagnostics.hasError () : "Got errors: " +
-	    diagnostics.getDiagnostics ().map (c -> c.toString ()).collect (Collectors.joining ("\n"));
+	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
+    }
+
+    private String getDiagnostics () {
+	Locale loc = Locale.getDefault ();
+	return diagnostics.getDiagnostics ().
+	    map (c -> c.getMessage (loc)).
+	    collect (Collectors.joining ("\n"));
     }
 }

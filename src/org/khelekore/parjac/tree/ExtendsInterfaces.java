@@ -9,6 +9,10 @@ public class ExtendsInterfaces implements TreeNode {
 	ls = (InterfaceTypeList)parts.pop ();
     }
 
+    public InterfaceTypeList get () {
+	return ls;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{extends " + ls + "}";
     }

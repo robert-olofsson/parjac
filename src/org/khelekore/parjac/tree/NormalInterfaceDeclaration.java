@@ -50,6 +50,10 @@ public class NormalInterfaceDeclaration implements TreeNode {
 	return types;
     }
 
+    public ExtendsInterfaces getExtendsInterfaces () {
+	return extendsInterfaces;
+    }
+
     public InterfaceBody getBody () {
 	return body;
     }

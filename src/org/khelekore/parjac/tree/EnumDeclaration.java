@@ -34,6 +34,10 @@ public class EnumDeclaration implements TreeNode {
 	return id;
     }
 
+    public InterfaceTypeList getSuperInterfaces () {
+	return superInterfaces;
+    }
+
     public EnumBody getBody () {
 	return body;
     }
