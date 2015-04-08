@@ -10,6 +10,14 @@ public class SimpleClassType implements TreeNode {
     private final String id;
     private final TypeArguments typeArguments;
 
+    public SimpleClassType (List<TreeNode> annotations,
+			    String id,
+			    TypeArguments typeArguments) {
+	this.annotations = annotations;
+	this.id = id;
+	this.typeArguments = typeArguments;
+    }
+
     public SimpleClassType (Rule r, Deque<TreeNode> parts) {
 	int len = 1;
 	TreeNode tn = parts.pop ();

@@ -42,6 +42,12 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (NormalClassDeclaration c) {
+	ClassType superclass = c.getSuperClass ();
+	if (superclass != null)
+	    setType (superclass);
+	InterfaceTypeList superInterfaces = c.getSuperInterfaces ();
+	if (superInterfaces != null)
+	    setTypes (superInterfaces);
 	containingTypeName.push (cth.getId (c));
 	registerTypeParameters (c.getTypeParameters ());
     }
@@ -92,6 +98,13 @@ public class ClassSetter implements TreeVisitor {
 	if (r instanceof Result.TypeResult)
 	    setType (((TypeResult)r).get ());
 	setTypes (m.getParameters ());
+    }
+
+    private void setTypes (InterfaceTypeList ls) {
+	if (ls == null)
+	    return;
+	for (ClassType ct : ls.get ())
+	    setType (ct);
     }
 
     private void setTypes (FormalParameterList ls) {
@@ -163,7 +176,7 @@ public class ClassSetter implements TreeVisitor {
 	    packageName.getDotName () + "." + containingTypeName.peek () + "." + id;
 	type = cth.getType (icn);
 	if (type != null)
-	    return id;
+	    return icn;
 	return resolveUsingImports (id);
     }
 

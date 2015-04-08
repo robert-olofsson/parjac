@@ -10,6 +10,10 @@ import org.khelekore.parjac.tree.ZOMEntry;
 public abstract class BodyBase implements TreeNode {
     private final List<TreeNode> declarations;
 
+    public BodyBase () {
+	declarations = Collections.emptyList ();
+    }
+
     public BodyBase (Rule r, Deque<TreeNode> parts) {
 	if (r.size () > 2) {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();

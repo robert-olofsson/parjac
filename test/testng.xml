@@ -11,4 +11,9 @@
       <package name="org.khelekore.parjac.parser" />
    </packages>
  </test>
+ <test name="Semantics">
+   <packages>
+      <package name="org.khelekore.parjac.semantics" />
+   </packages>
+ </test>
 </suite>

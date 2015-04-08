@@ -14,6 +14,20 @@ public class NormalClassDeclaration implements TreeNode {
     private final InterfaceTypeList superinterfaces;
     private final ClassBody body;
 
+    public NormalClassDeclaration (List<TreeNode> modifiers,
+				   String id,
+				   TypeParameters types,
+				   ClassType superclass,
+				   InterfaceTypeList superinterfaces,
+				   ClassBody body) {
+	this.modifiers = modifiers;
+	this.id = id;
+	this.types = types;
+	this.superclass = superclass;
+	this.superinterfaces = superinterfaces;
+	this.body = body;
+    }
+
     public NormalClassDeclaration (Rule r, Deque<TreeNode> parts) {
 	int pos = 2;
 	TreeNode tn = parts.pop ();
@@ -56,6 +70,14 @@ public class NormalClassDeclaration implements TreeNode {
 
     public TypeParameters getTypeParameters () {
 	return types;
+    }
+
+    public ClassType getSuperClass () {
+	return superclass;
+    }
+
+    public InterfaceTypeList getSuperInterfaces () {
+	return superinterfaces;
     }
 
     public ClassBody getBody () {

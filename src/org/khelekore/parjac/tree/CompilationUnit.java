@@ -11,6 +11,14 @@ public class CompilationUnit implements TreeNode {
     private final List<ImportDeclaration> imports;
     private final List<TreeNode> types;
 
+    public CompilationUnit (PackageDeclaration pd,
+			    List<ImportDeclaration> imports,
+			    List<TreeNode> types) {
+	this.pd = pd;
+	this.imports = imports;
+	this.types = types;
+    }
+
     public CompilationUnit (Rule r, Deque<TreeNode> parts) {
 	PackageDeclaration pd = null;
 	List<ImportDeclaration> imports = null;
