@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public abstract class Result implements TreeNode {
@@ -30,7 +31,7 @@ public abstract class Result implements TreeNode {
 	}
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.getRulePart (0).getId () == Token.VOID)
 	    return VOID_RESULT;
 	return new TypeResult (parts.pop ());

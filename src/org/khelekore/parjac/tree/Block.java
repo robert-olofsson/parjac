@@ -4,11 +4,12 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class Block implements TreeNode {
     private final List<TreeNode> statements;
 
-    public Block (Rule r, Deque<TreeNode> parts) {
+    public Block (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	statements = r.size () > 2 ? ((BlockStatements)parts.pop ()).get () : null;
     }
 

@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class EnumDeclaration implements TreeNode {
@@ -12,7 +13,7 @@ public class EnumDeclaration implements TreeNode {
     private final InterfaceTypeList superInterfaces;
     private final EnumBody body;
 
-    public EnumDeclaration (Rule r, Deque<TreeNode> parts) {
+    public EnumDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 2;
 	if (r.getRulePart (0).getId () != Token.ENUM) {
 	    pos++;

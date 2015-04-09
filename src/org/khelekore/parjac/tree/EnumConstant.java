@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class EnumConstant implements TreeNode {
@@ -12,7 +13,7 @@ public class EnumConstant implements TreeNode {
     private final ArgumentList arguments;
     private final ClassBody classBody;
 
-    public EnumConstant (Rule r, Deque<TreeNode> parts) {
+    public EnumConstant (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 0;
 	TreeNode tn = parts.pop ();
 	if (r.getRulePart (pos).getId () != Token.IDENTIFIER) {

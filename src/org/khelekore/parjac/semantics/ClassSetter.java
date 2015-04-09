@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 
@@ -103,6 +103,7 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (MethodDeclaration m) {
+	System.err.println ("m: " + m);
 	Result r = m.getResult ();
 	if (r instanceof Result.TypeResult)
 	    setType (((TypeResult)r).get ());
@@ -154,8 +155,8 @@ public class ClassSetter implements TreeVisitor {
 		}
 	    }
 	    if (fqn == null)
-		diagnostics.report (new NoSourceDiagnostics (tree.getOrigin () +
-							     ": Failed to find class: " + id1));
+		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
+							   "Failed to find class: " + id1));
 	    ct.setFullName (fqn);
 	} else {
 	    System.err.println ("Unhandled type: " + type.getClass ().getName () + ", " + type);

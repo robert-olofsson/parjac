@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
 public class FieldDeclaration implements TreeNode {
@@ -11,7 +12,7 @@ public class FieldDeclaration implements TreeNode {
     private final TreeNode type;
     private final VariableDeclaratorList variables;
 
-    public FieldDeclaration (Rule r, Deque<TreeNode> parts) {
+    public FieldDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	modifiers = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
 	type = parts.pop ();
 	variables = (VariableDeclaratorList)parts.pop ();

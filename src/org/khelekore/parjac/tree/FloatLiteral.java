@@ -1,9 +1,12 @@
 package org.khelekore.parjac.tree;
 
-public class FloatLiteral implements TreeNode {
+import org.khelekore.parjac.lexer.ParsePosition;
+
+public class FloatLiteral extends PositionNode {
     private final float value;
 
-    public FloatLiteral (float value) {
+    public FloatLiteral (float value, ParsePosition pos) {
+	super (pos);
 	this.value = value;
     }
 

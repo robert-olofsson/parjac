@@ -2,11 +2,13 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public class UnannArrayType implements TreeNode {
     private final TreeNode type;
     private final Dims dims;
 
-    public UnannArrayType (Deque<TreeNode> parts) {
+    public UnannArrayType (Deque<TreeNode> parts, ParsePosition pos) {
 	type = parts.pop ();
 	dims = (Dims)parts.pop ();
     }

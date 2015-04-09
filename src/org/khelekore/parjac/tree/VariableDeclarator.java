@@ -3,12 +3,13 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class VariableDeclarator implements TreeNode {
     private final VariableDeclaratorId vdi;
     private final TreeNode initializer;
 
-    public VariableDeclarator (Rule r, Deque<TreeNode> parts) {
+    public VariableDeclarator (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	vdi = (VariableDeclaratorId)parts.pop ();
 	if (r.size () > 1) {
 	    parts.pop (); // '='

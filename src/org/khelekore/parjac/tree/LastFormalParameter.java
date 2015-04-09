@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class LastFormalParameter implements TreeNode {
     private final List<TreeNode> modifiers;
@@ -26,7 +27,7 @@ public class LastFormalParameter implements TreeNode {
 	vdi = (VariableDeclaratorId)parts.pop ();
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return parts.pop ();
 	return new LastFormalParameter (r, parts);

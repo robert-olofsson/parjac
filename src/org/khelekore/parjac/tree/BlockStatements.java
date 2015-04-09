@@ -5,11 +5,12 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class BlockStatements implements TreeNode {
     private final List<TreeNode> statements;
 
-    public BlockStatements (Rule r, Deque<TreeNode> parts) {
+    public BlockStatements (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	TreeNode tn = parts.pop ();
 	if (r.size () > 1) {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();

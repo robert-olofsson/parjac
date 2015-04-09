@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class AnnotationTypeElementDeclaration implements TreeNode {
@@ -13,7 +14,7 @@ public class AnnotationTypeElementDeclaration implements TreeNode {
     private final Dims dims;
     private final DefaultValue defaultValue;
 
-    public AnnotationTypeElementDeclaration (Rule r, Deque<TreeNode> parts) {
+    public AnnotationTypeElementDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 4;
 	if (r.getRulePart (1).getId () != Token.IDENTIFIER) {
 	    modifiers = ((ZOMEntry)parts.pop ()).get ();

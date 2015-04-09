@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class CompilationUnit implements TreeNode {
     private final PackageDeclaration pd;
@@ -19,7 +20,7 @@ public class CompilationUnit implements TreeNode {
 	this.types = types;
     }
 
-    public CompilationUnit (Rule r, Deque<TreeNode> parts) {
+    public CompilationUnit (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	PackageDeclaration pd = null;
 	List<ImportDeclaration> imports = null;
 	List<TreeNode> types = null;

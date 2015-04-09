@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class MethodDeclarator implements TreeNode {
@@ -10,7 +11,7 @@ public class MethodDeclarator implements TreeNode {
     private final FormalParameterList parameterList;
     private final Dims dims;
 
-    public MethodDeclarator (Rule r, Deque<TreeNode> parts) {
+    public MethodDeclarator (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	id = ((Identifier)parts.pop ()).get ();
 	int len = 3;
 	if (r.getRulePart (2).getId () != Token.RIGHT_PARENTHESIS) {

@@ -1,9 +1,12 @@
 package org.khelekore.parjac.tree;
 
-public class CharLiteral implements TreeNode {
+import org.khelekore.parjac.lexer.ParsePosition;
+
+public class CharLiteral extends PositionNode {
     private final char value;
 
-    public CharLiteral (char value) {
+    public CharLiteral (char value, ParsePosition pos) {
+	super (pos);
 	this.value = value;
     }
 

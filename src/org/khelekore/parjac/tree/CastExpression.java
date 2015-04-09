@@ -4,13 +4,14 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class CastExpression implements TreeNode {
     private final TreeNode type;
     private final List<TreeNode> additionalBounds;
     private final TreeNode expression;
 
-    public CastExpression (Rule r, Deque<TreeNode> parts) {
+    public CastExpression (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	type = parts.pop ();
 	additionalBounds = r.size () > 4 ? ((ZOMEntry)parts.pop ()).get () : null;
 	expression = parts.pop ();

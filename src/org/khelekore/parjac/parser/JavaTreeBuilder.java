@@ -8,6 +8,7 @@ import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.RuleCollection;
 import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.*;
 
@@ -207,64 +208,65 @@ public class JavaTreeBuilder {
 
     /** Constructor taking one argument */
     public interface ConstructorOne<T> {
-	TreeNode create (T arg);
+	TreeNode create (T arg, ParsePosition pos);
     }
 
     /** Constructor taking two argument */
     public interface ConstructorTwo<T, U> {
-	TreeNode create (T t, U u);
+	TreeNode create (T t, U u, ParsePosition pos);
     }
 
     /** Given a rule and a deque of parts pop some parts and push the newly built part. */
     private interface Builder {
-	void build (Rule r, Deque<TreeNode> parts);
+	void build (Rule r, Deque<TreeNode> parts, ParsePosition pos);
     }
 
     private static Builder constructored (ConstructorOne<Deque<TreeNode>> cb) {
 	return new Builder () {
-	    public void build (Rule r, Deque<TreeNode> parts) {
-		parts.push (cb.create (parts));
+	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+		parts.push (cb.create (parts, pos));
 	    }
 	};
     }
 
     private static Builder constructored (ConstructorTwo<Rule, Deque<TreeNode>> cb) {
 	return new Builder () {
-	    public void build (Rule r, Deque<TreeNode> parts) {
-		parts.push (cb.create (r, parts));
+	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+		parts.push (cb.create (r, parts, pos));
 	    }
 	};
     }
 
     public TreeNode getTokenValue (Lexer lexer, Token token) {
+	ParsePosition pos = lexer.getParsePosition ();
 	if (token.isOperator ())
-	    return new OperatorTokenType (token);
+	    return new OperatorTokenType (token, pos);
 	else if (token.isPrimitive ())
-	    return new PrimitiveTokenType (token);
+	    return new PrimitiveTokenType (token, pos);
 	else if (token.isModifier ())
-	    return new ModifierTokenType (token);
+	    return new ModifierTokenType (token, pos);
 	else if (!token.hasValue ())
 	    return null;
 
 	switch (token) {
 	case INT_LITERAL:
-	    return new IntLiteral (lexer.getIntValue ());
+	    return new IntLiteral (lexer.getIntValue (), pos);
 	case LONG_LITERAL:
-	    return new LongLiteral (lexer.getLongValue ());
+	    return new LongLiteral (lexer.getLongValue (), pos);
 	case FLOAT_LITERAL:
-	    return new FloatLiteral (lexer.getFloatValue ());
+	    return new FloatLiteral (lexer.getFloatValue (), pos);
 	case DOUBLE_LITERAL:
-	    return new DoubleLiteral (lexer.getDoubleValue ());
+	    return new DoubleLiteral (lexer.getDoubleValue (), pos);
 	case CHARACTER_LITERAL:
-	    return new CharLiteral (lexer.getCharValue ());
+	    return new CharLiteral (lexer.getCharValue (), pos);
 	case STRING_LITERAL:
-	    return new StringLiteral (lexer.getStringValue ());
+	    return new StringLiteral (lexer.getStringValue (), pos);
 	case TRUE:
 	    return BooleanLiteral.TRUE_VALUE;
 	case FALSE:
 	    return BooleanLiteral.FALSE_VALUE;
 	case IDENTIFIER:
-	    return new Identifier (lexer.getIdentifier ());
+	    return new Identifier (lexer.getIdentifier (), pos);
 	case NULL:
 	    return NullLiteral.NULL;
 	default:
@@ -272,11 +274,11 @@ public class JavaTreeBuilder {
 	}
     }
 
-    public void build (State start, Deque<TreeNode> parts) {
+    public void build (State start, Deque<TreeNode> parts, ParsePosition pos) {
 	Rule rule = start.getRule ();
 	Builder b = builders.get (rule.getId ());
 	if (b != null) {
-	    b.build (rule, parts);
+	    b.build (rule, parts, pos);
 	} else if (rule.getName ().startsWith ("ZOM_")) {
 	    buildZOM (rule, parts);
 	}

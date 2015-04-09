@@ -2,15 +2,17 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public class NamedNode implements TreeNode {
     private final DottedName name;
 
-    public NamedNode (DottedName name) {
+    public NamedNode (DottedName name, ParsePosition ppos) {
 	this.name = name;
     }
 
-    public NamedNode (Deque<TreeNode> parts) {
-	this ((DottedName)parts.pop ());
+    public NamedNode (Deque<TreeNode> parts, ParsePosition ppos) {
+	this ((DottedName)parts.pop (), ppos);
     }
 
     @Override public boolean equals (Object o) {

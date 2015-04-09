@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class ExplicitConstructorInvocation implements TreeNode {
@@ -11,7 +12,7 @@ public class ExplicitConstructorInvocation implements TreeNode {
     private final Token where;
     private final ConstructorArguments args;
 
-    public ExplicitConstructorInvocation (Rule r, Deque<TreeNode> parts) {
+    public ExplicitConstructorInvocation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 0;
 	if (r.size () > 3) {
 	    type = parts.pop ();

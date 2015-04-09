@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public abstract class MethodBody implements TreeNode {
@@ -30,7 +31,7 @@ public abstract class MethodBody implements TreeNode {
 	}
     }
 
-    public static MethodBody build (Rule r, Deque<TreeNode> parts) {
+    public static MethodBody build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.getRulePart (0).getId () == Token.SEMICOLON)
 	    return EMPTY_BODY;
 	return new BlockBody ((Block)parts.pop ());

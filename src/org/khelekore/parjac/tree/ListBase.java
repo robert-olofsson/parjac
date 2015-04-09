@@ -5,12 +5,13 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
 public abstract class ListBase<T extends TreeNode> implements TreeNode {
     private final List<T> ls;
 
-    public ListBase (Rule r, Deque<TreeNode> parts) {
+    public ListBase (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	@SuppressWarnings("unchecked")T vd = (T)parts.pop ();
 	if (r.size () == 1) {
 	    ls = Collections.singletonList (vd);

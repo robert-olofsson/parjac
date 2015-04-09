@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class NormalInterfaceDeclaration implements TreeNode {
@@ -13,7 +14,7 @@ public class NormalInterfaceDeclaration implements TreeNode {
     private final ExtendsInterfaces extendsInterfaces;
     private final InterfaceBody body;
 
-    public NormalInterfaceDeclaration (Rule r, Deque<TreeNode> parts) {
+    public NormalInterfaceDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 2;
 	if (r.getRulePart (0).getId () != Token.INTERFACE) {
 	    modifiers = ((ZOMEntry)parts.pop ()).get ();

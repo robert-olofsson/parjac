@@ -4,13 +4,14 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ConstantDeclaration implements TreeNode {
     private final List<TreeNode> modifiers;
     private final TreeNode type;
     private final VariableDeclaratorList vdis;
 
-    public ConstantDeclaration (Rule r, Deque<TreeNode> parts) {
+    public ConstantDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	modifiers = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
 	type = parts.pop ();
 	vdis = ((VariableDeclaratorList)parts.pop ());

@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class NormalClassDeclaration implements TreeNode {
@@ -28,7 +29,7 @@ public class NormalClassDeclaration implements TreeNode {
 	this.body = body;
     }
 
-    public NormalClassDeclaration (Rule r, Deque<TreeNode> parts) {
+    public NormalClassDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 2;
 	TreeNode tn = parts.pop ();
 	if (r.getRulePart (1).getId () != Token.IDENTIFIER) {

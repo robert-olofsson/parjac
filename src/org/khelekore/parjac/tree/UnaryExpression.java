@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class UnaryExpression implements TreeNode {
@@ -14,7 +15,7 @@ public class UnaryExpression implements TreeNode {
 	this.exp = exp;
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	if (r.size () == 1)
 	    return parts.pop ();
 	Token conversion = ((OperatorTokenType)parts.pop ()).get ();

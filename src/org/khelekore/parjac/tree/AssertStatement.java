@@ -3,12 +3,13 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class AssertStatement implements TreeNode {
     private final TreeNode expression1; // the boolean/Boolean expression
     private final TreeNode expression2; // may not be void
 
-    public AssertStatement (Rule r, Deque<TreeNode> parts) {
+    public AssertStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	expression1 = parts.pop ();
 	if (r.size () > 3) {
 	    parts.pop (); // ':'

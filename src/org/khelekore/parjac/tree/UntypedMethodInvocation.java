@@ -3,12 +3,13 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class UntypedMethodInvocation implements TreeNode {
     private final String id;
     private final ArgumentList args;
 
-    public UntypedMethodInvocation (Rule r, Deque<TreeNode> parts) {
+    public UntypedMethodInvocation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	id = ((Identifier)parts.pop ()).get ();
 	args = r.size () > 3 ? (ArgumentList)parts.pop () : null;
     }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class DottedName implements TreeNode {
     private final List<String> parts;
@@ -19,7 +20,7 @@ public class DottedName implements TreeNode {
 	this.parts = new ArrayList<> (Arrays.asList (parts));
     }
 
-    public static TreeNode create (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode create (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	DottedName dn;
 	if (r.size () > 1)
 	    dn = (DottedName)parts.pop ();

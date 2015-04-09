@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
 public abstract class BodyBase implements TreeNode {
@@ -14,7 +15,7 @@ public abstract class BodyBase implements TreeNode {
 	declarations = Collections.emptyList ();
     }
 
-    public BodyBase (Rule r, Deque<TreeNode> parts) {
+    public BodyBase (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	if (r.size () > 2) {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
 	    declarations = ze.get ();

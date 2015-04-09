@@ -4,13 +4,14 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class MethodHeader implements TreeNode {
     private final TypeParameters typeParameters;
     private final List<TreeNode> annotations;
     private final UntypedMethodHeader untypedHeader;
 
-    public MethodHeader (Rule r, Deque<TreeNode> parts) {
+    public MethodHeader (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	typeParameters = r.size () > 1 ? (TypeParameters)parts.pop () : null;
 	annotations = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
 	untypedHeader = (UntypedMethodHeader)parts.pop ();

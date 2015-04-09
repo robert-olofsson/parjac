@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public abstract class MethodReference implements TreeNode {
@@ -58,7 +59,7 @@ public abstract class MethodReference implements TreeNode {
 	}
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	if (r.getRulePart (r.size () - 1).getId () == Token.NEW)
 	    return new ConstructorMethodReference (r, parts);
 	if (r.getRulePart (0).getId () == Token.SUPER || r.size () > 5)

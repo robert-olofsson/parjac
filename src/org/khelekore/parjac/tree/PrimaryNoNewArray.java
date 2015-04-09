@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class PrimaryNoNewArray {
@@ -47,7 +48,7 @@ public class PrimaryNoNewArray {
 	}
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	if (r.getRulePart (0).getId () == Token.THIS)
 	    return THIS_PRIMARY;
 	if (r.size () == 1)

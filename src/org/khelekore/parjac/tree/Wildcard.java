@@ -4,13 +4,14 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class Wildcard implements TreeNode {
     private final List<TreeNode> annotations;
     private final WildcardBounds bounds;
 
-    public Wildcard (Rule r, Deque<TreeNode> parts) {
+    public Wildcard (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	int len = 1;
 	if (r.getRulePart (0).getId () != Token.QUESTIONMARK) {
 	    annotations = ((ZOMEntry)parts.pop ()).get ();

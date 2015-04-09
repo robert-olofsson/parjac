@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class TryStatement implements TreeNode {
     private final ResourceList resources;
@@ -10,7 +11,7 @@ public class TryStatement implements TreeNode {
     private final Catches catches;
     private final Finally finallyBlock;
 
-    public TryStatement (Rule r, Deque<TreeNode> parts) {
+    public TryStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 1;
 	if (r.size () > 4) {
 	    resources = (ResourceList)parts.pop ();

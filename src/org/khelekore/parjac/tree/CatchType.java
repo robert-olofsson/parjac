@@ -6,11 +6,12 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class CatchType implements TreeNode {
     private List<ClassType> types;
 
-    public CatchType (Rule r, Deque<TreeNode> parts) {
+    public CatchType (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	UnannClassType ct = (UnannClassType)parts.pop ();
 	if (r.size () == 1) {
 	    types = Collections.singletonList (ct);

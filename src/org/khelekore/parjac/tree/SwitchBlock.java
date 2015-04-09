@@ -4,12 +4,13 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class SwitchBlock implements TreeNode {
     private final List<SwitchBlockStatementGroup> groups;
     private final List<SwitchLabel> labels;
 
-    public SwitchBlock (Rule r, Deque<TreeNode> parts) {
+    public SwitchBlock (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	List<SwitchBlockStatementGroup> groups = null;
 	List<SwitchLabel> labels = null;
 

@@ -30,7 +30,7 @@ public class TestPackage {
     @Test
     public void testSinglePackage () {
 	testSuccessfulParse ("package foo;",
-			     new PackageDeclaration (null, new DottedName ("foo")));
+			     new PackageDeclaration (null, new DottedName ("foo"), null));
     }
 
     @Test
@@ -41,7 +41,7 @@ public class TestPackage {
     @Test
     public void testMultiPackage () {
 	testSuccessfulParse ("package foo.bar.baz;",
-			     new PackageDeclaration (null, new DottedName ("foo", "bar", "baz")));
+			     new PackageDeclaration (null, new DottedName ("foo", "bar", "baz"), null));
     }
 
     @Test
@@ -49,10 +49,10 @@ public class TestPackage {
 	DottedName dn = new DottedName ("foo");
 	DottedName bar = new DottedName ("Bar");
 	testSuccessfulParse ("@foo package foo;",
-			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn)), dn));
+			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn, null)), dn, null));
 	testSuccessfulParse ("@foo @Bar package foo;",
-			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn),
-								    new MarkerAnnotation (bar)), dn));
+			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn, null),
+								    new MarkerAnnotation (bar, null)), dn, null));
     }
 
     @Test

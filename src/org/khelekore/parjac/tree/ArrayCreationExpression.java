@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ArrayCreationExpression implements TreeNode {
     private final TreeNode type;
@@ -10,7 +11,7 @@ public class ArrayCreationExpression implements TreeNode {
     private final Dims dims;
     private final ArrayInitializer initializer;
 
-    public ArrayCreationExpression (Rule r, Deque<TreeNode> parts) {
+    public ArrayCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	type = parts.pop ();
 	if (r.getRulePart (2).getId ().equals ("DimExprs")) {
 	    dimexprs = (DimExprs)parts.pop ();

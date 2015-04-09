@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class UntypedClassInstanceCreationExpression implements TreeNode {
@@ -14,7 +15,7 @@ public class UntypedClassInstanceCreationExpression implements TreeNode {
     private final ArgumentList args;
     private final ClassBody body;
 
-    public UntypedClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts) {
+    public UntypedClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 1;
 	if (r.getRulePart (pos).getId ().equals ("TypeArguments")) {
 	    typeArguments = (TypeArguments)parts.pop ();

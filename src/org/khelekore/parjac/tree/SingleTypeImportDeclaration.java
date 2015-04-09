@@ -2,9 +2,11 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public class SingleTypeImportDeclaration extends NamedNode implements ImportDeclaration {
-    public SingleTypeImportDeclaration (Deque<TreeNode> parts) {
-	super (parts);
+    public SingleTypeImportDeclaration (Deque<TreeNode> parts, ParsePosition pos) {
+	super (parts, pos);
     }
 
     public void visit (ImportVisitor iv) {

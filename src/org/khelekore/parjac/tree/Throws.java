@@ -6,11 +6,12 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class Throws implements TreeNode {
     private List<ClassType> exceptions;
 
-    public Throws (Rule r, Deque<TreeNode> parts) {
+    public Throws (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	ClassType ct = (ClassType)parts.pop ();
 	if (r.size () == 2) {
 	    exceptions = Collections.singletonList (ct);

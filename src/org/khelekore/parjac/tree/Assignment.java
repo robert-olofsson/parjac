@@ -2,12 +2,14 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public class Assignment implements TreeNode {
     private final TreeNode lhs;
     private final OperatorTokenType op;
     private final TreeNode rhs;
 
-    public Assignment (Deque<TreeNode> parts) {
+    public Assignment (Deque<TreeNode> parts, ParsePosition ppos) {
 	lhs = parts.pop ();
 	op = (OperatorTokenType)parts.pop ();
 	rhs = parts.pop ();

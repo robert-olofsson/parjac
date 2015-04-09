@@ -3,6 +3,7 @@ package org.khelekore.parjac.tree;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class BasicForStatement implements TreeNode {
     private final TreeNode forInit;
@@ -10,7 +11,7 @@ public class BasicForStatement implements TreeNode {
     private final StatementExpressionList forUpdate;
     private final TreeNode statement;
 
-    public BasicForStatement (Rule r, Deque<TreeNode> parts) {
+    public BasicForStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 2;
 	if (r.getRulePart (pos).isRulePart ()) {
 	    forInit = parts.pop ();

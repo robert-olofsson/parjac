@@ -2,11 +2,13 @@ package org.khelekore.parjac.tree;
 
 import java.util.Deque;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public class SingleStaticImportDeclaration extends NamedNode implements ImportDeclaration {
     private final String id;
 
-    public SingleStaticImportDeclaration (DottedName name, String id) {
-	super (name);
+    public SingleStaticImportDeclaration (DottedName name, String id, ParsePosition ppos) {
+	super (name, ppos);
 	this.id = id;
     }
 
@@ -14,10 +16,11 @@ public class SingleStaticImportDeclaration extends NamedNode implements ImportDe
 	iv.visit (this);
     }
 
-    public static SingleStaticImportDeclaration build (Deque<TreeNode> parts) {
+    public static SingleStaticImportDeclaration build (Deque<TreeNode> parts, ParsePosition pos) {
 	parts.pop (); // 'static'
 	return new SingleStaticImportDeclaration ((DottedName)parts.pop (),
-						  ((Identifier)parts.pop ()).get ());
+						  ((Identifier)parts.pop ()).get (),
+						  pos);
     }
 
     @Override public String toString () {

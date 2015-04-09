@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class SimpleClassType implements TreeNode {
     private final List<TreeNode> annotations;
@@ -18,7 +19,7 @@ public class SimpleClassType implements TreeNode {
 	this.typeArguments = typeArguments;
     }
 
-    public SimpleClassType (Rule r, Deque<TreeNode> parts) {
+    public SimpleClassType (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	int len = 1;
 	TreeNode tn = parts.pop ();
 	if (tn instanceof ZOMEntry) {

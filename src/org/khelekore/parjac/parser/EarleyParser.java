@@ -233,13 +233,13 @@ public class EarleyParser {
 	    State s = toVisit.pop ();
 
 	    State previous = s.getPrevious ();
+	    MultiState ms = states.get (tokenPos);
 	    if (previous == null) {
-		treeBuilder.build (s, parts);
+		treeBuilder.build (s, parts, ms.getParsePosition ());
 		continue;
 	    } else {
 		toVisit.push (previous);
 		if (previous.getPartAfterDot () instanceof TokenPart) {
-		    MultiState ms = states.get (tokenPos);
 		    TreeNode tn = ms.getParsedToken ();
 		    if (tn != null)
 			parts.push (tn);

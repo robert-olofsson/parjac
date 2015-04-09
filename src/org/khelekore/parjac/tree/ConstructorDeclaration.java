@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ConstructorDeclaration implements TreeNode {
     private final List<TreeNode> modifiers;
@@ -11,7 +12,7 @@ public class ConstructorDeclaration implements TreeNode {
     private final Throws throwsClause;
     private final ConstructorBody body;
 
-    public ConstructorDeclaration (Rule r, Deque<TreeNode> parts) {
+    public ConstructorDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	int pos = 1;
 	if (!r.getRulePart (0).getId ().equals ("ConstructorDeclarator")) {
 	    modifiers = ((ZOMEntry)parts.pop ()).get ();
