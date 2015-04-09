@@ -5,16 +5,20 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.TreeNode;
 
 class PredictedMultiState implements MultiState {
     private final ListRuleHolder rules;
     private final int startPos;
+    private final ParsePosition parsePosition;
 
-    public PredictedMultiState (ListRuleHolder rules, int startPos) {
+    public PredictedMultiState (ListRuleHolder rules, int startPos,
+				ParsePosition parsePosition) {
 	this.rules = rules;
 	this.startPos = startPos;
+	this.parsePosition = parsePosition;
     }
 
     @Override public String toString () {
@@ -44,6 +48,10 @@ class PredictedMultiState implements MultiState {
 
     public TreeNode getParsedToken () {
 	return null;
+    }
+
+    public ParsePosition getParsePosition () {
+	return parsePosition;
     }
 
     class PSSIterator implements Iterator<State> {

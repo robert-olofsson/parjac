@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.khelekore.parjac.grammar.Rule;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.util.MultiIterator;
@@ -99,5 +100,9 @@ class MergedMultiState implements MultiState {
 
     public TreeNode getParsedToken () {
 	return m1.getParsedToken ();
+    }
+
+    public ParsePosition getParsePosition () {
+	return m1.getParsePosition ();
     }
 }

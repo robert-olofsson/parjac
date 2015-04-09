@@ -9,11 +9,11 @@ public class CharBufferLexer implements Lexer {
     private final CharBuffer buf;
     private boolean hasSentEOI = false;
 
-    private long tokenStartPosition = 0;
-    private long tokenStartColumn = 0;
-    private long currentLine = 1;
+    private int tokenStartPosition = 0;
+    private int tokenStartColumn = 0;
+    private int currentLine = 1;
     private int currentLineStart = 0;
-    private long currentColumn = 0;
+    private int currentColumn = 0;
 
     // Text set when we get an lexer ERROR
     private String errorText;
@@ -71,19 +71,24 @@ public class CharBufferLexer implements Lexer {
 	return currentIdentifier;
     }
 
-    public long getLineNumber () {
+    public ParsePosition getParsePosition () {
+	return new ParsePosition (getLineNumber (), getTokenColumn (),
+				  getTokenStartPos (), getTokenEndPos ());
+    }
+
+    public int getLineNumber () {
 	return currentLine;
     }
 
-    public long getTokenStartPos () {
+    public int getTokenStartPos () {
 	return tokenStartPosition;
     }
 
-    public long getTokenEndPos () {
+    public int getTokenEndPos () {
 	return buf.position ();
     }
 
-    public long getTokenColumn () {
+    public int getTokenColumn () {
 	return tokenStartColumn;
     }
 

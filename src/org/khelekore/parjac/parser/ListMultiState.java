@@ -13,6 +13,7 @@ import java.util.Set;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.RulePart;
 import org.khelekore.parjac.grammar.SimplePart;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.TreeNode;
 
@@ -21,8 +22,10 @@ class ListMultiState implements MultiState {
     private final Map<Object, List<State>> m = new HashMap<> ();
     private Set<String> predictRules = Collections.emptySet ();
     private final TreeNode tokenValue;
+    private final ParsePosition parsePosition;
 
-    public ListMultiState (List<State> ss, TreeNode tokenValue) {
+    public ListMultiState (List<State> ss, TreeNode tokenValue,
+			   ParsePosition parsePosition) {
 	this.tokenValue = tokenValue;
 	for (State s : ss) {
 	    if (s.dotIsLast ()) {
@@ -44,6 +47,7 @@ class ListMultiState implements MultiState {
 		}
 	    }
 	}
+	this.parsePosition = parsePosition;
     }
 
     public List<State> getCompleted () {
@@ -92,5 +96,9 @@ class ListMultiState implements MultiState {
 
     public TreeNode getParsedToken () {
 	return tokenValue;
+    }
+
+    public ParsePosition getParsePosition () {
+	return parsePosition;
     }
 }

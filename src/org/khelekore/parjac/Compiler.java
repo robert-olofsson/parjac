@@ -50,7 +50,12 @@ public class Compiler {
     }
 
     public void compile (List<Path> srcFiles) {
+	long startParse = System.nanoTime ();
 	List<SyntaxTree> trees = parse (srcFiles);
+	long endParse = System.nanoTime ();
+	//if (settings.getDebug ())
+	    System.out.println (String.format ("Parsing completed in: %.3f millis",
+					       (endParse - startParse) / 1.0e6));
 	if (diagnostics.hasError ())
 	    return;
 

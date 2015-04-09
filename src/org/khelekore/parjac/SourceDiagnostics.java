@@ -3,20 +3,18 @@ package org.khelekore.parjac;
 import java.nio.file.Path;
 import java.util.Locale;
 import javax.tools.Diagnostic;
+import org.khelekore.parjac.lexer.ParsePosition;
 
 public class SourceDiagnostics implements Diagnostic<Path> {
     private final Path path;
-    private final long startPos, endPos, line, column;
+    private final ParsePosition parsePosition;
     private final String format;
     private final Object[] args;
 
-    public SourceDiagnostics (Path path, long startPos, long endPos, long line, long column,
+    public SourceDiagnostics (Path path, ParsePosition  parsePosition,
 			      String format, Object... args) {
 	this.path = path;
-	this.startPos = startPos;
-	this.endPos = endPos;
-	this.line = line;
-	this.column = column;
+	this.parsePosition = parsePosition;
 	this.format = format;
 	this.args = args;
     }
@@ -30,23 +28,23 @@ public class SourceDiagnostics implements Diagnostic<Path> {
     }
 
     public long getPosition () {
-	return startPos;
+	return parsePosition.getTokenStartPos ();
     }
 
     public long getStartPosition () {
-	return startPos;
+	return parsePosition.getTokenStartPos ();
     }
 
     public long getEndPosition () {
-	return endPos;
+	return parsePosition.getTokenEndPos ();
     }
 
     public long getLineNumber () {
-	return line;
+	return parsePosition.getLineNumber ();
     }
 
     public long getColumnNumber () {
-	return column;
+	return parsePosition.getTokenColumn ();
     }
 
     public String getCode () {
@@ -55,6 +53,7 @@ public class SourceDiagnostics implements Diagnostic<Path> {
 
     public String getMessage (Locale locale) {
 	String msg = String.format (format, args);
-	return String.format ("%s:%d:%d: %s", path.toString (), line, column, msg);
+	return String.format ("%s:%d:%d: %s", path.toString (),
+			      getLineNumber (), getColumnNumber (), msg);
     }
 }

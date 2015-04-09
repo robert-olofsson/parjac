@@ -1,5 +1,7 @@
 package org.khelekore.parjac.lexer;
 
+import org.khelekore.parjac.lexer.ParsePosition;
+
 public interface Lexer {
 
     /** Get the current error */
@@ -26,17 +28,8 @@ public interface Lexer {
     /** Get the current identifier */
     String getIdentifier ();
 
-    /** Get the start position of the current token */
-    long getTokenStartPos ();
-
-    /** Get the end position of the current token */
-    long getTokenEndPos ();
-
-    /** Get the line number of the current token */
-    long getLineNumber ();
-
-    /** Get the start column of the current token */
-    long getTokenColumn ();
+    /** Get the current parse position */
+    ParsePosition getParsePosition ();
 
     /** Check if there are any more tokens.
      *  Note that this method will return true until END_OF_INPUT has been returned.

@@ -67,7 +67,7 @@ public class EarleyParser {
 	startStates.add (new State (goalRule, 0, currentPosition));
 	if (grammar.getRules ("Goal").canBeEmpty ())
 	    startStates.add (new State (goalRule, 1, currentPosition));
-	MultiState state = new ListMultiState (startStates, null);
+	MultiState state = new ListMultiState (startStates, null, lexer.getParsePosition ());
 	states.add (state);
 	Token nextToken = Token.END_OF_INPUT;
 	TreeNode currentTokenValue = null;
@@ -134,7 +134,7 @@ public class EarleyParser {
 	    complete (multiComplete.removeFirst (), seen, completed, multiComplete);
 	if (completed.isEmpty ())
 	    return null;
-	return new ListMultiState (completed, null);
+	return new ListMultiState (completed, null, currentStates.getParsePosition ());
     }
 
     private void complete (State s, Map<State, State> seen,
@@ -159,7 +159,7 @@ public class EarleyParser {
 	ListRuleHolder rh = predictCache.getPredictedRules (currentStates.getPredictRules (), crules);
 	if (rh == null)
 	    return null;
-	return new PredictedMultiState (rh, currentPosition);
+	return new PredictedMultiState (rh, currentPosition, currentStates.getParsePosition ());
     }
 
     private MultiState scan (MultiState currentStates, MultiState cms, MultiState pms,
@@ -172,7 +172,7 @@ public class EarleyParser {
 	    scan (pms, nextToken, scanned);
 	if (scanned.isEmpty ())
 	    return null;
-	return new ListMultiState (scanned, currentTokenValue);
+	return new ListMultiState (scanned, currentTokenValue, lexer.getParsePosition ());
     }
 
     private void scan (MultiState ms, Token nextToken, List<State> scanned) {
@@ -255,10 +255,7 @@ public class EarleyParser {
 
     private void addParserError (String error) {
 	diagnostics.report (new SourceDiagnostics (path,
-						   lexer.getTokenStartPos (),
-						   lexer.getTokenEndPos (),
-						   lexer.getLineNumber (),
-						   lexer.getTokenColumn (),
+						   lexer.getParsePosition (),
 						   error));
     }
 }
