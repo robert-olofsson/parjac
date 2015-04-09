@@ -31,6 +31,8 @@ public class ClassSetter implements TreeVisitor {
 	this.crh = crh;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
+
+	// System.err.println ("compiled types: " + cth.getTypes ());
 	CompilationUnit cu = tree.getCompilationUnit ();
 	packageName = cu.getPackage ();
 	cu.getImports ().forEach (i -> i.visit (ih));
@@ -138,6 +140,7 @@ public class ClassSetter implements TreeVisitor {
 	    ClassType ct = (ClassType)type;
 	    String id1 = getId (ct, ".");
 	    String fqn = resolve (id1);
+	    // System.err.println ("id1: " + id1 + ", fqn: " + fqn);
 	    if (fqn == null && ct.size () > 1) {
 		String firstName = ct.get ().get (0).getId ();
 		String outerName = ih.stid.get (firstName);
@@ -178,12 +181,15 @@ public class ClassSetter implements TreeVisitor {
 	}
 
 	// check for inner class
-	String icn = packageName == null ?
-	    containingTypeName.peek () + "." + id :
-	    packageName.getDotName () + "." + containingTypeName.peek () + "." + id;
-	type = cth.getType (icn);
-	if (type != null)
-	    return icn;
+	for (String ctn : containingTypeName) {
+	    String icn = packageName == null ?
+		ctn + "." + id :
+		packageName.getDotName () + "." + ctn + "." + id;
+	    // System.err.println ("Trying icn: " + icn);
+	    type = cth.getType (icn);
+	    if (type != null)
+		return icn;
+	}
 	return resolveUsingImports (id);
     }
 

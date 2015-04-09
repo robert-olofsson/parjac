@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.tree.*;
@@ -16,6 +17,10 @@ public class CompiledTypesHolder {
 
     public void addTypes (SyntaxTree tree) {
 	tree.getCompilationUnit ().visit (new ClassMapper ());
+    }
+
+    public Set<String> getTypes () {
+	return name2node.keySet ();
     }
 
     /** Get the outer tree node for a given fully qualified name,

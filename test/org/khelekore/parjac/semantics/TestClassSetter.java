@@ -110,6 +110,13 @@ public class TestClassSetter {
 	checkOneInterface (ei.get (), "foo.bar.Foo");
     }
 
+    @Test
+    public void testInnerParamOuterEnum () throws IOException {
+	parseAndSetClasses ("package foo; " +
+			    "class Foo { enum Type {A, B} static class P { Type t; }}");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
