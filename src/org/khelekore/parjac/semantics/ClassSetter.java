@@ -86,14 +86,6 @@ public class ClassSetter implements TreeVisitor {
 	    setTypes (superInterfaces);
     }
 
-    private void registerTypeParameters (TypeParameters tps) {
-	if (tps != null) {
-	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
-	} else {
-	    types.push (Collections.emptySet ());
-	}
-    }
-
     @Override public void visit (ConstructorDeclaration c) {
 	setTypes (c.getParameters ());
     }
@@ -103,11 +95,23 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (MethodDeclaration m) {
-	System.err.println ("m: " + m);
+	registerTypeParameters (m.getTypeParameters ());
 	Result r = m.getResult ();
 	if (r instanceof Result.TypeResult)
 	    setType (((TypeResult)r).get ());
 	setTypes (m.getParameters ());
+    }
+
+    @Override public void endMethod (MethodDeclaration m) {
+	types.pop ();
+    }
+
+    private void registerTypeParameters (TypeParameters tps) {
+	if (tps != null) {
+	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
+	} else {
+	    types.push (Collections.emptySet ());
+	}
     }
 
     private void setTypes (InterfaceTypeList ls) {

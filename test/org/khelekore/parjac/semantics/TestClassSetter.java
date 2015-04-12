@@ -117,6 +117,18 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testGenericClassType () throws IOException {
+	parseAndSetClasses ("package foo; class Foo<T> { T t; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testGenericMethodType () throws IOException {
+	parseAndSetClasses ("package foo;\nclass Foo {\n<T> T foo (T t) { T t; }}");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

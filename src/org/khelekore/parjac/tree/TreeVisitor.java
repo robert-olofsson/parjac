@@ -26,6 +26,8 @@ public interface TreeVisitor {
     }
     default void visit (MethodDeclaration m) {
     }
+    default void endMethod (MethodDeclaration m) {
+    }
 
     default void visit (Block b) {
     }
