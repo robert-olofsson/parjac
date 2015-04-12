@@ -129,6 +129,44 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    /*
+    @Test
+    public void testInnerClassFromSuperClass () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo {\npublic class Bar {}}\n" +
+			    "class Baz extends Foo { Bar doBar() {return null;} }");
+	assertNoErrors ();
+    }
+    */
+
+    @Test
+    public void testSingleStaticImport () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import static java.util.Map.Entry;\n" +
+			    "class Foo {Entry e = null;}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testStaticImportOnDemand () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import static java.util.concurrent.locks.ReentrantReadWriteLock.*;\n" +
+			    "class Foo { ReadLock rl; WriteLock wl; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testPrimitiveArray () throws IOException {
+	parseAndSetClasses ("class Foo { int[] ia; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testStringArray () throws IOException {
+	parseAndSetClasses ("class Foo { String[] ia; }");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

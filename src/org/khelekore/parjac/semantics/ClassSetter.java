@@ -162,6 +162,9 @@ public class ClassSetter implements TreeVisitor {
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
 							   "Failed to find class: " + id1));
 	    ct.setFullName (fqn);
+	} else if (type instanceof ArrayType) {
+	    ArrayType at = (ArrayType)type;
+	    setType (at.getType ());
 	} else {
 	    System.err.println ("Unhandled type: " + type.getClass ().getName () + ", " + type);
 	}
@@ -205,14 +208,12 @@ public class ClassSetter implements TreeVisitor {
 	fqn = tryTypeImportOnDemand (id);
 	if (fqn != null)
 	    return fqn;
-	/*
 	fqn = trySingleStaticImport (id);
 	if (fqn != null)
 	    return fqn;
 	fqn = tryStaticImportOnDemand (id);
 	if (fqn != null)
 	    return fqn;
-	*/
 
 	return null;
     }
@@ -227,6 +228,23 @@ public class ClassSetter implements TreeVisitor {
     private String tryTypeImportOnDemand (String id) {
 	for (String p : ih.tiod) {
 	    String fqn = p + "." + id;
+	    if (validFullName (fqn))
+		return fqn;
+	}
+	return null;
+    }
+
+    private String trySingleStaticImport (String id) {
+	for (SingleStaticImportDeclaration ssid : ih.ssid) {
+	    if (id.equals (ssid.getInnerId ()))
+		return ssid.getFullName ();
+	}
+	return null;
+    }
+
+    private String tryStaticImportOnDemand (String id) {
+	for (StaticImportOnDemandDeclaration siod : ih.siod) {
+	    String fqn = siod.getName ().getDotName () + "." + id;
 	    if (validFullName (fqn))
 		return fqn;
 	}

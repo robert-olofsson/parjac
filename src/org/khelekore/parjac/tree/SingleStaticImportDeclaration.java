@@ -26,4 +26,12 @@ public class SingleStaticImportDeclaration extends NamedNode implements ImportDe
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{name: " + getName () + ", identifier: " + id + "}";
     }
+
+    public String getInnerId () {
+	return id;
+    }
+
+    public String getFullName () {
+	return getName ().getDotName () + "." + id;
+    }
 }
