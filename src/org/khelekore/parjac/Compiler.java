@@ -120,7 +120,8 @@ public class Compiler {
     private void checkSemantics (List<SyntaxTree> trees) {
 	cth = new CompiledTypesHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
-	trees.parallelStream ().forEach (this::fillInClasses);
+	trees.parallelStream ().forEach (t -> fillInClasses (t, null));
+	trees.parallelStream ().forEach (t -> fillInClasses (t, diagnostics));
 	// TODO: implement
 	// Fill in correct classes
 	// Check modifiers
@@ -129,7 +130,7 @@ public class Compiler {
 	// Check generics
     }
 
-    private void fillInClasses (SyntaxTree tree) {
+    private void fillInClasses (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics);
 	cs.fillIn ();
     }
@@ -164,7 +165,7 @@ public class Compiler {
     }
 
     private void writeClasses (SyntaxTree tree, Path destinationDir) {
-	BytecodeWriter w = new BytecodeWriter (destinationDir, cth);
+	BytecodeWriter w = new BytecodeWriter (tree.getOrigin (), destinationDir, cth);
 	tree.getCompilationUnit ().visit (w);
     }
 }

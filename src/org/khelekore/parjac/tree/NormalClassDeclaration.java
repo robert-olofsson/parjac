@@ -1,5 +1,6 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class NormalClassDeclaration implements TreeNode {
 	    tn = parts.pop ();
 	    pos++;
 	} else {
-	    modifiers = null;
+	    modifiers = Collections.emptyList ();
 	}
 	id = ((Identifier)tn).get ();
 	if (r.getRulePart (pos).getId ().equals ("TypeParameters")) {
@@ -63,6 +64,10 @@ public class NormalClassDeclaration implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + modifiers + " " + id +
 	    " " + types + " " + superclass + " " + superinterfaces + " " + body + "}";
+    }
+
+    public List<TreeNode> getModifiers () {
+	return modifiers;
     }
 
     public String getId () {

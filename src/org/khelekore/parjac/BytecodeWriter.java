@@ -14,16 +14,19 @@ import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeWriter implements TreeVisitor {
+    private final Path origin;
     private final Path destinationDir;
     private final CompiledTypesHolder cth;
     private DottedName packageName;
     private final Deque<ClassWriterHolder> classes = new ArrayDeque<> ();
 
-    public BytecodeWriter (Path destinationDir, CompiledTypesHolder cth) {
+    public BytecodeWriter (Path origin, Path destinationDir, CompiledTypesHolder cth) {
+	this.origin = origin;
 	this.destinationDir = destinationDir;
 	this.cth = cth;
     }
@@ -118,49 +121,6 @@ public class BytecodeWriter implements TreeVisitor {
         // variables
         mw.visitMaxs(2, 2);
         mw.visitEnd();
-    }
-
-    private int getModifiers (List<TreeNode> modifiers) {
-	int ret = 0;
-	if (modifiers != null) {
-	    for (TreeNode tn : modifiers) {
-		if (tn instanceof ModifierTokenType) {
-		    ret |= getModifier (((ModifierTokenType)tn).get ());
-		}
-	    }
-	}
-	return ret;
-    }
-
-    private int getModifier (Token t) {
-	switch (t) {
-	case PUBLIC:
-	    return ACC_PUBLIC;
-	case PROTECTED:
-	    return ACC_PROTECTED;
-	case PRIVATE:
-	    return ACC_PRIVATE;
-	case ABSTRACT:
-	    return ACC_ABSTRACT;
-	case STATIC:
-	    return ACC_STATIC;
-	case FINAL:
-	    return ACC_FINAL;
-	case STRICTFP:
-	    return ACC_STRICT;
-	case TRANSIENT:
-	    return ACC_TRANSIENT;
-	case VOLATILE:
-	    return ACC_VOLATILE;
-	case SYNCHRONIZED:
-	    return ACC_SYNCHRONIZED;
-	case NATIVE:
-	    return ACC_NATIVE;
-	case DEFAULT:
-	    // hmm?
-	default:
-	    throw new IllegalStateException ("Got unexpected token: " + t);
-	}
     }
 
     private boolean hasVarargs (FormalParameterList ls) {
@@ -269,8 +229,21 @@ public class BytecodeWriter implements TreeVisitor {
 	}
 
 	public void start () {
+	    // TODO: we need to be careful about . and $ in generated names
 	    String fqn = cth.getFullName (tn);
-	    cw.visit (V1_8, ACC_PUBLIC, fqn, null, "java/lang/Object", null);
+	    String supername = "java/lang/Object";
+	    int flags = 0;
+	    if (tn instanceof NormalClassDeclaration) {
+		NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
+		ClassType ct = ncd.getSuperClass ();
+		if (ct != null) {
+		    supername = ct.getFullName ().replace ('.', '/');
+		}
+		flags = getModifiers (ncd.getModifiers ());
+	    }
+	    if (origin != null)
+		cw.visitSource (origin.getFileName ().toString (), null);
+	    cw.visit (V1_8, flags, fqn, null, supername, null);
 	}
 
 	public void write () {
@@ -287,6 +260,49 @@ public class BytecodeWriter implements TreeVisitor {
 	    if (packageName == null)
 		return Paths.get (destinationDir.toString (), cid);
 	    return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);
+	}
+    }
+
+    private int getModifiers (List<TreeNode> modifiers) {
+	int ret = 0;
+	if (modifiers != null) {
+	    for (TreeNode tn : modifiers) {
+		if (tn instanceof ModifierTokenType) {
+		    ret |= getModifier (((ModifierTokenType)tn).get ());
+		}
+	    }
+	}
+	return ret;
+    }
+
+    private int getModifier (Token t) {
+	switch (t) {
+	case PUBLIC:
+	    return ACC_PUBLIC;
+	case PROTECTED:
+	    return ACC_PROTECTED;
+	case PRIVATE:
+	    return ACC_PRIVATE;
+	case ABSTRACT:
+	    return ACC_ABSTRACT;
+	case STATIC:
+	    return ACC_STATIC;
+	case FINAL:
+	    return ACC_FINAL;
+	case STRICTFP:
+	    return ACC_STRICT;
+	case TRANSIENT:
+	    return ACC_TRANSIENT;
+	case VOLATILE:
+	    return ACC_VOLATILE;
+	case SYNCHRONIZED:
+	    return ACC_SYNCHRONIZED;
+	case NATIVE:
+	    return ACC_NATIVE;
+	case DEFAULT:
+	    // hmm?
+	default:
+	    throw new IllegalStateException ("Got unexpected token: " + t);
 	}
     }
 }

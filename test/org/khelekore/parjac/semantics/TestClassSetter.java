@@ -72,6 +72,20 @@ public class TestClassSetter {
     }
 
     @Test
+    public void testMultiClassBadOrder () throws IOException {
+	parseAndSetClasses ("class Bar extends Foo {} class Foo {}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMultiClassFieldBadOrder () throws IOException {
+	parseAndSetClasses ("class Bar extends Baz { FooBar foo; }\n" +
+			    "class Baz extends Foo {}\n" +
+			    "class Foo { enum FooBar {}}");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testFieldOfSameClass () throws IOException {
 	parseAndSetClasses ("package foo.bar; class Foo { Foo next; }");
 	assertNoErrors ();
@@ -129,12 +143,37 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
-    /*
     @Test
-    public void testInnerClassFromSuperClass () throws IOException {
+    public void testInnerClassFromSuperClassCompiled () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "class Foo {\npublic class Bar {}}\n" +
 			    "class Baz extends Foo { Bar doBar() {return null;} }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInnerClassFromSuperInterfaceCompiled () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "interface Foo { enum Bar { A, B }}\n" +
+			    "class Baz implements Foo { Bar doBar() {return null;} }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInnerClassFromSuperSuperClassCompiled () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo {\npublic class Bar {}}\n" +
+			    "class Baz extends Foo {}\n" +
+			    "class Quop extends Baz { Bar doBar() {return null;} }");
+	assertNoErrors ();
+    }
+
+    /*
+    @Test
+    public void testInnerClassFromSuperClassKnown () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.HashMap;\n" +
+			    "class Foo extends HashMap { Entry e = null; }");
 	assertNoErrors ();
     }
     */
@@ -171,7 +210,9 @@ public class TestClassSetter {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
 	cth.addTypes (st);
-	ClassSetter cs = new ClassSetter (cth, crh, st, diagnostics);
+	ClassSetter cs = new ClassSetter (cth, crh, st, null);
+	cs.fillIn ();
+	cs = new ClassSetter (cth, crh, st, diagnostics);
 	cs.fillIn ();
     }
 

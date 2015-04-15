@@ -32,7 +32,6 @@ public class ClassSetter implements TreeVisitor {
 	this.tree = tree;
 	this.diagnostics = diagnostics;
 
-	// System.err.println ("compiled types: " + cth.getTypes ());
 	CompilationUnit cu = tree.getCompilationUnit ();
 	packageName = cu.getPackage ();
 	cu.getImports ().forEach (i -> i.visit (ih));
@@ -143,6 +142,8 @@ public class ClassSetter implements TreeVisitor {
 	}
 	if (type instanceof ClassType) {
 	    ClassType ct = (ClassType)type;
+	    if (ct.getFullName () != null) // already set?
+		return;
 	    String id1 = getId (ct, ".");
 	    String fqn = resolve (id1);
 	    // System.err.println ("id1: " + id1 + ", fqn: " + fqn);
@@ -158,7 +159,7 @@ public class ClassSetter implements TreeVisitor {
 			fqn = null;
 		}
 	    }
-	    if (fqn == null)
+	    if (fqn == null && diagnostics != null)
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
 							   "Failed to find class: " + id1));
 	    ct.setFullName (fqn);
@@ -168,7 +169,6 @@ public class ClassSetter implements TreeVisitor {
 	} else {
 	    System.err.println ("Unhandled type: " + type.getClass ().getName () + ", " + type);
 	}
-	// TODO: handle arrays
     }
 
     private String getId (ClassType ct, String join) {
@@ -193,12 +193,65 @@ public class ClassSetter implements TreeVisitor {
 	    String icn = packageName == null ?
 		ctn + "." + id :
 		packageName.getDotName () + "." + ctn + "." + id;
-	    // System.err.println ("Trying icn: " + icn);
 	    type = cth.getType (icn);
 	    if (type != null)
 		return icn;
 	}
+
+	// check for inner class of super classes
+	for (String ctn : containingTypeName) {
+	    String fullCtn = packageName == null ? ctn : packageName.getDotName () + "." + ctn;
+	    String fqn = checkSuperClasses (fullCtn, id);
+	    if (fqn != null)
+		return fqn;
+	}
+
 	return resolveUsingImports (id);
+    }
+
+    private String checkSuperClasses (String fullCtn, String id) {
+	List<String> superclasses = getSuperClasses (fullCtn);
+	//System.err.println ("fullCtn: " + fullCtn + ", id: " + id + ", superclasses: " + superclasses);
+	for (String superclass : superclasses) {
+	    String icn = superclass + "." + id;
+	    if (validFullName (icn))
+		return icn;
+	    String ssn = checkSuperClasses (superclass, id);
+	    if (ssn != null)
+		return ssn;
+	}
+	return null;
+    }
+
+    private List<String> getSuperClasses (String type) {
+	TreeNode tn = cth.getType (type);
+	if (tn instanceof NormalClassDeclaration) {
+	    NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
+	    List<String> ret = new ArrayList<> ();
+	    ClassType ct = ncd.getSuperClass ();
+	    if (ct != null) {
+		if (ct.getFullName () == null)
+		    return Collections.emptyList ();
+		ret.add (ct.getFullName ());
+	    }
+	    InterfaceTypeList ifs = ncd.getSuperInterfaces ();
+	    if (ifs != null)
+		ifs.get ().forEach (ic -> ret.add (ic.getFullName ()));
+	    return ret;
+	} else if (tn instanceof NormalInterfaceDeclaration) {
+	    NormalInterfaceDeclaration nid = (NormalInterfaceDeclaration)tn;
+	    ExtendsInterfaces ei = nid.getExtendsInterfaces ();
+	    if (ei != null) {
+		List<ClassType> cts = ei.get ().get ();
+		return cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
+	    }
+	}
+
+	if (crh.hasType (type)) {
+	    // TODO: get information from class resource
+	    //System.err.println ("need to get bytecode for class...");
+	}
+	return Collections.emptyList ();
     }
 
     private String resolveUsingImports (String id) {
