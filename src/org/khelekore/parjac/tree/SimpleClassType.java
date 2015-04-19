@@ -37,6 +37,10 @@ public class SimpleClassType implements TreeNode {
 	return id;
     }
 
+    public TypeArguments getTypeArguments () {
+	return typeArguments;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + annotations + " " + id + " " + typeArguments + "}";
     }

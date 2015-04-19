@@ -18,4 +18,8 @@ public class TypeArguments implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + typeArgumentList + "}";
     }
+
+    public List<TreeNode> getTypeArguments () {
+	return typeArgumentList;
+    }
 }

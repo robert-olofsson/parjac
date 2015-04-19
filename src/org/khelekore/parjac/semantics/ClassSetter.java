@@ -168,6 +168,11 @@ public class ClassSetter implements TreeVisitor {
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
 							   "Failed to find class: " + id1));
 	    ct.setFullName (fqn);
+	    for (SimpleClassType sct : ct.get ()) {
+		TypeArguments tas = sct.getTypeArguments ();
+		if (tas != null)
+		    tas.getTypeArguments ().forEach (tn -> setType (tn));
+	    }
 	} else if (type instanceof ArrayType) {
 	    ArrayType at = (ArrayType)type;
 	    setType (at.getType ());
@@ -186,7 +191,7 @@ public class ClassSetter implements TreeVisitor {
 	    return id;
 
 	if (isTypeParameter (id)) {
-	    return id;
+	    return "generic type: " + id;
 	}
 
 	if (crh.hasType (id)) {

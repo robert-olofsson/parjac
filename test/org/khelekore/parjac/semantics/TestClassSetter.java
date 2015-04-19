@@ -16,7 +16,9 @@ import org.khelekore.parjac.tree.FieldDeclaration;
 import org.khelekore.parjac.tree.InterfaceTypeList;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
+import org.khelekore.parjac.tree.SimpleClassType;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TypeArguments;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -138,8 +140,37 @@ public class TestClassSetter {
     }
 
     @Test
+    public void testGenericSuperType () throws IOException {
+	parseAndSetClasses ("package foo; class Foo implements Comparable<Foo> {}");
+	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType ("foo.Foo");
+	InterfaceTypeList ifs = cd.getSuperInterfaces ();
+	assert ifs != null;
+	List<ClassType> cts = ifs.get ();
+	assert cts != null;
+	assert cts.size () == 1;
+	ClassType ct = cts.get (0);
+	assert ct.getFullName ().equals ("java.lang.Comparable");
+	SimpleClassType sct = ct.get ().get (0);
+	TypeArguments tas = sct.getTypeArguments ();
+	ClassType ctt = (ClassType)(tas.getTypeArguments ().get (0));
+	assert ctt.getFullName ().equals ("foo.Foo");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testGenericClassTypeWithGenericSuperclass () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo<T> {}\n" +
+			    "class Bar<T> extends Foo<T> {}");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testGenericMethodType () throws IOException {
-	parseAndSetClasses ("package foo;\nclass Foo {\n<T> T foo (T t) { T t; }}");
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo {\n" +
+			    "    <T> T foo (T t) { T t; }\n" +
+			    "}");
 	assertNoErrors ();
     }
 
