@@ -9,7 +9,7 @@ public abstract class PositionNode implements TreeNode {
 	this.pos = pos;
     }
 
-    public ParsePosition getParsePosition () {
+    @Override public ParsePosition getParsePosition () {
 	return pos;
     }
 }

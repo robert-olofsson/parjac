@@ -6,20 +6,14 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ClassType extends Multipart<SimpleClassType> {
-    private final ParsePosition pos;
     private String fqn;
 
     public ClassType (SimpleClassType sct, ParsePosition pos) {
-	super (sct);
-	this.pos = pos;
+	super (sct, pos);
     }
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + get () + ", fqn: " + fqn + "}";
-    }
-
-    public ParsePosition getParsePosition () {
-	return pos;
     }
 
     public void setFullName (String fqn) {

@@ -244,6 +244,24 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testSimpleWildCard () throws IOException {
+	parseAndSetClasses ("class Foo { Class<?> c; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testGenericTypeExtends () throws IOException {
+	parseAndSetClasses ("package foo; class Foo<T> { void foo (Foo<? extends Foo> e) {} }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testGenericTypeSuper () throws IOException {
+	parseAndSetClasses ("package foo; class Foo<T> { void foo (Foo<? super Foo> s) {} }");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

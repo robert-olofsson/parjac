@@ -1,5 +1,6 @@
 package org.khelekore.parjac.semantics;
 
+import java.lang.reflect.WildcardType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -176,8 +177,16 @@ public class ClassSetter implements TreeVisitor {
 	} else if (type instanceof ArrayType) {
 	    ArrayType at = (ArrayType)type;
 	    setType (at.getType ());
+	} else if (type instanceof Wildcard) {
+	    Wildcard wc = (Wildcard)type;
+	    WildcardBounds wb = wc.getBounds ();
+	    if (wb != null)
+		setType (wb.getClassType ());
 	} else {
-	    System.err.println ("Unhandled type: " + type.getClass ().getName () + ", " + type);
+	    if (diagnostics != null)
+		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), type.getParsePosition (),
+							   "Unhandled type: " + type.getClass ().getName () +
+							   ", " + type));
 	}
     }
 

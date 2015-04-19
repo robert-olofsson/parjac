@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Multipart<T extends TreeNode> implements TreeNode {
+import org.khelekore.parjac.lexer.ParsePosition;
+
+public class Multipart<T extends TreeNode> extends PositionNode {
     private List<T> data;
 
-    public Multipart (T t) {
+    public Multipart (T t, ParsePosition pos) {
+	super (pos);
 	data = Collections.singletonList (t);
     }
 
