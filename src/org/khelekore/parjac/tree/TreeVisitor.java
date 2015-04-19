@@ -22,6 +22,8 @@ public interface TreeVisitor {
 
     default void visit (ConstructorDeclaration c) {
     }
+    default void endConstructor (ConstructorDeclaration c) {
+    }
     default void visit (FieldDeclaration f) {
     }
     default void visit (MethodDeclaration m) {

@@ -86,7 +86,12 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (ConstructorDeclaration c) {
+	registerTypeParameters (c.getTypeParameters ());
 	setTypes (c.getParameters ());
+    }
+
+    @Override public void endConstructor (ConstructorDeclaration c) {
+	types.pop ();
     }
 
     @Override public void visit (FieldDeclaration f) {

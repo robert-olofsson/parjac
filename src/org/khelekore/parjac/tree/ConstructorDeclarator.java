@@ -31,6 +31,10 @@ public class ConstructorDeclarator implements TreeNode {
 	return getClass ().getSimpleName () + "{" + types + " " + id + "(" + params + ")}";
     }
 
+    public TypeParameters getTypeParameters () {
+	return types;
+    }
+
     public FormalParameterList getParameters () {
 	return params;
     }

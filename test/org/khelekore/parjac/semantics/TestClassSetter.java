@@ -179,6 +179,13 @@ public class TestClassSetter {
     */
 
     @Test
+    public void testConstructorWithType () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo { <T> Foo (T t) {} }");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testSingleStaticImport () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "import static java.util.Map.Entry;\n" +
