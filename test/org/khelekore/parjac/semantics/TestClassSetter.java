@@ -262,6 +262,14 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testMultiGenericType () throws IOException {
+	parseAndSetClasses ("package foo;" +
+			    "import java.util.List; " +
+			    "class Foo { List<List<List<String>>> ls; }");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
