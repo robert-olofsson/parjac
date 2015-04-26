@@ -14,7 +14,6 @@ import org.khelekore.parjac.tree.*;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -240,6 +239,10 @@ public class BytecodeWriter implements TreeVisitor {
 		    supername = ct.getFullName ().replace ('.', '/');
 		}
 		flags = getModifiers (ncd.getModifiers ());
+	    } else if (tn instanceof EnumDeclaration) {
+		EnumDeclaration ed = (EnumDeclaration)tn;
+		supername = "java.lang.Enum<" + ed.getId () + ">";
+		flags = ACC_FINAL;
 	    }
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
