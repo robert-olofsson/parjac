@@ -211,12 +211,12 @@ public class JavaTreeBuilder {
 	TreeNode create (T arg, ParsePosition pos);
     }
 
-    /** Constructor taking two argument */
+    /** Constructor taking two arguments */
     public interface ConstructorTwo<T, U> {
 	TreeNode create (T t, U u, ParsePosition pos);
     }
 
-    /** Given a rule and a deque of parts pop some parts and push the newly built part. */
+    /** Given a rule and a deque of parts, pop some parts and push the newly built part. */
     private interface Builder {
 	void build (Rule r, Deque<TreeNode> parts, ParsePosition pos);
     }

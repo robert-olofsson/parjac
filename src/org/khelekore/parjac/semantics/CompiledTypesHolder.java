@@ -31,7 +31,7 @@ public class CompiledTypesHolder {
     }
 
     /** Get the class id, something like "Foo.Bar.1".
-     *  Inner classes are use dot as separator, filename use dollar as separator.
+     *  Inner classes use dot as separator, filename use dollar as separator.
      */
     public String getId (TreeNode tn) {
 	return node2id.get (tn);

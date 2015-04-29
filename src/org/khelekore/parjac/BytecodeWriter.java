@@ -92,7 +92,7 @@ public class BytecodeWriter implements TreeVisitor {
 	ClassWriter cw = classes.peekLast ().cw;
 	int mods = getModifiers (f.getModifiers ());
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
-	    // int access, String name, String desc, String signature, Object value)
+	    // int access, String name, String desc, String signature, Object value
 	    FieldVisitor fw = cw.visitField (mods, vd.getId (), getType (f.getType ()), null, null);
 	    fw.visitEnd ();
 	}
