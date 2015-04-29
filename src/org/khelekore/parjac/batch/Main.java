@@ -92,7 +92,7 @@ public class Main {
 		if (hasFollowingArgExists (args, i)) {
 		    String e = args[++i];
 		    if (!Charset.isSupported (e)) {
-			diagnostics.report (new NoSourceDiagnostics ("Unkonwn encoding: %s", e));
+			diagnostics.report (new NoSourceDiagnostics ("Unknown encoding: %s", e));
 			return null;
 		    }
 		    encoding = Charset.forName (e);
@@ -106,7 +106,7 @@ public class Main {
 		usage ();
 	        return null;
 	    default:
-		diagnostics.report (new NoSourceDiagnostics ("Unkonwn argument: \"%s\" " +
+		diagnostics.report (new NoSourceDiagnostics ("Unknown argument: \"%s\" " +
 							     "add \"--help\" for usage", args[i]));
 		return null;
 	    }
