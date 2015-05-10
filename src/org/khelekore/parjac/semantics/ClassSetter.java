@@ -1,6 +1,5 @@
 package org.khelekore.parjac.semantics;
 
-import java.lang.reflect.WildcardType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -243,6 +242,7 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private List<String> getSuperClasses (String type) {
+	/* TODO: move this into cth */
 	TreeNode tn = cth.getType (type);
 	if (tn instanceof NormalClassDeclaration) {
 	    NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
@@ -265,7 +265,7 @@ public class ClassSetter implements TreeVisitor {
 		return cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
 	    }
 	}
-
+	/** TODO: move this into crh */
 	if (crh.hasType (type)) {
 	    // TODO: get information from class resource
 	    //System.err.println ("need to get bytecode for class...");
