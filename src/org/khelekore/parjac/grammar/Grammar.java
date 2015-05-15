@@ -3,7 +3,6 @@ package org.khelekore.parjac.grammar;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -88,104 +87,6 @@ public class Grammar {
 	return nameToRules.get (name);
     }
 
-    public void memorize () {
-	memorizeEmpty ();
-	memorizeFirsts ();
-	memorizeFollows ();
-    }
-
-    private void memorizeEmpty () {
-	ruleCollections.forEach (rc -> rc.setCanBeEmpty (false));
-	boolean thereWasChanges;
-	do {
-	    thereWasChanges = false;
-	    for (RuleCollection rc : ruleCollections) {
-		if (!rc.canBeEmpty ()) {
-		    if (canBeEmpty (rc)) {
-			rc.setCanBeEmpty (true);
-			thereWasChanges = true;
-		    }
-		}
-	    }
-	} while (thereWasChanges);
-    }
-
-    private boolean canBeEmpty (RuleCollection rc) {
-	for (Rule r : getRules ()) {
-	    if (r.getParts ().isEmpty ())
-		return true;
-	    if (r.getParts ().stream ().allMatch (sp -> sp.canBeEmpty ()))
-		return true;
-	}
-	return false;
-    }
-
-    private void memorizeFirsts () {
-	ruleCollections.forEach (rc -> rc.setFirsts (EnumSet.noneOf (Token.class)));
-	boolean thereWasChanges;
-	do {
-	    thereWasChanges = false;
-	    for (RuleCollection rc : ruleCollections)
-		thereWasChanges |= rc.getFirsts ().addAll (getFirsts (rc));
-	} while (thereWasChanges);
-    }
-
-    private static EnumSet<Token> getFirsts (RuleCollection rc) {
-	EnumSet<Token> firsts = EnumSet.noneOf (Token.class);
-	if (rc.getRules ().isEmpty ())
-	    return firsts;
-	for (Rule r : rc.getRules ()) {
-	    for (SimplePart sp : r.getParts ()) {
-		firsts.addAll (sp.getFirsts ());
-		if (!sp.canBeEmpty ())
-		    break;
-	    }
-	}
-	return firsts;
-    }
-
-    private void memorizeFollows () {
-	ruleCollections.forEach (rc -> rc.setFollows (EnumSet.noneOf (Token.class)));
-	boolean thereWasChanges;
-	do {
-	    thereWasChanges = false;
-	    for (Rule r : rules) {
-		int s = r.getParts ().size ();
-		for (int i = 0; i < s; i++) {
-		    SimplePart sp1 = r.getParts ().get (i);
-		    if (sp1 instanceof TokenPart)
-			continue;
-		    RulePart rp1 = (RulePart)sp1;
-		    boolean restCanBeEmpty = true;
-		    for (int j = i + 1; j < s; j++) {
-			SimplePart sp2 = r.getParts ().get (j);
-			thereWasChanges |= addFollow (rp1.getId (), sp2);
-			if (!sp2.canBeEmpty ()) {
-			    restCanBeEmpty = false;
-			    break;
-			}
-		    }
-		    if (restCanBeEmpty)
-			thereWasChanges |= addFollow (rp1.getId (),
-						      nameToRules.get (r.getName ()).getFollows ());
-		}
-	    }
-	} while (thereWasChanges);
-    }
-
-    private boolean addFollow (String rule, SimplePart sp) {
-	if (sp instanceof TokenPart) {
-	    EnumSet<Token> ts = EnumSet.of (((TokenPart)sp).getId ());
-	    return addFollow (rule, ts);
-	}
-	RulePart rp = (RulePart)sp;
-	return addFollow (rule, nameToRules.get (rp.getId ()).getFirsts ());
-    }
-
-    private boolean addFollow (String rule, EnumSet<Token> ts) {
-	return nameToRules.get (rule).getFollows ().addAll (ts);
-    }
-
     private static List<List<SimplePart>> split (ComplexPart[] parts) {
 	List<List<SimplePart>> ret = new ArrayList<> ();
 	ret.add (new ArrayList<> ());
@@ -221,7 +122,7 @@ public class Grammar {
     }
 
     public ComplexPart zeroOrOne (String rule) {
-	return new ZeroOrOneRulePart (new RulePart (rule, this));
+	return new ZeroOrOneRulePart (new RulePart (rule));
     }
 
     public ComplexPart zeroOrOne (Token token) {
@@ -233,7 +134,7 @@ public class Grammar {
     }
 
     public ComplexPart zeroOrMore (String rule) {
-	return new ZeroOrMoreRulePart (new RulePart (rule, this));
+	return new ZeroOrMoreRulePart (new RulePart (rule));
     }
 
     public ComplexPart zeroOrMore (Object... parts) {
@@ -256,7 +157,7 @@ public class Grammar {
 	    else if (os[i] instanceof Token)
 		parts[i] = new TokenPart ((Token)os[i]);
 	    else if (os[i] instanceof String)
-		parts[i] = new RulePart ((String)os[i], this);
+		parts[i] = new RulePart ((String)os[i]);
 	    else
 		throw new IllegalArgumentException ("Unknown part: " + os[i] +
 						    ", os: " + Arrays.toString (os));
@@ -324,10 +225,10 @@ public class Grammar {
 	    RulePart rp = zomRules.get (part);
 	    if (rp != null)
 		return rp;
-	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++, Grammar.this);
+	    RulePart newRule  = new RulePart ("ZOM_" + zomCounter++);
 	    zomRules.put (part, newRule);
 	    addRule (newRule.data, part);
-	    addRule (newRule.data, new RulePart (newRule.data, Grammar.this), part);
+	    addRule (newRule.data, new RulePart (newRule.data), part);
 	    return newRule;
 	}
     }
