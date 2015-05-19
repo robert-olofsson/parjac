@@ -9,15 +9,11 @@ import org.khelekore.parjac.grammar.SimplePart;
 
 class State {
     private final Rule r;
-    private final int dotPos;
-    private final int startPos;
-    private final int hc;
+    private final int positions; // 24 bit startpos, 8 bit dotPos.
 
     public State (Rule r, int dotPos, int startPos) {
 	this.r = r;
-	this.dotPos = dotPos;
-	this.startPos = startPos;
-	hc = (startPos << 16) | (dotPos << 8) | r.getId ();
+	this.positions = (0xff & dotPos) | (startPos << 8);
     }
 
     public Rule getRule () {
@@ -25,24 +21,24 @@ class State {
     }
 
     public int getDotPos () {
-	return dotPos;
+	return positions & 0xff;
     }
 
     public SimplePart getPartAfterDot () {
-	return r.getParts ().get (dotPos);
+	return r.getParts ().get (getDotPos ());
     }
 
     public boolean dotIsLast () {
-	return dotPos == r.getParts ().size ();
+	return getDotPos () == r.getParts ().size ();
     }
 
     public int getStartPos () {
-	return startPos;
+	return positions >>> 8;
     }
 
     @Override public String toString () {
 	return getClass ().getSimpleName () +
-	    "{" + getRule () + ", " + getDotPos () + ", " + startPos + "}";
+	    "{" + getRule () + ", " + getDotPos () + ", " + getStartPos () + "}";
     }
 
     @Override public boolean equals (Object o) {
@@ -53,17 +49,16 @@ class State {
 	if (o.getClass () != getClass ())
 	    return false;
 	State s = (State)o;
-	return startPos == s.startPos &&
-	    getDotPos () == s.getDotPos () &&
+	return positions == s.positions &&
 	    getRule () == s.getRule (); // yes, ref comparisson
     }
 
     @Override public int hashCode () {
-	return hc;
+	return positions | r.getId ();
     }
 
     public State advance (State completed) {
-	return new StateWithPrevious (getRule (), getDotPos () + 1, startPos, this, completed);
+	return new StateWithPrevious (getRule (), getDotPos () + 1, getStartPos (), this, completed);
     }
 
     public State getPrevious () {
