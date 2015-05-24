@@ -19,7 +19,7 @@ import org.khelekore.parjac.tree.TreeNode;
 
 class ListMultiState implements MultiState {
     private List<State> completed = Collections.emptyList ();
-    private final Map<Object, List<State>> m = new HashMap<> ();
+    private Map<Object, List<State>> m = Collections.emptyMap ();
     private Set<String> predictRules = Collections.emptySet ();
     private final TreeNode tokenValue;
     private final ParsePosition parsePosition;
@@ -37,6 +37,9 @@ class ListMultiState implements MultiState {
 		List<State> ls = m.get (sp.getId ());
 		if (ls == null) {
 		    ls = new ArrayList<> ();
+		    if (m.isEmpty ()) {
+			m = new HashMap<> ();
+		    }
 		    m.put (sp.getId (), ls);
 		}
 		ls.add (s);
