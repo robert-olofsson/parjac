@@ -78,7 +78,7 @@ public class EarleyParser {
 		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
 	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    currentPosition++;
-	    if (states.size () <= currentPosition || states.get (currentPosition).isEmpty ()) {
+	    if (states.size () <= currentPosition) {
 		ParseErrorSolution pe = findBestSolution ();
 		addParserError ("No possible next state, expected " + pe.getWantedToken() +
 				" in order to complete " + pe.getRule ().getName () + "\n" +
@@ -233,6 +233,8 @@ public class EarleyParser {
 		ret.addState (s.advance (null));
 	    }
 	}
+	if (ret.isEmpty ())
+	    return null;
 	return ret;
     }
 
@@ -253,6 +255,20 @@ public class EarleyParser {
 			    rule = s.getRule ();
 			    minLength = lengthToComplete;
 			}
+		    }
+		}
+	    }
+	}
+	ListRuleHolder lrh = es.getListRuleHolder ();
+	if (lrh != null) {
+	    for (Token t : lrh.getStartingTokens ()) {
+		for (Iterator<Rule> i = lrh.getRulesWithTokenNext (t); i.hasNext (); ) {
+		    Rule r = i.next ();
+		    int lengthToComplete = r.size ();
+		    if (lengthToComplete < minLength) {
+			bestToken = t;
+			rule = r;
+			minLength = lengthToComplete;
 		    }
 		}
 	    }
