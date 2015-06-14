@@ -71,6 +71,10 @@ public class EarleyState {
 	return et;
     }
 
+    public boolean isEmpty () {
+	return states.isEmpty () && lrh == null;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" +
 	    "parsePosition: " + parsePosition +

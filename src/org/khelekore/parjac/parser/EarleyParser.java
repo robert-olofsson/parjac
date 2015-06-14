@@ -78,21 +78,12 @@ public class EarleyParser {
 		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
 	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    currentPosition++;
-	    if (states.size () <= currentPosition) {
+	    if (states.size () <= currentPosition || states.get (currentPosition).isEmpty ()) {
 		ParseErrorSolution pe = findBestSolution ();
 		addParserError ("No possible next state, expected " + pe.getWantedToken() +
 				" in order to complete " + pe.getRule ().getName () + "\n" +
 				lexer.getCurrentLine ());
 		return null;
-	    }
-	    // qwerty
-	    if (currentPosition % 100000 == 0) {
-		try {
-		    System.out.println (currentPosition + ": press enter");
-		    System.in.read ();
-		} catch (java.io.IOException e) {
-		    e.printStackTrace ();
-		}
 	    }
 	}
 
@@ -180,6 +171,38 @@ public class EarleyParser {
 		multiComplete.add (nextState);
 	} else {
 	    alreadySeen.addCompleted (completed);
+	}
+
+	// TODO: this ought to come from the grammar
+	if (completed.getRule ().getName ().equals ("ClassBodyDeclaration")) {
+	    clearStates (completed);
+	}
+    }
+
+    private void clearStates (State tc) {
+	Deque<State> toVisit = new ArrayDeque<> ();
+	toVisit.add (tc);
+
+	// States in current EarleySet to keep, may be many due to completion
+	Set<State> toKeep = new HashSet<> ();
+	int tokenPos = states.size () - 1; // current pos
+	while (!toVisit.isEmpty ()) {
+	    State s = toVisit.pop ();
+	    toKeep.add (s);
+	    State previous = s.getPrevious ();
+	    EarleyState es = states.get (tokenPos);
+	    if (previous != null) {
+		toVisit.push (previous);
+		if (previous.getPartAfterDot () instanceof TokenPart) {
+		    es.getStates ().retainAll (toKeep);
+		    toKeep.clear ();
+		    tokenPos--;
+		}
+		List<State> completed = s.getCompleted ();
+		if (completed != null)
+		    for (State c : completed)
+			toVisit.push (c);
+	    }
 	}
     }
 
