@@ -20,18 +20,7 @@ public class PredictCache {
 	cache = Collections.synchronizedMap (calculatePredictSets ());
     }
 
-    public ListRuleHolder getPredictedRules (Set<String> rules, Set<String> crules) {
-	if (crules.isEmpty ())
-	    return getPredictedRulesS (rules);
-	if (rules.isEmpty ())
-	    return getPredictedRulesS (crules);
-	Set<String> rr = new HashSet<> ();
-	rr.addAll (rules);
-	rr.addAll (crules);
-	return getPredictedRulesS (rr);
-    }
-
-    private ListRuleHolder getPredictedRulesS (Set<String> rules) {
+    public ListRuleHolder getPredictedRules (Set<String> rules) {
 	ListRuleHolder predicted = cache.get (rules);
 	if (predicted != null)
 	    return predicted;

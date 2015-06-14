@@ -14,6 +14,15 @@ public class ParsePosition {
 	this.tokenEndPos = tokenEndPos;
     }
 
+    @Override public String toString () {
+	return getClass ().getSimpleName () + "{" +
+	    "line: " + lineNumber +
+	    ", column: " + tokenColumn +
+	    ", token start pos: " + tokenEndPos +
+	    ", token end pos: " + tokenEndPos +
+	    "}";
+    }
+
     /** Get the start position of the current token */
     public int getTokenStartPos () {
 	return tokenStartPos;

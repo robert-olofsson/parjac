@@ -76,29 +76,38 @@ class State {
 
 class StateWithPrevious extends State {
     private State previousState;
-    private List<State> completed;
+    private Object completed;
 
     public StateWithPrevious (Rule r, int dotPos, int startPos, State previousState, State completed) {
 	super (r, dotPos, startPos);
 	this.previousState = previousState;
-	if (completed != null)
-	    this.completed = Collections.singletonList (completed);
+	this.completed = completed;
     }
 
     @Override public State getPrevious () {
 	return previousState;
     }
 
-    @Override public void addCompleted (State c) {
-	if (completed.size () == 1) {
-	    List<State> ls = new ArrayList<> ();
-	    ls.add (completed.get (0));
-	    completed = ls;
+    @Override @SuppressWarnings("unchecked") public void addCompleted (State c) {
+	if (completed == null) {
+	    completed = c;
+	} else {
+	    List<State> ls;
+	    if (completed instanceof State) {
+		ls = new ArrayList<> ();
+		ls.add ((State)completed);
+	    } else {
+		ls = (List<State>)completed;
+	    }
+	    ls.add (c);
 	}
-	completed.add (c);
     }
 
-    @Override public List<State> getCompleted () {
-	return completed;
+    @Override @SuppressWarnings("unchecked") public List<State> getCompleted () {
+	if (completed == null)
+	    return Collections.emptyList ();
+	if (completed instanceof State)
+	    return Collections.singletonList ((State)completed);
+	return (List<State>)completed;
     }
 }
