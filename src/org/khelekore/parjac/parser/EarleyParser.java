@@ -158,33 +158,28 @@ public class EarleyParser {
 	EarleyState originStates = states.get (completed.getStartPos ());
 	for (State s : originStates.getStates ()) {
 	    if (!s.dotIsLast () && s.getPartAfterDot ().getId ().equals (completed.getRule ().getName ())) {
-		State nextState = s.advance (completed);
-		State alreadySeen = seen.get (nextState);
-		if (alreadySeen == null) {
-		    seen.put (nextState, nextState);
-		    allCompleted.add (nextState);
-		    if (nextState.dotIsLast ())
-			multiComplete.add (nextState);
-		} else {
-		    alreadySeen.addCompleted (completed);
-		}
+		complete (completed, seen, allCompleted, multiComplete, s.advance (completed));
 	    }
 	}
 	ListRuleHolder lrh = originStates.getListRuleHolder ();
 	if (lrh != null) {
 	    for (Iterator<Rule> i = lrh.getRulesWithRuleNext (completed.getRule ()); i.hasNext (); ) {
 		State previousState = new State (i.next (), 0, completed.getStartPos ());
-		State nextState = previousState.advance (completed);
-		State alreadySeen = seen.get (nextState);
-		if (alreadySeen == null) {
-		    seen.put (nextState, nextState);
-		    allCompleted.add (nextState);
-		    if (nextState.dotIsLast ())
-			multiComplete.add (nextState);
-		} else {
-		    alreadySeen.addCompleted (completed);
-		}
+		complete (completed, seen, allCompleted, multiComplete, previousState.advance (completed));
 	    }
+	}
+    }
+
+    private void complete (State completed, Map<State, State> seen,
+			   List<State> allCompleted, Deque<State> multiComplete, State nextState) {
+	State alreadySeen = seen.get (nextState);
+	if (alreadySeen == null) {
+	    seen.put (nextState, nextState);
+	    allCompleted.add (nextState);
+	    if (nextState.dotIsLast ())
+		multiComplete.add (nextState);
+	} else {
+	    alreadySeen.addCompleted (completed);
 	}
     }
 
