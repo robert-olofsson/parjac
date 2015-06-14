@@ -76,6 +76,12 @@ class State {
 
 class StateWithPrevious extends State {
     private State previousState;
+
+    /** Keeping this as a simple pointer saves quite a lot of memory for large inputs.
+     *  It is mostly null or single state, it should only reach a list for strange input.
+     *
+     *  Goes from null, to direct pointer to a real List
+     */
     private Object completed;
 
     public StateWithPrevious (Rule r, int dotPos, int startPos, State previousState, State completed) {
