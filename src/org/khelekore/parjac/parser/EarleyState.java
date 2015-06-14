@@ -60,12 +60,14 @@ public class EarleyState {
 
     public EnumSet<Token> getPossibleNextToken () {
 	EnumSet<Token> et = EnumSet.noneOf (Token.class);
-	et.addAll (lrh.getStartingTokens ());
-	for (State s : states) {
-	    if (!s.dotIsLast ()) {
-		SimplePart sp = s.getPartAfterDot ();
-		if (sp.isTokenPart ())
-		    et.add ((Token)sp.getId ());
+	if (lrh != null) {
+	    et.addAll (lrh.getStartingTokens ());
+	    for (State s : states) {
+		if (!s.dotIsLast ()) {
+		    SimplePart sp = s.getPartAfterDot ();
+		    if (sp.isTokenPart ())
+			et.add ((Token)sp.getId ());
+		}
 	    }
 	}
 	return et;
