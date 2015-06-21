@@ -3,7 +3,6 @@ package org.khelekore.parjac.semantics;
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +23,9 @@ public class ClassResourceHolder {
 	this.classPathEntries = classPathEntries;
     }
 
+    /** Find things that may be classes, this will only validate names.
+     *  More detailed checks will be done once we start using classes.
+     */
     public void scanClassPath () throws IOException {
 	scanRT ();
 	for (Path p : classPathEntries)
