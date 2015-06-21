@@ -13,10 +13,9 @@ import java.util.stream.Collectors;
 
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.JavaGrammarHelper;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.grammar.GrammarReader;
-import org.khelekore.parjac.lexer.Token;
 
 /** Program to run a batch compilation.
  */
@@ -59,12 +58,7 @@ public class Main {
 	System.out.println ("compiling " + srcFiles.size () + " files");
 	System.out.println ("destination: " + settings.getOutputDir ());
 
-	GrammarReader gr = new GrammarReader ();
-	gr.read (getClass ().getResource ("/java_8.pj"));
-	Grammar g = gr.getGrammar ();
-	g.addRule ("Goal", "CompilationUnit", Token.END_OF_INPUT);
-	g.validateRules ();
-
+	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar ();
 	Compiler c = new Compiler (diagnostics, g, settings);
 	c.compile (srcFiles);
 	long endTime = System.nanoTime ();

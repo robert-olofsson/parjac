@@ -26,6 +26,8 @@ public class Grammar {
     private final Map<ComplexPart, RulePart> zomRules = new HashMap<> ();
     private int zomCounter = 0; // used when generating zomRules
 
+    private Set<Rule> clearableRules = new HashSet<> ();
+
     public Grammar () {
 	// empty
     }
@@ -85,6 +87,16 @@ public class Grammar {
 
     public RuleCollection getRules (String name) {
 	return nameToRules.get (name);
+    }
+
+    /** Add a rule that has completed some partial step so that states can be cleared up.
+     */
+    public void addClearableRule (String name) {
+	clearableRules.addAll (getRules (name).getRules ());
+    }
+
+    public boolean isClearableRule (Rule r) {
+	return clearableRules.contains (r);
     }
 
     private static List<List<SimplePart>> split (ComplexPart[] parts) {

@@ -174,7 +174,7 @@ public class EarleyParser {
 	}
 
 	// TODO: this ought to come from the grammar
-	if (completed.getRule ().getName ().equals ("ClassBodyDeclaration")) {
+	if (grammar.isClearableRule (completed.getRule ())) {
 	    clearStates (completed);
 	}
     }
