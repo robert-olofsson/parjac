@@ -187,15 +187,19 @@ public class EarleyParser {
 	Set<State> toKeep = new HashSet<> ();
 	int tokenPos = states.size () - 1; // current pos
 	while (!toVisit.isEmpty ()) {
-	    State s = toVisit.pop ();
-	    toKeep.add (s);
-	    State previous = s.getPrevious ();
 	    EarleyState es = states.get (tokenPos);
+	    State s = toVisit.pop ();
+	    if (!es.hasBeenCleared ())
+		toKeep.add (s);
+	    State previous = s.getPrevious ();
 	    if (previous != null) {
 		toVisit.push (previous);
 		if (previous.getPartAfterDot () instanceof TokenPart) {
-		    es.getStates ().retainAll (toKeep);
-		    toKeep.clear ();
+		    if (!es.hasBeenCleared ()) {
+			es.getStates ().retainAll (toKeep);
+			toKeep.clear ();
+			es.setCleared ();
+		    }
 		    tokenPos--;
 		}
 		List<State> completed = s.getCompleted ();

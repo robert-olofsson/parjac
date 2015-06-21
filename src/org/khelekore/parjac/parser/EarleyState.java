@@ -18,6 +18,7 @@ public class EarleyState {
     private ListRuleHolder lrh;
     // States that have been advanced in some way
     private List<State> states = Collections.emptyList ();
+    private boolean cleared = false; // have we removed non-used states?
 
     public EarleyState (ParsePosition parsePosition, TreeNode tokenValue) {
 	this.parsePosition = parsePosition;
@@ -75,6 +76,16 @@ public class EarleyState {
 
     public boolean isEmpty () {
 	return states.isEmpty () && lrh == null;
+    }
+
+    public boolean hasBeenCleared () {
+	return cleared;
+    }
+
+    /** Mark this state as cleared
+     */
+    public void setCleared () {
+	cleared = true;
     }
 
     @Override public String toString () {
