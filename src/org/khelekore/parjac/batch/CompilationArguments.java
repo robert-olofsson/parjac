@@ -14,13 +14,16 @@ public class CompilationArguments {
     private final List<Path> srcDirs;
     private final Path outputDir;
     private final Charset encoding;
+    private final List<Path> classPathEntries;
     private final boolean debug;
 
     public CompilationArguments (List<Path> srcDirs, Path outputDir,
-				 Charset encoding, boolean debug) {
+				 Charset encoding, List<Path> classPathEntries,
+				 boolean debug) {
 	this.srcDirs = new ArrayList<> (srcDirs);
 	this.outputDir = outputDir;
 	this.encoding = encoding;
+	this.classPathEntries = classPathEntries;
 	this.debug = debug;
     }
 
@@ -34,6 +37,10 @@ public class CompilationArguments {
 
     public Charset getEncoding () {
 	return encoding;
+    }
+
+    public List<Path> getClassPathEntries () {
+	return classPathEntries;
     }
 
     public boolean getDebug () {

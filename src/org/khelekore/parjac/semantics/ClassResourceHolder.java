@@ -11,18 +11,23 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ClassResourceHolder {
+    private final List<Path> classPathEntries;
     private Map<String, Result> foundClasses = new HashMap<> ();
 
+    public ClassResourceHolder (List<Path> classPathEntries) {
+	this.classPathEntries = classPathEntries;
+    }
+
     public void scanClassPath () throws IOException {
-	URLClassLoader cl = (URLClassLoader)getClass ().getClassLoader ();
 	scanRT ();
-	for (URL u : cl.getURLs ())
-	    scan (u);
+	for (Path p : classPathEntries)
+	    scan (p);
     }
 
     private void scanRT () throws IOException {
@@ -33,16 +38,11 @@ public class ClassResourceHolder {
 	}
     }
 
-    private void scan (URL u) throws IOException {
-	if (u.getProtocol ().equals ("file")) {
-	    Path p = Paths.get (u.getFile ());
-	    if (Files.isDirectory (p))
-		scanDirectory (p);
-	    else if (Files.isRegularFile (p))
-		scanJar (p);
-	} else {
-	    throw new IOException ("Unhandled classpath entry: " + u);
-	}
+    private void scan (Path p) throws IOException {
+	if (Files.isDirectory (p))
+	    scanDirectory (p);
+	else if (Files.isRegularFile (p))
+	    scanJar (p);
     }
 
     private void scanDirectory (final Path start) throws IOException {

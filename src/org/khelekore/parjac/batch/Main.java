@@ -1,5 +1,6 @@
 package org.khelekore.parjac.batch;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitOption;
@@ -69,6 +70,7 @@ public class Main {
 	List<Path> srcDirs = new ArrayList<> ();
 	Path outputDir = null;
 	Charset encoding = Charset.forName ("UTF-8");
+	List<Path> classPathEntries = new ArrayList<> ();
 	boolean debug = false;
 	for (int i = 0; i < args.length; i++) {
 	    switch (args[i]) {
@@ -98,14 +100,22 @@ public class Main {
 	    case "-h":
 	    case "--help":
 		usage ();
-	        return null;
+		return null;
+	    case "-cp":
+	    case "-classpath":
+		if (hasFollowingArgExists (args, i)) {
+		    String p = args[++i];
+		    splitToClasspaths (classPathEntries, p);
+		}
+	        break;
 	    default:
 		diagnostics.report (new NoSourceDiagnostics ("Unknown argument: \"%s\" " +
 							     "add \"--help\" for usage", args[i]));
 		return null;
 	    }
 	}
-	CompilationArguments ca = new CompilationArguments (srcDirs, outputDir, encoding, debug);
+	CompilationArguments ca =
+	    new CompilationArguments (srcDirs, outputDir, encoding, classPathEntries, debug);
 	ca.validate (diagnostics);
 	if (diagnostics.hasError ()) {
 	    System.err.println ("Invalid arguments, use \"--help\" for usage.\nProblems found:");
@@ -123,8 +133,41 @@ public class Main {
 	return true;
     }
 
+    private void splitToClasspaths (List<Path> classPathEntries, String classpath) {
+	String[] pathParts = classpath.split (File.pathSeparator);
+	for (String s : pathParts) {
+	    if (s.endsWith ("/*") || s.endsWith ("\\*")) {
+		try {
+		    findAllJars (classPathEntries, s);
+		} catch (IOException e) {
+		    diagnostics.report (new NoSourceDiagnostics ("Failed to find jars for: %s (%s)",
+								 s, classpath));
+		}
+	    } else {
+		Path p = Paths.get (s);
+		if (!Files.exists (p)) {
+		    diagnostics.report (new NoSourceDiagnostics ("Non existing classpath: %s (%s)",
+								 s, classpath));
+		} else {
+		    classPathEntries.add (p);
+		}
+	    }
+	}
+    }
+
+    private void findAllJars (List<Path> classPathEntries, String dir) throws IOException {
+	Path parent = Paths.get (dir).getParent (); // remove the * part
+	Files.list (parent).filter (p -> isJar (p)).forEach (p -> classPathEntries.add (p));
+    }
+
+    private static boolean isJar (Path p) {
+	return Files.isRegularFile (p) &&
+	    p.getFileName ().toString ().toLowerCase ().endsWith (".jar");
+    }
+
     private static void usage () {
 	System.err.println ("usage: java " + Main.class.getName () +
+			    " [-cp <path>] [-classpath <path>]" + // same thing
 			    " [--encoding encoding]" +
 			    " [-i|--input srcdir]+ [-d|--destination dir]" +
 			    " [--debug] [-h|--help]");

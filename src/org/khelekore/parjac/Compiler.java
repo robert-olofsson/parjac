@@ -82,7 +82,7 @@ public class Compiler {
     private SyntaxTree parse (Path path) {
 	try {
 	    long start = System.nanoTime ();
-	    //if (settings.getDebug ())
+	    if (settings.getDebug ())
 		System.out.println ("parsing: " + path);
 	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
 	    CharsetDecoder decoder = settings.getEncoding ().newDecoder ();
@@ -94,9 +94,9 @@ public class Compiler {
 						    diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    long end = System.nanoTime ();
-	    //if (settings.getDebug ())
-	    System.out.println (String.format ("parsed: %s in: %.3f millis",
-					       path, (end - start) / 1.0e6));
+	    if (settings.getDebug ())
+		System.out.println (String.format ("parsed: %s in: %.3f millis",
+						   path, (end - start) / 1.0e6));
 	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
@@ -110,7 +110,7 @@ public class Compiler {
 
     private void scanClassPaths () {
 	try {
-	    crh = new ClassResourceHolder ();
+	    crh = new ClassResourceHolder (settings.getClassPathEntries ());
 	    crh.scanClassPath ();
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to scan classpath: %s", e));
