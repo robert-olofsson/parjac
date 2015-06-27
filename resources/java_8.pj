@@ -632,7 +632,6 @@ UntypedClassInstanceCreationExpression:
 	'new' TypeArguments? Annotation* ClassInstanceName TypeArgumentsOrDiamond? '(' ArgumentList? ')' ClassBody?
 
 ClassInstanceName:
-	'identifier'
 	'identifier' ExtraName*
 
 ExtraName:
