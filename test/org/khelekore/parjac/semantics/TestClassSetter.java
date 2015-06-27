@@ -315,6 +315,19 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testInnerClassAndAnonymousClass () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "public class GC {\n" +
+			    "private void foo (Filter filter) {}\n" +
+			    "private void bar () {\n" +
+			    "new Thread (new Runnable () {public void run () {}});\n" +
+			    "}\n" +
+			    "public static class Filter {}\n" +
+			    "}");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

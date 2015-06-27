@@ -49,18 +49,18 @@ public class ClassSetter implements TreeVisitor {
 	if (superclass != null)
 	    setType (superclass);
 	visitSuperInterfaces (c.getSuperInterfaces ());
-	containingTypeName.push (cth.getId (c));
+	containingTypeName.push (cth.getFullName (c));
 	registerTypeParameters (c.getTypeParameters ());
     }
 
     @Override public void visit (EnumDeclaration e) {
-	containingTypeName.push (cth.getId (e));
+	containingTypeName.push (cth.getFullName (e));
 	visitSuperInterfaces (e.getSuperInterfaces ());
 	registerTypeParameters (null);
     }
 
     @Override public void visit (NormalInterfaceDeclaration i) {
-	containingTypeName.push (cth.getId (i));
+	containingTypeName.push (cth.getFullName (i));
 	ExtendsInterfaces ei = i.getExtendsInterfaces ();
 	if (ei != null)
 	    visitSuperInterfaces (ei.get ());
@@ -68,20 +68,20 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public void visit (AnnotationTypeDeclaration a) {
-	containingTypeName.push (cth.getId (a));
+	containingTypeName.push (cth.getFullName (a));
 	registerTypeParameters (null);
     }
 
     @Override public void anonymousClass (ClassType ct, ClassBody b) {
 	setType (ct);
-	containingTypeName.push (ct.get ().get (0).getId ());
-	containingTypeName.push (cth.getId (b));
+	containingTypeName.push (ct.getFullName ());
+	containingTypeName.push (cth.getFullName (b));
 	registerTypeParameters (null);
     }
 
     @Override public void endAnonymousClass () {
-	containingTypeName.pop ();
 	endType ();
+	containingTypeName.pop ();
     }
 
     @Override public void endType () {
@@ -217,9 +217,7 @@ public class ClassSetter implements TreeVisitor {
 
 	// check for inner class
 	for (String ctn : containingTypeName) {
-	    String icn = packageName == null ?
-		ctn + "." + id :
-		packageName.getDotName () + "." + ctn + "." + id;
+	    String icn = ctn + "." + id;
 	    type = cth.getType (icn);
 	    if (type != null)
 		return icn;
@@ -227,8 +225,7 @@ public class ClassSetter implements TreeVisitor {
 
 	// check for inner class of super classes
 	for (String ctn : containingTypeName) {
-	    String fullCtn = packageName == null ? ctn : packageName.getDotName () + "." + ctn;
-	    String fqn = checkSuperClasses (fullCtn, id);
+	    String fqn = checkSuperClasses (ctn, id);
 	    if (fqn != null)
 		return fqn;
 	}
