@@ -1,9 +1,8 @@
 package org.khelekore.parjac.semantics;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.JarURLConnection;
-import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,16 +32,16 @@ public class ClassResourceHolder {
      *  More detailed checks will be done once we start using classes.
      */
     public void scanClassPath () throws IOException {
-	scanRT ();
+	scanBootPath ();
 	for (Path p : classPathEntries)
 	    scan (p);
     }
 
-    private void scanRT () throws IOException {
-	URL uo = getClass ().getClassLoader ().getResource ("java/lang/Object.class");
-	JarURLConnection ju = (JarURLConnection)uo.openConnection ();
-	try (JarFile jf = ju.getJarFile ()) {
-	    jf.stream ().forEach (m -> storeClass (Paths.get (jf.getName ()), m));
+    private void scanBootPath () throws IOException {
+	String bootpath = System.getProperty ("sun.boot.class.path");
+	String[] parts = bootpath.split (File.pathSeparator);
+	for (String part : parts) {
+	    scan (Paths.get (part));
 	}
     }
 

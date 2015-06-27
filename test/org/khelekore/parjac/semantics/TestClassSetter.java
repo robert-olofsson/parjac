@@ -278,6 +278,19 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testBootpathClass () throws IOException {
+	// Cipher is in jce.jar, not in rt.jar
+	parseAndSetClasses ("package foo;\n" +
+			    "import javax.crypto.*;\n" +
+			    "class Foo {\n" +
+			    "    class Bar {\n" +
+			    "        private Cipher cipher;\n" +
+			    "    }\n" +
+			    "}");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
