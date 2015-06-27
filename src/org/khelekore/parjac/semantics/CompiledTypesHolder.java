@@ -50,27 +50,27 @@ public class CompiledTypesHolder {
 	private DottedName packageName;
 	private final Deque<ClassId> classes = new ArrayDeque<> ();
 
-	public void visit (CompilationUnit cu) {
+	@Override public void visit (CompilationUnit cu) {
 	    packageName = cu.getPackage ();
 	}
 
-	public void visit (NormalClassDeclaration c) {
+	@Override public void visit (NormalClassDeclaration c) {
 	    pushClass (c.getId (), c);
 	}
 
-	public void visit (EnumDeclaration e) {
+	@Override public void visit (EnumDeclaration e) {
 	    pushClass (e.getId (), e);
 	}
 
-	public void visit (NormalInterfaceDeclaration i) {
+	@Override public void visit (NormalInterfaceDeclaration i) {
 	    pushClass (i.getId (), i);
 	}
 
-	public void visit (AnnotationTypeDeclaration a) {
+	@Override public void visit (AnnotationTypeDeclaration a) {
 	    pushClass (a.getId (), a);
 	}
 
-	public void anonymousClass (ClassBody b) {
+	@Override public void anonymousClass (ClassType ct, ClassBody b) {
 	    pushClass (generateAnonId (), b);
 	}
 
@@ -80,7 +80,7 @@ public class CompiledTypesHolder {
 	    return Integer.toString (cid.anonId);
 	}
 
-	public void endType () {
+	@Override public void endType () {
 	    classes.removeLast ();
 	}
 

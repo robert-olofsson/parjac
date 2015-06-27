@@ -18,4 +18,8 @@ public class ExtraName implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{." + annotations + " " + id + "}";
     }
+
+    public SimpleClassType toSimpleClassType () {
+	return new SimpleClassType (annotations, id, null);
+    }
 }

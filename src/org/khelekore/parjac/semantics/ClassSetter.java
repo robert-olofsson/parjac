@@ -72,9 +72,16 @@ public class ClassSetter implements TreeVisitor {
 	registerTypeParameters (null);
     }
 
-    @Override public void anonymousClass (ClassBody b) {
+    @Override public void anonymousClass (ClassType ct, ClassBody b) {
+	setType (ct);
+	containingTypeName.push (ct.get ().get (0).getId ());
 	containingTypeName.push (cth.getId (b));
 	registerTypeParameters (null);
+    }
+
+    @Override public void endAnonymousClass () {
+	containingTypeName.pop ();
+	endType ();
     }
 
     @Override public void endType () {

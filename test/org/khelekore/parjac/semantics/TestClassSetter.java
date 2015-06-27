@@ -291,6 +291,30 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testSuperInnerFromAnonymous () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo { class Bar {} }\n" +
+			    "class Baz {\n" +
+			    "    Foo foo () {\n" +
+			    "        return new Foo () { public Bar bar () { return null; }};\n" +
+			    "    }\n" +
+			    "}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testSuperInnerFromAnonymousFQN () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo { class Bar {} }\n" +
+			    "class Baz {\n" +
+			    "    Foo foo () {\n" +
+			    "        return new foo.Foo () { public Foo.Bar bar () { return null; }};\n" +
+			    "    }\n" +
+			    "}");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

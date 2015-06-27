@@ -13,9 +13,11 @@ public interface TreeVisitor {
     }
     default void visit (AnnotationTypeDeclaration a) {
     }
-    default void anonymousClass (ClassBody b) {
+    default void anonymousClass (ClassType ct, ClassBody b) {
     }
 
+    default void endAnonymousClass () {
+    }
     /** Ends the visit of the current type */
     default void endType () {
     }

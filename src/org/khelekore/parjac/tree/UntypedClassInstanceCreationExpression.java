@@ -7,15 +7,16 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class UntypedClassInstanceCreationExpression implements TreeNode {
+public class UntypedClassInstanceCreationExpression extends PositionNode {
     private final TypeArguments typeArguments;
     private final List<TreeNode> annotations;
-    private final ClassInstanceName id;
+    private final ClassType id;
     private final TreeNode typeArgumentsOrDiamond;
     private final ArgumentList args;
     private final ClassBody body;
 
     public UntypedClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 1;
 	if (r.getRulePart (pos).getId ().equals ("TypeArguments")) {
 	    typeArguments = (TypeArguments)parts.pop ();
@@ -29,7 +30,7 @@ public class UntypedClassInstanceCreationExpression implements TreeNode {
 	} else {
 	    annotations = null;
 	}
-	id = (ClassInstanceName)parts.pop ();
+	id = ((ClassInstanceName)parts.pop ()).toClassType ();
 	pos++;
 	if (r.getRulePart (pos).getId () != Token.LEFT_PARENTHESIS) {
 	    typeArgumentsOrDiamond = parts.pop ();
@@ -57,9 +58,9 @@ public class UntypedClassInstanceCreationExpression implements TreeNode {
 	if (args != null)
 	    args.visit (visitor);
 	if (body != null) {
-	    visitor.anonymousClass (body);
+	    visitor.anonymousClass (id, body);
 	    body.visit (visitor);
-	    visitor.endType ();
+	    visitor.endAnonymousClass ();
 	}
     }
 }

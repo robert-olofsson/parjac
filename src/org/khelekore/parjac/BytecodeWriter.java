@@ -30,27 +30,27 @@ public class BytecodeWriter implements TreeVisitor {
 	this.cth = cth;
     }
 
-    public void visit (CompilationUnit cu) {
+    @Override public void visit (CompilationUnit cu) {
 	packageName = cu.getPackage ();
     }
 
-    public void visit (NormalClassDeclaration c) {
+    @Override public void visit (NormalClassDeclaration c) {
 	pushClass (c);
     }
 
-    public void visit (EnumDeclaration e) {
+    @Override public void visit (EnumDeclaration e) {
 	pushClass (e);
     }
 
-    public void visit (NormalInterfaceDeclaration i) {
+    @Override public void visit (NormalInterfaceDeclaration i) {
 	pushClass (i);
     }
 
-    public void visit (AnnotationTypeDeclaration a) {
+    @Override public void visit (AnnotationTypeDeclaration a) {
 	pushClass (a);
     }
 
-    public void anonymousClass (ClassBody b) {
+    @Override public void anonymousClass (ClassType ct, ClassBody b) {
 	pushClass (b);
     }
 
@@ -60,12 +60,12 @@ public class BytecodeWriter implements TreeVisitor {
 	cid.start ();
     }
 
-    public void endType () {
+    @Override public void endType () {
 	ClassWriterHolder cid = classes.removeLast ();
 	cid.write ();
     }
 
-    public void visit (ConstructorDeclaration c) {
+    @Override public void visit (ConstructorDeclaration c) {
 	ClassWriter cw = classes.peekLast ().cw;
 
 	int mods = getModifiers (c.getModifiers ());
@@ -88,7 +88,7 @@ public class BytecodeWriter implements TreeVisitor {
 	mw.visitEnd();
     }
 
-    public void visit (FieldDeclaration f) {
+    @Override public void visit (FieldDeclaration f) {
 	ClassWriter cw = classes.peekLast ().cw;
 	int mods = getModifiers (f.getModifiers ());
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
@@ -98,7 +98,7 @@ public class BytecodeWriter implements TreeVisitor {
 	}
     }
 
-    public void visit (MethodDeclaration m) {
+    @Override public void visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
 	int mods = getModifiers (m.getModifiers ());
@@ -212,10 +212,10 @@ public class BytecodeWriter implements TreeVisitor {
 	}
     }
 
-    public void visit (Block b) {
+    @Override public void visit (Block b) {
     }
 
-    public void endBlock () {
+    @Override public void endBlock () {
     }
 
     private class ClassWriterHolder {
