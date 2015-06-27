@@ -201,15 +201,21 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
-    /*
     @Test
-    public void testInnerClassFromSuperClassKnown () throws IOException {
+    public void testInnerClassFromSuperClass () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.Base64;\n" +
+			    "class Foo extends Base64 { Decoder d = null; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInnerClassFromSuperInterface () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "import java.util.HashMap;\n" +
 			    "class Foo extends HashMap { Entry e = null; }");
 	assertNoErrors ();
     }
-    */
 
     @Test
     public void testConstructorWithType () throws IOException {

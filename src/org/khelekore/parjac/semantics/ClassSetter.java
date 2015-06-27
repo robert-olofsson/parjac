@@ -1,5 +1,6 @@
 package org.khelekore.parjac.semantics;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
@@ -265,10 +267,10 @@ public class ClassSetter implements TreeVisitor {
 		return cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
 	    }
 	}
-	/** TODO: move this into crh */
-	if (crh.hasType (type)) {
-	    // TODO: get information from class resource
-	    //System.err.println ("need to get bytecode for class...");
+	try {
+	    return crh.getSuperTypes (type);
+	} catch (IOException e) {
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + type, e));
 	}
 	return Collections.emptyList ();
     }
