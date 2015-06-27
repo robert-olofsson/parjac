@@ -54,6 +54,10 @@ public class BytecodeWriter implements TreeVisitor {
 	pushClass (b);
     }
 
+    @Override public void endAnonymousClass () {
+	endType ();
+    }
+
     private void pushClass (TreeNode tn) {
 	ClassWriterHolder cid = new ClassWriterHolder (tn);
 	classes.addLast (cid);

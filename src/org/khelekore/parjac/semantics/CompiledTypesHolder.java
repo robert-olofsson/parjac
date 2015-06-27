@@ -74,6 +74,10 @@ public class CompiledTypesHolder {
 	    pushClass (generateAnonId (), b);
 	}
 
+	@Override public void endAnonymousClass () {
+	    endType ();
+	}
+
 	private String generateAnonId () {
 	    ClassId cid = classes.peekLast ();
 	    cid.anonId++;
