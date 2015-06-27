@@ -1,7 +1,7 @@
 mkdir -p bin
 
 javac \
- -classpath libs/asm-5.0.3.jar \
+ -classpath libs/asm-5.0.4.jar:libs/asm-tree-5.0.4.jar \
  -d bin \
  -sourcepath src \
  -Xdiags:verbose \

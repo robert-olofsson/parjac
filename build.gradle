@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-//    compile group: 'asm', name: 'asm', version: '5.0.3'
-    compile files('libs/asm-5.0.3.jar')
+    compile 'org.ow2.asm:asm:5.0.4'
+    compile 'org.ow2.asm:asm-tree:5.0.4'
     testCompile 'org.testng:testng:6.8+'
 }
 
