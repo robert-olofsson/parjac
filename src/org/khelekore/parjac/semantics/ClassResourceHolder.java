@@ -84,10 +84,7 @@ public class ClassResourceHolder {
     }
 
     public boolean hasType (String fqn) {
-	Result r = foundClasses.get (fqn);
-	if (r != null)
-	    return true;
-	return false;
+	return foundClasses.get (fqn) != null;
     }
 
     public List<String> getSuperTypes (String fqn) throws IOException {
