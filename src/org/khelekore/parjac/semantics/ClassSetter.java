@@ -219,6 +219,7 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private String resolve (String id) {
+	// System.err.println ("Trying to resolve: " + id);
 	TreeNode type = cth.getType (id);
 	if (type != null)
 	    return id;
@@ -234,9 +235,8 @@ public class ClassSetter implements TreeVisitor {
 	// check for inner class
 	for (String ctn : containingTypeName) {
 	    String icn = ctn + "." + id;
-	    type = cth.getType (icn);
 	    // System.err.println ("icn: " + icn + " => " + type);
-	    if (type != null)
+	    if (validFullName (icn))
 		return icn;
 	}
 
@@ -252,7 +252,7 @@ public class ClassSetter implements TreeVisitor {
 
     private String checkSuperClasses (String fullCtn, String id) {
 	List<String> superclasses = getSuperClasses (fullCtn);
-	//System.err.println ("fullCtn: " + fullCtn + ", id: " + id + ", superclasses: " + superclasses);
+	// System.err.println ("fullCtn: " + fullCtn + ", id: " + id + ", superclasses: " + superclasses);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "." + id;
 	    // System.err.println ("sicn: " + icn + " => " + validFullName(icn));
