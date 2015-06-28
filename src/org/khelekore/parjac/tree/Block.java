@@ -18,8 +18,7 @@ public class Block implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	if (statements != null)
+	if (visitor.visit (this) && statements != null)
 	    statements.forEach (s -> s.visit (visitor));
 	visitor.endBlock ();
     }

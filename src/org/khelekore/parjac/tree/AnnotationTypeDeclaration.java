@@ -30,8 +30,8 @@ public class AnnotationTypeDeclaration implements TreeNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	body.visit (visitor);
+	if (visitor.visit (this))
+	    body.visit (visitor);
 	visitor.endType ();
     }
 }

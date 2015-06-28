@@ -44,44 +44,54 @@ public class ClassSetter implements TreeVisitor {
 	tree.getCompilationUnit ().visit (this);
     }
 
-    @Override public void visit (NormalClassDeclaration c) {
+    @Override public boolean visit (NormalClassDeclaration c) {
 	ClassType superclass = c.getSuperClass ();
 	if (superclass != null)
 	    setType (superclass);
 	visitSuperInterfaces (c.getSuperInterfaces ());
 	containingTypeName.push (cth.getFullName (c));
 	registerTypeParameters (c.getTypeParameters ());
+	return true;
     }
 
-    @Override public void visit (EnumDeclaration e) {
+    @Override public boolean visit (EnumDeclaration e) {
 	containingTypeName.push (cth.getFullName (e));
 	visitSuperInterfaces (e.getSuperInterfaces ());
 	registerTypeParameters (null);
+	return true;
     }
 
-    @Override public void visit (NormalInterfaceDeclaration i) {
+    @Override public boolean visit (NormalInterfaceDeclaration i) {
 	containingTypeName.push (cth.getFullName (i));
 	ExtendsInterfaces ei = i.getExtendsInterfaces ();
 	if (ei != null)
 	    visitSuperInterfaces (ei.get ());
 	registerTypeParameters (i.getTypeParameters ());
+	return true;
     }
 
-    @Override public void visit (AnnotationTypeDeclaration a) {
+    @Override public boolean visit (AnnotationTypeDeclaration a) {
 	containingTypeName.push (cth.getFullName (a));
 	registerTypeParameters (null);
+	return true;
     }
 
-    @Override public void anonymousClass (ClassType ct, ClassBody b) {
+    @Override public boolean anonymousClass (ClassType ct, ClassBody b) {
 	setType (ct);
-	containingTypeName.push (ct.getFullName ());
-	containingTypeName.push (cth.getFullName (b));
-	registerTypeParameters (null);
+	if (ct.getFullName () != null) {
+	    containingTypeName.push (ct.getFullName ());
+	    containingTypeName.push (cth.getFullName (b));
+	    registerTypeParameters (null);
+	    return true;
+	}
+	return false;
     }
 
-    @Override public void endAnonymousClass () {
-	endType ();
-	containingTypeName.pop ();
+    @Override public void endAnonymousClass (ClassType ct, ClassBody b) {
+	if (ct.getFullName () != null) {
+	    endType ();
+	    containingTypeName.pop ();
+	}
     }
 
     @Override public void endType () {
@@ -94,9 +104,10 @@ public class ClassSetter implements TreeVisitor {
 	    setTypes (superInterfaces);
     }
 
-    @Override public void visit (ConstructorDeclaration c) {
+    @Override public boolean visit (ConstructorDeclaration c) {
 	registerTypeParameters (c.getTypeParameters ());
 	setTypes (c.getParameters ());
+	return true;
     }
 
     @Override public void endConstructor (ConstructorDeclaration c) {
@@ -107,12 +118,13 @@ public class ClassSetter implements TreeVisitor {
 	setType (f.getType ());
     }
 
-    @Override public void visit (MethodDeclaration m) {
+    @Override public boolean visit (MethodDeclaration m) {
 	registerTypeParameters (m.getTypeParameters ());
 	Result r = m.getResult ();
 	if (r instanceof Result.TypeResult)
 	    setType (((TypeResult)r).get ());
 	setTypes (m.getParameters ());
+	return true;
     }
 
     @Override public void endMethod (MethodDeclaration m) {
@@ -151,7 +163,11 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private void setType (TreeNode type) {
+	// System.err.println ("Trying to set type for: " + type);
 	if (type instanceof PrimitiveTokenType) {
+	    return;
+	}
+	if (type instanceof PrimitiveType) {
 	    return;
 	}
 	if (type instanceof ClassType) {
@@ -219,6 +235,7 @@ public class ClassSetter implements TreeVisitor {
 	for (String ctn : containingTypeName) {
 	    String icn = ctn + "." + id;
 	    type = cth.getType (icn);
+	    // System.err.println ("icn: " + icn + " => " + type);
 	    if (type != null)
 		return icn;
 	}
@@ -238,6 +255,7 @@ public class ClassSetter implements TreeVisitor {
 	//System.err.println ("fullCtn: " + fullCtn + ", id: " + id + ", superclasses: " + superclasses);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "." + id;
+	    // System.err.println ("sicn: " + icn + " => " + validFullName(icn));
 	    if (validFullName (icn))
 		return icn;
 	    String ssn = checkSuperClasses (superclass, id);

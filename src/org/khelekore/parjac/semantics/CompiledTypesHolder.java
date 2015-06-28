@@ -11,7 +11,6 @@ import org.khelekore.parjac.tree.*;
 
 public class CompiledTypesHolder {
     private Map<String, TreeNode> name2node = new HashMap<> ();
-    private Map<TreeNode, String> node2id = new HashMap<> ();
     private Map<TreeNode, String> node2filename = new HashMap<> ();
     private Map<TreeNode, String> node2fqn = new HashMap<> ();
 
@@ -30,13 +29,6 @@ public class CompiledTypesHolder {
 	return name2node.get (name);
     }
 
-    /** Get the class id, something like "Foo.Bar.1".
-     *  Inner classes use dot as separator, filename use dollar as separator.
-     */
-    public String getId (TreeNode tn) {
-	return node2id.get (tn);
-    }
-
     public String getFilename (TreeNode tn) {
 	return node2filename.get (tn);
     }
@@ -50,31 +42,37 @@ public class CompiledTypesHolder {
 	private DottedName packageName;
 	private final Deque<ClassId> classes = new ArrayDeque<> ();
 
-	@Override public void visit (CompilationUnit cu) {
+	@Override public boolean visit (CompilationUnit cu) {
 	    packageName = cu.getPackage ();
+	    return true;
 	}
 
-	@Override public void visit (NormalClassDeclaration c) {
+	@Override public boolean visit (NormalClassDeclaration c) {
 	    pushClass (c.getId (), c);
+	    return true;
 	}
 
-	@Override public void visit (EnumDeclaration e) {
+	@Override public boolean visit (EnumDeclaration e) {
 	    pushClass (e.getId (), e);
+	    return true;
 	}
 
-	@Override public void visit (NormalInterfaceDeclaration i) {
+	@Override public boolean visit (NormalInterfaceDeclaration i) {
 	    pushClass (i.getId (), i);
+	    return true;
 	}
 
-	@Override public void visit (AnnotationTypeDeclaration a) {
+	@Override public boolean visit (AnnotationTypeDeclaration a) {
 	    pushClass (a.getId (), a);
+	    return true;
 	}
 
-	@Override public void anonymousClass (ClassType ct, ClassBody b) {
+	@Override public boolean anonymousClass (ClassType ct, ClassBody b) {
 	    pushClass (generateAnonId (), b);
+	    return true;
 	}
 
-	@Override public void endAnonymousClass () {
+	@Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	    endType ();
 	}
 
@@ -96,7 +94,6 @@ public class CompiledTypesHolder {
 	    String name = getFQN (packageName, fullId);
 	    synchronized (name2node) {
 		name2node.put (name, tn);
-		node2id.put (tn, fullId);
 		node2filename.put (tn, filename);
 		node2fqn.put (tn, name);
 	    }

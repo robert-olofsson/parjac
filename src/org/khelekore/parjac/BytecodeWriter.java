@@ -30,31 +30,37 @@ public class BytecodeWriter implements TreeVisitor {
 	this.cth = cth;
     }
 
-    @Override public void visit (CompilationUnit cu) {
+    @Override public boolean visit (CompilationUnit cu) {
 	packageName = cu.getPackage ();
+	return true;
     }
 
-    @Override public void visit (NormalClassDeclaration c) {
+    @Override public boolean visit (NormalClassDeclaration c) {
 	pushClass (c);
+	return true;
     }
 
-    @Override public void visit (EnumDeclaration e) {
+    @Override public boolean visit (EnumDeclaration e) {
 	pushClass (e);
+	return true;
     }
 
-    @Override public void visit (NormalInterfaceDeclaration i) {
+    @Override public boolean visit (NormalInterfaceDeclaration i) {
 	pushClass (i);
+	return true;
     }
 
-    @Override public void visit (AnnotationTypeDeclaration a) {
+    @Override public boolean visit (AnnotationTypeDeclaration a) {
 	pushClass (a);
+	return true;
     }
 
-    @Override public void anonymousClass (ClassType ct, ClassBody b) {
+    @Override public boolean anonymousClass (ClassType ct, ClassBody b) {
 	pushClass (b);
+	return true;
     }
 
-    @Override public void endAnonymousClass () {
+    @Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	endType ();
     }
 
@@ -69,7 +75,7 @@ public class BytecodeWriter implements TreeVisitor {
 	cid.write ();
     }
 
-    @Override public void visit (ConstructorDeclaration c) {
+    @Override public boolean visit (ConstructorDeclaration c) {
 	ClassWriter cw = classes.peekLast ().cw;
 
 	int mods = getModifiers (c.getModifiers ());
@@ -90,6 +96,7 @@ public class BytecodeWriter implements TreeVisitor {
 	// this code uses a maximum of one stack element and one local variable
 	mw.visitMaxs(1, 1);
 	mw.visitEnd();
+	return true;
     }
 
     @Override public void visit (FieldDeclaration f) {
@@ -102,7 +109,7 @@ public class BytecodeWriter implements TreeVisitor {
 	}
     }
 
-    @Override public void visit (MethodDeclaration m) {
+    @Override public boolean visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
 	int mods = getModifiers (m.getModifiers ());
@@ -124,6 +131,7 @@ public class BytecodeWriter implements TreeVisitor {
         // variables
         mw.visitMaxs(2, 2);
         mw.visitEnd();
+	return true;
     }
 
     private boolean hasVarargs (FormalParameterList ls) {
@@ -216,7 +224,8 @@ public class BytecodeWriter implements TreeVisitor {
 	}
     }
 
-    @Override public void visit (Block b) {
+    @Override public boolean visit (Block b) {
+	return true;
     }
 
     @Override public void endBlock () {

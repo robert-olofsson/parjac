@@ -58,9 +58,9 @@ public class UntypedClassInstanceCreationExpression extends PositionNode {
 	if (args != null)
 	    args.visit (visitor);
 	if (body != null) {
-	    visitor.anonymousClass (id, body);
-	    body.visit (visitor);
-	    visitor.endAnonymousClass ();
+	    if (visitor.anonymousClass (id, body))
+		body.visit (visitor);
+	    visitor.endAnonymousClass (id, body);
 	}
     }
 }

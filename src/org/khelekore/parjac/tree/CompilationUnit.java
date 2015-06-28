@@ -68,8 +68,7 @@ public class CompilationUnit implements TreeNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	if (types != null)
+	if (visitor.visit (this) && types != null)
 	    types.forEach (t -> t.visit (visitor));
     }
 }
