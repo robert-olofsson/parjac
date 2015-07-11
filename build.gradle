@@ -37,3 +37,7 @@ test {
      logger.lifecycle("Running test: " + descriptor)
   }
 }
+
+task showMeCache << {
+  configurations.compile.each { println it }
+}
