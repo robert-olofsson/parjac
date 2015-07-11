@@ -9,14 +9,14 @@ import org.khelekore.parjac.lexer.Token;
 import static org.objectweb.asm.Opcodes.*;
 
 public class ModifierHelper {
-    public static List<Annotation> getAnnotations (List<TreeNode> modifiers) {
-	List<Annotation> ret = Collections.emptyList ();
+    public static List<TreeNode> getAnnotations (List<TreeNode> modifiers) {
+	List<TreeNode> ret = Collections.emptyList ();
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
 		if (!(tn instanceof ModifierTokenType)) {
 		    if (ret.isEmpty ())
 			ret = new ArrayList<> ();
-		    ret.add ((Annotation)tn);
+		    ret.add (tn);
 		}
 	    }
 	}

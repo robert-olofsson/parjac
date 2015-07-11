@@ -8,7 +8,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class EnumDeclaration extends PositionNode {
-    private final List<Annotation> annotations;
+    private final List<TreeNode> annotations;
     private final int accessFlags;
     private final String id;
     private final InterfaceTypeList superInterfaces;
@@ -40,7 +40,7 @@ public class EnumDeclaration extends PositionNode {
 	return accessFlags;
     }
 
-    public List<Annotation> getAnntations () {
+    public List<TreeNode> getAnntations () {
 	return annotations;
     }
 

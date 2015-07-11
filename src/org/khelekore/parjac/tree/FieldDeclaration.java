@@ -7,19 +7,23 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
-public class FieldDeclaration implements TreeNode {
-    private final List<TreeNode> modifiers;
+public class FieldDeclaration extends PositionNode {
+    private final List<TreeNode> annotations;
+    private final int flags;
     private final TreeNode type;
     private final VariableDeclaratorList variables;
 
     public FieldDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
-	modifiers = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
+	super (pos);
+	List<TreeNode> modifiers = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
+	annotations = ModifierHelper.getAnnotations (modifiers);
+	flags = ModifierHelper.getModifiers (modifiers);
 	type = parts.pop ();
 	variables = (VariableDeclaratorList)parts.pop ();
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{modifiers: " + modifiers +
+	return getClass ().getSimpleName () + "{annotations: " + annotations + ", flags: " + flags +
 	    ", type: " + type + ", variables: " + variables + "}";
     }
 
@@ -28,8 +32,12 @@ public class FieldDeclaration implements TreeNode {
 	variables.visit (visitor);
     }
 
-    public List<TreeNode> getModifiers () {
-	return modifiers;
+    public List<TreeNode> getAnotations () {
+	return annotations;
+    }
+
+    public int getFlags () {
+	return flags;
     }
 
     public TreeNode getType () {

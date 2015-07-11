@@ -101,7 +101,7 @@ public class BytecodeWriter implements TreeVisitor {
 
     @Override public void visit (FieldDeclaration f) {
 	ClassWriter cw = classes.peekLast ().cw;
-	int mods = ModifierHelper.getModifiers (f.getModifiers ());
+	int mods = f.getFlags ();
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    // int access, String name, String desc, String signature, Object value
 	    FieldVisitor fw = cw.visitField (mods, vd.getId (), getType (f.getType ()), null, null);
@@ -112,7 +112,7 @@ public class BytecodeWriter implements TreeVisitor {
     @Override public boolean visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
-	int mods = ModifierHelper.getModifiers (m.getModifiers ());
+	int mods = m.getFlags ();
 	if (hasVarargs (m.getParameters ()))
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
