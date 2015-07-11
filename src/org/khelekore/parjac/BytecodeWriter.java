@@ -188,8 +188,7 @@ public class BytecodeWriter implements TreeVisitor {
 	} else if (tn instanceof ClassType) {
 	    ClassType ct = (ClassType)tn;
 	    sb.append ("L");
-	    String fqn = ct.getFullName ();
-	    sb.append (fqn != null ? fqn : "java.lang.String"); // TODO: remove null check
+	    sb.append (ct.getFullName ());
 	    sb.append (";");
 	} else {
 	    UnannArrayType at = (UnannArrayType)tn;
@@ -260,7 +259,7 @@ public class BytecodeWriter implements TreeVisitor {
 	    // TODO: handle interface flags
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
-	    cw.visit (V1_8, flags, fqn, null, supername, null);
+	    cw.visit (V1_8, flags, fqn, /*signature*/null, supername, /*interfaces */null);
 	}
 
 	public void write () {
