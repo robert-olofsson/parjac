@@ -19,11 +19,9 @@ public class CompilerDiagnosticCollector implements DiagnosticListener<Path> {
     private volatile boolean hasError;
 
     public void report (Diagnostic<? extends Path> diagnostic) {
-	synchronized (list) {
-	    if (diagnostic.getKind () == Diagnostic.Kind.ERROR)
-		hasError = true;
-	    list.add (diagnostic);
-	}
+	if (diagnostic.getKind () == Diagnostic.Kind.ERROR)
+	    hasError = true;
+	list.add (diagnostic);
     }
 
     public boolean hasError () {

@@ -328,8 +328,20 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    /* This works with javac, not sure if it is actually legal */
+    @Test
+    public void testInnerClassSubpackage () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "class RPG {\n" +
+			    "public interface TG {}\n" +
+			    "}\n" +
+			    "class IPG extends RPG {}\n" +
+			    "class STG implements IPG.TG {}\n");
+	assertNoErrors ();
+    }
+
     private void parseAndSetClasses (String code) {
-	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, diagnostics);
+	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
 	cth.addTypes (st);
 	ClassSetter cs = new ClassSetter (cth, crh, st, null);

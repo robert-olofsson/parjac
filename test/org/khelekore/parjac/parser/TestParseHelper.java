@@ -45,17 +45,19 @@ public class TestParseHelper {
     }
 
     public static void earleyParse (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
-	parse (g, s, diagnostics, null);
+	parse (g, s, null, diagnostics, null);
     }
 
-    public static SyntaxTree earleyParseBuildTree (Grammar g, String s, CompilerDiagnosticCollector diagnostics) {
-	return parse (g, s, diagnostics, new JavaTreeBuilder (g));
+    public static SyntaxTree earleyParseBuildTree (Grammar g, String s, String path,
+						   CompilerDiagnosticCollector diagnostics) {
+	return parse (g, s, path, diagnostics, new JavaTreeBuilder (g));
     }
 
-    private static SyntaxTree parse (Grammar g, String s, CompilerDiagnosticCollector diagnostics,
+    private static SyntaxTree parse (Grammar g, String s, String sourcePath,
+				     CompilerDiagnosticCollector diagnostics,
 				     JavaTreeBuilder tb) {
 	CharBuffer charBuf = CharBuffer.wrap (s);
-	Path path = Paths.get ("TestParseHelper.getParser");
+	Path path = Paths.get (sourcePath == null ? "TestParseHelper.getParser" : sourcePath);
 	Lexer lexer = new CharBufferLexer (charBuf);
 	PredictCache pc = new PredictCache (g); // TODO: this is pretty inefficient
 	EarleyParser ep = new EarleyParser (g, path, lexer, pc, tb, diagnostics, false);

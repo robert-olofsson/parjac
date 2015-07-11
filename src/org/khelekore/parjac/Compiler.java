@@ -26,6 +26,7 @@ import org.khelekore.parjac.parser.PredictCache;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
+import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -133,6 +134,7 @@ public class Compiler {
 	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
 	}
 	// Check file names / class names matching and modifiers
+	trees.parallelStream ().forEach (t -> checkNamesAndModifiers (t, diagnostics));
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
@@ -145,6 +147,11 @@ public class Compiler {
 	cs.fillIn ();
 	if (!cs.completed ())
 	    rest.add (tree);
+    }
+
+    private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	NameModifierChecker nmc = new NameModifierChecker (tree, diagnostics);
+	nmc.check ();
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,

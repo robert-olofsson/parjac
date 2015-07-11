@@ -6,19 +6,32 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class AnnotationTypeDeclaration implements TreeNode {
-    private final List<TreeNode> modifiers;
+public class AnnotationTypeDeclaration extends PositionNode {
+    private final List<Annotation> annotations;
+    private final int accessFlags;
     private final String id;
     private final AnnotationTypeBody body;
 
     public AnnotationTypeDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
-	modifiers = r.size () > 4 ? ((ZOMEntry)parts.pop ()).get () : null;
+	super (ppos);
+	List<TreeNode> modifiers = r.size () > 4 ? ((ZOMEntry)parts.pop ()).get () : null;
+	annotations = ModifierHelper.getAnnotations (modifiers);
+	accessFlags = ModifierHelper.getModifiers (modifiers);
 	id = ((Identifier)parts.pop ()).get ();
 	body = (AnnotationTypeBody)parts.pop ();
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + modifiers + " " + id + " " + body + "}";
+	return getClass ().getSimpleName () +
+	    "{" + annotations + ", " + accessFlags + " " + id + " " + body + "}";
+    }
+
+    public int getAccessFlags () {
+	return accessFlags;
+    }
+
+    public List<Annotation> getAnntations () {
+	return annotations;
     }
 
     public String getId () {

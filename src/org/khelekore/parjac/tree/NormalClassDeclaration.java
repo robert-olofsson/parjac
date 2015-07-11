@@ -8,31 +8,20 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class NormalClassDeclaration implements TreeNode {
-    private final List<TreeNode> modifiers;
+public class NormalClassDeclaration extends PositionNode {
+    private final List<Annotation> annotations;
+    private final int accessFlags;
     private final String id;
     private final TypeParameters types;
     private final ClassType superclass;
     private final InterfaceTypeList superinterfaces;
     private final ClassBody body;
 
-    public NormalClassDeclaration (List<TreeNode> modifiers,
-				   String id,
-				   TypeParameters types,
-				   ClassType superclass,
-				   InterfaceTypeList superinterfaces,
-				   ClassBody body) {
-	this.modifiers = modifiers;
-	this.id = id;
-	this.types = types;
-	this.superclass = superclass;
-	this.superinterfaces = superinterfaces;
-	this.body = body;
-    }
-
     public NormalClassDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 2;
 	TreeNode tn = parts.pop ();
+	List<TreeNode> modifiers;
 	if (r.getRulePart (1).getId () != Token.IDENTIFIER) {
 	    modifiers = ((ZOMEntry)tn).get ();
 	    tn = parts.pop ();
@@ -40,6 +29,8 @@ public class NormalClassDeclaration implements TreeNode {
 	} else {
 	    modifiers = Collections.emptyList ();
 	}
+	annotations = ModifierHelper.getAnnotations (modifiers);
+	accessFlags = ModifierHelper.getModifiers (modifiers);
 	id = ((Identifier)tn).get ();
 	if (r.getRulePart (pos).getId ().equals ("TypeParameters")) {
 	    types = (TypeParameters)parts.pop ();
@@ -62,12 +53,16 @@ public class NormalClassDeclaration implements TreeNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + modifiers + " " + id +
-	    " " + types + " " + superclass + " " + superinterfaces + " " + body + "}";
+	return getClass ().getSimpleName () + "{" + annotations + ", " + accessFlags + " " +
+	    id + " " + types + " " + superclass + " " + superinterfaces + " " + body + "}";
     }
 
-    public List<TreeNode> getModifiers () {
-	return modifiers;
+    public int getAccessFlags () {
+	return accessFlags;
+    }
+
+    public List<Annotation> getAnntations () {
+	return annotations;
     }
 
     public String getId () {

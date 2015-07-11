@@ -153,7 +153,7 @@ public class TestFullClass {
     }
 
     private void testSuccessfulParse (String s, TreeNode tn) {
-	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, diagnostics);
+	SyntaxTree t = TestParseHelper.earleyParseBuildTree (g, s, null, diagnostics);
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
 	if (tn != null)
 	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;

@@ -78,7 +78,7 @@ public class BytecodeWriter implements TreeVisitor {
     @Override public boolean visit (ConstructorDeclaration c) {
 	ClassWriter cw = classes.peekLast ().cw;
 
-	int mods = getModifiers (c.getModifiers ());
+	int mods = ModifierHelper.getModifiers (c.getModifiers ());
 	if (hasVarargs (c.getParameters ()))
 	    mods |= ACC_VARARGS;
 
@@ -101,7 +101,7 @@ public class BytecodeWriter implements TreeVisitor {
 
     @Override public void visit (FieldDeclaration f) {
 	ClassWriter cw = classes.peekLast ().cw;
-	int mods = getModifiers (f.getModifiers ());
+	int mods = ModifierHelper.getModifiers (f.getModifiers ());
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    // int access, String name, String desc, String signature, Object value
 	    FieldVisitor fw = cw.visitField (mods, vd.getId (), getType (f.getType ()), null, null);
@@ -112,7 +112,7 @@ public class BytecodeWriter implements TreeVisitor {
     @Override public boolean visit (MethodDeclaration m) {
 	ClassWriter cw = classes.peekLast ().cw;
         // creates a MethodWriter for the method
-	int mods = getModifiers (m.getModifiers ());
+	int mods = ModifierHelper.getModifiers (m.getModifiers ());
 	if (hasVarargs (m.getParameters ()))
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
@@ -251,12 +251,13 @@ public class BytecodeWriter implements TreeVisitor {
 		if (ct != null) {
 		    supername = ct.getFullName ().replace ('.', '/');
 		}
-		flags = getModifiers (ncd.getModifiers ());
+		flags = ncd.getAccessFlags ();
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
 		supername = "java.lang.Enum<" + ed.getId () + ">";
-		flags = ACC_FINAL;
+		flags = (ed.getAccessFlags () | ACC_FINAL);
 	    }
+	    // TODO: handle interface flags
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
 	    cw.visit (V1_8, flags, fqn, null, supername, null);
@@ -276,49 +277,6 @@ public class BytecodeWriter implements TreeVisitor {
 	    if (packageName == null)
 		return Paths.get (destinationDir.toString (), cid);
 	    return Paths.get (destinationDir.toString (), packageName.getPathName (), cid);
-	}
-    }
-
-    private int getModifiers (List<TreeNode> modifiers) {
-	int ret = 0;
-	if (modifiers != null) {
-	    for (TreeNode tn : modifiers) {
-		if (tn instanceof ModifierTokenType) {
-		    ret |= getModifier (((ModifierTokenType)tn).get ());
-		}
-	    }
-	}
-	return ret;
-    }
-
-    private int getModifier (Token t) {
-	switch (t) {
-	case PUBLIC:
-	    return ACC_PUBLIC;
-	case PROTECTED:
-	    return ACC_PROTECTED;
-	case PRIVATE:
-	    return ACC_PRIVATE;
-	case ABSTRACT:
-	    return ACC_ABSTRACT;
-	case STATIC:
-	    return ACC_STATIC;
-	case FINAL:
-	    return ACC_FINAL;
-	case STRICTFP:
-	    return ACC_STRICT;
-	case TRANSIENT:
-	    return ACC_TRANSIENT;
-	case VOLATILE:
-	    return ACC_VOLATILE;
-	case SYNCHRONIZED:
-	    return ACC_SYNCHRONIZED;
-	case NATIVE:
-	    return ACC_NATIVE;
-	case DEFAULT:
-	    // hmm?
-	default:
-	    throw new IllegalStateException ("Got unexpected token: " + t);
 	}
     }
 }
