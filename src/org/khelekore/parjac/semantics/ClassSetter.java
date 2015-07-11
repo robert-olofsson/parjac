@@ -26,6 +26,7 @@ public class ClassSetter implements TreeVisitor {
     private final ImportHandler ih = new ImportHandler ();
     private final Deque<String> containingTypeName = new ArrayDeque<> ();
     private final Deque<Set<String>> types = new ArrayDeque<> ();
+    private boolean completed = true;
 
     public ClassSetter (CompiledTypesHolder cth, ClassResourceHolder crh,
 			SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
@@ -40,8 +41,15 @@ public class ClassSetter implements TreeVisitor {
 	ih.addDefaultPackages ();
     }
 
+    /**
+     * @return true if every part was filled in correctly, false if something failed
+     */
     public void fillIn () {
 	tree.getCompilationUnit ().visit (this);
+    }
+
+    public boolean completed () {
+	return completed;
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
@@ -189,9 +197,12 @@ public class ClassSetter implements TreeVisitor {
 			fqn = null;
 		}
 	    }
-	    if (fqn == null && diagnostics != null)
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
-							   "Failed to find class: " + id1));
+	    if (fqn == null) {
+		completed = false;
+		if (diagnostics != null)
+		    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
+							       "Failed to find class: " + id1));
+	    }
 	    ct.setFullName (fqn);
 	    for (SimpleClassType sct : ct.get ()) {
 		TypeArguments tas = sct.getTypeArguments ();
@@ -207,10 +218,12 @@ public class ClassSetter implements TreeVisitor {
 	    if (wb != null)
 		setType (wb.getClassType ());
 	} else {
-	    if (diagnostics != null)
+	    completed = false;
+	    if (diagnostics != null) {
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), type.getParsePosition (),
 							   "Unhandled type: " + type.getClass ().getName () +
 							   ", " + type));
+	    }
 	}
     }
 
@@ -292,7 +305,9 @@ public class ClassSetter implements TreeVisitor {
 	try {
 	    return crh.getSuperTypes (type);
 	} catch (IOException e) {
-	    diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + type, e));
+	    completed = false;
+	    if (diagnostics != null)
+		diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + type, e));
 	}
 	return Collections.emptyList ();
     }

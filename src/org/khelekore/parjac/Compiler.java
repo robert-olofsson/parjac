@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.batch.CompilationArguments;
@@ -120,19 +122,29 @@ public class Compiler {
     private void checkSemantics (List<SyntaxTree> trees) {
 	cth = new CompiledTypesHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
-	trees.parallelStream ().forEach (t -> fillInClasses (t, null));
-	trees.parallelStream ().forEach (t -> fillInClasses (t, diagnostics));
-	// TODO: implement
+
 	// Fill in correct classes
-	// Check modifiers
+	// Depending on order we may not have correct parents on first try.
+	// We collect the trees that fails and tries again
+	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
+	trees.parallelStream ().forEach (t -> fillInClasses (t, null, rest));
+	if (!rest.isEmpty ()) {
+	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
+	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
+	}
+	// Check file names / class names matching and modifiers
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
     }
 
-    private void fillInClasses (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+    private void fillInClasses (SyntaxTree tree,
+				CompilerDiagnosticCollector diagnostics,
+				Queue<SyntaxTree> rest) {
 	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics);
 	cs.fillIn ();
+	if (!cs.completed ())
+	    rest.add (tree);
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,
