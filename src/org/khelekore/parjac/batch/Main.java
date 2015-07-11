@@ -189,6 +189,7 @@ public class Main {
     }
 
     private static boolean isJavaFile (Path p) {
-	return p.getFileName ().toString ().toLowerCase ().endsWith (".java");
+	// javac only accept ".java", ".Java" gives "invalid flag...".
+	return p.getFileName ().toString ().endsWith (".java");
     }
 }
