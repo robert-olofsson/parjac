@@ -173,7 +173,6 @@ public class EarleyParser {
 	    alreadySeen.addCompleted (completed);
 	}
 
-	// TODO: this ought to come from the grammar
 	if (grammar.isClearableRule (completed.getRule ())) {
 	    clearStates (completed);
 	}
