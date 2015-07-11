@@ -28,7 +28,12 @@ public class ModifierHelper {
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
 		if (tn instanceof ModifierTokenType) {
-		    ret |= getModifier (((ModifierTokenType)tn).get ());
+		    int newFlag = getModifier (((ModifierTokenType)tn).get ());
+		    /* TODO: something like this
+		    if ((ret & newFlag) == newFlag)
+			reportDuplicateFlags (tn);
+		    */
+		    ret |= newFlag;
 		}
 	    }
 	}
