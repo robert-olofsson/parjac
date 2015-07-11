@@ -1,9 +1,13 @@
 package org.khelekore.parjac.semantics;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,34 @@ public class CompiledTypesHolder {
     /** Get the class id, something like "some.package.Foo.Bar.1". */
     public String getFullName (TreeNode tn) {
 	return node2fqn.get (tn);
+    }
+
+    public Optional<List<String>> getSuperTypes (String type) {
+	TreeNode tn = getType (type);
+	if (tn instanceof NormalClassDeclaration) {
+	    NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
+	    List<String> ret = new ArrayList<> ();
+	    ClassType ct = ncd.getSuperClass ();
+	    if (ct != null) {
+		if (ct.getFullName () == null)
+		    return Optional.of (Collections.<String>emptyList ());
+		ret.add (ct.getFullName ());
+	    }
+	    InterfaceTypeList ifs = ncd.getSuperInterfaces ();
+	    if (ifs != null)
+		ifs.get ().forEach (ic -> ret.add (ic.getFullName ()));
+	    return Optional.of (ret);
+	} else if (tn instanceof NormalInterfaceDeclaration) {
+	    NormalInterfaceDeclaration nid = (NormalInterfaceDeclaration)tn;
+	    ExtendsInterfaces ei = nid.getExtendsInterfaces ();
+	    if (ei != null) {
+		List<ClassType> cts = ei.get ().get ();
+		List<String> ret =
+		    cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
+		return Optional.of (ret);
+	    }
+	}
+	return Optional.empty ();
     }
 
     private class ClassMapper implements TreeVisitor {

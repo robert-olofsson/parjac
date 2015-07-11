@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -279,29 +280,9 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private List<String> getSuperClasses (String type) {
-	/* TODO: move this into cth */
-	TreeNode tn = cth.getType (type);
-	if (tn instanceof NormalClassDeclaration) {
-	    NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
-	    List<String> ret = new ArrayList<> ();
-	    ClassType ct = ncd.getSuperClass ();
-	    if (ct != null) {
-		if (ct.getFullName () == null)
-		    return Collections.emptyList ();
-		ret.add (ct.getFullName ());
-	    }
-	    InterfaceTypeList ifs = ncd.getSuperInterfaces ();
-	    if (ifs != null)
-		ifs.get ().forEach (ic -> ret.add (ic.getFullName ()));
-	    return ret;
-	} else if (tn instanceof NormalInterfaceDeclaration) {
-	    NormalInterfaceDeclaration nid = (NormalInterfaceDeclaration)tn;
-	    ExtendsInterfaces ei = nid.getExtendsInterfaces ();
-	    if (ei != null) {
-		List<ClassType> cts = ei.get ().get ();
-		return cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
-	    }
-	}
+	Optional<List<String>> supers = cth.getSuperTypes (type);
+	if (supers.isPresent ())
+	    return supers.get ();
 	try {
 	    return crh.getSuperTypes (type);
 	} catch (IOException e) {
