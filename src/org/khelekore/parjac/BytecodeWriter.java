@@ -118,18 +118,20 @@ public class BytecodeWriter implements TreeVisitor {
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
         MethodVisitor mw = cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null);
-        // pushes the 'out' field (of type PrintStream) of the System class
-        mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
-                "Ljava/io/PrintStream;");
-        // pushes the "Hello World!" String constant
-        mw.visitLdcInsn("Hello world!");
-        // invokes the 'println' method (defined in the PrintStream class)
-        mw.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-                "(Ljava/lang/String;)V", false);
-        mw.visitInsn(RETURN);
-        // this code uses a maximum of two stack elements and two local
-        // variables
-        mw.visitMaxs(2, 2);
+	if ((mods & ACC_ABSTRACT) == 0) {
+	    // pushes the 'out' field (of type PrintStream) of the System class
+	    mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+			      "Ljava/io/PrintStream;");
+	    // pushes the "Hello World!" String constant
+	    mw.visitLdcInsn("Hello world!");
+	    // invokes the 'println' method (defined in the PrintStream class)
+	    mw.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+			       "(Ljava/lang/String;)V", false);
+	    mw.visitInsn(RETURN);
+	    // this code uses a maximum of two stack elements and two local
+	    // variables
+	    mw.visitMaxs(2, 2);
+	}
         mw.visitEnd();
 	return true;
     }
