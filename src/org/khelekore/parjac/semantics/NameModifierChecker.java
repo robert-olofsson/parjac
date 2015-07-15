@@ -3,7 +3,10 @@ package org.khelekore.parjac.semantics;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
+import org.khelekore.parjac.tree.ConstructorDeclaration;
 import org.khelekore.parjac.tree.EnumDeclaration;
+import org.khelekore.parjac.tree.FieldDeclaration;
+import org.khelekore.parjac.tree.MethodDeclaration;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -77,6 +80,33 @@ public class NameModifierChecker implements TreeVisitor {
 							   "Top level type may not be private"));
 	    count++;
 	}
+	if (count > 1)
+	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
+						       "Type has too many access flags"));
+    }
+
+    @Override public boolean visit (ConstructorDeclaration c) {
+	checkAccess (c, c.getFlags ());
+	return true;
+    }
+
+    @Override public void visit (FieldDeclaration f) {
+	checkAccess (f, f.getFlags ());
+    }
+
+    @Override public boolean visit (MethodDeclaration m) {
+	checkAccess (m, m.getFlags ());
+	return true;
+    }
+
+    private void checkAccess (TreeNode tn, int flags) {
+	int count = 0;
+	if (isPublic (flags))
+	    count++;
+	if (isProtected (flags))
+	    count++;
+	if (isPrivate (flags))
+	    count++;
 	if (count > 1)
 	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
 						       "Type has too many access flags"));

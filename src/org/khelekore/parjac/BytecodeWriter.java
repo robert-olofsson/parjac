@@ -78,7 +78,7 @@ public class BytecodeWriter implements TreeVisitor {
     @Override public boolean visit (ConstructorDeclaration c) {
 	ClassWriter cw = classes.peekLast ().cw;
 
-	int mods = ModifierHelper.getModifiers (c.getModifiers ());
+	int mods = c.getFlags ();
 	if (hasVarargs (c.getParameters ()))
 	    mods |= ACC_VARARGS;
 

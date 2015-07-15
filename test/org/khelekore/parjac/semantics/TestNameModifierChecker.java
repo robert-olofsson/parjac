@@ -77,6 +77,48 @@ public class TestNameModifierChecker {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testMethod () throws IOException {
+	testBody ("void bar () {}");
+    }
+
+    @Test
+    public void testField () throws IOException {
+	testBody ("int bar;");
+    }
+
+    @Test
+    public void testConstructor () throws IOException {
+	testBody ("Foo () {}");
+    }
+
+    private void testBody (String bodyPart) throws IOException {
+	parseAndSetClasses ("class Foo {" + bodyPart + "}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { public " + bodyPart + " }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { protected " + bodyPart + " }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { private " + bodyPart + " }");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { public private " + bodyPart + " }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { protected private " + bodyPart + " }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { public protected " + bodyPart + " }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { public protected private " + bodyPart + " }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
