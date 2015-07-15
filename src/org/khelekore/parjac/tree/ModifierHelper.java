@@ -32,10 +32,12 @@ public class ModifierHelper {
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
 		if (tn instanceof ModifierTokenType) {
-		    int newFlag = getModifier (((ModifierTokenType)tn).get ());
+		    ModifierTokenType mtt = (ModifierTokenType)tn;
+		    int newFlag = getModifier (mtt.get ());
 		    if ((ret & newFlag) == newFlag) {
 			diagnostics.report (new SourceDiagnostics (path, tn.getParsePosition (),
-								   "Duplicate modifier found"));
+								   "Duplicate modifier '" + mtt.get () +
+								   "' found"));
 
 		    }
 		    ret |= newFlag;
