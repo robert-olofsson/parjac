@@ -21,9 +21,11 @@ public class InterfaceMethodDeclaration extends MethodDeclaration {
 	boolean hasDefault = false;
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
-		ModifierTokenType mtt = (ModifierTokenType)tn;
-		if (mtt.get () == Token.DEFAULT)
-		    hasDefault = true;
+		if (tn instanceof ModifierTokenType) {
+		    ModifierTokenType mtt = (ModifierTokenType)tn;
+		    if (mtt.get () == Token.DEFAULT)
+			hasDefault = true;
+		}
 	    }
 	}
 
