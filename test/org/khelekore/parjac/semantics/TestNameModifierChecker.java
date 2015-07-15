@@ -124,6 +124,14 @@ public class TestNameModifierChecker {
     }
 
     @Test
+    public void testNativeMethodBody () throws IOException {
+	parseAndSetClasses ("class Foo { native void bar (); }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { native void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
     public void testField () throws IOException {
 	testBody ("int bar;");
     }

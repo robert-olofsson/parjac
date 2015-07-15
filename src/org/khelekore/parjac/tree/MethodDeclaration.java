@@ -55,4 +55,8 @@ public class MethodDeclaration extends PositionNode {
     public FormalParameterList getParameters () {
 	return header.getParameters ();
     }
+
+    public MethodBody getBody () {
+	return body;
+    }
 }

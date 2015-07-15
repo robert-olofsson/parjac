@@ -6,6 +6,7 @@ import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
 import org.khelekore.parjac.tree.ConstructorDeclaration;
 import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.FieldDeclaration;
+import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
@@ -110,6 +111,13 @@ public class NameModifierChecker implements TreeVisitor {
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
 							   "Mixing abstract with non allowed flags"));
 	    }
+	}
+
+	if (isNative (flags)) {
+	    MethodBody body = m.getBody ();
+	    if (body != MethodBody.EMPTY_BODY)
+		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
+							   "Native method may not have a body"));
 	}
 	return true;
     }
