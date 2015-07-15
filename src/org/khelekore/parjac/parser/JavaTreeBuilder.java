@@ -1,9 +1,11 @@
 package org.khelekore.parjac.parser;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.RuleCollection;
@@ -55,17 +57,17 @@ public class JavaTreeBuilder {
 		  constructored (StaticImportOnDemandDeclaration::build));
 
 	// Productions from §8 (Classes)
-	register (g, "NormalClassDeclaration", constructored (NormalClassDeclaration::new));
+	register (g, "NormalClassDeclaration", diagnosed (NormalClassDeclaration::new));
 	register (g, "TypeParameters", constructored (TypeParameters::new));
 	register (g, "InterfaceTypeList", constructored (InterfaceTypeList::new));
 	register (g, "ClassBody", constructored (ClassBody::new));
-	register (g, "FieldDeclaration", constructored (FieldDeclaration::new));
+	register (g, "FieldDeclaration", diagnosed (FieldDeclaration::new));
 	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
 	register (g, "VariableDeclarator", constructored (VariableDeclarator::new));
 	register (g, "VariableDeclaratorId", constructored (VariableDeclaratorId::new));
 	register (g, "UnannClassType", constructored (UnannClassType::build));
 	register (g, "UnannArrayType", constructored (UnannArrayType::new));
-	register (g, "MethodDeclaration", constructored (MethodDeclaration::new));
+	register (g, "MethodDeclaration", diagnosed (MethodDeclaration::new));
 	register (g, "MethodHeader", constructored (MethodHeader::new));
 	register (g, "UntypedMethodHeader", constructored (UntypedMethodHeader::new));
 	register (g, "Result", constructored (Result::build));
@@ -79,13 +81,13 @@ public class JavaTreeBuilder {
 	register (g, "MethodBody", constructored (MethodBody::build));
 	register (g, "InstanceInitializer", constructored (InstanceInitializer::new));
 	register (g, "StaticInitializer", constructored (StaticInitializer::new));
-	register (g, "ConstructorDeclaration", constructored (ConstructorDeclaration::new));
+	register (g, "ConstructorDeclaration", diagnosed (ConstructorDeclaration::new));
 	register (g, "ConstructorDeclarator", constructored (ConstructorDeclarator::new));
 	register (g, "ConstructorBody", constructored (ConstructorBody::new));
 	register (g, "ExplicitConstructorInvocation",
 		  constructored (ExplicitConstructorInvocation::new));
 	register (g, "ConstructorArguments", constructored (ConstructorArguments::new));
-	register (g, "EnumDeclaration", constructored (EnumDeclaration::new));
+	register (g, "EnumDeclaration", diagnosed (EnumDeclaration::new));
 	register (g, "EnumBody", constructored (EnumBody::new));
 	register (g, "EnumConstantList", constructored (EnumConstantList::new));
 	register (g, "EnumConstant", constructored (EnumConstant::new));
@@ -93,12 +95,12 @@ public class JavaTreeBuilder {
 	register (g, "EmptyDeclaration", constructored (EmptyDeclaration::build));
 
 	// Productions from §9 (Interfaces)
-	register (g, "NormalInterfaceDeclaration", constructored (NormalInterfaceDeclaration::new));
+	register (g, "NormalInterfaceDeclaration", diagnosed (NormalInterfaceDeclaration::new));
 	register (g, "ExtendsInterfaces", constructored (ExtendsInterfaces::new));
 	register (g, "InterfaceBody", constructored (InterfaceBody::new));
 	register (g, "ConstantDeclaration", constructored (ConstantDeclaration::new));
 	register (g, "InterfaceMethodDeclaration", constructored (InterfaceMethodDeclaration::new));
-	register (g, "AnnotationTypeDeclaration", constructored (AnnotationTypeDeclaration::new));
+	register (g, "AnnotationTypeDeclaration", diagnosed (AnnotationTypeDeclaration::new));
 	register (g, "AnnotationTypeBody", constructored (AnnotationTypeBody::new));
 	register (g, "AnnotationTypeElementDeclaration",
 		  constructored (AnnotationTypeElementDeclaration::new));
@@ -206,24 +208,32 @@ public class JavaTreeBuilder {
 	    builders.set (r.getId (), b);
     }
 
-    /** Constructor taking one argument */
+    /** Constructor taking one argument + parse position */
     public interface ConstructorOne<T> {
 	TreeNode create (T arg, ParsePosition pos);
     }
 
-    /** Constructor taking two arguments */
+    /** Constructor taking two arguments + parse position */
     public interface ConstructorTwo<T, U> {
 	TreeNode create (T t, U u, ParsePosition pos);
     }
 
+    /** Constructor taking two arguments that may report errors + parse position */
+    public interface DiagnosticsConstructor<T, U> {
+	TreeNode create (T t, U u, ParsePosition pos,
+			 Path path, CompilerDiagnosticCollector diagnostics);
+    }
+
     /** Given a rule and a deque of parts, pop some parts and push the newly built part. */
     private interface Builder {
-	void build (Rule r, Deque<TreeNode> parts, ParsePosition pos);
+	void build (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+		    Path path, CompilerDiagnosticCollector diagnostics);
     }
 
     private static Builder constructored (ConstructorOne<Deque<TreeNode>> cb) {
 	return new Builder () {
-	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+			       Path path, CompilerDiagnosticCollector diagnostics) {
 		parts.push (cb.create (parts, pos));
 	    }
 	};
@@ -231,8 +241,18 @@ public class JavaTreeBuilder {
 
     private static Builder constructored (ConstructorTwo<Rule, Deque<TreeNode>> cb) {
 	return new Builder () {
-	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+			       Path path, CompilerDiagnosticCollector diagnostics) {
 		parts.push (cb.create (r, parts, pos));
+	    }
+	};
+    }
+
+    private static Builder diagnosed (DiagnosticsConstructor<Rule, Deque<TreeNode>> cb) {
+	return new Builder () {
+	    public void build (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+			       Path path, CompilerDiagnosticCollector diagnostics) {
+		parts.push (cb.create (r, parts, pos, path, diagnostics));
 	    }
 	};
     }
@@ -274,11 +294,12 @@ public class JavaTreeBuilder {
 	}
     }
 
-    public void build (State start, Deque<TreeNode> parts, ParsePosition pos) {
+    public void build (State start, Deque<TreeNode> parts, ParsePosition pos,
+		       Path path, CompilerDiagnosticCollector diagnostics) {
 	Rule rule = start.getRule ();
 	Builder b = builders.get (rule.getId ());
 	if (b != null) {
-	    b.build (rule, parts, pos);
+	    b.build (rule, parts, pos, path, diagnostics);
 	} else if (rule.getName ().startsWith ("ZOM_")) {
 	    buildZOM (rule, parts);
 	}

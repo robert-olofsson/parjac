@@ -1,8 +1,10 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.Deque;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
@@ -14,7 +16,8 @@ public class EnumDeclaration extends PositionNode {
     private final InterfaceTypeList superInterfaces;
     private final EnumBody body;
 
-    public EnumDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public EnumDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos,
+			    Path path, CompilerDiagnosticCollector diagnostics) {
 	super (ppos);
 	int pos = 2;
 	List<TreeNode> modifiers;
@@ -25,7 +28,7 @@ public class EnumDeclaration extends PositionNode {
 	    modifiers = null;
 	}
 	annotations = ModifierHelper.getAnnotations (modifiers);
-	accessFlags = ModifierHelper.getModifiers (modifiers);
+	accessFlags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
 	id = ((Identifier)parts.pop ()).get ();
 	superInterfaces = r.size () > pos + 1 ? (InterfaceTypeList)parts.pop () : null;
 	body = (EnumBody)parts.pop ();

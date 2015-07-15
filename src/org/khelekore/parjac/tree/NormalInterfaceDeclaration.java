@@ -1,8 +1,10 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.Deque;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
@@ -15,7 +17,8 @@ public class NormalInterfaceDeclaration extends PositionNode {
     private final ExtendsInterfaces extendsInterfaces;
     private final InterfaceBody body;
 
-    public NormalInterfaceDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public NormalInterfaceDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos,
+				       Path path, CompilerDiagnosticCollector diagnostics) {
 	super (ppos);
 	int pos = 2;
 	List<TreeNode> modifiers;
@@ -26,7 +29,7 @@ public class NormalInterfaceDeclaration extends PositionNode {
 	    modifiers = null;
 	}
 	annotations = ModifierHelper.getAnnotations (modifiers);
-	accessFlags = ModifierHelper.getModifiers (modifiers);
+	accessFlags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
 
 	id = ((Identifier)parts.pop ()).get ();
 	if (r.getRulePart (pos).getId ().equals ("TypeParameters")) {

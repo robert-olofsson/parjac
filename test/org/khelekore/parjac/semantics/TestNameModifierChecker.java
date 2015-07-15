@@ -188,6 +188,30 @@ public class TestNameModifierChecker {
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
+    @Test
+    public void testDuplicateFlags () throws IOException {
+	testClassDups ("public");
+	testClassDups ("protected");
+	testClassDups ("private");
+	testClassDups ("abstract");
+	testClassDups ("final");
+	testClassDups ("strictfp");
+
+	testInnerClassDups ("static");
+    }
+
+    private void testClassDups (String flag) throws IOException {
+	parseAndSetClasses (flag + " " + flag + " class Foo { }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
+    private void testInnerClassDups (String flag) throws IOException {
+	parseAndSetClasses ("class Foo { " + flag + " " + flag + " class Bar {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();

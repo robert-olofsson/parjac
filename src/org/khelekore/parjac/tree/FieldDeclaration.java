@@ -1,8 +1,10 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.Deque;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
@@ -13,11 +15,12 @@ public class FieldDeclaration extends PositionNode {
     private final TreeNode type;
     private final VariableDeclaratorList variables;
 
-    public FieldDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+    public FieldDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+			     Path path, CompilerDiagnosticCollector diagnostics) {
 	super (pos);
 	List<TreeNode> modifiers = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
 	annotations = ModifierHelper.getAnnotations (modifiers);
-	flags = ModifierHelper.getModifiers (modifiers);
+	flags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
 	type = parts.pop ();
 	variables = (VariableDeclaratorList)parts.pop ();
     }

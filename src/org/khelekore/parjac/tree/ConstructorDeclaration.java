@@ -1,8 +1,10 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.Deque;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
@@ -13,7 +15,8 @@ public class ConstructorDeclaration extends PositionNode {
     private final Throws throwsClause;
     private final ConstructorBody body;
 
-    public ConstructorDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public ConstructorDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos,
+				   Path path, CompilerDiagnosticCollector diagnostics) {
 	super (ppos);
 	int pos = 1;
 	List<TreeNode> modifiers;
@@ -24,7 +27,7 @@ public class ConstructorDeclaration extends PositionNode {
 	    modifiers = null;
 	}
 	annotations = ModifierHelper.getAnnotations (modifiers);
-	flags = ModifierHelper.getModifiers (modifiers);
+	flags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
 	declarator = (ConstructorDeclarator)parts.pop ();
 	if (r.getRulePart (pos).getId ().equals ("Throws")) {
 	    throwsClause = (Throws)parts.pop ();

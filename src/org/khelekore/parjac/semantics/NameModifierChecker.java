@@ -84,6 +84,10 @@ public class NameModifierChecker implements TreeVisitor {
 	if (count > 1)
 	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
 						       "Type has too many access flags"));
+
+	if (isStatic (accessFlags) && level == 0)
+	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
+						       "Top level type may not be static"));
     }
 
     @Override public boolean visit (ConstructorDeclaration c) {

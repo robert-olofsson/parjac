@@ -312,7 +312,7 @@ public class EarleyParser {
 	    State previous = s.getPrevious ();
 	    EarleyState es = states.get (tokenPos);
 	    if (previous == null) {
-		treeBuilder.build (s, parts, es.getParsePosition ());
+		treeBuilder.build (s, parts, es.getParsePosition (), path, diagnostics);
 		continue;
 	    } else {
 		toVisit.push (previous);

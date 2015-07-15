@@ -1,9 +1,12 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.Token;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -23,16 +26,18 @@ public class ModifierHelper {
 	return ret;
     }
 
-    public static int getModifiers (List<TreeNode> modifiers) {
+    public static int getModifiers (List<TreeNode> modifiers, Path path,
+				    CompilerDiagnosticCollector diagnostics) {
 	int ret = 0;
 	if (modifiers != null) {
 	    for (TreeNode tn : modifiers) {
 		if (tn instanceof ModifierTokenType) {
 		    int newFlag = getModifier (((ModifierTokenType)tn).get ());
-		    /* TODO: something like this
-		    if ((ret & newFlag) == newFlag)
-			reportDuplicateFlags (tn);
-		    */
+		    if ((ret & newFlag) == newFlag) {
+			diagnostics.report (new SourceDiagnostics (path, tn.getParsePosition (),
+								   "Duplicate modifier found"));
+
+		    }
 		    ret |= newFlag;
 		}
 	    }
