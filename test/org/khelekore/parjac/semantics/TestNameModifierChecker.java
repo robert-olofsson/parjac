@@ -93,7 +93,7 @@ public class TestNameModifierChecker {
     }
 
     @Test
-    public void testAbstractMethod () throws IOException {
+    public void testAbstractMethodFlags () throws IOException {
 	// abstract may not be mixed with:
 	// private, static, final, native, strictfp, or synchronized.
 	parseAndSetClasses ("class Foo { abstract void bar (); }");
@@ -120,14 +120,18 @@ public class TestNameModifierChecker {
 
 	parseAndSetClasses ("class Foo { abstract synchronized void bar () {} }");
 	assert diagnostics.hasError () : "Expected to find errors";
-	diagnostics = new CompilerDiagnosticCollector ();
     }
 
     @Test
-    public void testNativeMethodBody () throws IOException {
+    public void testNoMethodBody () throws IOException {
 	parseAndSetClasses ("class Foo { native void bar (); }");
 	assertNoErrors ();
+	parseAndSetClasses ("class Foo { abstract void bar (); }");
+	assertNoErrors ();
 	parseAndSetClasses ("class Foo { native void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { abstract void bar () {} }");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
