@@ -133,6 +133,12 @@ public class TestNameModifierChecker {
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo { abstract void bar () {} }");
 	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { void bar (); }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { synchronized void bar (); }");
+	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test

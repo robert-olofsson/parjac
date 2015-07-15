@@ -123,6 +123,12 @@ public class NameModifierChecker implements TreeVisitor {
 		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
 							   "Native method may not have a body"));
 	}
+	MethodBody body = m.getBody ();
+	if (body == MethodBody.EMPTY_BODY && !(isAbstract (flags) || isNative (flags))) {
+	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
+						       "Empty method body is only allowed for native " +
+						       "and abstract methods"));
+	}
 	return true;
     }
 
