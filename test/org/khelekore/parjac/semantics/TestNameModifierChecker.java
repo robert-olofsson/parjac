@@ -142,6 +142,28 @@ public class TestNameModifierChecker {
     }
 
     @Test
+    public void testInterfaceMethod () throws IOException {
+	parseAndSetClasses ("interface Foo { void bar (); }");
+	assertNoErrors ();
+	parseAndSetClasses ("interface Foo { default void bar () {} }");
+	assertNoErrors ();
+	parseAndSetClasses ("interface Foo { static void bar () {} }");
+	assertNoErrors ();
+
+	parseAndSetClasses ("interface Foo { static void bar (); }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("interface Foo { default void bar (); }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("interface Foo { void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
+    @Test
     public void testField () throws IOException {
 	testBody ("int bar;");
     }

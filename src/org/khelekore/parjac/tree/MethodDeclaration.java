@@ -19,9 +19,14 @@ public class MethodDeclaration extends PositionNode {
 	super (pos);
 	List<TreeNode> modifiers = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
 	annotations = ModifierHelper.getAnnotations (modifiers);
-	flags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
+	int mflags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
+	flags = getFlags (mflags, modifiers);
 	header = (MethodHeader)parts.pop ();
 	body = (MethodBody)parts.pop ();
+    }
+
+    public int getFlags (int flags, List<TreeNode> modifiers) {
+	return flags;
     }
 
     @Override public String toString () {

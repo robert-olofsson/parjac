@@ -34,7 +34,7 @@ public class ModifierHelper {
 		if (tn instanceof ModifierTokenType) {
 		    ModifierTokenType mtt = (ModifierTokenType)tn;
 		    int newFlag = getModifier (mtt.get ());
-		    if ((ret & newFlag) == newFlag) {
+		    if ((ret & newFlag) > 0) {
 			diagnostics.report (new SourceDiagnostics (path, tn.getParsePosition (),
 								   "Duplicate modifier '" + mtt.get () +
 								   "' found"));
@@ -72,7 +72,7 @@ public class ModifierHelper {
 	case NATIVE:
 	    return ACC_NATIVE;
 	case DEFAULT:
-	    // hmm?
+	    return 0;
 	default:
 	    throw new IllegalStateException ("Got unexpected token: " + t);
 	}

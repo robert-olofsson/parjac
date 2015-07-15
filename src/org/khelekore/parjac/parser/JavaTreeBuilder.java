@@ -99,7 +99,7 @@ public class JavaTreeBuilder {
 	register (g, "ExtendsInterfaces", constructored (ExtendsInterfaces::new));
 	register (g, "InterfaceBody", constructored (InterfaceBody::new));
 	register (g, "ConstantDeclaration", constructored (ConstantDeclaration::new));
-	register (g, "InterfaceMethodDeclaration", constructored (InterfaceMethodDeclaration::new));
+	register (g, "InterfaceMethodDeclaration", diagnosed (InterfaceMethodDeclaration::new));
 	register (g, "AnnotationTypeDeclaration", diagnosed (AnnotationTypeDeclaration::new));
 	register (g, "AnnotationTypeBody", constructored (AnnotationTypeBody::new));
 	register (g, "AnnotationTypeElementDeclaration",

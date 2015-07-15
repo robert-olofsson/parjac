@@ -255,6 +255,9 @@ public class BytecodeWriter implements TreeVisitor {
 		EnumDeclaration ed = (EnumDeclaration)tn;
 		supername = "java.lang.Enum<" + ed.getId () + ">";
 		flags = (ed.getAccessFlags () | ACC_FINAL);
+	    } else if (tn instanceof NormalInterfaceDeclaration) {
+		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
+		flags = i.getAccessFlags () | ACC_INTERFACE;
 	    }
 	    // TODO: handle interface flags
 	    if (origin != null)
