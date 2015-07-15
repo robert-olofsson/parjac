@@ -91,7 +91,11 @@ public class NameModifierChecker implements TreeVisitor {
     }
 
     @Override public void visit (FieldDeclaration f) {
-	checkAccess (f, f.getFlags ());
+	int flags = f.getFlags ();
+	checkAccess (f, flags);
+	if ((flags & ACC_FINAL) == ACC_FINAL && (flags & ACC_VOLATILE) == ACC_VOLATILE)
+	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), f.getParsePosition (),
+						       "Field may not be both final and volatile"));
     }
 
     @Override public boolean visit (MethodDeclaration m) {

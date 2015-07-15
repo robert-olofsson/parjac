@@ -88,6 +88,16 @@ public class TestNameModifierChecker {
     }
 
     @Test
+    public void testFinalVolatileField () throws IOException {
+	parseAndSetClasses ("class Foo { final int bar = 0; }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { volatile int bar = 0; }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { final volatile int bar = 0; }");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
     public void testConstructor () throws IOException {
 	testBody ("Foo () {}");
     }
