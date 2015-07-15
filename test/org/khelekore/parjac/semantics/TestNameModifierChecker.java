@@ -83,6 +83,47 @@ public class TestNameModifierChecker {
     }
 
     @Test
+    public void testNativeStrictFPMethod () throws IOException {
+	parseAndSetClasses ("class Foo { native void bar (); }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { strictfp void bar () {} }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { native strictfp void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testAbstractMethod () throws IOException {
+	// abstract may not be mixed with:
+	// private, static, final, native, strictfp, or synchronized.
+	parseAndSetClasses ("class Foo { abstract void bar (); }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { abstract private void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { abstract static void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { abstract final void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { abstract native void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { abstract strictfp void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { abstract synchronized void bar () {} }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
+    @Test
     public void testField () throws IOException {
 	testBody ("int bar;");
     }

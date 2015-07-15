@@ -93,13 +93,24 @@ public class NameModifierChecker implements TreeVisitor {
     @Override public void visit (FieldDeclaration f) {
 	int flags = f.getFlags ();
 	checkAccess (f, flags);
-	if ((flags & ACC_FINAL) == ACC_FINAL && (flags & ACC_VOLATILE) == ACC_VOLATILE)
+	if (isFinal (flags) && isVolatile (flags))
 	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), f.getParsePosition (),
 						       "Field may not be both final and volatile"));
     }
 
     @Override public boolean visit (MethodDeclaration m) {
-	checkAccess (m, m.getFlags ());
+	int flags = m.getFlags ();
+	checkAccess (m, flags);
+	if (isNative (flags) && isStrictFp (flags))
+	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
+						       "method may not be both native and strictfp"));
+	if (isAbstract (flags)) {
+	    if  (isPrivate (flags) || isStatic (flags) || isFinal (flags) ||
+		 isNative (flags) || isStrictFp (flags) || isSynchronized (flags)) {
+		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
+							   "Mixing abstract with non allowed flags"));
+	    }
+	}
 	return true;
     }
 
@@ -126,5 +137,33 @@ public class NameModifierChecker implements TreeVisitor {
 
     private boolean isPrivate (int accessFlags) {
 	return (accessFlags & ACC_PRIVATE) == ACC_PRIVATE;
+    }
+
+    private boolean isFinal (int f) {
+	return (f & ACC_FINAL) == ACC_FINAL;
+    }
+
+    private boolean isVolatile (int f) {
+	return (f & ACC_VOLATILE) == ACC_VOLATILE;
+    }
+
+    private boolean isNative (int f) {
+	return (f & ACC_NATIVE) == ACC_NATIVE;
+    }
+
+    private boolean isStrictFp (int f) {
+	return (f & ACC_STRICT) == ACC_STRICT;
+    }
+
+    private boolean isAbstract (int f) {
+	return (f & ACC_ABSTRACT) == ACC_ABSTRACT;
+    }
+
+    private boolean isStatic (int f) {
+	return (f & ACC_STATIC) == ACC_STATIC;
+    }
+
+    private boolean isSynchronized (int f) {
+	return (f & ACC_SYNCHRONIZED) == ACC_SYNCHRONIZED;
     }
 }
