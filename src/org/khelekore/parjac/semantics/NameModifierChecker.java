@@ -31,25 +31,25 @@ public class NameModifierChecker implements TreeVisitor {
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
-	checkFileName (c.getId (), c, c.getAccessFlags ());
+	checkNameAndFlags (c.getId (), c, c.getAccessFlags ());
 	level++;
 	return true;
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	checkFileName (e.getId (), e, e.getAccessFlags ());
+	checkNameAndFlags (e.getId (), e, e.getAccessFlags ());
 	level++;
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	checkFileName (i.getId (), i, i.getAccessFlags ());
+	checkNameAndFlags (i.getId (), i, i.getAccessFlags ());
 	level++;
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	checkFileName (a.getId (), a, a.getAccessFlags ());
+	checkNameAndFlags (a.getId (), a, a.getAccessFlags ());
 	level++;
 	return true;
     }
@@ -58,7 +58,7 @@ public class NameModifierChecker implements TreeVisitor {
 	level--;
     }
 
-    private void checkFileName (String id, TreeNode tn, int accessFlags) {
+    private void checkNameAndFlags (String id, TreeNode tn, int accessFlags) {
 	int count = 0;
 	if (isPublic (accessFlags)) {
 	    if (level == 0 && tree.getOrigin () != null &&
