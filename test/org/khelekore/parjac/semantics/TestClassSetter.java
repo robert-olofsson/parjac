@@ -328,19 +328,40 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
-    /* This works with javac, not sure if it is actually legal */
-    /* TODO: fix this
+    @Test
+    public void testFullName () throws IOException {
+	parseAndSetClasses ("class Foo extends java.util.HashMap {}");
+	assertNoErrors ();
+	parseAndSetClasses ("package foo;\n" +
+			    "class Foo {}\n" +
+			    "class Bar extends foo.Foo {}");
+	assertNoErrors ();
+    }
+
     @Test
     public void testInnerClassSubpackage () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
-			    "class RPG {\n" +
-			    "public interface TG {}\n" +
-			    "}\n" +
+			    "class RPG { public interface TG {} }\n" +
 			    "class IPG extends RPG {}\n" +
-			    "class STG implements IPG.TG {}\n");
+			    "class STG1 implements IPG.TG {}\n" +
+			    "class STG2 implements foo.IPG.TG {}");
 	assertNoErrors ();
     }
-    */
+
+    @Test
+    public void testMultiType () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.Map;\n" +
+			    "abstract class MyEntry implements Map.Entry {}\n");
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.HashMap;\n" +
+			    "abstract class Foo implements HashMap.Entry {}\n");
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.HashMap;\n" +
+			    "abstract class Foo implements java.util.HashMap.Entry {}\n");
+	assertNoErrors ();
+    }
+
 
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);

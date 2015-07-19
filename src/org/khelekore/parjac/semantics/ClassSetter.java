@@ -172,7 +172,6 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private void setType (TreeNode type) {
-	// System.err.println ("Trying to set type for: " + type);
 	if (type instanceof PrimitiveTokenType) {
 	    return;
 	}
@@ -183,20 +182,13 @@ public class ClassSetter implements TreeVisitor {
 	    ClassType ct = (ClassType)type;
 	    if (ct.getFullName () != null) // already set?
 		return;
+	    // "List" and "java.util.List" are easy to resolve
 	    String id1 = getId (ct, ".");
 	    String fqn = resolve (id1);
-	    // System.err.println ("id1: " + id1 + ", fqn: " + fqn);
 	    if (fqn == null && ct.size () > 1) {
-		String firstName = ct.get ().get (0).getId ();
-		String outerName = ih.stid.get (firstName);
-		if (outerName != null) {
-		    List<SimpleClassType> ls = ct.get ();
-		    fqn = outerName + "." +
-			ls.subList (1, ls.size ()).stream ().
-			map (s -> s.getId ()).collect (Collectors.joining ("."));
-		    if (!validFullName (fqn))
-			fqn = null;
-		}
+		// ok, someone probably wrote something like "HashMap.Entry" or
+		// "java.util.HashMap.Entry" which is somewhat problematic, but legal
+		fqn = tryAllParts (ct);
 	    }
 	    if (fqn == null) {
 		completed = false;
@@ -229,16 +221,56 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private String getId (ClassType ct, String join) {
+	if (ct.size () == 1)
+	    return ct.get ().get (0).getId ();
 	return ct.get ().stream ().map (s -> s.getId ()).collect (Collectors.joining (join));
     }
 
+    /** Try to find an outer class that has the inner classes for misdirected outer classes.
+     */
+    private String tryAllParts (ClassType ct) {
+	StringBuilder sb = new StringBuilder ();
+	List<SimpleClassType> scts = ct.get ();
+	// group package names to class "java.util.HashMap"
+	for (int i = 0, s = scts.size (); i < s; i++) {
+	    SimpleClassType sct = scts.get (i);
+	    if (i > 0)
+		sb.append (".");
+	    sb.append (sct.getId ());
+	    String outerClass = resolve (sb.toString ());
+	    if (outerClass != null) {
+		// Ok, now check if Entry is an inner class either directly or in super class
+		String fqn = checkForInnerClasses (scts, i + 1, outerClass);
+		if (fqn != null)
+		    return fqn;
+	    }
+	}
+	return null;
+    }
+
+    private String checkForInnerClasses (List<SimpleClassType> scts, int i, String outerClass) {
+	String currentOuterClass = outerClass;
+	for (int s = scts.size (); i < s; i++) {
+	    SimpleClassType sct = scts.get (i);
+	    String directInnerClass = currentOuterClass + "." + sct.getId ();
+	    if (validFullName (directInnerClass)) {
+		currentOuterClass = directInnerClass;
+	    } else {
+		currentOuterClass = checkSuperClasses (currentOuterClass, sct.getId ());
+		if (currentOuterClass == null)
+		    return null;
+	    }
+	}
+	return currentOuterClass;
+    }
+
     private String resolve (String id) {
-	// System.err.println ("Trying to resolve: " + id);
 	TreeNode type = cth.getType (id);
 	if (type != null)
 	    return id;
 
 	if (isTypeParameter (id)) {
+	    // TODO: how to handle this?
 	    return "generic type: " + id;
 	}
 
@@ -249,7 +281,6 @@ public class ClassSetter implements TreeVisitor {
 	// check for inner class
 	for (String ctn : containingTypeName) {
 	    String icn = ctn + "." + id;
-	    // System.err.println ("icn: " + icn + " => " + type);
 	    if (validFullName (icn))
 		return icn;
 	}
@@ -266,10 +297,8 @@ public class ClassSetter implements TreeVisitor {
 
     private String checkSuperClasses (String fullCtn, String id) {
 	List<String> superclasses = getSuperClasses (fullCtn);
-	// System.err.println ("fullCtn: " + fullCtn + ", id: " + id + ", superclasses: " + superclasses);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "." + id;
-	    // System.err.println ("sicn: " + icn + " => " + validFullName(icn));
 	    if (validFullName (icn))
 		return icn;
 	    String ssn = checkSuperClasses (superclass, id);

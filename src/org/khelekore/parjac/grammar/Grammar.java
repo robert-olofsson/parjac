@@ -50,9 +50,11 @@ public class Grammar {
 		    if (!validRules.contains (subrule))
 			throw new IllegalStateException ("*" + rule + "* missing subrule: " + subrule);
 	    });
-	for (Rule r : rules)
-	    if (r.getParts ().isEmpty ())
+	for (Rule r : rules) {
+	    if (r.getParts ().isEmpty ()) {
 		System.err.println ("Warning: Found empty rule: " + r);
+	    }
+	}
 	RuleCollection goal = nameToRules.get ("Goal");
 	if (goal == null)
 	    throw new IllegalStateException ("No Goal rule defined");
