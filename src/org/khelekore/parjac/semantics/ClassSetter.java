@@ -265,18 +265,13 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private String resolve (String id) {
-	TreeNode type = cth.getType (id);
-	if (type != null)
-	    return id;
-
 	if (isTypeParameter (id)) {
 	    // TODO: how to handle this?
 	    return "generic type: " + id;
 	}
 
-	if (crh.hasType (id)) {
+	if (validFullName (id))
 	    return id;
-	}
 
 	// check for inner class
 	for (String ctn : containingTypeName) {
