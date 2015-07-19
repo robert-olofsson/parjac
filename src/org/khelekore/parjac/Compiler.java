@@ -57,7 +57,7 @@ public class Compiler {
 	    return;
 
 	runTimed (() -> scanClassPaths (), "Scanning classpath");
-	runTimed (() -> checkSemantics (trees), "Checking semantics");
+	checkSemantics (trees);
 	if (diagnostics.hasError ())
 	    return;
 
@@ -121,30 +121,23 @@ public class Compiler {
 	cth = new CompiledTypesHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
 
+	runTimed (() -> fillinClasses (trees), "Setting classes");
+	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
+	// Check types of fields and assignments
+	// Check matching methods
+	// Check generics
+    }
+
+    private void fillinClasses (List<SyntaxTree> trees) {
 	// Fill in correct classes
 	// Depending on order we may not have correct parents on first try.
 	// We collect the trees that fails and tries again
-	long start = System.nanoTime ();
 	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
 	trees.parallelStream ().forEach (t -> fillInClasses (t, null, rest));
 	if (!rest.isEmpty ()) {
 	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
 	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
 	}
-	long end = System.nanoTime ();
-	if (settings.getReportTime ())
-	    reportTime ("Classes filled in", start, end);
-
-	// Check file names / class names matching and modifiers
-	start = System.nanoTime ();
-	trees.parallelStream ().forEach (t -> checkNamesAndModifiers (t, diagnostics));
-	end = System.nanoTime ();
-	if (settings.getReportTime ())
-	    reportTime ("Name and modifiers validated", start, end);
-
-	// Check types of fields and assignments
-	// Check matching methods
-	// Check generics
     }
 
     private void fillInClasses (SyntaxTree tree,
@@ -154,6 +147,11 @@ public class Compiler {
 	cs.fillIn ();
 	if (!cs.completed ())
 	    rest.add (tree);
+    }
+
+    private void checkNamesAndModifiers (List<SyntaxTree> trees) {
+	// Check file names / class names matching and modifiers
+	trees.parallelStream ().forEach (t -> checkNamesAndModifiers (t, diagnostics));
     }
 
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
