@@ -3,6 +3,7 @@ package org.khelekore.parjac.semantics;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
+import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.ConstructorDeclaration;
 import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.FieldDeclaration;
@@ -17,11 +18,16 @@ import org.khelekore.parjac.tree.TreeVisitor;
 import static org.objectweb.asm.Opcodes.*;
 
 public class NameModifierChecker implements TreeVisitor {
+    private final CompiledTypesHolder cth;
+    private final ClassResourceHolder crh;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private int level = 0;
 
-    public NameModifierChecker (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+    public NameModifierChecker (CompiledTypesHolder cth, ClassResourceHolder crh,
+				SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	this.cth = cth;
+	this.crh = crh;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
     }
@@ -33,6 +39,26 @@ public class NameModifierChecker implements TreeVisitor {
     @Override public boolean visit (NormalClassDeclaration c) {
 	checkNameAndFlags (c.getId (), c, c.getAccessFlags ());
 	level++;
+	ClassType ct = c.getSuperClass ();
+	if (ct != null) {
+	    int flags;
+	    String fqn = ct.getFullName ();
+	    if (fqn != null) {
+		// TODO: need to make sure I can merge cth and crh and get some interface type back
+		// TODO: with appropriate methods on it.
+		TreeNode tn;
+		if ((tn = cth.getType (fqn)) != null) {
+		    // TODO: this can probably fail
+		    NormalClassDeclaration clz = (NormalClassDeclaration)tn;
+		    flags = clz.getAccessFlags ();
+		} else {
+		    flags = crh.getClassModifiers (fqn);
+		}
+		if (isFinal (flags))
+		    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
+							       "Can not extend final class"));
+	    }
+	}
 	return true;
     }
 

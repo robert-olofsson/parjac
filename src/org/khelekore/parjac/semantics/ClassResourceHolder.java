@@ -103,7 +103,12 @@ public class ClassResourceHolder {
 	return r.superTypes;
     }
 
-    public int getClassModifiers (String fq
+    public int getClassModifiers (String fqn) {
+	Result r = foundClasses.get (fqn);
+	if (r == null)
+	    throw new IllegalArgumentException ("No such class: " + fqn);
+	return r.node.access;
+    }
 
     private static abstract class Result {
 	private ClassNode node;

@@ -1,6 +1,8 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -15,15 +17,22 @@ import org.testng.annotations.Test;
 public class TestNameModifierChecker {
     private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
+    private CompiledTypesHolder cth;
+    private ClassResourceHolder crh;
 
     @BeforeClass
     public void createLRParser () throws IOException {
 	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
+	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
+				       // Can not use instance field
+				       new CompilerDiagnosticCollector ());
+	crh.scanClassPath ();
     }
 
     @BeforeMethod
     public void createDiagnostics () {
 	diagnostics = new CompilerDiagnosticCollector ();
+	cth = new CompiledTypesHolder ();
     }
 
     @Test
@@ -234,10 +243,27 @@ public class TestNameModifierChecker {
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
+    @Test
+    public void testExtendsFinalExternal () throws IOException {
+	parseAndSetClasses ("class Foo extends String {}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testExtendsFinalInternal () throws IOException {
+	parseAndSetClasses ("final class Foo {}\n" +
+			    "class Bar extends Foo {}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	NameModifierChecker nmc = new NameModifierChecker (st, diagnostics);
+	// We need classes to be correctly filled in for NameModifierChecker to work
+	cth.addTypes (st);
+	ClassSetter cs = new ClassSetter (cth, crh, st, null);
+	cs.fillIn ();
+	NameModifierChecker nmc = new NameModifierChecker (cth, crh, st, diagnostics);
 	nmc.check ();
     }
 

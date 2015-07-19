@@ -135,8 +135,14 @@ public class Compiler {
 	long end = System.nanoTime ();
 	if (settings.getReportTime ())
 	    reportTime ("Classes filled in", start, end);
+
 	// Check file names / class names matching and modifiers
+	start = System.nanoTime ();
 	trees.parallelStream ().forEach (t -> checkNamesAndModifiers (t, diagnostics));
+	end = System.nanoTime ();
+	if (settings.getReportTime ())
+	    reportTime ("Name and modifiers validated", start, end);
+
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
@@ -152,7 +158,7 @@ public class Compiler {
     }
 
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	NameModifierChecker nmc = new NameModifierChecker (tree, diagnostics);
+	NameModifierChecker nmc = new NameModifierChecker (cth, crh, tree, diagnostics);
 	nmc.check ();
     }
 
