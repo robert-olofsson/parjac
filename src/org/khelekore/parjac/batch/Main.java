@@ -55,7 +55,7 @@ public class Main {
 
 	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar ();
 	Compiler c = new Compiler (diagnostics, g, settings);
-	c.compile (settings.getSourceProvider ());
+	c.compile ();
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
     }

@@ -47,7 +47,8 @@ public class Compiler {
 	this.settings = settings;
     }
 
-    public void compile (SourceProvider sourceProvider) {
+    public void compile () {
+	SourceProvider sourceProvider = settings.getSourceProvider ();
 	runTimed (() -> setupSourceProvider (sourceProvider), "Setting up sources");
 	if (diagnostics.hasError ())
 	    return;
