@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.BytecodeWriter;
+import org.khelekore.parjac.CompilationArguments;
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.FileBytecodeWriter;
 import org.khelekore.parjac.JavaGrammarHelper;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.grammar.Grammar;
@@ -57,7 +60,6 @@ public class Main {
 	    return;
 
 	System.out.println ("compiling " + srcFiles.size () + " files");
-	System.out.println ("destination: " + settings.getOutputDir ());
 
 	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar ();
 	Compiler c = new Compiler (diagnostics, g, settings);
@@ -68,7 +70,7 @@ public class Main {
 
     private CompilationArguments parseArgs (String[] args) {
 	List<Path> srcDirs = new ArrayList<> ();
-	Path outputDir = null;
+	BytecodeWriter output = null;
 	Charset encoding = Charset.forName ("UTF-8");
 	List<Path> classPathEntries = new ArrayList<> ();
 	boolean reportTime = true;
@@ -83,7 +85,7 @@ public class Main {
 	    case "-d":
 	    case "--destination":
 		if (hasFollowingArgExists (args, i))
-		    outputDir = Paths.get (args[++i]);
+		    output = new FileBytecodeWriter (Paths.get (args[++i]));
 	        break;
 	    case "--encoding":
 		if (hasFollowingArgExists (args, i)) {
@@ -119,7 +121,7 @@ public class Main {
 	    }
 	}
 	CompilationArguments ca =
-	    new CompilationArguments (srcDirs, outputDir, encoding, classPathEntries, reportTime, debug);
+	    new CompilationArguments (srcDirs, output, encoding, classPathEntries, reportTime, debug);
 	ca.validate (diagnostics);
 	if (diagnostics.hasError ()) {
 	    System.err.println ("Invalid arguments, use \"--help\" for usage.\nProblems found:");

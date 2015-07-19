@@ -1,4 +1,4 @@
-package org.khelekore.parjac.batch;
+package org.khelekore.parjac;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -12,17 +12,17 @@ import org.khelekore.parjac.NoSourceDiagnostics;
 /** Batch compiler command line arguments */
 public class CompilationArguments {
     private final List<Path> srcDirs;
-    private final Path outputDir;
+    private final BytecodeWriter classWriter;
     private final Charset encoding;
     private final List<Path> classPathEntries;
     private final boolean reportTime;
     private final boolean debug;
 
-    public CompilationArguments (List<Path> srcDirs, Path outputDir,
+    public CompilationArguments (List<Path> srcDirs, BytecodeWriter classWriter,
 				 Charset encoding, List<Path> classPathEntries,
 				 boolean reportTime, boolean debug) {
 	this.srcDirs = new ArrayList<> (srcDirs);
-	this.outputDir = outputDir;
+	this.classWriter = classWriter;
 	this.encoding = encoding;
 	this.classPathEntries = classPathEntries;
 	this.reportTime = reportTime;
@@ -33,8 +33,8 @@ public class CompilationArguments {
 	return Collections.unmodifiableList (srcDirs);
     }
 
-    public Path getOutputDir () {
-	return outputDir;
+    public BytecodeWriter getClassWriter () {
+	return classWriter;
     }
 
     public Charset getEncoding () {
@@ -58,7 +58,7 @@ public class CompilationArguments {
 	    diagnostics.report (new NoSourceDiagnostics ("Source dirs may not be null"));
 	else if (srcDirs.isEmpty ())
 	    diagnostics.report (new NoSourceDiagnostics ("Source dirs may not be empty"));
-	if (outputDir == null)
-	    diagnostics.report (new NoSourceDiagnostics ("Output dir may not be null"));
+	if (classWriter == null)
+	    diagnostics.report (new NoSourceDiagnostics ("BytecodeWriter may not be null"));
     }
 }

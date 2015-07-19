@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
-import org.khelekore.parjac.batch.CompilationArguments;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.lexer.CharBufferLexer;
 import org.khelekore.parjac.lexer.Lexer;
@@ -66,11 +65,11 @@ public class Compiler {
 	if (diagnostics.hasError ())
 	    return;
 
-	createOutputDirectories (trees, settings.getOutputDir ());
+	createOutputDirectories (trees, settings.getClassWriter());
 	if (diagnostics.hasError ())
 	    return;
 
-	writeClasses (trees, settings.getOutputDir ());
+	writeClasses (trees);
     }
 
     private List<SyntaxTree> parse (List<Path> srcFiles) {
@@ -163,36 +162,37 @@ public class Compiler {
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,
-					  Path destinationDir) {
+					  BytecodeWriter classWriter) {
 	Set<Path> dirs = new HashSet<> ();
 	trees.stream ().
-	    forEach (t -> dirs.add (getPath (destinationDir, t)));
-	dirs.forEach (p -> createDirectory (p));
+	    forEach (t -> dirs.add (getPath (t)));
+	dirs.forEach (p -> createDirectory (classWriter, p));
     }
 
-    private Path getPath (Path dest, SyntaxTree t) {
+    private Path getPath (SyntaxTree t) {
 	CompilationUnit cu = t.getCompilationUnit ();
 	DottedName packageName = cu.getPackage ();
 	if (packageName == null)
-	    return dest;
-	return Paths.get (dest.toString (), packageName.getPathName ());
+	    return Paths.get (".");
+	return Paths.get (packageName.getPathName ());
     }
 
-    private void createDirectory (Path p) {
+    private void createDirectory (BytecodeWriter bw, Path p) {
 	try {
-	    Files.createDirectories (p);
+	    bw.createDirectory (p);
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to create output directory: %s", p));
 	}
     }
 
-    private void writeClasses (List<SyntaxTree> trees, Path destinationDir) {
+    private void writeClasses (List<SyntaxTree> trees) {
 	trees.parallelStream ().
-	    forEach (t -> writeClasses (t, destinationDir));
+	    forEach (t -> writeClasses (t));
     }
 
-    private void writeClasses (SyntaxTree tree, Path destinationDir) {
-	BytecodeWriter w = new BytecodeWriter (tree.getOrigin (), destinationDir, cth);
+    private void writeClasses (SyntaxTree tree) {
+	BytecodeGenerator w =
+	    new BytecodeGenerator (tree.getOrigin (), cth, settings.getClassWriter ());
 	tree.getCompilationUnit ().visit (w);
     }
 
