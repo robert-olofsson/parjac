@@ -21,7 +21,7 @@ public class TestNameModifierChecker {
     private ClassResourceHolder crh;
 
     @BeforeClass
-    public void createLRParser () throws IOException {
+    public void beforeClass () throws IOException {
 	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
 	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
 				       // Can not use instance field
