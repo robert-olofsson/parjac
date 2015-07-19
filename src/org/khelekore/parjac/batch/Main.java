@@ -3,22 +3,22 @@ package org.khelekore.parjac.batch;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import org.khelekore.parjac.BytecodeWriter;
 import org.khelekore.parjac.CompilationArguments;
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.FileBytecodeWriter;
+import org.khelekore.parjac.FileSourceProvider;
 import org.khelekore.parjac.JavaGrammarHelper;
 import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.SourceProvider;
 import org.khelekore.parjac.grammar.Grammar;
 
 /** Program to run a batch compilation.
@@ -33,9 +33,7 @@ public class Main {
 	}
 
 	CompilerDiagnosticCollector collector = new CompilerDiagnosticCollector ();
-
 	Main main = new Main (collector);
-
 	main.compile (args);
 	Locale locale = Locale.getDefault ();
 	collector.getDiagnostics ().
@@ -52,18 +50,12 @@ public class Main {
 	if (settings == null || diagnostics.hasError ())
 	    return;
 
-	List<Path> srcFiles = new ArrayList<> ();
-	settings.getSrcDirs ().stream ().
-	    forEach (p -> addFiles (p, srcFiles));
-
 	if (diagnostics.hasError ())
 	    return;
 
-	System.out.println ("compiling " + srcFiles.size () + " files");
-
 	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar ();
 	Compiler c = new Compiler (diagnostics, g, settings);
-	c.compile (srcFiles);
+	c.compile (settings.getSourceProvider ());
 	long endTime = System.nanoTime ();
 	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
     }
@@ -120,8 +112,9 @@ public class Main {
 		return null;
 	    }
 	}
+	SourceProvider sp = new FileSourceProvider (srcDirs, encoding);
 	CompilationArguments ca =
-	    new CompilationArguments (srcDirs, output, encoding, classPathEntries, reportTime, debug);
+	    new CompilationArguments (sp, output, classPathEntries, reportTime, debug);
 	ca.validate (diagnostics);
 	if (diagnostics.hasError ()) {
 	    System.err.println ("Invalid arguments, use \"--help\" for usage.\nProblems found:");
@@ -177,25 +170,5 @@ public class Main {
 			    " [--encoding encoding]" +
 			    " [-i|--input srcdir]+ [-d|--destination dir]" +
 			    " [--no-timing] [--debug] [-h|--help]");
-    }
-
-    private void addFiles (Path p, List<Path> srcFiles) {
-	if (!Files.isDirectory (p)) {
-	    diagnostics.report (new NoSourceDiagnostics ("input srcdir: %s is not a directory", p));
-	    return;
-	}
-
-	try {
-	    srcFiles.addAll (Files.walk (p, FileVisitOption.FOLLOW_LINKS).
-			     filter (Main::isJavaFile).
-			     collect (Collectors.toList ()));
-	} catch (IOException e) {
-	    diagnostics.report (new NoSourceDiagnostics ("Failed to get files from: %s", p));
-	}
-    }
-
-    private static boolean isJavaFile (Path p) {
-	// javac only accept ".java", ".Java" gives "invalid flag...".
-	return p.getFileName ().toString ().endsWith (".java");
     }
 }

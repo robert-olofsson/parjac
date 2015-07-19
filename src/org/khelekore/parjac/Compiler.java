@@ -1,12 +1,8 @@
 package org.khelekore.parjac;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.nio.charset.MalformedInputException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -51,45 +47,50 @@ public class Compiler {
 	this.settings = settings;
     }
 
-    public void compile (List<Path> srcFiles) {
-	long startParse = System.nanoTime ();
-	List<SyntaxTree> trees = parse (srcFiles);
-	long endParse = System.nanoTime ();
-	if (settings.getReportTime ())
-	    reportTime ("Complete parsing", startParse, endParse);
+    public void compile (SourceProvider sourceProvider) {
+	runTimed (() -> setupSourceProvider (sourceProvider), "Setting up sources");
 	if (diagnostics.hasError ())
 	    return;
 
-	scanClassPaths ();
-	checkSemantics (trees);
+	List<SyntaxTree> trees = runTimed (() -> parse (sourceProvider), "Parsing");
 	if (diagnostics.hasError ())
 	    return;
 
-	createOutputDirectories (trees, settings.getClassWriter());
+	runTimed (() -> scanClassPaths (), "Scanning classpath");
+	runTimed (() -> checkSemantics (trees), "Checking semantics");
 	if (diagnostics.hasError ())
 	    return;
 
-	writeClasses (trees);
+	runTimed (() -> createOutputDirectories (trees, settings.getClassWriter()),
+		  "Creating output directories");
+	if (diagnostics.hasError ())
+	    return;
+
+	runTimed (() -> writeClasses (trees), "Writing classes");
     }
 
-    private List<SyntaxTree> parse (List<Path> srcFiles) {
+    private void setupSourceProvider (SourceProvider sourceProvider) {
+	try {
+	    sourceProvider.setup (diagnostics);
+	} catch (IOException e) {
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to setup SourceProvider: ", sourceProvider));
+	}
+    }
+
+    private List<SyntaxTree> parse (SourceProvider sourceProvider) {
 	return
-	    srcFiles.parallelStream ().
-	    map (p -> parse (p)).
+	    sourceProvider.getSourcePaths ().parallelStream ().
+	    map (p -> parse (sourceProvider, p)).
 	    filter (p -> p != null).
 	    collect (Collectors.toList ());
     }
 
-    private SyntaxTree parse (Path path) {
+    private SyntaxTree parse (SourceProvider sourceProvider, Path path) {
 	try {
 	    long start = System.nanoTime ();
 	    if (settings.getDebug ())
 		System.out.println ("parsing: " + path);
-	    ByteBuffer buf = ByteBuffer.wrap (Files.readAllBytes (path));
-	    CharsetDecoder decoder = settings.getEncoding ().newDecoder ();
-	    decoder.onMalformedInput (CodingErrorAction.REPORT);
-	    decoder.onUnmappableCharacter (CodingErrorAction.REPORT);
-	    CharBuffer charBuf = decoder.decode (buf);
+	    CharBuffer charBuf = sourceProvider.getInput (path);
 	    Lexer lexer = new CharBufferLexer (charBuf);
 	    EarleyParser parser = new EarleyParser (g, path, lexer, predictCache, treeBuilder,
 						    diagnostics, settings.getDebug ());
@@ -99,8 +100,7 @@ public class Compiler {
 		reportTime ("Parsing " + path, start, end);
 	    return tree;
 	} catch (MalformedInputException e) {
-	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
-							 path, settings.getEncoding ()));
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s, wrong encoding?", path));
 	    return null;
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to read: %s: %s", path, e));
@@ -194,6 +194,31 @@ public class Compiler {
 	BytecodeGenerator w =
 	    new BytecodeGenerator (tree.getOrigin (), cth, settings.getClassWriter ());
 	tree.getCompilationUnit ().visit (w);
+    }
+
+    private <T> T runTimed (CompilationStep<T> cs, String type) {
+	long start = System.nanoTime ();
+	T ret = cs.run ();
+	long end = System.nanoTime ();
+	if (settings.getReportTime ())
+	    reportTime (type, start, end);
+	return ret;
+    }
+
+    private void runTimed (VoidCompilationStep cs, String type) {
+	long start = System.nanoTime ();
+	cs.run ();
+	long end = System.nanoTime ();
+	if (settings.getReportTime ())
+	    reportTime (type, start, end);
+    }
+
+    private interface CompilationStep<T> {
+	T run ();
+    }
+
+    private interface VoidCompilationStep {
+	void run ();
     }
 
     private void reportTime (String type, long start, long end) {
