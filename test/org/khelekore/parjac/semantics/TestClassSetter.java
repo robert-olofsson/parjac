@@ -34,7 +34,9 @@ public class TestClassSetter {
     @BeforeClass
     public void createLRParser () throws IOException {
 	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
-	crh = new ClassResourceHolder (Collections.<Path>emptyList ());
+	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
+				       // Can not use instance field
+				       new CompilerDiagnosticCollector ());
 	crh.scanClassPath ();
     }
 

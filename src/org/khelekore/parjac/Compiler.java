@@ -111,7 +111,7 @@ public class Compiler {
 
     private void scanClassPaths () {
 	try {
-	    crh = new ClassResourceHolder (settings.getClassPathEntries ());
+	    crh = new ClassResourceHolder (settings.getClassPathEntries (), diagnostics);
 	    crh.scanClassPath ();
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to scan classpath: %s", e));

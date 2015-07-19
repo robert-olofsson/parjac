@@ -14,15 +14,20 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassResourceHolder {
     private final List<Path> classPathEntries;
+    private final CompilerDiagnosticCollector diagnostics;
     private Map<String, Result> foundClasses = new HashMap<> ();
 
-    public ClassResourceHolder (List<Path> classPathEntries) {
+    public ClassResourceHolder (List<Path> classPathEntries,
+				CompilerDiagnosticCollector diagnostics) {
 	this.classPathEntries = classPathEntries;
+	this.diagnostics = diagnostics;
     }
 
     /** Find things that may be classes, this will only validate names.
@@ -77,7 +82,17 @@ public class ClassResourceHolder {
     }
 
     public boolean hasType (String fqn) {
-	return foundClasses.get (fqn) != null;
+	Result r = foundClasses.get (fqn);
+	if (r != null) {
+	    try {
+		r.ensureNodeIsLoaded ();
+	    } catch (IOException e) {
+		diagnostics.report (new NoSourceDiagnostics ("Failed to load class from: " +
+							     r.getPath ()));
+		r = null;
+	    }
+	}
+	return r != null;
     }
 
     public List<String> getSuperTypes (String fqn) throws IOException {
@@ -88,11 +103,13 @@ public class ClassResourceHolder {
 	return r.superTypes;
     }
 
+    public int getClassModifiers (String fq
+
     private static abstract class Result {
 	private ClassNode node;
 	private List<String> superTypes;
 
-	public void ensureNodeIsLoaded () throws IOException {
+	public synchronized void ensureNodeIsLoaded () throws IOException {
 	    if (node != null)
 		return;
 	    node = readNode ();
@@ -107,6 +124,8 @@ public class ClassResourceHolder {
 	}
 
 	public abstract ClassNode readNode () throws IOException;
+
+	public abstract String getPath ();
     }
 
     private static class PathResult extends Result {
@@ -120,6 +139,10 @@ public class ClassResourceHolder {
 	    try (InputStream is = Files.newInputStream (path)) {
 		return ClassResourceHolder.readNode (is);
 	    }
+	}
+
+	public String getPath () {
+	    return path.toString ();
 	}
     }
 
@@ -142,12 +165,20 @@ public class ClassResourceHolder {
 		}
 	    }
 	}
+
+	public String getPath () {
+	    return jarfile.toString () + "!" + name;
+	}
     }
 
     private static ClassNode readNode (InputStream is) throws IOException {
-	ClassReader cr = new ClassReader (is);
-	ClassNode cn = new ClassNode ();
-	cr.accept (cn, 0);
-	return cn;
+	try {
+	    ClassReader cr = new ClassReader (is);
+	    ClassNode cn = new ClassNode ();
+	    cr.accept (cn, 0);
+	    return cn;
+	} catch (RuntimeException e) {
+	    throw new IOException ("Failed to read class: ", e);
+	}
     }
 }
