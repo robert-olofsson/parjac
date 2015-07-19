@@ -15,15 +15,17 @@ public class CompilationArguments {
     private final Path outputDir;
     private final Charset encoding;
     private final List<Path> classPathEntries;
+    private final boolean reportTime;
     private final boolean debug;
 
     public CompilationArguments (List<Path> srcDirs, Path outputDir,
 				 Charset encoding, List<Path> classPathEntries,
-				 boolean debug) {
+				 boolean reportTime, boolean debug) {
 	this.srcDirs = new ArrayList<> (srcDirs);
 	this.outputDir = outputDir;
 	this.encoding = encoding;
 	this.classPathEntries = classPathEntries;
+	this.reportTime = reportTime;
 	this.debug = debug;
     }
 
@@ -41,6 +43,10 @@ public class CompilationArguments {
 
     public List<Path> getClassPathEntries () {
 	return classPathEntries;
+    }
+
+    public boolean getReportTime () {
+	return reportTime;
     }
 
     public boolean getDebug () {

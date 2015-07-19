@@ -71,6 +71,7 @@ public class Main {
 	Path outputDir = null;
 	Charset encoding = Charset.forName ("UTF-8");
 	List<Path> classPathEntries = new ArrayList<> ();
+	boolean reportTime = true;
 	boolean debug = false;
 	for (int i = 0; i < args.length; i++) {
 	    switch (args[i]) {
@@ -94,6 +95,9 @@ public class Main {
 		    encoding = Charset.forName (e);
 		}
 		break;
+	    case "--no-timing":
+		reportTime = false;
+		break;
 	    case "--debug":
 		debug = true;
 		break;
@@ -115,7 +119,7 @@ public class Main {
 	    }
 	}
 	CompilationArguments ca =
-	    new CompilationArguments (srcDirs, outputDir, encoding, classPathEntries, debug);
+	    new CompilationArguments (srcDirs, outputDir, encoding, classPathEntries, reportTime, debug);
 	ca.validate (diagnostics);
 	if (diagnostics.hasError ()) {
 	    System.err.println ("Invalid arguments, use \"--help\" for usage.\nProblems found:");
@@ -170,7 +174,7 @@ public class Main {
 			    " [-cp <path>] [-classpath <path>]" + // same thing
 			    " [--encoding encoding]" +
 			    " [-i|--input srcdir]+ [-d|--destination dir]" +
-			    " [--debug] [-h|--help]");
+			    " [--no-timing] [--debug] [-h|--help]");
     }
 
     private void addFiles (Path p, List<Path> srcFiles) {

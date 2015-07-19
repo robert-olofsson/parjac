@@ -56,9 +56,8 @@ public class Compiler {
 	long startParse = System.nanoTime ();
 	List<SyntaxTree> trees = parse (srcFiles);
 	long endParse = System.nanoTime ();
-	//if (settings.getDebug ())
-	    System.out.println (String.format ("Parsing completed in: %.3f millis",
-					       (endParse - startParse) / 1.0e6));
+	if (settings.getReportTime ())
+	    reportTime ("Complete parsing", startParse, endParse);
 	if (diagnostics.hasError ())
 	    return;
 
@@ -98,8 +97,7 @@ public class Compiler {
 	    SyntaxTree tree = parser.parse ();
 	    long end = System.nanoTime ();
 	    if (settings.getDebug ())
-		System.out.println (String.format ("parsed: %s in: %.3f millis",
-						   path, (end - start) / 1.0e6));
+		reportTime ("Parsing " + path, start, end);
 	    return tree;
 	} catch (MalformedInputException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to decode text: %s using %s",
@@ -127,12 +125,16 @@ public class Compiler {
 	// Fill in correct classes
 	// Depending on order we may not have correct parents on first try.
 	// We collect the trees that fails and tries again
+	long start = System.nanoTime ();
 	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
 	trees.parallelStream ().forEach (t -> fillInClasses (t, null, rest));
 	if (!rest.isEmpty ()) {
 	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
 	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
 	}
+	long end = System.nanoTime ();
+	if (settings.getReportTime ())
+	    reportTime ("Classes filled in", start, end);
 	// Check file names / class names matching and modifiers
 	trees.parallelStream ().forEach (t -> checkNamesAndModifiers (t, diagnostics));
 	// Check types of fields and assignments
@@ -186,5 +188,9 @@ public class Compiler {
     private void writeClasses (SyntaxTree tree, Path destinationDir) {
 	BytecodeWriter w = new BytecodeWriter (tree.getOrigin (), destinationDir, cth);
 	tree.getCompilationUnit ().visit (w);
+    }
+
+    private void reportTime (String type, long start, long end) {
+	System.out.format ("%s, time taken: %.3f millis\n", type, (end - start) / 1.0e6);
     }
 }
