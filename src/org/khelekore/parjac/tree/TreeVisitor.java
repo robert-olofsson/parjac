@@ -78,4 +78,17 @@ public interface TreeVisitor {
     }
     default void endBlock () {
     }
+
+    /**
+     * @return true to visit subtree, false to stop tree traversal
+     *         The endReturn will be called no matter what.
+     */
+    default boolean visit (ReturnStatement r) {
+	return true;
+    }
+    default void endReturn (ReturnStatement r) {
+    }
+
+    default void visit (IntLiteral i) {
+    }
 }

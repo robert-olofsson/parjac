@@ -18,8 +18,15 @@ public class UnaryExpression implements TreeNode {
     public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	if (r.size () == 1)
 	    return parts.pop ();
-	Token conversion = ((OperatorTokenType)parts.pop ()).get ();
+	TreeNode conversionNode = parts.pop ();
+	Token conversion = ((OperatorTokenType)conversionNode).get ();
 	TreeNode exp = parts.pop ();
+	if (exp instanceof IntLiteral) {
+	    IntLiteral i = (IntLiteral)exp;
+	    if (conversion == Token.MINUS)
+		return new IntLiteral (-i.get (), conversionNode.getParsePosition ());
+	    return i;
+	}
 	return new UnaryExpression (conversion, exp);
     }
 

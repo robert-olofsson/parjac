@@ -22,6 +22,7 @@ public class BytecodeGenerator implements TreeVisitor {
     private final BytecodeWriter classWriter;
     private DottedName packageName;
     private final Deque<ClassWriterHolder> classes = new ArrayDeque<> ();
+    private final Deque<MethodInfo> methods = new ArrayDeque<> ();
 
     public BytecodeGenerator (Path origin, CompiledTypesHolder cth,
 			      BytecodeWriter classWriter) {
@@ -117,23 +118,30 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
-        MethodVisitor mw = cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null);
-	if ((mods & ACC_ABSTRACT) == 0) {
-	    // pushes the 'out' field (of type PrintStream) of the System class
-	    mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
-			      "Ljava/io/PrintStream;");
-	    // pushes the "Hello World!" String constant
-	    mw.visitLdcInsn("Hello world!");
-	    // invokes the 'println' method (defined in the PrintStream class)
-	    mw.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-			       "(Ljava/lang/String;)V", false);
-	    mw.visitInsn(RETURN);
-	    // this code uses a maximum of two stack elements and two local
-	    // variables
-	    mw.visitMaxs(2, 2);
-	}
-        mw.visitEnd();
+        MethodInfo mi = new MethodInfo (cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null));
+	methods.addLast (mi);
+
+	/* Hello world example
+	// pushes the 'out' field (of type PrintStream) of the System class
+	mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
+			  "Ljava/io/PrintStream;");
+	// pushes the "Hello World!" String constant
+	mw.visitLdcInsn("Hello world!");
+	// invokes the 'println' method (defined in the PrintStream class)
+	mw.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+			   "(Ljava/lang/String;)V", false);
+	mw.visitInsn(RETURN);
+	// this code uses a maximum of two stack elements and two local
+	// variables
+	mw.visitMaxs(2, 2);
+	*/
 	return true;
+    }
+
+    @Override public void endMethod (MethodDeclaration m) {
+	MethodInfo mi = methods.removeLast ();
+	mi.mv.visitMaxs (mi.maxStack, mi.maxLocals);
+        mi.mv.visitEnd ();
     }
 
     private boolean hasVarargs (FormalParameterList ls) {
@@ -232,6 +240,25 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endBlock () {
     }
 
+    @Override public boolean visit (ReturnStatement r) {
+	return true;
+    }
+
+    @Override public void endReturn (ReturnStatement r) {
+	MethodInfo mi = methods.peekLast ();
+	if (r.hasExpression ()) {
+	    mi.mv.visitInsn (IRETURN);
+	} else {
+	    mi.mv.visitInsn (RETURN);
+	}
+    }
+
+    @Override public void visit (IntLiteral i) {
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitLdcInsn (i.get ());
+	mi.maxStack++;
+    }
+
     private class ClassWriterHolder {
 	private final TreeNode tn;
 	private final ClassWriter cw;
@@ -281,6 +308,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	    if (packageName == null)
 		return Paths.get (cid);
 	    return Paths.get (packageName.getPathName (), cid);
+	}
+    }
+
+    private static class MethodInfo {
+	public final MethodVisitor mv;
+	public int maxStack = 0;
+	public int maxLocals = 0;
+
+	public MethodInfo (MethodVisitor mv) {
+	    this.mv = mv;
 	}
     }
 }

@@ -16,4 +16,9 @@
       <package name="org.khelekore.parjac.semantics" />
    </packages>
  </test>
+ <test name="Code generation">
+   <packages>
+      <package name="org.khelekore.parjac" />
+   </packages>
+ </test>
 </suite>

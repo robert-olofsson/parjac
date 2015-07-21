@@ -17,7 +17,15 @@ public class ReturnStatement implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	if (exp != null)
-	    exp.visit (visitor);
+	if (visitor.visit (this)) {
+	    if (exp != null) {
+		exp.visit (visitor);
+	    }
+	}
+	visitor.endReturn (this);
+    }
+
+    public boolean hasExpression () {
+	return exp != null;
     }
 }
