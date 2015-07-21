@@ -254,6 +254,10 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (IntLiteral iv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+
 	MethodInfo mi = methods.peekLast ();
 	int i = iv.get ();
 	if (i >= -1 && i <= 5) {
