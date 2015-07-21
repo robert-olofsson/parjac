@@ -253,9 +253,18 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
-    @Override public void visit (IntLiteral i) {
+    @Override public void visit (IntLiteral iv) {
 	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitLdcInsn (i.get ());
+	int i = iv.get ();
+	if (i >= -1 && i <= 5) {
+	    mi.mv.visitInsn (ICONST_M1 + 1 + i);
+	} else if (i >= -128 && i <= 127) {
+	    mi.mv.visitIntInsn (BIPUSH, i);
+	} else if (i >= -32768 && i <= 32767) {
+	    mi.mv.visitIntInsn (SIPUSH, i);
+	} else {
+	    mi.mv.visitLdcInsn (i);
+	}
 	mi.maxStack++;
     }
 
