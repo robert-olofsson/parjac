@@ -91,4 +91,10 @@ public interface TreeVisitor {
 
     default void visit (IntLiteral i) {
     }
+
+    default void visit (DoubleLiteral d) {
+    }
+
+    default void visit (FloatLiteral d) {
+    }
 }

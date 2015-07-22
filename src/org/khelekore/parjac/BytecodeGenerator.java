@@ -10,6 +10,7 @@ import java.util.List;
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.tree.*;
+import org.khelekore.parjac.tree.Result.TypeResult;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -118,7 +119,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
-        MethodInfo mi = new MethodInfo (cw.visitMethod(mods, m.getMethodName (), sb.toString (), null, null));
+        MethodInfo mi = new MethodInfo (m, cw.visitMethod(mods, m.getMethodName (),
+							  sb.toString (), null, null));
 	methods.addLast (mi);
 
 	/* Hello world example
@@ -247,7 +249,25 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endReturn (ReturnStatement r) {
 	MethodInfo mi = methods.peekLast ();
 	if (r.hasExpression ()) {
-	    mi.mv.visitInsn (IRETURN);
+	    Result.TypeResult tr = (TypeResult)mi.md.getResult ();
+	    TreeNode tn = tr.get ();
+	    if (tn instanceof PrimitiveTokenType) {
+		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
+		Token t = ptt.get ();
+		switch (t) {
+		case BYTE:
+		case SHORT:
+		case CHAR:
+		case INT:
+		    mi.mv.visitInsn (IRETURN); break;
+		case LONG: mi.mv.visitInsn (LRETURN); break;
+		case DOUBLE: mi.mv.visitInsn (DRETURN); break;
+		case FLOAT: mi.mv.visitInsn (FRETURN); break;
+		default: throw new IllegalArgumentException ("Got strange token: " + t);
+		}
+	    } else {
+		mi.mv.visitInsn (ARETURN);
+	    }
 	} else {
 	    mi.mv.visitInsn (RETURN);
 	}
@@ -269,7 +289,43 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    mi.mv.visitLdcInsn (i);
 	}
-	mi.maxStack++;
+	mi.maxStack = Math.max (mi.maxStack, 1);
+    }
+
+    @Override public void visit (DoubleLiteral dv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+
+	MethodInfo mi = methods.peekLast ();
+	double d = dv.get ();
+	if (d == 0) {
+	    mi.mv.visitInsn (DCONST_0);
+	} else if (d == 1.0) {
+	    mi.mv.visitInsn (DCONST_1);
+	} else {
+	    mi.mv.visitLdcInsn (d);
+	}
+	mi.maxStack = Math.max (mi.maxStack, 2);
+    }
+
+    @Override public void visit (FloatLiteral fv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+
+	MethodInfo mi = methods.peekLast ();
+	float f = fv.get ();
+	if (f == 0) {
+	    mi.mv.visitInsn (FCONST_0);
+	} else if (f == 1.0f) {
+	    mi.mv.visitInsn (FCONST_1);
+	} else if (f == 2.0f) {
+	    mi.mv.visitInsn (FCONST_2);
+	} else {
+	    mi.mv.visitLdcInsn (f);
+	}
+	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     private class ClassWriterHolder {
@@ -325,11 +381,14 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     private static class MethodInfo {
+	public final MethodDeclaration md;
 	public final MethodVisitor mv;
+
 	public int maxStack = 0;
 	public int maxLocals = 0;
 
-	public MethodInfo (MethodVisitor mv) {
+	public MethodInfo (MethodDeclaration md, MethodVisitor mv) {
+	    this.md = md;
 	    this.mv = mv;
 	}
     }

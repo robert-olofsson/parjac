@@ -21,11 +21,12 @@ public class UnaryExpression implements TreeNode {
 	TreeNode conversionNode = parts.pop ();
 	Token conversion = ((OperatorTokenType)conversionNode).get ();
 	TreeNode exp = parts.pop ();
-	if (exp instanceof IntLiteral) {
-	    IntLiteral i = (IntLiteral)exp;
+	if (exp instanceof LiteralValue) {
+	    LiteralValue lv = (LiteralValue)exp;
 	    if (conversion == Token.MINUS)
-		return new IntLiteral (-i.get (), conversionNode.getParsePosition ());
-	    return i;
+		return lv.getNegated ();
+	    // For plus we just return the actual value
+	    return exp;
 	}
 	return new UnaryExpression (conversion, exp);
     }

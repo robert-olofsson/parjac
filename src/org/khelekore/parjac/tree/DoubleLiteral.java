@@ -2,7 +2,7 @@ package org.khelekore.parjac.tree;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class DoubleLiteral extends PositionNode {
+public class DoubleLiteral extends PositionNode implements LiteralValue {
     private final double value;
 
     public DoubleLiteral (double value, ParsePosition pos) {
@@ -16,5 +16,13 @@ public class DoubleLiteral extends PositionNode {
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + value + "}";
+    }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    @Override public DoubleLiteral getNegated () {
+	return new DoubleLiteral (-value, getParsePosition ());
     }
 }

@@ -37,6 +37,29 @@ public class TestBytecodeGeneration {
 	}
     }
 
+    @Test
+    public void testDoubleReturnValue () throws IOException, ReflectiveOperationException {
+	double[] values = {0.0, 1.0, 3.14, 99.99, 2134e67,
+			   -1.0 -3.14, -99.99, -2134e67};
+	for (double v : values) {
+	    String src = "public class Foo { public static double foo () { return " + v + "; }}";
+	    Object ret = compileAndRun (src);
+	    assert ret.equals (v) : "Got wrong thing back: " + ret + ", expected: " + v;
+	}
+    }
+
+    @Test
+    public void testFloatReturnValue () throws IOException, ReflectiveOperationException {
+	float[] values = {0.0f, 1.0f, 3.14f, 99.99f, 2134e12f,
+			   -1.0f -3.14f, -99.99f, -2134e12f};
+	for (float v : values) {
+	    String src = "public class Foo { public static float foo () { return " + v + "f; }}";
+	    Object ret = compileAndRun (src);
+	    assert ret.equals (v) : "Got wrong thing back: " + ret +
+		", ret.class: " + ret.getClass ().getName () +", expected: " + v;
+	}
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s);
 	Method m = c.getMethod ("foo");
