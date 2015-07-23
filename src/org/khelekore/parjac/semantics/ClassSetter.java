@@ -322,13 +322,13 @@ public class ClassSetter implements TreeVisitor {
 	if (fqn != null && validFullName (fqn))
 	    return fqn;
 	fqn = tryTypeImportOnDemand (id);
-	if (fqn != null)
+	if (fqn != null && validFullName (fqn))
 	    return fqn;
 	fqn = trySingleStaticImport (id);
-	if (fqn != null)
+	if (fqn != null && validFullName (fqn))
 	    return fqn;
 	fqn = tryStaticImportOnDemand (id);
-	if (fqn != null)
+	if (fqn != null && validFullName (fqn))
 	    return fqn;
 
 	return null;
@@ -342,8 +342,8 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private String tryTypeImportOnDemand (String id) {
-	for (String p : ih.tiod) {
-	    String fqn = p + "." + id;
+	for (ClassAndSeparator cas : ih.tiod) {
+	    String fqn = cas.name + cas.sep + id;
 	    if (validFullName (fqn))
 		return fqn;
 	}
@@ -351,11 +351,7 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private String trySingleStaticImport (String id) {
-	for (SingleStaticImportDeclaration ssid : ih.ssid) {
-	    if (id.equals (ssid.getInnerId ()))
-		return ssid.getFullName ();
-	}
-	return null;
+	return ih.ssid.get (id);
     }
 
     private String tryStaticImportOnDemand (String id) {
@@ -379,31 +375,54 @@ public class ClassSetter implements TreeVisitor {
 
     private class ImportHandler implements ImportVisitor {
 	private final Map<String, String> stid = new HashMap<> ();
-	private final List<String> tiod = new ArrayList<> ();
-	private final List<SingleStaticImportDeclaration> ssid = new ArrayList<> ();
+	private final List<ClassAndSeparator> tiod = new ArrayList<> ();
+	private final Map<String, String> ssid = new HashMap<> ();
 	private final List<StaticImportOnDemandDeclaration> siod = new ArrayList<> ();
 
 	public void visit (SingleTypeImportDeclaration i) {
 	    DottedName dn = i.getName ();
-	    stid.put (dn.getLastPart (), dn.getDotName ());
+	    stid.put (dn.getLastPart (), getClassName (dn).name);
 	}
 
 	public void visit (TypeImportOnDemandDeclaration i) {
-	    tiod.add (i.getName ().getDotName ());
+	    tiod.add (getClassName (i.getName ()));
 	}
 
 	public void visit (SingleStaticImportDeclaration i) {
-	    ssid.add (i);
+	    ssid.put (i.getInnerId (), getClassName (i.getName ()).name + "$" + i.getInnerId ());
 	}
 
 	public void visit (StaticImportOnDemandDeclaration i) {
 	    siod.add (i);
 	}
 
+	private ClassAndSeparator getClassName (DottedName dn) {
+	    StringBuilder sb = new StringBuilder ();
+	    char sep = '.';
+	    for (String c : dn.getParts ()) {
+		if (sb.length () > 0)
+		    sb.append (sep);
+		sb.append (c);
+		if (validFullName (sb.toString ()))
+		    sep = '$';
+	    }
+	    return new ClassAndSeparator (sb.toString (), sep);
+	}
+
 	private void addDefaultPackages () {
 	    if (packageName != null)
-		tiod.add (packageName.getDotName ());
-	    tiod.add ("java.lang");
+		tiod.add (getClassName (packageName));
+	    tiod.add (new ClassAndSeparator ("java.lang", '.'));
+	}
+    }
+
+    private static class ClassAndSeparator {
+	private final String name;
+	private final char sep;
+
+	public ClassAndSeparator (String name, char sep) {
+	    this.name = name;
+	    this.sep = sep;
 	}
     }
 }

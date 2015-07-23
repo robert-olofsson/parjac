@@ -179,6 +179,14 @@ public class TestClassSetter {
     }
 
     @Test
+    public void testImportedInner () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.Map.Entry;\n" +
+			    "class Foo implements Entry {}");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testInnerClassFromSuperClassCompiled () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "class Foo {\npublic class Bar {}}\n" +
@@ -231,6 +239,14 @@ public class TestClassSetter {
 	parseAndSetClasses ("package foo;\n" +
 			    "import static java.util.Map.Entry;\n" +
 			    "class Foo {Entry e = null;}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testTypeImportOnDemand () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.Base64.*;\n" +
+			    "class Foo { Decoder d; }");
 	assertNoErrors ();
     }
 

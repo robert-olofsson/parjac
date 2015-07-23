@@ -46,6 +46,10 @@ public class DottedName implements TreeNode {
 	return parts.equals (dn.parts);
     }
 
+    public List<String> getParts () {
+	return parts;
+    }
+
     public String getPathName () {
 	return parts.stream ().collect (Collectors.joining ("/"));
     }
