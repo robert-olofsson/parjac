@@ -109,7 +109,7 @@ public class TestClassSetter {
     public void testInnerClass () throws IOException {
 	parseAndSetClasses ("package foo.bar; class Foo { class Bar {} Bar bar;}");
 	assertNoErrors ();
-	checkField ("foo.bar.Foo", 1, "foo.bar.Foo.Bar");
+	checkField ("foo.bar.Foo", 1, "foo.bar.Foo$Bar");
     }
 
     @Test
@@ -355,13 +355,21 @@ public class TestClassSetter {
 	parseAndSetClasses ("package foo;\n" +
 			    "import java.util.Map;\n" +
 			    "abstract class MyEntry implements Map.Entry {}\n");
+	checkImplements ("foo.MyEntry", "java.util.Map$Entry");
 	parseAndSetClasses ("package foo;\n" +
 			    "import java.util.HashMap;\n" +
 			    "abstract class Foo implements HashMap.Entry {}\n");
+	checkImplements ("foo.MyEntry", "java.util.Map$Entry");
 	parseAndSetClasses ("package foo;\n" +
 			    "import java.util.HashMap;\n" +
 			    "abstract class Foo implements java.util.HashMap.Entry {}\n");
+	checkImplements ("foo.MyEntry", "java.util.Map$Entry");
 	assertNoErrors ();
+    }
+
+    private void checkImplements (String classToCheck, String wantedInterface) {
+	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (classToCheck);
+	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
     }
 
 
@@ -385,7 +393,8 @@ public class TestClassSetter {
 	List<ClassType> cts = ifs.get ();
 	assert cts != null;
 	assert cts.size () == 1;
-	assert cts.get (0).getFullName ().equals (type);
+	String name = cts.get (0).getFullName ();
+	assert type.equals (name) : "Wrong name, got: " + name + ", expected: " + type;
     }
 
     private void checkField (String className, int bodyPosition, String expectedType) {

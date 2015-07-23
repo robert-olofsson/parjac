@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.TestParseHelper;
@@ -60,6 +61,41 @@ public class TestBytecodeGeneration {
 	}
     }
 
+    @Test
+    public void testBooleanReturnValue () throws IOException, ReflectiveOperationException {
+	boolean[] values = {true, false};
+	for (boolean b : values) {
+	    String src = "public class Foo { public static boolean foo () { return " + b + "; }}";
+	    Object ret = compileAndRun (src);
+	    assert ret.equals (b) : "Got wrong thing back: " + ret +
+		", ret.class: " + ret.getClass ().getName () +", expected: " + b;
+	}
+    }
+
+    @Test
+    public void testNullReturn () throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRun ("public class Foo { public static String foo () { return null; }}");
+	assert ret == null : "Got something back from null method: " + ret;
+	ret = compileAndRun ("public class Foo { public static Foo foo () { return null; }}");
+	assert ret == null : "Got something back from null method: " + ret;
+	ret = compileAndRun ("import java.util.Map;\n" +
+			     "public class Foo {\n" +
+			     "    public static Map.Entry foo () { return null; }\n"+
+			     "}");
+	assert ret == null : "Got something back from null method: " + ret;
+    }
+
+    @Test
+    public void testStringReturnValue () throws IOException, ReflectiveOperationException {
+	String[] values = {"", "adsf", "asdfasdfasdfasdfasdadf"};
+	for (String s : values) {
+	    String src = "public class Foo { public static String foo () { return \"" + s + "\"; }}";
+	    Object ret = compileAndRun (src);
+	    assert ret.equals (s) : "Got wrong thing back: " + ret +
+		", ret.class: " + ret.getClass ().getName () +", expected: " + s;
+	}
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s);
 	Method m = c.getMethod ("foo");
@@ -75,6 +111,11 @@ public class TestBytecodeGeneration {
 	    new CompilationArguments (sp, bw, classPathEntries, false, false);
 	Compiler c = new Compiler (diagnostics, g, settings);
 	c.compile ();
+	if (diagnostics.hasError ()) {
+	    diagnostics.getDiagnostics ().
+		forEach (d -> System.err.println (d.getMessage (Locale.getDefault ())));
+	    assert false : "Compilation generated errors";
+	}
 	final byte[] b = bw.getBytecode (Paths.get ("Foo.class"));
 	ClassLoader cl = new ClassLoader () {
 	    protected Class<?> findClass (String name) throws ClassNotFoundException {

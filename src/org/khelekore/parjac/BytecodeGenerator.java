@@ -119,8 +119,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
-        MethodInfo mi = new MethodInfo (m, cw.visitMethod(mods, m.getMethodName (),
-							  sb.toString (), null, null));
+        MethodInfo mi = new MethodInfo (m, cw.visitMethod (mods, m.getMethodName (),
+							   sb.toString (), null, null));
 	methods.addLast (mi);
 
 	/* Hello world example
@@ -200,7 +200,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else if (tn instanceof ClassType) {
 	    ClassType ct = (ClassType)tn;
 	    sb.append ("L");
-	    sb.append (ct.getFullName ());
+	    sb.append (ct.getSlashName ());
 	    sb.append (";");
 	} else {
 	    UnannArrayType at = (UnannArrayType)tn;
@@ -255,6 +255,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
 		Token t = ptt.get ();
 		switch (t) {
+		case BOOLEAN:
 		case BYTE:
 		case SHORT:
 		case CHAR:
@@ -325,6 +326,34 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    mi.mv.visitLdcInsn (f);
 	}
+	mi.maxStack = Math.max (mi.maxStack, 1);
+    }
+
+    @Override public void visit (StringLiteral sv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitLdcInsn (sv.get ());
+	mi.maxStack = Math.max (mi.maxStack, 1);
+    }
+
+    @Override public void visit (BooleanLiteral bv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+	MethodInfo mi = methods.peekLast ();
+	boolean f = bv.get ();
+	mi.mv.visitInsn (f ? ICONST_1 : ICONST_0);
+	mi.maxStack = Math.max (mi.maxStack, 1);
+    }
+
+    @Override public void visit (NullLiteral nv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitInsn (ACONST_NULL);
 	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 

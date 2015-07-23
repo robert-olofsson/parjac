@@ -95,6 +95,15 @@ public interface TreeVisitor {
     default void visit (DoubleLiteral d) {
     }
 
-    default void visit (FloatLiteral d) {
+    default void visit (FloatLiteral f) {
+    }
+
+    default void visit (StringLiteral s) {
+    }
+
+    default void visit (BooleanLiteral b) {
+    }
+
+    default void visit (NullLiteral s) {
     }
 }

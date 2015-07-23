@@ -27,7 +27,7 @@ public class CompiledTypesHolder {
     }
 
     /** Get the outer tree node for a given fully qualified name,
-     *  that is "some.package.Foo.Bar".
+     *  that is "some.package.Foo$Bar".
      */
     public TreeNode getType (String name) {
 	return name2node.get (name);
@@ -37,7 +37,7 @@ public class CompiledTypesHolder {
 	return node2filename.get (tn);
     }
 
-    /** Get the class id, something like "some.package.Foo.Bar.1". */
+    /** Get the class id, something like "some.package.Foo$Bar$1". */
     public String getFullName (TreeNode tn) {
 	return node2fqn.get (tn);
     }
@@ -132,7 +132,7 @@ public class CompiledTypesHolder {
 	}
 
 	private String getFullId () {
-	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("."));
+	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
 	}
 
 	private String getFullFilename () {

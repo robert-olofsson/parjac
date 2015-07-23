@@ -76,7 +76,6 @@ public class ClassResourceHolder {
 	if (name.endsWith (".class")) {
 	    name = name.substring (0, name.length () - 6);
 	    name = name.replace ('/', '.');
-	    name = name.replace ('$', '.');
 	    foundClasses.put (name, r);
 	}
     }

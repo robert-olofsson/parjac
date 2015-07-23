@@ -10,4 +10,8 @@ public class NullLiteral implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
 }

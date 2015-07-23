@@ -252,7 +252,7 @@ public class ClassSetter implements TreeVisitor {
 	String currentOuterClass = outerClass;
 	for (int s = scts.size (); i < s; i++) {
 	    SimpleClassType sct = scts.get (i);
-	    String directInnerClass = currentOuterClass + "." + sct.getId ();
+	    String directInnerClass = currentOuterClass + "$" + sct.getId ();
 	    if (validFullName (directInnerClass)) {
 		currentOuterClass = directInnerClass;
 	    } else {
@@ -275,7 +275,7 @@ public class ClassSetter implements TreeVisitor {
 
 	// check for inner class
 	for (String ctn : containingTypeName) {
-	    String icn = ctn + "." + id;
+	    String icn = ctn + "$" + id;
 	    if (validFullName (icn))
 		return icn;
 	}
@@ -293,7 +293,7 @@ public class ClassSetter implements TreeVisitor {
     private String checkSuperClasses (String fullCtn, String id) {
 	List<String> superclasses = getSuperClasses (fullCtn);
 	for (String superclass : superclasses) {
-	    String icn = superclass + "." + id;
+	    String icn = superclass + "$" + id;
 	    if (validFullName (icn))
 		return icn;
 	    String ssn = checkSuperClasses (superclass, id);
@@ -360,7 +360,7 @@ public class ClassSetter implements TreeVisitor {
 
     private String tryStaticImportOnDemand (String id) {
 	for (StaticImportOnDemandDeclaration siod : ih.siod) {
-	    String fqn = siod.getName ().getDotName () + "." + id;
+	    String fqn = siod.getName ().getDotName () + "$" + id;
 	    if (validFullName (fqn))
 		return fqn;
 	}

@@ -17,4 +17,8 @@ public class StringLiteral extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + value + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
 }
