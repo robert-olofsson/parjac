@@ -20,6 +20,18 @@ public class Assignment implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	rhs.visit (visitor);
+	visitor.visit (this);
+    }
+
+    public TreeNode lhs () {
+	return lhs;
+    }
+
+    public OperatorTokenType getOperator () {
+	return op;
+    }
+
+    public TreeNode rhs () {
+	return rhs;
     }
 }

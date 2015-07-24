@@ -57,6 +57,14 @@ public interface TreeVisitor {
     }
     default void endConstructor (ConstructorDeclaration c) {
     }
+    default boolean visit (ConstructorBody cb) {
+	return true;
+    }
+    default void visit (ExplicitConstructorInvocation eci) {
+    }
+    default void endExplicitConstructorInvocation (ExplicitConstructorInvocation eci) {
+    }
+
     default void visit (FieldDeclaration f) {
     }
     /**
@@ -105,5 +113,8 @@ public interface TreeVisitor {
     }
 
     default void visit (NullLiteral s) {
+    }
+
+    default void visit (Assignment a) {
     }
 }

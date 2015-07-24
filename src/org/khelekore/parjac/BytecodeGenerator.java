@@ -90,23 +90,33 @@ public class BytecodeGenerator implements TreeVisitor {
 	MethodInfo mi = new MethodInfo (Result.VOID_RESULT,
 					cw.visitMethod (mods, "<init>", sb.toString (), null, null));
 	methods.addLast (mi);
-
-	/*
-	// pushes the 'this' variable
-	mw.visitVarInsn(ALOAD, 0);
-	// invokes the super class constructor
-	mw.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-	mw.visitInsn(RETURN);
-	// this code uses a maximum of one stack element and one local variable
-	mw.visitMaxs(1, 1);
-	mw.visitEnd();
-	*/
 	return true;
     }
     @Override public void endConstructor (ConstructorDeclaration c) {
 	MethodInfo mi = methods.removeLast ();
+	mi.mv.visitInsn (RETURN);
 	mi.mv.visitMaxs (mi.maxStack, mi.maxLocals);
         mi.mv.visitEnd ();
+    }
+
+    @Override public boolean visit (ConstructorBody cb) {
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
+	if (eci == null) {
+	    mi.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	    mi.maxStack = Math.max (mi.maxStack, 1);
+	    mi.maxLocals = Math.max (mi.maxLocals, 1);
+	}
+	return true;
+    }
+
+    @Override public void visit (ExplicitConstructorInvocation eci) {
+	MethodInfo mi = methods.peekLast ();
+	ClassWriterHolder cid = classes.peekLast ();
+	SuperAndFlags saf = cid.getSuperAndFlags ();
+	// TODO: the signature here is borked, need to get signature from super class
+	mi.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, "<init>", "()V", false);
     }
 
     @Override public void visit (FieldDeclaration f) {
@@ -366,6 +376,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
+    @Override public void visit (Assignment a) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+	// TODO: something like this
+	/*
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitIntInsn (ALOAD, 0);
+	a.rhs ().visit (this);
+	ClassWriterHolder cwh = classes.peekLast ();
+	String fqn = cth.getFullName (cwh.tn);
+	// TODO: name and type need to be set correctly
+	mi.mv.visitFieldInsn (PUTFIELD, fqn, "a", "I");
+	*/
+    }
+
     private class ClassWriterHolder {
 	private final TreeNode tn;
 	private final ClassWriter cw;
@@ -380,8 +406,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 
 	public void start () {
-	    // TODO: we need to be careful about . and $ in generated names
 	    String fqn = cth.getFullName (tn);
+	    SuperAndFlags saf = getSuperAndFlags ();
+	    if (origin != null)
+		cw.visitSource (origin.getFileName ().toString (), null);
+	    if (fqn == null) System.err.println ("tn: " + tn);
+	    cw.visit (V1_8, saf.flags, fqn, /*signature*/null, saf.supername, /*interfaces */null);
+	}
+
+	public SuperAndFlags getSuperAndFlags () {
 	    String supername = "java/lang/Object";
 	    int flags = 0;
 	    if (tn instanceof NormalClassDeclaration) {
@@ -400,9 +433,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		flags = i.getAccessFlags () | ACC_INTERFACE;
 	    }
 	    // TODO: handle interface flags
-	    if (origin != null)
-		cw.visitSource (origin.getFileName ().toString (), null);
-	    cw.visit (V1_8, flags, fqn, /*signature*/null, supername, /*interfaces */null);
+	    return new SuperAndFlags (supername, flags);
 	}
 
 	public void write () {
@@ -419,6 +450,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	    if (packageName == null)
 		return Paths.get (cid);
 	    return Paths.get (packageName.getPathName (), cid);
+	}
+    }
+
+    private static class SuperAndFlags {
+	public final String supername;
+	public final int flags;
+	public SuperAndFlags (String supername, int flags) {
+	    this.supername = supername;
+	    this.flags = flags;
 	}
     }
 

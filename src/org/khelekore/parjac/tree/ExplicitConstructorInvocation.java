@@ -33,4 +33,10 @@ public class ExplicitConstructorInvocation implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + types + " " + where + " " + args + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	args.visit (visitor);
+	visitor.endExplicitConstructorInvocation (this);
+    }
 }

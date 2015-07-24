@@ -15,4 +15,9 @@ public class ConstructorArguments implements TreeNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{(" + args + ");}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (args != null)
+	    args.visit (visitor);
+    }
 }

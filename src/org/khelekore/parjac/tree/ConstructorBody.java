@@ -29,9 +29,15 @@ public class ConstructorBody implements TreeNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	if (eci != null)
-	    eci.visit (visitor);
-	if (statements != null)
-	    statements.visit (visitor);
+	if (visitor.visit (this)) {
+	    if (eci != null)
+		eci.visit (visitor);
+	    if (statements != null)
+		statements.visit (visitor);
+	}
+    }
+
+    public ExplicitConstructorInvocation getConstructorInvocation () {
+	return eci;
     }
 }
