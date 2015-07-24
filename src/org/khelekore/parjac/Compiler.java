@@ -61,6 +61,7 @@ public class Compiler {
 	checkSemantics (trees);
 	if (diagnostics.hasError ())
 	    return;
+	optimize (trees);
 
 	runTimed (() -> createOutputDirectories (trees, settings.getClassWriter()),
 		  "Creating output directories");
@@ -124,6 +125,8 @@ public class Compiler {
 
 	runTimed (() -> fillinClasses (trees), "Setting classes");
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
+	// check that there is at least one constructor
+	// check that there are returns, even in void methods
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
@@ -139,6 +142,8 @@ public class Compiler {
 	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
 	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
 	}
+	// warn for unused imports
+	// warn for import conflicts
     }
 
     private void fillInClasses (SyntaxTree tree,
@@ -158,6 +163,10 @@ public class Compiler {
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	NameModifierChecker nmc = new NameModifierChecker (cth, crh, tree, diagnostics);
 	nmc.check ();
+    }
+
+    private void optimize (List<SyntaxTree> trees) {
+	// merge constant expressions "1 + 2" => "3"
     }
 
     private void createOutputDirectories (List<SyntaxTree> trees,
