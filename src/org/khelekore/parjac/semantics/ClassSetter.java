@@ -38,8 +38,8 @@ public class ClassSetter implements TreeVisitor {
 
 	CompilationUnit cu = tree.getCompilationUnit ();
 	packageName = cu.getPackage ();
-	cu.getImports ().forEach (i -> i.visit (ih));
 	ih.addDefaultPackages ();
+	cu.getImports ().forEach (i -> i.visit (ih));
     }
 
     /**
