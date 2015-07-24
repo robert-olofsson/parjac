@@ -87,9 +87,11 @@ public class BytecodeGenerator implements TreeVisitor {
 	StringBuilder sb = new StringBuilder ();
 	appendParameters (c.getParameters (), sb);
 	sb.append ("V");
-	MethodVisitor mw =
-	    cw.visitMethod (mods, "<init>", sb.toString (), null, null);
+	MethodInfo mi = new MethodInfo (Result.VOID_RESULT,
+					cw.visitMethod (mods, "<init>", sb.toString (), null, null));
+	methods.addLast (mi);
 
+	/*
 	// pushes the 'this' variable
 	mw.visitVarInsn(ALOAD, 0);
 	// invokes the super class constructor
@@ -98,7 +100,13 @@ public class BytecodeGenerator implements TreeVisitor {
 	// this code uses a maximum of one stack element and one local variable
 	mw.visitMaxs(1, 1);
 	mw.visitEnd();
+	*/
 	return true;
+    }
+    @Override public void endConstructor (ConstructorDeclaration c) {
+	MethodInfo mi = methods.removeLast ();
+	mi.mv.visitMaxs (mi.maxStack, mi.maxLocals);
+        mi.mv.visitEnd ();
     }
 
     @Override public void visit (FieldDeclaration f) {
@@ -119,8 +127,9 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 	StringBuilder sb = new StringBuilder ();
 	appendSignature (m, sb);
-        MethodInfo mi = new MethodInfo (m, cw.visitMethod (mods, m.getMethodName (),
-							   sb.toString (), null, null));
+        MethodInfo mi = new MethodInfo (m.getResult (),
+					cw.visitMethod (mods, m.getMethodName (),
+							sb.toString (), null, null));
 	methods.addLast (mi);
 
 	/* Hello world example
@@ -249,7 +258,7 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endReturn (ReturnStatement r) {
 	MethodInfo mi = methods.peekLast ();
 	if (r.hasExpression ()) {
-	    Result.TypeResult tr = (TypeResult)mi.md.getResult ();
+	    Result.TypeResult tr = (TypeResult)mi.result;
 	    TreeNode tn = tr.get ();
 	    if (tn instanceof PrimitiveTokenType) {
 		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
@@ -366,6 +375,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	    cw = new ClassWriter (0);
 	}
 
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{tn: " + tn + "}";
+	}
+
 	public void start () {
 	    // TODO: we need to be careful about . and $ in generated names
 	    String fqn = cth.getFullName (tn);
@@ -410,15 +423,19 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     private static class MethodInfo {
-	public final MethodDeclaration md;
+	public final Result result;
 	public final MethodVisitor mv;
 
 	public int maxStack = 0;
 	public int maxLocals = 0;
 
-	public MethodInfo (MethodDeclaration md, MethodVisitor mv) {
-	    this.md = md;
+	public MethodInfo (Result result, MethodVisitor mv) {
+	    this.result = result;
 	    this.mv = mv;
+	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{result: " + result + ", mv: " + mv + "}";
 	}
     }
 }
