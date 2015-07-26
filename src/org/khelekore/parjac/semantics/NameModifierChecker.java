@@ -55,8 +55,8 @@ public class NameModifierChecker implements TreeVisitor {
 		    flags = crh.getClassModifiers (fqn);
 		}
 		if (isFinal (flags))
-		    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
-							       "Can not extend final class"));
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), ct.getParsePosition (),
+								 "Can not extend final class"));
 	    }
 	}
 	return true;
@@ -89,31 +89,32 @@ public class NameModifierChecker implements TreeVisitor {
 	if (isPublic (accessFlags)) {
 	    if (level == 0 && tree.getOrigin () != null &&
 		!(id + ".java").equals (tree.getOrigin ().getFileName ().toString ()))
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-							   "Public top level type: " + id +
-							   " should be in a file named: " + id +
-							   ".java, not in " + tree.getOrigin ().getFileName ()));
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							     "Public top level type: %s" +
+							     " should be in a file named: '%s" +
+							     ".java', not in '%s'",
+							     id, id, tree.getOrigin ().getFileName ()));
 	    count++;
 	}
 	if (isProtected (accessFlags)) {
 	    if (level == 0)
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-							   "Top level type may not be protected"));
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							     "Top level type may not be protected"));
 	    count++;
 	}
 	if (isPrivate (accessFlags)) {
 	    if (level == 0)
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-							   "Top level type may not be private"));
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							     "Top level type may not be private"));
 	    count++;
 	}
 	if (count > 1)
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-						       "Type has too many access flags"));
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							 "Type has too many access flags"));
 
 	if (isStatic (accessFlags) && level == 0)
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-						       "Top level type may not be static"));
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							 "Top level type may not be static"));
     }
 
     @Override public boolean visit (ConstructorDeclaration c) {
@@ -125,39 +126,39 @@ public class NameModifierChecker implements TreeVisitor {
 	int flags = f.getFlags ();
 	checkAccess (f, flags);
 	if (isFinal (flags) && isVolatile (flags))
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), f.getParsePosition (),
-						       "Field may not be both final and volatile"));
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
+							 "Field may not be both final and volatile"));
     }
 
     @Override public boolean visit (MethodDeclaration m) {
 	int flags = m.getFlags ();
 	checkAccess (m, flags);
 	if (isNative (flags) && isStrictFp (flags))
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
-						       "method may not be both native and strictfp"));
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							 "method may not be both native and strictfp"));
 	if (isAbstract (flags)) {
 	    if  (isPrivate (flags) || isStatic (flags) || isFinal (flags) ||
 		 isNative (flags) || isStrictFp (flags) || isSynchronized (flags)) {
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
-							   "Mixing abstract with non allowed flags"));
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							     "Mixing abstract with non allowed flags"));
 	    }
 	    MethodBody body = m.getBody ();
-	    if (body != MethodBody.EMPTY_BODY)
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
-							   "Abstract method may not have a body"));
+	    if (!body.isEmpty ())
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							     "Abstract method may not have a body"));
 	}
 
 	if (isNative (flags)) {
 	    MethodBody body = m.getBody ();
-	    if (body != MethodBody.EMPTY_BODY)
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
-							   "Native method may not have a body"));
+	    if (!body.isEmpty ())
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							     "Native method may not have a body"));
 	}
 	MethodBody body = m.getBody ();
-	if (body == MethodBody.EMPTY_BODY && !(isAbstract (flags) || isNative (flags))) {
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), m.getParsePosition (),
-						       "Empty method body is only allowed for native " +
-						       "and abstract methods"));
+	if (body.isEmpty () && !(isAbstract (flags) || isNative (flags))) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							 "Empty method body is only allowed for native " +
+							 "and abstract methods"));
 	}
 	return true;
     }
@@ -171,8 +172,8 @@ public class NameModifierChecker implements TreeVisitor {
 	if (isPrivate (flags))
 	    count++;
 	if (count > 1)
-	    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), tn.getParsePosition (),
-						       "Type has too many access flags"));
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							 "Type has too many access flags"));
     }
 
     private boolean isPublic (int accessFlags) {

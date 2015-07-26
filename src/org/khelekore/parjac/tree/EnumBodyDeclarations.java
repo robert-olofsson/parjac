@@ -6,10 +6,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class EnumBodyDeclarations implements TreeNode {
+public class EnumBodyDeclarations extends PositionNode {
     private final List<TreeNode> classBodyDeclarations;
 
-    public EnumBodyDeclarations (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public EnumBodyDeclarations (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	classBodyDeclarations = r.size () > 1 ? ((ZOMEntry)parts.pop ()).get () : null;
     }
 

@@ -6,13 +6,14 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class MethodInvocation implements TreeNode {
+public class MethodInvocation extends PositionNode {
     private final TreeNode on;
     private final TypeArguments types;
     private final boolean isSuper;
     private final UntypedMethodInvocation mi;
 
-    public MethodInvocation (Rule r, Deque<TreeNode> parts) {
+    public MethodInvocation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 0;
 	if (r.getRulePart (0).getId () == Token.SUPER) {
 	    on = null;
@@ -31,10 +32,10 @@ public class MethodInvocation implements TreeNode {
 	mi = (UntypedMethodInvocation)parts.pop ();
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return parts.pop ();
-	return new MethodInvocation (r, parts);
+	return new MethodInvocation (r, parts, pos);
     }
 
     @Override public String toString () {
@@ -42,8 +43,27 @@ public class MethodInvocation implements TreeNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	if (on != null)
-	    on.visit (visitor);
-	mi.visit (visitor);
+	if (visitor.visit (this))
+	    mi.visit (visitor);
+    }
+
+    public TreeNode getOn () {
+	return on;
+    }
+
+    public TypeArguments getTypeArguments () {
+	return types;
+    }
+
+    public boolean isSuper () {
+	return isSuper;
+    }
+
+    public String getId () {
+	return mi.getId ();
+    }
+
+    public ArgumentList getArgumentList () {
+	return mi.getArgumentList ();
     }
 }

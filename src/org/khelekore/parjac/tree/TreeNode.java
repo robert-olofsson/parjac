@@ -8,7 +8,6 @@ public interface TreeNode {
 	// empty
     }
 
-    default ParsePosition getParsePosition () {
-	throw new RuntimeException ("No parse position for: " + getClass ().getName ());
-    }
+    /** Get the parse position for this node */
+    ParsePosition getParsePosition ();
 }

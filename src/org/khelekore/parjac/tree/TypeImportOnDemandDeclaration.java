@@ -4,7 +4,7 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class TypeImportOnDemandDeclaration extends NamedNode implements ImportDeclaration {
+public class TypeImportOnDemandDeclaration extends ImportDeclarationBase {
     public TypeImportOnDemandDeclaration (Deque<TreeNode> parts, ParsePosition pos) {
 	super (parts, pos);
 	parts.pop (); // '*'

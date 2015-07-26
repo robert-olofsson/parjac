@@ -8,18 +8,21 @@ import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class PrimaryNoNewArray {
-    public static final ThisPrimary THIS_PRIMARY = new ThisPrimary ();
-    public static final VoidClass VOID_CLASS = new VoidClass ();
+    public static class ThisPrimary extends PositionNode {
+	public ThisPrimary (ParsePosition pos) {
+	    super (pos);
+	}
 
-    public static class ThisPrimary implements TreeNode {
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{}";
 	}
     }
 
-    public static class DottedThis implements TreeNode {
+    public static class DottedThis extends PositionNode {
 	private final DottedName name;
-	public DottedThis (DottedName name) {
+
+	public DottedThis (DottedName name, ParsePosition pos) {
+	    super (pos);
 	    this.name = name;
 	}
 
@@ -28,17 +31,22 @@ public class PrimaryNoNewArray {
 	}
     }
 
-    public static class VoidClass implements TreeNode {
+    public static class VoidClass extends PositionNode {
+	public VoidClass (ParsePosition pos) {
+	    super (pos);
+	}
+
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{}";
 	}
     }
 
-    public static class ClassPrimary implements TreeNode {
+    public static class ClassPrimary extends PositionNode {
 	private final TreeNode type;
 	private final List<Brackets> brackets;
 
-	public ClassPrimary (TreeNode type, List<Brackets> brackets) {
+	public ClassPrimary (TreeNode type, List<Brackets> brackets, ParsePosition pos) {
+	    super (pos);
 	    this.type = type;
 	    this.brackets = brackets;
 	}
@@ -48,17 +56,17 @@ public class PrimaryNoNewArray {
 	}
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.getRulePart (0).getId () == Token.THIS)
-	    return THIS_PRIMARY;
+	    return new ThisPrimary (pos);
 	if (r.size () == 1)
 	    return parts.pop ();
 	if (r.getRulePart (0).getId () == Token.LEFT_PARENTHESIS)
 	    return parts.pop ();
 	if (r.getRulePart (2).getId () == Token.THIS)
-	    return new DottedThis ((DottedName)parts.pop ());
+	    return new DottedThis ((DottedName)parts.pop (), pos);
 	if (r.getRulePart (0).getId () == Token.VOID)
-	    return VOID_CLASS;
-	return new ClassPrimary (parts.pop (), r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null);
+	    return new VoidClass (pos);
+	return new ClassPrimary (parts.pop (), r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null, pos);
     }
 }

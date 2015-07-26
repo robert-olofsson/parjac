@@ -5,10 +5,11 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class LocalVariableDeclarationStatement implements TreeNode {
+public class LocalVariableDeclarationStatement extends PositionNode {
     private final LocalVariableDeclaration lvd;
 
-    public LocalVariableDeclarationStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public LocalVariableDeclarationStatement (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	lvd = (LocalVariableDeclaration)parts.pop ();
     }
 

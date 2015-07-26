@@ -4,7 +4,7 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class StaticImportOnDemandDeclaration extends NamedNode implements ImportDeclaration {
+public class StaticImportOnDemandDeclaration extends ImportDeclarationBase {
     public StaticImportOnDemandDeclaration (DottedName name, ParsePosition ppos) {
 	super (name, ppos);
     }

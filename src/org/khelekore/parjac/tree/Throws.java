@@ -8,10 +8,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class Throws implements TreeNode {
+public class Throws extends PositionNode {
     private List<ClassType> exceptions;
 
     public Throws (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	ClassType ct = (ClassType)parts.pop ();
 	if (r.size () == 2) {
 	    exceptions = Collections.singletonList (ct);

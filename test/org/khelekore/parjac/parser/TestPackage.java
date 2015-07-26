@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
@@ -29,8 +30,9 @@ public class TestPackage {
 
     @Test
     public void testSinglePackage () {
+	List<String> names = Arrays.asList ("foo");
 	testSuccessfulParse ("package foo;",
-			     new PackageDeclaration (null, new DottedName ("foo"), null));
+			     new PackageDeclaration (null, new DottedName (names, null), null));
     }
 
     @Test
@@ -40,14 +42,15 @@ public class TestPackage {
 
     @Test
     public void testMultiPackage () {
+	List<String> names = Arrays.asList ("foo", "bar", "baz");
 	testSuccessfulParse ("package foo.bar.baz;",
-			     new PackageDeclaration (null, new DottedName ("foo", "bar", "baz"), null));
+			     new PackageDeclaration (null, new DottedName (names, null), null));
     }
 
     @Test
     public void testMarkerAnnotatedPackage () {
-	DottedName dn = new DottedName ("foo");
-	DottedName bar = new DottedName ("Bar");
+	DottedName dn = new DottedName (Arrays.asList ("foo"), null);
+	DottedName bar = new DottedName (Arrays.asList ("Bar"), null);
 	testSuccessfulParse ("@foo package foo;",
 			     new PackageDeclaration (Arrays.asList (new MarkerAnnotation (dn, null)), dn, null));
 	testSuccessfulParse ("@foo @Bar package foo;",

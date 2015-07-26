@@ -8,10 +8,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class EnumConstantList implements TreeNode {
+public class EnumConstantList extends PositionNode {
     private final List<EnumConstant> constants;
 
-    public EnumConstantList (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public EnumConstantList (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	EnumConstant ec = (EnumConstant)parts.pop ();
 	if (r.size () == 1) {
 	    constants = Collections.singletonList (ec);

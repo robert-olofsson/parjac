@@ -6,13 +6,14 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class Resource implements TreeNode {
+public class Resource extends PositionNode {
     private final List<TreeNode> modifiers;
     private final TreeNode type;
     private final VariableDeclaratorId vdi;
     private final TreeNode exp;
 
-    public Resource (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public Resource (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	modifiers = r.size () > 4 ? ((ZOMEntry)parts.pop ()).get () : null;
 	type = parts.pop ();
 	vdi = (VariableDeclaratorId)parts.pop ();

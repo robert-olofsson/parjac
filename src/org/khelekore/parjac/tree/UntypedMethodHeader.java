@@ -5,12 +5,13 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class UntypedMethodHeader implements TreeNode {
+public class UntypedMethodHeader extends PositionNode {
     private final Result result;
     private final MethodDeclarator declarator;
     private final Throws thrown;
 
     public UntypedMethodHeader (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	result = (Result)parts.pop ();
 	declarator = (MethodDeclarator)parts.pop ();
 	thrown = r.size () > 2 ? (Throws)parts.pop () : null;

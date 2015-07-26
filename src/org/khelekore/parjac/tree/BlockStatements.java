@@ -7,10 +7,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class BlockStatements implements TreeNode {
+public class BlockStatements extends PositionNode {
     private final List<TreeNode> statements;
 
-    public BlockStatements (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public BlockStatements (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	TreeNode tn = parts.pop ();
 	if (r.size () > 1) {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();

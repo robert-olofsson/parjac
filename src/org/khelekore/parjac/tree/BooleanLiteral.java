@@ -1,12 +1,12 @@
 package org.khelekore.parjac.tree;
 
-public class BooleanLiteral implements TreeNode {
+import org.khelekore.parjac.lexer.ParsePosition;
+
+public class BooleanLiteral extends PositionNode {
     private final boolean value;
 
-    public static final BooleanLiteral TRUE_VALUE = new BooleanLiteral (true);
-    public static final BooleanLiteral FALSE_VALUE = new BooleanLiteral (false);
-
-    private BooleanLiteral (boolean value) {
+    public BooleanLiteral (boolean value, ParsePosition pos) {
+	super (pos);
 	this.value = value;
     }
 
@@ -15,7 +15,7 @@ public class BooleanLiteral implements TreeNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + value + "}";
+	return getClass ().getSimpleName () + "{}";
     }
 
     @Override public void visit (TreeVisitor visitor) {

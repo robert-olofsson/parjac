@@ -7,16 +7,18 @@ import java.util.Objects;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class PackageDeclaration implements TreeNode {
+public class PackageDeclaration extends PositionNode {
     private final List<TreeNode> annotations;
     private final DottedName name;
 
     public PackageDeclaration (List<TreeNode> annotations, DottedName name, ParsePosition pos) {
+	super (pos);
 	this.annotations = annotations;
 	this.name = name;
     }
 
     public PackageDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	annotations = r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null;
 	name = (DottedName)parts.pop ();
     }

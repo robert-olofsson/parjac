@@ -6,10 +6,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class OneDim implements TreeNode {
+public class OneDim extends PositionNode {
     private final List<TreeNode> annotations;
 
     public OneDim (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	annotations = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
     }
 

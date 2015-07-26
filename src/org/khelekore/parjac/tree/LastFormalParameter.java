@@ -6,13 +6,14 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class LastFormalParameter implements TreeNode {
+public class LastFormalParameter extends PositionNode {
     private final List<TreeNode> modifiers;
     private final TreeNode type;
     private final List<TreeNode> annotations;
     private final VariableDeclaratorId vdi;
 
-    public LastFormalParameter (Rule r, Deque<TreeNode> parts) {
+    public LastFormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	int len = 3;
 	TreeNode tn = parts.pop ();
 	if (tn instanceof ZOMEntry) {
@@ -30,7 +31,7 @@ public class LastFormalParameter implements TreeNode {
     public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return parts.pop ();
-	return new LastFormalParameter (r, parts);
+	return new LastFormalParameter (r, parts, pos);
     }
 
     @Override public String toString () {

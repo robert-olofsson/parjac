@@ -4,11 +4,12 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ArrayType implements TreeNode {
+public class ArrayType extends PositionNode {
     private final TreeNode type;
     private final Dims dims;
 
     public ArrayType (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	type = parts.pop ();
 	dims = (Dims)parts.pop ();
     }

@@ -6,12 +6,13 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class FormalParameter implements TreeNode {
+public class FormalParameter extends PositionNode {
     private final List<TreeNode> annotations;
     private final TreeNode type;
     private final VariableDeclaratorId vdi;
 
     public FormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	annotations = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
 	type = parts.pop ();
 	vdi = (VariableDeclaratorId)parts.pop ();

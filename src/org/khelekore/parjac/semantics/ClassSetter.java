@@ -9,12 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 
@@ -27,14 +30,53 @@ public class ClassSetter implements TreeVisitor {
     private final ImportHandler ih = new ImportHandler ();
     private final Deque<String> containingTypeName = new ArrayDeque<> ();
     private final Deque<Set<String>> types = new ArrayDeque<> ();
+    private final int level;
     private boolean completed = true;
 
+    public static void fillInClasses (CompiledTypesHolder cth, ClassResourceHolder crh,
+				      List<SyntaxTree> trees,
+				      CompilerDiagnosticCollector diagnostics) {
+	// Fill in correct classes
+	// Depending on order we may not have correct parents on first try.
+	// We collect the trees that fails and tries again
+	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
+	trees.parallelStream ().forEach (t -> fillInClasses (cth, crh, t, diagnostics, rest, 0));
+	if (!rest.isEmpty ()) {
+	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
+	    rest.parallelStream ().forEach (t -> fillInClasses (cth, crh, t, diagnostics, rest2, 1));
+	}
+	trees.forEach (t -> checkUnusedInport (t, diagnostics));
+    }
+
+    private static void fillInClasses (CompiledTypesHolder cth, ClassResourceHolder crh,
+				       SyntaxTree tree,
+				       CompilerDiagnosticCollector diagnostics,
+				       Queue<SyntaxTree> rest, int level) {
+	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics, level);
+	cs.fillIn ();
+	if (!cs.completed ())
+	    rest.add (tree);
+    }
+
+    private static void checkUnusedInport (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	List<ImportDeclaration> imports = tree.getCompilationUnit ().getImports ();
+	imports.stream ().filter (i -> !i.hasBeenUsed ())
+	    .forEach (i -> checkUnusedImport (tree, i, diagnostics));
+    }
+
+    private static void checkUnusedImport (SyntaxTree tree, ImportDeclaration i,
+					   CompilerDiagnosticCollector diagnostics) {
+	diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), i.getParsePosition (),
+						       "Unused import"));
+    }
+
     public ClassSetter (CompiledTypesHolder cth, ClassResourceHolder crh,
-			SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+			SyntaxTree tree, CompilerDiagnosticCollector diagnostics, int level) {
 	this.cth = cth;
 	this.crh = crh;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
+	this.level = level;
 
 	CompilationUnit cu = tree.getCompilationUnit ();
 	packageName = cu.getPackage ();
@@ -42,14 +84,11 @@ public class ClassSetter implements TreeVisitor {
 	cu.getImports ().forEach (i -> i.visit (ih));
     }
 
-    /**
-     * @return true if every part was filled in correctly, false if something failed
-     */
     public void fillIn () {
 	tree.getCompilationUnit ().visit (this);
     }
 
-    public boolean completed () {
+    private boolean completed () {
 	return completed;
     }
 
@@ -140,6 +179,18 @@ public class ClassSetter implements TreeVisitor {
 	types.pop ();
     }
 
+    @Override public void visit (UntypedClassInstanceCreationExpression c) {
+	setType (c.getId ());
+    }
+
+    @Override public boolean visit (MethodInvocation m) {
+	TreeNode on = m.getOn ();
+	if (on instanceof ClassType) {
+	    setType ((ClassType)on);
+	}
+	return true;
+    }
+
     private void registerTypeParameters (TypeParameters tps) {
 	if (tps != null) {
 	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
@@ -184,7 +235,7 @@ public class ClassSetter implements TreeVisitor {
 		return;
 	    // "List" and "java.util.List" are easy to resolve
 	    String id1 = getId (ct, ".");
-	    String fqn = resolve (id1);
+	    String fqn = resolve (id1, ct.getParsePosition ());
 	    if (fqn == null && ct.size () > 1) {
 		// ok, someone probably wrote something like "HashMap.Entry" or
 		// "java.util.HashMap.Entry" which is somewhat problematic, but legal
@@ -192,9 +243,9 @@ public class ClassSetter implements TreeVisitor {
 	    }
 	    if (fqn == null) {
 		completed = false;
-		if (diagnostics != null)
-		    diagnostics.report (new SourceDiagnostics (tree.getOrigin (), ct.getParsePosition (),
-							       "Failed to find class: " + id1));
+		if (mayReport ())
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), ct.getParsePosition (),
+								 "Failed to find class: %s", id1));
 	    }
 	    ct.setFullName (fqn);
 	    for (SimpleClassType sct : ct.get ()) {
@@ -212,10 +263,10 @@ public class ClassSetter implements TreeVisitor {
 		setType (wb.getClassType ());
 	} else {
 	    completed = false;
-	    if (diagnostics != null) {
-		diagnostics.report (new SourceDiagnostics (tree.getOrigin (), type.getParsePosition (),
-							   "Unhandled type: " + type.getClass ().getName () +
-							   ", " + type));
+	    if (mayReport ()) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), type.getParsePosition (),
+							     "Unhandled type: %s, %s",
+							     type.getClass ().getName (), type));
 	    }
 	}
     }
@@ -237,7 +288,7 @@ public class ClassSetter implements TreeVisitor {
 	    if (i > 0)
 		sb.append (".");
 	    sb.append (sct.getId ());
-	    String outerClass = resolve (sb.toString ());
+	    String outerClass = resolve (sb.toString (), ct.getParsePosition ());
 	    if (outerClass != null) {
 		// Ok, now check if Entry is an inner class either directly or in super class
 		String fqn = checkForInnerClasses (scts, i + 1, outerClass);
@@ -264,7 +315,7 @@ public class ClassSetter implements TreeVisitor {
 	return currentOuterClass;
     }
 
-    private String resolve (String id) {
+    private String resolve (String id, ParsePosition pos) {
 	if (isTypeParameter (id)) {
 	    // TODO: how to handle this?
 	    return "generic type: " + id;
@@ -287,7 +338,7 @@ public class ClassSetter implements TreeVisitor {
 		return fqn;
 	}
 
-	return resolveUsingImports (id);
+	return resolveUsingImports (id, pos);
     }
 
     private String checkSuperClasses (String fullCtn, String id) {
@@ -311,17 +362,19 @@ public class ClassSetter implements TreeVisitor {
 	    return crh.getSuperTypes (type);
 	} catch (IOException e) {
 	    completed = false;
-	    if (diagnostics != null)
+	    if (mayReport ())
 		diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + type, e));
 	}
 	return Collections.emptyList ();
     }
 
-    private String resolveUsingImports (String id) {
-	String fqn = ih.stid.get (id);
-	if (fqn != null && validFullName (fqn))
-	    return fqn;
-	fqn = tryTypeImportOnDemand (id);
+    private String resolveUsingImports (String id, ParsePosition pos) {
+	ImportHolder i = ih.stid.get (id);
+	if (i != null && validFullName (i.cas.name)) {
+	    i.markUsed ();
+	    return i.cas.name;
+	}
+	String fqn = tryTypeImportOnDemand (id, pos);
 	if (fqn != null && validFullName (fqn))
 	    return fqn;
 	fqn = trySingleStaticImport (id);
@@ -341,13 +394,23 @@ public class ClassSetter implements TreeVisitor {
 	return false;
     }
 
-    private String tryTypeImportOnDemand (String id) {
-	for (ClassAndSeparator cas : ih.tiod) {
-	    String fqn = cas.name + cas.sep + id;
-	    if (validFullName (fqn))
-		return fqn;
+    private String tryTypeImportOnDemand (String id, ParsePosition pos) {
+	List<String> matches = new ArrayList<> ();
+	String fqn = null;
+	for (ImportHolder ih : ih.tiod) {
+	    String t = ih.cas.name + ih.cas.sep + id;
+	    if (validFullName (t)) {
+		matches.add (t);
+		ih.markUsed ();
+	    }
 	}
-	return null;
+	if (matches.size () > 1) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), pos,
+							 "Ambigous type: %s: %s", id, matches));
+	}
+	if (matches.isEmpty ())
+	    return null;
+	return matches.get (0);
     }
 
     private String trySingleStaticImport (String id) {
@@ -357,8 +420,10 @@ public class ClassSetter implements TreeVisitor {
     private String tryStaticImportOnDemand (String id) {
 	for (StaticImportOnDemandDeclaration siod : ih.siod) {
 	    String fqn = siod.getName ().getDotName () + "$" + id;
-	    if (validFullName (fqn))
+	    if (validFullName (fqn)) {
+		siod.markUsed ();
 		return fqn;
+	    }
 	}
 	return null;
     }
@@ -373,19 +438,33 @@ public class ClassSetter implements TreeVisitor {
 	return false;
     }
 
+    private boolean mayReport () {
+	return level > 0;
+    }
+
     private class ImportHandler implements ImportVisitor {
-	private final Map<String, String> stid = new HashMap<> ();
-	private final List<ClassAndSeparator> tiod = new ArrayList<> ();
+	private final Map<String, ImportHolder> stid = new HashMap<> ();
+	private final List<ImportHolder> tiod = new ArrayList<> ();
 	private final Map<String, String> ssid = new HashMap<> ();
 	private final List<StaticImportOnDemandDeclaration> siod = new ArrayList<> ();
 
 	public void visit (SingleTypeImportDeclaration i) {
 	    DottedName dn = i.getName ();
-	    stid.put (dn.getLastPart (), getClassName (dn).name);
+	    ClassAndSeparator cas = getClassName (dn);
+	    if (!validFullName (cas.name) && level == 0) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+							     "Type not found: %s", cas.name));
+		i.markUsed (); // Unused, but already flagged as bad, don't want multiple lines
+	    }
+	    ImportHolder prev = stid.put (dn.getLastPart (), new ImportHolder (i, cas));
+	    if (prev != null) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+							     "Name clash for: %s", dn.getLastPart ()));
+	    }
 	}
 
 	public void visit (TypeImportOnDemandDeclaration i) {
-	    tiod.add (getClassName (i.getName ()));
+	    tiod.add (new ImportHolder (i, getClassName (i.getName ())));
 	}
 
 	public void visit (SingleStaticImportDeclaration i) {
@@ -411,8 +490,22 @@ public class ClassSetter implements TreeVisitor {
 
 	private void addDefaultPackages () {
 	    if (packageName != null)
-		tiod.add (getClassName (packageName));
-	    tiod.add (new ClassAndSeparator ("java.lang", '.'));
+		tiod.add (new ImportHolder (null, getClassName (packageName)));
+	    tiod.add (new ImportHolder (null, new ClassAndSeparator ("java.lang", '.')));
+	}
+    }
+
+    private static class ImportHolder {
+	private final ImportDeclaration i;
+	private final ClassAndSeparator cas;
+	public ImportHolder (ImportDeclaration i, ClassAndSeparator cas) {
+	    this.i = i;
+	    this.cas = cas;
+	}
+
+	public void markUsed () {
+	    if (i != null)
+		i.markUsed ();
 	}
     }
 

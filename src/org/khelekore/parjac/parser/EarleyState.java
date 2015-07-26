@@ -12,7 +12,7 @@ import org.khelekore.parjac.tree.TreeNode;
 
 public class EarleyState {
 
-    private final ParsePosition parsePosition;
+    private ParsePosition parsePosition;
     private final TreeNode tokenValue;
     // Predicted rules
     private ListRuleHolder lrh;
@@ -20,9 +20,12 @@ public class EarleyState {
     private List<State> states = Collections.emptyList ();
     private boolean cleared = false; // have we removed non-used states?
 
-    public EarleyState (ParsePosition parsePosition, TreeNode tokenValue) {
-	this.parsePosition = parsePosition;
+    public EarleyState (TreeNode tokenValue) {
 	this.tokenValue = tokenValue;
+    }
+
+    public void setParsePosition (ParsePosition parsePosition) {
+	this.parsePosition = parsePosition;
     }
 
     public ParsePosition getParsePosition () {

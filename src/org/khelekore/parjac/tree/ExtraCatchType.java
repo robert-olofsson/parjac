@@ -4,10 +4,11 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ExtraCatchType implements TreeNode {
+public class ExtraCatchType extends PositionNode {
     private final ClassType ct;
 
-    public ExtraCatchType (Deque<TreeNode> parts, ParsePosition ppos) {
+    public ExtraCatchType (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	parts.pop (); // '|'
 	ct = (ClassType)parts.pop ();
     }

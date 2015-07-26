@@ -8,14 +8,11 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
-public abstract class BodyBase implements TreeNode {
+public abstract class BodyBase extends PositionNode {
     private final List<TreeNode> declarations;
 
-    public BodyBase () {
-	declarations = Collections.emptyList ();
-    }
-
-    public BodyBase (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public BodyBase (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	if (r.size () > 2) {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
 	    declarations = ze.get ();

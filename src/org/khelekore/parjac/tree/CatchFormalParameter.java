@@ -6,12 +6,13 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class CatchFormalParameter implements TreeNode {
+public class CatchFormalParameter extends PositionNode {
     private final List<TreeNode> modifiers;
     private final CatchType type;
     private final VariableDeclaratorId vdi;
 
-    public CatchFormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public CatchFormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	modifiers = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
 	type = (CatchType)parts.pop ();
 	vdi = (VariableDeclaratorId)parts.pop ();

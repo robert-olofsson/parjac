@@ -3,9 +3,6 @@ package org.khelekore.parjac;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.NoSourceDiagnostics;
-
 /** Batch compiler command line arguments */
 public class CompilationArguments {
     private final SourceProvider sourceProvider;

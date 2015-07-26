@@ -5,11 +5,12 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class LabeledStatement implements TreeNode {
+public class LabeledStatement extends PositionNode {
     private final String id;
     private final TreeNode statement;
 
-    public LabeledStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public LabeledStatement (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	id = ((Identifier)parts.pop ()).get ();
 	parts.pop (); // ':'
 	statement = parts.pop ();

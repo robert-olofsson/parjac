@@ -6,10 +6,11 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class ShiftOp implements TreeNode {
+public class ShiftOp extends PositionNode {
 
-    private ShiftOp () {
+    private ShiftOp (ParsePosition pos) {
 	// do not create
+	super (pos);
     }
 
     public static TreeNode create (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {

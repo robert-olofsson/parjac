@@ -5,11 +5,12 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class NormalAnnotation implements TreeNode  {
+public class NormalAnnotation extends PositionNode  {
     private DottedName name;
     private ElementValuePairList pairs;
 
-    public NormalAnnotation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public NormalAnnotation (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	name = (DottedName)parts.pop ();
 	pairs = r.size () > 4 ? (ElementValuePairList)parts.pop () : null;
     }

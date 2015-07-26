@@ -2,6 +2,7 @@ package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -114,7 +115,9 @@ public class TestClassSetter {
 
     @Test
     public void testEnumExtends () throws IOException {
-	parseAndSetClasses ("package foo.bar; interface Foo {} enum E implements Foo {A, B}");
+	parseAndSetClasses ("package foo.bar;\n" +
+			    "interface Foo {}\n" +
+			    "enum E implements Foo {A, B}");
 	assertNoErrors ();
 	EnumDeclaration ed = (EnumDeclaration)cth.getType ("foo.bar.E");
 	checkOneInterface (ed.getSuperInterfaces (), "foo.bar.Foo");
@@ -383,20 +386,60 @@ public class TestClassSetter {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testUnusedImports () throws IOException {
+	parseAndSetClasses ("import java.util.Map;\n" +
+			    "abstract class Foo {}\n");
+	assert diagnostics.hasWarning () : "Expected unused import warnings";
+    }
+
+    @Test
+    public void testSingleTypeImportNameClash () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.awt.List;\n" +
+			    "import java.util.List;\n" +
+			    "class Qwer { List l; }\n");
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
+    @Test
+    public void testTypeImportOnDemandNameClash () throws IOException {
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.awt.*;\n" +
+			    "import java.util.*;\n" +
+			    "class Qwer { List l; }\n");
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
+    @Test
+    public void testNonFoundPackageAndClass () throws IOException {
+	parseAndSetClasses ("import bar.Bar;\n" +
+			    "class Foo {}\n");
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
+    @Test
+    public void testNonFoundClass () throws IOException {
+	parseAndSetClasses ("import java.util.QEWR;\n" +
+			    "class Foo {}\n");
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
     private void checkImplements (String classToCheck, String wantedInterface) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
     }
 
 
-    private void parseAndSetClasses (String code) {
-	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);
-	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	cth.addTypes (st);
-	ClassSetter cs = new ClassSetter (cth, crh, st, null);
-	cs.fillIn ();
-	cs = new ClassSetter (cth, crh, st, diagnostics);
-	cs.fillIn ();
+    private void parseAndSetClasses (String... sourceCodes) {
+	List<SyntaxTree> trees = new ArrayList<> ();
+	for (String code : sourceCodes) {
+	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);
+	    assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
+	    cth.addTypes (st);
+	    trees.add (st);
+	}
+	ClassSetter.fillInClasses (cth, crh, trees, diagnostics);
     }
 
     private void checkSuperTypeName (String classToCheck, String expectedSuperType) {

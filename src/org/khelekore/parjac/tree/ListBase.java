@@ -8,10 +8,11 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ZOMEntry;
 
-public abstract class ListBase<T extends TreeNode> implements TreeNode {
+public abstract class ListBase<T extends TreeNode> extends PositionNode {
     private final List<T> ls;
 
     public ListBase (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	@SuppressWarnings("unchecked")T vd = (T)parts.pop ();
 	if (r.size () == 1) {
 	    ls = Collections.singletonList (vd);

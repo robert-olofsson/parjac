@@ -5,13 +5,14 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class BasicForStatement implements TreeNode {
+public class BasicForStatement extends PositionNode {
     private final TreeNode forInit;
     private final TreeNode exp;
     private final StatementExpressionList forUpdate;
     private final TreeNode statement;
 
     public BasicForStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 2;
 	if (r.getRulePart (pos).isRulePart ()) {
 	    forInit = parts.pop ();

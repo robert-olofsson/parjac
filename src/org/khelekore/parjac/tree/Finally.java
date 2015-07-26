@@ -4,10 +4,11 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class Finally implements TreeNode {
+public class Finally extends PositionNode {
     private final Block block;
 
-    public Finally (Deque<TreeNode> parts, ParsePosition ppos) {
+    public Finally (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	block = (Block)parts.pop ();
     }
 

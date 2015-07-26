@@ -87,7 +87,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	StringBuilder sb = new StringBuilder ();
 	appendParameters (c.getParameters (), sb);
 	sb.append ("V");
-	MethodInfo mi = new MethodInfo (Result.VOID_RESULT,
+	MethodInfo mi = new MethodInfo (new Result.VoidResult (null),
 					cw.visitMethod (mods, "<init>", sb.toString (), null, null));
 	methods.addLast (mi);
 	return true;

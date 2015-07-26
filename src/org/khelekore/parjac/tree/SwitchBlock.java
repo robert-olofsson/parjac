@@ -6,11 +6,12 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class SwitchBlock implements TreeNode {
+public class SwitchBlock extends PositionNode {
     private final List<SwitchBlockStatementGroup> groups;
     private final List<SwitchLabel> labels;
 
-    public SwitchBlock (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public SwitchBlock (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	List<SwitchBlockStatementGroup> groups = null;
 	List<SwitchLabel> labels = null;
 

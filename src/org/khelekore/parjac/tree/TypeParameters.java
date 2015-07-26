@@ -7,10 +7,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class TypeParameters implements TreeNode {
+public class TypeParameters extends PositionNode {
     private final List<TypeParameter> types;
 
     public TypeParameters (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	parts.pop (); // '<'
 	TypeParameter tp = (TypeParameter)parts.pop ();
 	if (r.size () == 3) {

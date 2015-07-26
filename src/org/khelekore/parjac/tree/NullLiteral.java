@@ -1,10 +1,11 @@
 package org.khelekore.parjac.tree;
 
-public class NullLiteral implements TreeNode {
-    public static final NullLiteral NULL = new NullLiteral ();
+import org.khelekore.parjac.lexer.ParsePosition;
 
-    private NullLiteral () {
-	// empty
+public class NullLiteral extends PositionNode {
+
+    public NullLiteral (ParsePosition pos) {
+	super (pos);
     }
 
     @Override public String toString () {

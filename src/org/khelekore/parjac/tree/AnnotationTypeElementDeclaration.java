@@ -7,7 +7,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class AnnotationTypeElementDeclaration implements TreeNode {
+public class AnnotationTypeElementDeclaration extends PositionNode {
     private final List<TreeNode> modifiers;
     private final TreeNode type;
     private final String id;
@@ -15,6 +15,7 @@ public class AnnotationTypeElementDeclaration implements TreeNode {
     private final DefaultValue defaultValue;
 
     public AnnotationTypeElementDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 4;
 	if (r.getRulePart (1).getId () != Token.IDENTIFIER) {
 	    modifiers = ((ZOMEntry)parts.pop ()).get ();

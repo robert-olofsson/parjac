@@ -261,7 +261,7 @@ public class TestNameModifierChecker {
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
 	// We need classes to be correctly filled in for NameModifierChecker to work
 	cth.addTypes (st);
-	ClassSetter cs = new ClassSetter (cth, crh, st, null);
+	ClassSetter cs = new ClassSetter (cth, crh, st, diagnostics, 0);
 	cs.fillIn ();
 	NameModifierChecker nmc = new NameModifierChecker (cth, crh, st, diagnostics);
 	nmc.check ();

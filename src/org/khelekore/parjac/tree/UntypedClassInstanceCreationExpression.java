@@ -55,6 +55,7 @@ public class UntypedClassInstanceCreationExpression extends PositionNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
 	if (args != null)
 	    args.visit (visitor);
 	if (body != null) {
@@ -62,5 +63,13 @@ public class UntypedClassInstanceCreationExpression extends PositionNode {
 		body.visit (visitor);
 	    visitor.endAnonymousClass (id, body);
 	}
+    }
+
+    public TypeArguments getTypeArguments () {
+	return typeArguments;
+    }
+
+    public ClassType getId () {
+	return id;
     }
 }

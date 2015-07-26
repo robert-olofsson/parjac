@@ -92,7 +92,7 @@ public class JavaTreeBuilder {
 	register (g, "EnumConstantList", constructored (EnumConstantList::new));
 	register (g, "EnumConstant", constructored (EnumConstant::new));
 	register (g, "EnumBodyDeclarations", constructored (EnumBodyDeclarations::new));
-	register (g, "EmptyDeclaration", constructored (EmptyDeclaration::build));
+	register (g, "EmptyDeclaration", constructored (EmptyDeclaration::new));
 
 	// Productions from §9 (Interfaces)
 	register (g, "NormalInterfaceDeclaration", diagnosed (NormalInterfaceDeclaration::new));
@@ -123,7 +123,7 @@ public class JavaTreeBuilder {
 	register (g, "LocalVariableDeclarationStatement",
 		  constructored (LocalVariableDeclarationStatement::new));
 	register (g, "LocalVariableDeclaration", constructored (LocalVariableDeclaration::new));
-	register (g, "EmptyStatement", constructored (EmptyStatement::build));
+	register (g, "EmptyStatement", constructored (EmptyStatement::new));
 	register (g, "LabeledStatement", constructored (LabeledStatement::new));
 	register (g, "LabeledStatementNoShortIf", constructored (LabeledStatement::new));
 	register (g, "ExpressionStatement", constructored (ExpressionStatement::new));
@@ -160,14 +160,14 @@ public class JavaTreeBuilder {
 
 	// Productions from §15 (Expressions)
 	register (g, "PrimaryNoNewArray", constructored (PrimaryNoNewArray::build));
-	register (g, "Brackets", constructored (Brackets::build));
+	register (g, "Brackets", constructored (Brackets::new));
 	register (g, "ClassInstanceCreationExpression",
 		  constructored (ClassInstanceCreationExpression::build));
 	register (g, "UntypedClassInstanceCreationExpression",
 		  constructored (UntypedClassInstanceCreationExpression::new));
 	register (g, "ClassInstanceName", constructored (ClassInstanceName::new));
 	register (g, "ExtraName", constructored (ExtraName::new));
-	register (g, "Diamond", constructored (Diamond::build));
+	register (g, "Diamond", constructored (Diamond::new));
 	register (g, "FieldAccess", constructored (FieldAccess::new));
 	register (g, "ArrayAccess", constructored (ArrayAccess::new));
 	register (g, "MethodInvocation", constructored (MethodInvocation::build));
@@ -282,13 +282,13 @@ public class JavaTreeBuilder {
 	case STRING_LITERAL:
 	    return new StringLiteral (lexer.getStringValue (), pos);
 	case TRUE:
-	    return BooleanLiteral.TRUE_VALUE;
+	    return new BooleanLiteral (true, pos);
 	case FALSE:
-	    return BooleanLiteral.FALSE_VALUE;
+	    return new BooleanLiteral (false, pos);
 	case IDENTIFIER:
 	    return new Identifier (lexer.getIdentifier (), pos);
 	case NULL:
-	    return NullLiteral.NULL;
+	    return new NullLiteral (pos);
 	default:
 	    throw new IllegalStateException ("Do not know how to get value from:" + token);
 	}
@@ -301,17 +301,17 @@ public class JavaTreeBuilder {
 	if (b != null) {
 	    b.build (rule, parts, pos, path, diagnostics);
 	} else if (rule.getName ().startsWith ("ZOM_")) {
-	    buildZOM (rule, parts);
+	    buildZOM (rule, parts, pos);
 	}
     }
 
-    private void buildZOM (Rule r, Deque<TreeNode> parts) {
+    private void buildZOM (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	ZOMEntry z;
 	String name = r.getName ();
 	if (r.size () > 1 && r.getRulePart (0).getId () == name) {
 	    z = (ZOMEntry)parts.pop ();
 	} else {
-	    z = new ZOMEntry (r.getRulePart (0).getId ().toString ());
+	    z = new ZOMEntry (r.getRulePart (0).getId ().toString (), pos);
 	}
 	// We should not have ',' or similar in the parts so no need to pop those
 	z.add (parts.pop ());

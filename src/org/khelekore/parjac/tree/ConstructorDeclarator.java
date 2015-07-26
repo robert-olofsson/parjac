@@ -6,12 +6,13 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class ConstructorDeclarator implements TreeNode {
+public class ConstructorDeclarator extends PositionNode {
     private final TypeParameters types;
     private final String id;
     private final FormalParameterList params;
 
     public ConstructorDeclarator (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 2;
 	if (r.getRulePart (0).getId () != Token.IDENTIFIER) {
 	    types = (TypeParameters)parts.pop ();

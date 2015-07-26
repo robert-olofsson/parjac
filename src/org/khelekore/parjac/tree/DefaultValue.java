@@ -4,10 +4,11 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class DefaultValue implements TreeNode {
+public class DefaultValue extends PositionNode {
     private final TreeNode value;
 
-    public DefaultValue (Deque<TreeNode> parts, ParsePosition ppos) {
+    public DefaultValue (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	parts.pop (); // 'default'
 	this.value = parts.pop ();
     }

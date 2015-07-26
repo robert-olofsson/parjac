@@ -7,10 +7,11 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class TypeArgumentList implements TreeNode {
+public class TypeArgumentList extends PositionNode {
     private final List<TreeNode> ls;
 
     public TypeArgumentList (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	TreeNode ta = parts.pop ();
 	if (r.size () == 1) {
 	    ls = Collections.singletonList (ta);

@@ -4,11 +4,12 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class LambdaExpression implements TreeNode {
+public class LambdaExpression extends PositionNode {
     private final TreeNode parameters;
     private final TreeNode body;
 
-    public LambdaExpression (Deque<TreeNode> parts, ParsePosition ppos) {
+    public LambdaExpression (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	parameters = parts.pop ();
 	parts.pop (); // '->'
 	body = parts.pop ();

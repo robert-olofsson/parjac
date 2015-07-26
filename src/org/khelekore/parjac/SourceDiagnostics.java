@@ -6,21 +6,33 @@ import javax.tools.Diagnostic;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class SourceDiagnostics implements Diagnostic<Path> {
+    private final Diagnostic.Kind kind;
     private final Path path;
     private final ParsePosition parsePosition;
     private final String format;
     private final Object[] args;
 
-    public SourceDiagnostics (Path path, ParsePosition  parsePosition,
-			      String format, Object... args) {
+    private SourceDiagnostics (Diagnostic.Kind kind, Path path, ParsePosition  parsePosition,
+			       String format, Object... args) {
+	this.kind = kind;
 	this.path = path;
 	this.parsePosition = parsePosition;
 	this.format = format;
 	this.args = args;
     }
 
+    public static  SourceDiagnostics error (Path path, ParsePosition  parsePosition,
+					    String format, Object... args) {
+	return new SourceDiagnostics (Diagnostic.Kind.ERROR, path, parsePosition, format, args);
+    }
+
+    public static SourceDiagnostics warning (Path path, ParsePosition  parsePosition,
+					     String format, Object... args) {
+	return new SourceDiagnostics (Diagnostic.Kind.WARNING, path, parsePosition, format, args);
+    }
+
     public Diagnostic.Kind getKind () {
-	return Diagnostic.Kind.ERROR;
+	return kind;
     }
 
     public Path getSource () {
@@ -53,7 +65,7 @@ public class SourceDiagnostics implements Diagnostic<Path> {
 
     public String getMessage (Locale locale) {
 	String msg = String.format (format, args);
-	return String.format ("%s:%d:%d: %s", path.toString (),
-			      getLineNumber (), getColumnNumber (), msg);
+	return String.format ("%s:%d:%d: %s: %s", path.toString (),
+			      getLineNumber (), getColumnNumber (), kind, msg);
     }
 }

@@ -3,11 +3,14 @@ package org.khelekore.parjac.tree;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZOMEntry implements TreeNode {
+import org.khelekore.parjac.lexer.ParsePosition;
+
+public class ZOMEntry extends PositionNode {
     private final String type;
     private final List<TreeNode> nodes = new ArrayList<> ();
 
-    public ZOMEntry (String type) {
+    public ZOMEntry (String type, ParsePosition pos) {
+	super (pos);
 	this.type = type;
     }
 

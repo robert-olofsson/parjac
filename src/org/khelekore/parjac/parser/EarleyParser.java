@@ -65,7 +65,7 @@ public class EarleyParser {
     public SyntaxTree parse () {
 	Rule goalRule = grammar.getRules ("Goal").getRules ().get (0);
 	int currentPosition = 0;
-	EarleyState es = new EarleyState (lexer.getParsePosition (), null);
+	EarleyState es = new EarleyState (null);
 	es.addState (new State (goalRule, 0, currentPosition));
 	if (grammar.getRules ("Goal").canBeEmpty ())
 	    es.addState (new State (goalRule, 1, currentPosition));
@@ -108,7 +108,7 @@ public class EarleyParser {
 
 	SyntaxTree sn = buildTree (finished.get (0).getPrevious ()); // skip end of file
 	if (debug)
-	    System.err.println ("Build tree: " + sn);
+	    System.err.println ("Built tree: " + sn);
 	return sn;
     }
 
@@ -120,6 +120,7 @@ public class EarleyParser {
 		System.err.println ("nextToken: " + nextToken);
 	}
 	EarleyState current = states.get (currentPosition);
+	current.setParsePosition (lexer.getParsePosition ());
 	if (debug)
 	    System.err.println (currentPosition + ": start current: " + current);
 	complete (current);
@@ -223,7 +224,7 @@ public class EarleyParser {
 
     private EarleyState scan (EarleyState current, int currentPosition,
 			      Token nextToken, TreeNode currentTokenValue) {
-	EarleyState ret = new EarleyState (lexer.getParsePosition (), currentTokenValue);
+	EarleyState ret = new EarleyState (currentTokenValue);
 	for (State s : current.getStates ()) {
 	    if (!s.dotIsLast () && s.getPartAfterDot ().getId ().equals (nextToken))
 		ret.addState (s.advance (null));
@@ -331,8 +332,6 @@ public class EarleyParser {
     }
 
     private void addParserError (String error) {
-	diagnostics.report (new SourceDiagnostics (path,
-						   lexer.getParsePosition (),
-						   error));
+	diagnostics.report (SourceDiagnostics.error (path, lexer.getParsePosition (), error));
     }
 }

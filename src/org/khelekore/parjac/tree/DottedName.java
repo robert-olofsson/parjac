@@ -1,7 +1,6 @@
 package org.khelekore.parjac.tree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,15 +8,12 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class DottedName implements TreeNode {
+public class DottedName extends PositionNode {
     private final List<String> parts;
 
-    public DottedName (List<String> parts) {
+    public DottedName (List<String> parts, ParsePosition pos) {
+	super (pos);
 	this.parts = parts;
-    }
-
-    public DottedName (String... parts) {
-	this.parts = new ArrayList<> (Arrays.asList (parts));
     }
 
     public static TreeNode create (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
@@ -25,7 +21,7 @@ public class DottedName implements TreeNode {
 	if (r.size () > 1)
 	    dn = (DottedName)parts.pop ();
 	else
-	    dn = new DottedName (new ArrayList<> ());
+	    dn = new DottedName (new ArrayList<> (), pos);
 
 	dn.parts.add (((Identifier)parts.pop ()).get ());
 	return dn;
@@ -60,5 +56,15 @@ public class DottedName implements TreeNode {
 
     public String getLastPart () {
 	return parts.get (parts.size () - 1);
+    }
+
+    public ClassType toClassType () {
+	String name = parts.get (0);
+	ParsePosition pos = getParsePosition ();
+	ClassType ct = new ClassType (new SimpleClassType (null, name, null, pos), pos);
+	for (int i = 1; i < parts.size (); i++) {
+	    ct.add (new SimpleClassType (null, name, null, pos));
+	}
+	return ct;
     }
 }

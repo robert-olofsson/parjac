@@ -1,9 +1,10 @@
 package org.khelekore.parjac.tree;
 
-public class DefaultLabel implements TreeNode {
-    public static final DefaultLabel INSTANCE = new DefaultLabel ();
+import org.khelekore.parjac.lexer.ParsePosition;
 
-    private DefaultLabel () {
+public class DefaultLabel extends PositionNode {
+    public DefaultLabel (ParsePosition pos) {
+	super (pos);
     }
 
     @Override public String toString () {

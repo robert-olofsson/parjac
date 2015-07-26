@@ -4,7 +4,7 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class SingleTypeImportDeclaration extends NamedNode implements ImportDeclaration {
+public class SingleTypeImportDeclaration extends ImportDeclarationBase {
     public SingleTypeImportDeclaration (Deque<TreeNode> parts, ParsePosition pos) {
 	super (parts, pos);
     }

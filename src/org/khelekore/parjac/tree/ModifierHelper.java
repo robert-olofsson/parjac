@@ -35,9 +35,9 @@ public class ModifierHelper {
 		    ModifierTokenType mtt = (ModifierTokenType)tn;
 		    int newFlag = getModifier (mtt.get ());
 		    if ((ret & newFlag) > 0) {
-			diagnostics.report (new SourceDiagnostics (path, tn.getParsePosition (),
-								   "Duplicate modifier '" + mtt.get () +
-								   "' found"));
+			diagnostics.report (SourceDiagnostics.error (path, tn.getParsePosition (),
+								     "Duplicate modifier '%s' found",
+								     mtt.get ()));
 
 		    }
 		    ret |= newFlag;

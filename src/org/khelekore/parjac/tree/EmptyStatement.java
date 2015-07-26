@@ -4,14 +4,10 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class EmptyStatement implements TreeNode {
-    public static final EmptyStatement INSTANCE = new EmptyStatement ();
+public class EmptyStatement extends PositionNode {
 
-    private EmptyStatement () {
-    }
-
-    public static EmptyStatement build (Deque<TreeNode> parts, ParsePosition ppos) {
-	return INSTANCE;
+    public EmptyStatement (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
     }
 
     @Override public String toString () {

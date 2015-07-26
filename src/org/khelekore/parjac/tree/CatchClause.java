@@ -4,11 +4,12 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class CatchClause implements TreeNode {
+public class CatchClause extends PositionNode {
     private final CatchFormalParameter cfp;
     private final Block block;
 
-    public CatchClause (Deque<TreeNode> parts, ParsePosition ppos) {
+    public CatchClause (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	cfp = (CatchFormalParameter)parts.pop ();
 	block = (Block)parts.pop ();
     }

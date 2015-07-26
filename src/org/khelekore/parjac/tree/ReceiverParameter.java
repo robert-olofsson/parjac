@@ -7,12 +7,13 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ReceiverParameter implements TreeNode {
+public class ReceiverParameter extends PositionNode {
     private final List<TreeNode> annotations;
     private final TreeNode type;
     private final List<String> ids;
 
     public ReceiverParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	int len = 2;
 	TreeNode tn = parts.pop ();
 	if (tn instanceof ZOMEntry) {

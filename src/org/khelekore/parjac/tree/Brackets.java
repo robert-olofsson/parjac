@@ -4,14 +4,9 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class Brackets implements TreeNode {
-    public static final Brackets INSTANCE = new Brackets ();
-
-    private Brackets () {
-    }
-
-    public static Brackets build (Deque<TreeNode> parts, ParsePosition ppos) {
-	return INSTANCE;
+public class Brackets extends PositionNode {
+    public Brackets (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
     }
 
     @Override public String toString () {

@@ -5,10 +5,11 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ReturnStatement implements TreeNode {
+public class ReturnStatement extends PositionNode {
     private final TreeNode exp;
 
-    public ReturnStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public ReturnStatement (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	exp = r.size () > 2 ? parts.pop () : null;
     }
 

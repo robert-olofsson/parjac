@@ -4,10 +4,11 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ExtendsInterfaces implements TreeNode {
+public class ExtendsInterfaces extends PositionNode {
     private final InterfaceTypeList ls;
 
-    public ExtendsInterfaces (Deque<TreeNode> parts, ParsePosition ppos) {
+    public ExtendsInterfaces (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	ls = (InterfaceTypeList)parts.pop ();
     }
 

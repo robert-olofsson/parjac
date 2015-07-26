@@ -7,9 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.grammar.Grammar;
@@ -123,36 +121,13 @@ public class Compiler {
 	cth = new CompiledTypesHolder ();
 	trees.parallelStream ().forEach (t -> cth.addTypes (t));
 
-	runTimed (() -> fillinClasses (trees), "Setting classes");
+	runTimed (() -> ClassSetter.fillInClasses (cth, crh, trees, diagnostics), "Setting classes");
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	// check that there is at least one constructor
 	// check that there are returns, even in void methods
 	// Check types of fields and assignments
 	// Check matching methods
 	// Check generics
-    }
-
-    private void fillinClasses (List<SyntaxTree> trees) {
-	// Fill in correct classes
-	// Depending on order we may not have correct parents on first try.
-	// We collect the trees that fails and tries again
-	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
-	trees.parallelStream ().forEach (t -> fillInClasses (t, null, rest));
-	if (!rest.isEmpty ()) {
-	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
-	    rest.parallelStream ().forEach (t -> fillInClasses (t, diagnostics, rest2));
-	}
-	// warn for unused imports
-	// warn for import conflicts
-    }
-
-    private void fillInClasses (SyntaxTree tree,
-				CompilerDiagnosticCollector diagnostics,
-				Queue<SyntaxTree> rest) {
-	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics);
-	cs.fillIn ();
-	if (!cs.completed ())
-	    rest.add (tree);
     }
 
     private void checkNamesAndModifiers (List<SyntaxTree> trees) {

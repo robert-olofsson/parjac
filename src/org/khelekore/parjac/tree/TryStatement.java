@@ -5,13 +5,14 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class TryStatement implements TreeNode {
+public class TryStatement extends PositionNode {
     private final ResourceList resources;
     private final Block block;
     private final Catches catches;
     private final Finally finallyBlock;
 
     public TryStatement (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 1;
 	if (r.size () > 4) {
 	    resources = (ResourceList)parts.pop ();

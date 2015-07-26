@@ -4,10 +4,11 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class PostDecrementExpression implements TreeNode {
+public class PostDecrementExpression extends PositionNode {
     private final TreeNode exp;
 
-    public PostDecrementExpression (Deque<TreeNode> parts, ParsePosition ppos) {
+    public PostDecrementExpression (Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	exp = parts.pop ();
 	parts.pop (); // '--'
     }

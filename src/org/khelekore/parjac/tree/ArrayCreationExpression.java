@@ -5,13 +5,14 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ArrayCreationExpression implements TreeNode {
+public class ArrayCreationExpression extends PositionNode {
     private final TreeNode type;
     private final DimExprs dimexprs;
     private final Dims dims;
     private final ArrayInitializer initializer;
 
-    public ArrayCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public ArrayCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	type = parts.pop ();
 	if (r.getRulePart (2).getId ().equals ("DimExprs")) {
 	    dimexprs = (DimExprs)parts.pop ();

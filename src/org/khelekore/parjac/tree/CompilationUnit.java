@@ -7,20 +7,13 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class CompilationUnit implements TreeNode {
+public class CompilationUnit extends PositionNode {
     private final PackageDeclaration pd;
     private final List<ImportDeclaration> imports;
     private final List<TreeNode> types;
 
-    public CompilationUnit (PackageDeclaration pd,
-			    List<ImportDeclaration> imports,
-			    List<TreeNode> types) {
-	this.pd = pd;
-	this.imports = imports;
-	this.types = types;
-    }
-
     public CompilationUnit (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	PackageDeclaration pd = null;
 	List<ImportDeclaration> imports = null;
 	List<TreeNode> types = null;

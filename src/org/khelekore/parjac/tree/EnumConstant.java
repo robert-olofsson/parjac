@@ -7,13 +7,14 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class EnumConstant implements TreeNode {
+public class EnumConstant extends PositionNode {
     private final List<TreeNode> annotations;
     private final String id;
     private final ArgumentList arguments;
     private final ClassBody classBody;
 
     public EnumConstant (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	int pos = 0;
 	TreeNode tn = parts.pop ();
 	if (r.getRulePart (pos).getId () != Token.IDENTIFIER) {

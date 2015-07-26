@@ -6,9 +6,11 @@ import org.khelekore.parjac.lexer.ParsePosition;
 
 public class NamedNode implements TreeNode {
     private final DottedName name;
+    private final ParsePosition ppos;
 
     public NamedNode (DottedName name, ParsePosition ppos) {
 	this.name = name;
+	this.ppos = ppos;
     }
 
     public NamedNode (Deque<TreeNode> parts, ParsePosition ppos) {
@@ -27,10 +29,14 @@ public class NamedNode implements TreeNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{name: " + name + "}";
+	return getClass ().getSimpleName () + "{name: " + name + ", " + getParsePosition () + "}";
     }
 
     public DottedName getName () {
 	return name;
+    }
+
+    @Override public ParsePosition getParsePosition () {
+	return ppos;
     }
 }

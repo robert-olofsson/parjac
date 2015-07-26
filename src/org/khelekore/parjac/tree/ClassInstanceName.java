@@ -10,8 +10,8 @@ public class ClassInstanceName extends PositionNode {
     private final String id;
     private final List<ExtraName> extras;
 
-    public ClassInstanceName (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
-	super (ppos);
+    public ClassInstanceName (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	id = ((Identifier)parts.pop ()).get ();
 	extras = r.size () > 1 ? ((ZOMEntry)parts.pop ()).get () : null;
     }
@@ -21,7 +21,8 @@ public class ClassInstanceName extends PositionNode {
     }
 
     public ClassType toClassType () {
-	ClassType ct = new ClassType (new SimpleClassType (null, id, null), getParsePosition ());
+	ParsePosition pos = getParsePosition ();
+	ClassType ct = new ClassType (new SimpleClassType (null, id, null, pos), pos);
 	if (extras != null) {
 	    for (ExtraName n : extras) {
 		ct.add (n.toSimpleClassType ());

@@ -7,11 +7,12 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class EnumBody implements TreeNode {
+public class EnumBody extends PositionNode {
     private final EnumConstantList constants;
     private final EnumBodyDeclarations enumBodyDeclarations;
 
     public EnumBody (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+	super (ppos);
 	EnumConstantList constants = null;
 	EnumBodyDeclarations enumBodyDeclarations = null;
 	for (SimplePart sp : r.getParts ()) {

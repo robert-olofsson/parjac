@@ -18,7 +18,7 @@ public class ParsePosition {
 	return getClass ().getSimpleName () + "{" +
 	    "line: " + lineNumber +
 	    ", column: " + tokenColumn +
-	    ", token start pos: " + tokenEndPos +
+	    ", token start pos: " + tokenStartPos +
 	    ", token end pos: " + tokenEndPos +
 	    "}";
     }

@@ -7,11 +7,12 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class NormalFormalParameterList implements TreeNode {
+public class NormalFormalParameterList extends PositionNode {
     private final List<FormalParameter> fps;
     private final LastFormalParameter lfp;
 
     public NormalFormalParameterList (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
+	super (pos);
 	List<FormalParameter> fps =
 	    r.size () > 1 ? ((ZOMEntry)parts.pop ()).get () : null;
 	TreeNode tn = parts.pop ();

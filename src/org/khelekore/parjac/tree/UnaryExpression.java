@@ -6,16 +6,17 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class UnaryExpression implements TreeNode {
+public class UnaryExpression extends PositionNode {
     private final Token conversion;
     private final TreeNode exp;
 
-    public UnaryExpression (Token conversion, TreeNode exp) {
+    public UnaryExpression (Token conversion, TreeNode exp, ParsePosition pos) {
+	super (pos);
 	this.conversion = conversion;
 	this.exp = exp;
     }
 
-    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
+    public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return parts.pop ();
 	TreeNode conversionNode = parts.pop ();
@@ -28,7 +29,7 @@ public class UnaryExpression implements TreeNode {
 	    // For plus we just return the actual value
 	    return exp;
 	}
-	return new UnaryExpression (conversion, exp);
+	return new UnaryExpression (conversion, exp, pos);
     }
 
     @Override public String toString () {
