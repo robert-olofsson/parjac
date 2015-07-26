@@ -396,7 +396,6 @@ public class ClassSetter implements TreeVisitor {
 
     private String tryTypeImportOnDemand (String id, ParsePosition pos) {
 	List<String> matches = new ArrayList<> ();
-	String fqn = null;
 	for (ImportHolder ih : ih.tiod) {
 	    String t = ih.cas.name + ih.cas.sep + id;
 	    if (validFullName (t)) {
