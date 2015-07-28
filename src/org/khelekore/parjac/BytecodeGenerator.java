@@ -8,7 +8,7 @@ import java.util.Deque;
 import java.util.List;
 
 import org.khelekore.parjac.lexer.Token;
-import org.khelekore.parjac.semantics.CompiledTypesHolder;
+import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 import org.objectweb.asm.ClassWriter;
@@ -19,16 +19,16 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeGenerator implements TreeVisitor {
     private final Path origin;
-    private final CompiledTypesHolder cth;
+    private final ClassInformationProvider cip;
     private final BytecodeWriter classWriter;
     private DottedName packageName;
     private final Deque<ClassWriterHolder> classes = new ArrayDeque<> ();
     private final Deque<MethodInfo> methods = new ArrayDeque<> ();
 
-    public BytecodeGenerator (Path origin, CompiledTypesHolder cth,
+    public BytecodeGenerator (Path origin, ClassInformationProvider cip,
 			      BytecodeWriter classWriter) {
 	this.origin = origin;
-	this.cth = cth;
+	this.cip = cip;
 	this.classWriter = classWriter;
     }
 
@@ -406,7 +406,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 
 	public void start () {
-	    String fqn = cth.getFullName (tn);
+	    String fqn = cip.getFullName (tn);
 	    SuperAndFlags saf = getSuperAndFlags ();
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
@@ -446,7 +446,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 
 	private Path getPath () {
-	    String cid = cth.getFilename (tn) + ".class";
+	    String cid = cip.getFilename (tn) + ".class";
 	    if (packageName == null)
 		return Paths.get (cid);
 	    return Paths.get (packageName.getPathName (), cid);

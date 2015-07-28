@@ -16,6 +16,7 @@ import org.khelekore.parjac.lexer.Lexer;
 import org.khelekore.parjac.parser.EarleyParser;
 import org.khelekore.parjac.parser.JavaTreeBuilder;
 import org.khelekore.parjac.parser.PredictCache;
+import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
@@ -32,9 +33,7 @@ public class Compiler {
     private final PredictCache predictCache;
     private final JavaTreeBuilder treeBuilder;
     private final CompilationArguments settings;
-
-    private CompiledTypesHolder cth;
-    private ClassResourceHolder crh;
+    private final ClassInformationProvider cip;
 
     public Compiler (CompilerDiagnosticCollector diagnostics, Grammar g,
 		     CompilationArguments settings) {
@@ -43,6 +42,10 @@ public class Compiler {
 	this.predictCache = new PredictCache (g);
 	this.treeBuilder = new JavaTreeBuilder (g);
 	this.settings = settings;
+
+	ClassResourceHolder crh = new ClassResourceHolder (settings.getClassPathEntries (), diagnostics);
+	CompiledTypesHolder cth = new CompiledTypesHolder ();
+	cip = new ClassInformationProvider (crh, cth);
     }
 
     public void compile () {
@@ -110,18 +113,16 @@ public class Compiler {
 
     private void scanClassPaths () {
 	try {
-	    crh = new ClassResourceHolder (settings.getClassPathEntries (), diagnostics);
-	    crh.scanClassPath ();
+	    cip.scanClassPath ();
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to scan classpath: %s", e));
 	}
     }
 
     private void checkSemantics (List<SyntaxTree> trees) {
-	cth = new CompiledTypesHolder ();
-	trees.parallelStream ().forEach (t -> cth.addTypes (t));
+	trees.parallelStream ().forEach (t -> cip.addTypes (t));
 
-	runTimed (() -> ClassSetter.fillInClasses (cth, crh, trees, diagnostics), "Setting classes");
+	runTimed (() -> ClassSetter.fillInClasses (cip, trees, diagnostics), "Setting classes");
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	// check that there is at least one constructor
 	// check that there are returns, even in void methods
@@ -136,7 +137,7 @@ public class Compiler {
     }
 
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	NameModifierChecker nmc = new NameModifierChecker (cth, crh, tree, diagnostics);
+	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();
     }
 
@@ -175,7 +176,7 @@ public class Compiler {
 
     private void writeClasses (SyntaxTree tree) {
 	BytecodeGenerator w =
-	    new BytecodeGenerator (tree.getOrigin (), cth, settings.getClassWriter ());
+	    new BytecodeGenerator (tree.getOrigin (), cip, settings.getClassWriter ());
 	tree.getCompilationUnit ().visit (w);
     }
 

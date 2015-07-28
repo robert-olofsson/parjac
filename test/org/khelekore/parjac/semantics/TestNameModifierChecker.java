@@ -17,8 +17,8 @@ import org.testng.annotations.Test;
 public class TestNameModifierChecker {
     private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
-    private CompiledTypesHolder cth;
     private ClassResourceHolder crh;
+    private ClassInformationProvider cip;
 
     @BeforeClass
     public void beforeClass () throws IOException {
@@ -32,7 +32,8 @@ public class TestNameModifierChecker {
     @BeforeMethod
     public void createDiagnostics () {
 	diagnostics = new CompilerDiagnosticCollector ();
-	cth = new CompiledTypesHolder ();
+	CompiledTypesHolder cth = new CompiledTypesHolder ();
+	cip = new ClassInformationProvider (crh, cth);
     }
 
     @Test
@@ -256,14 +257,20 @@ public class TestNameModifierChecker {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
+    @Test
+    public void testExtendsInterface () throws IOException {
+	parseAndSetClasses ("class Foo extends Runnable {}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
     private void parseAndSetClasses (String code) {
 	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
 	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
 	// We need classes to be correctly filled in for NameModifierChecker to work
-	cth.addTypes (st);
-	ClassSetter cs = new ClassSetter (cth, crh, st, diagnostics, 0);
+	cip.addTypes (st);
+	ClassSetter cs = new ClassSetter (cip, st, diagnostics, 0);
 	cs.fillIn ();
-	NameModifierChecker nmc = new NameModifierChecker (cth, crh, st, diagnostics);
+	NameModifierChecker nmc = new NameModifierChecker (cip, st, diagnostics);
 	nmc.check ();
     }
 

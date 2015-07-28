@@ -26,11 +26,15 @@ public class CompiledTypesHolder {
 	return name2node.keySet ();
     }
 
+    public boolean hasType (String fqn) {
+	return name2node.containsKey (fqn);
+    }
+
     /** Get the outer tree node for a given fully qualified name,
      *  that is "some.package.Foo$Bar".
      */
-    public TreeNode getType (String name) {
-	return name2node.get (name);
+    public TreeNode getType (String fqn) {
+	return name2node.get (fqn);
     }
 
     public String getFilename (TreeNode tn) {

@@ -18,16 +18,14 @@ import org.khelekore.parjac.tree.TreeVisitor;
 import static org.objectweb.asm.Opcodes.*;
 
 public class NameModifierChecker implements TreeVisitor {
-    private final CompiledTypesHolder cth;
-    private final ClassResourceHolder crh;
+    private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private int level = 0;
 
-    public NameModifierChecker (CompiledTypesHolder cth, ClassResourceHolder crh,
-				SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	this.cth = cth;
-	this.crh = crh;
+    public NameModifierChecker (ClassInformationProvider cip, SyntaxTree tree,
+				CompilerDiagnosticCollector diagnostics) {
+	this.cip = cip;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
     }
@@ -41,22 +39,15 @@ public class NameModifierChecker implements TreeVisitor {
 	level++;
 	ClassType ct = c.getSuperClass ();
 	if (ct != null) {
-	    int flags;
 	    String fqn = ct.getFullName ();
 	    if (fqn != null) {
-		// TODO: need to make sure I can merge cth and crh and get some interface type back
-		// TODO: with appropriate methods on it.
-		TreeNode tn;
-		if ((tn = cth.getType (fqn)) != null) {
-		    // TODO: this can probably fail
-		    NormalClassDeclaration clz = (NormalClassDeclaration)tn;
-		    flags = clz.getAccessFlags ();
-		} else {
-		    flags = crh.getClassModifiers (fqn);
-		}
+		int flags = cip.getFlags (fqn);
 		if (isFinal (flags))
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), ct.getParsePosition (),
 								 "Can not extend final class"));
+		if (isInterface (flags))
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), ct.getParsePosition (),
+								 "Can not extend interface"));
 	    }
 	}
 	return true;
@@ -214,5 +205,9 @@ public class NameModifierChecker implements TreeVisitor {
 
     private boolean isSynchronized (int f) {
 	return (f & ACC_SYNCHRONIZED) == ACC_SYNCHRONIZED;
+    }
+
+    private boolean isInterface (int f) {
+	return (f & ACC_INTERFACE) == ACC_INTERFACE;
     }
 }

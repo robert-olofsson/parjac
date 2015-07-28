@@ -29,8 +29,8 @@ import org.testng.annotations.Test;
 public class TestClassSetter {
     private Grammar g;
     private CompilerDiagnosticCollector diagnostics;
-    private CompiledTypesHolder cth;
     private ClassResourceHolder crh;
+    private ClassInformationProvider cip;
 
     @BeforeClass
     public void beforeClass () throws IOException {
@@ -44,7 +44,8 @@ public class TestClassSetter {
     @BeforeMethod
     public void createDiagnostics () {
 	diagnostics = new CompilerDiagnosticCollector ();
-	cth = new CompiledTypesHolder ();
+	CompiledTypesHolder cth = new CompiledTypesHolder ();
+	cip = new ClassInformationProvider (crh, cth);
     }
 
     @Test
@@ -119,7 +120,7 @@ public class TestClassSetter {
 			    "interface Foo {}\n" +
 			    "enum E implements Foo {A, B}");
 	assertNoErrors ();
-	EnumDeclaration ed = (EnumDeclaration)cth.getType ("foo.bar.E");
+	EnumDeclaration ed = (EnumDeclaration)cip.getType ("foo.bar.E");
 	checkOneInterface (ed.getSuperInterfaces (), "foo.bar.Foo");
     }
 
@@ -127,7 +128,7 @@ public class TestClassSetter {
     public void testInterfaceExtends () throws IOException {
 	parseAndSetClasses ("package foo.bar; interface Foo {} interface Bar extends Foo {}");
 	assertNoErrors ();
-	NormalInterfaceDeclaration id = (NormalInterfaceDeclaration)cth.getType ("foo.bar.Bar");
+	NormalInterfaceDeclaration id = (NormalInterfaceDeclaration)cip.getType ("foo.bar.Bar");
 	ExtendsInterfaces ei = id.getExtendsInterfaces ();
 	assert ei != null;
 	checkOneInterface (ei.get (), "foo.bar.Foo");
@@ -149,7 +150,7 @@ public class TestClassSetter {
     @Test
     public void testGenericSuperType () throws IOException {
 	parseAndSetClasses ("package foo; class Foo implements Comparable<Foo> {}");
-	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType ("foo.Foo");
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType ("foo.Foo");
 	InterfaceTypeList ifs = cd.getSuperInterfaces ();
 	assert ifs != null;
 	List<ClassType> cts = ifs.get ();
@@ -426,7 +427,7 @@ public class TestClassSetter {
     }
 
     private void checkImplements (String classToCheck, String wantedInterface) {
-	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (classToCheck);
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
     }
 
@@ -436,14 +437,14 @@ public class TestClassSetter {
 	for (String code : sourceCodes) {
 	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);
 	    assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	    cth.addTypes (st);
+	    cip.addTypes (st);
 	    trees.add (st);
 	}
-	ClassSetter.fillInClasses (cth, crh, trees, diagnostics);
+	ClassSetter.fillInClasses (cip, trees, diagnostics);
     }
 
     private void checkSuperTypeName (String classToCheck, String expectedSuperType) {
-	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (classToCheck);
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	assertClassType (cd.getSuperClass (), expectedSuperType);
     }
 
@@ -457,7 +458,7 @@ public class TestClassSetter {
     }
 
     private void checkField (String className, int bodyPosition, String expectedType) {
-	NormalClassDeclaration cd = (NormalClassDeclaration)cth.getType (className);
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (className);
 	ClassBody body = cd.getBody ();
 	FieldDeclaration fd = (FieldDeclaration)body.getDeclarations ().get (bodyPosition);
 	assertClassType ((ClassType)fd.getType (), expectedType);

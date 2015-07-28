@@ -7,10 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -94,12 +94,12 @@ public class ClassResourceHolder {
 	return r != null;
     }
 
-    public List<String> getSuperTypes (String fqn) throws IOException {
+    public Optional<List<String>> getSuperTypes (String fqn) throws IOException {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
-	    return Collections.emptyList ();
+	    return Optional.empty ();
 	r.ensureNodeIsLoaded ();
-	return r.superTypes;
+	return Optional.of (r.superTypes);
     }
 
     public int getClassModifiers (String fqn) {

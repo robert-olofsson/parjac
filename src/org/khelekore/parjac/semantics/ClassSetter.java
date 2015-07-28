@@ -22,8 +22,7 @@ import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 
 public class ClassSetter implements TreeVisitor {
-    private final CompiledTypesHolder cth;
-    private final ClassResourceHolder crh;
+    private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private final DottedName packageName;
@@ -33,26 +32,34 @@ public class ClassSetter implements TreeVisitor {
     private final int level;
     private boolean completed = true;
 
-    public static void fillInClasses (CompiledTypesHolder cth, ClassResourceHolder crh,
+    public static void fillInClasses (ClassInformationProvider cip,
 				      List<SyntaxTree> trees,
 				      CompilerDiagnosticCollector diagnostics) {
 	// Fill in correct classes
 	// Depending on order we may not have correct parents on first try.
 	// We collect the trees that fails and tries again
 	Queue<SyntaxTree> rest = new ConcurrentLinkedQueue<SyntaxTree> ();
-	trees.parallelStream ().forEach (t -> fillInClasses (cth, crh, t, diagnostics, rest, 0));
+	trees.parallelStream ().forEach (t -> fillInClasses (cip, t, diagnostics, rest, 0));
 	if (!rest.isEmpty ()) {
 	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
-	    rest.parallelStream ().forEach (t -> fillInClasses (cth, crh, t, diagnostics, rest2, 1));
+	    rest.parallelStream ().forEach (t -> fillInClasses (cip, t, diagnostics, rest2, 1));
 	}
+	// TODO: replace DottedName with identifier and classes where possible
+	// TODO: "foo = 2;" parses to "Assignment (DottedName(foo), =, 2)"
+	// TODO: "foo.bar.baz()" parses to "MethodInvocation(DottedName(foo.bar), baz()"
+	// TODO: has to be that way, since we can always write fully qualified names
+	// TODO: ExplicitConstructorInvocation, PrimaryNoNewArray, ClassInstanceCreationExpression,
+	// TODO: FieldAccess, ArrayAccess, MethodInvocation, MethodReference, LeftHandSide,
+	// TODO: PostfixExpression
+	// TODO: can probably replace inside block.
 	trees.forEach (t -> checkUnusedInport (t, diagnostics));
     }
 
-    private static void fillInClasses (CompiledTypesHolder cth, ClassResourceHolder crh,
+    private static void fillInClasses (ClassInformationProvider cip,
 				       SyntaxTree tree,
 				       CompilerDiagnosticCollector diagnostics,
 				       Queue<SyntaxTree> rest, int level) {
-	ClassSetter cs = new ClassSetter (cth, crh, tree, diagnostics, level);
+	ClassSetter cs = new ClassSetter (cip, tree, diagnostics, level);
 	cs.fillIn ();
 	if (!cs.completed ())
 	    rest.add (tree);
@@ -70,10 +77,9 @@ public class ClassSetter implements TreeVisitor {
 						       "Unused import"));
     }
 
-    public ClassSetter (CompiledTypesHolder cth, ClassResourceHolder crh,
-			SyntaxTree tree, CompilerDiagnosticCollector diagnostics, int level) {
-	this.cth = cth;
-	this.crh = crh;
+    public ClassSetter (ClassInformationProvider cip, SyntaxTree tree,
+			CompilerDiagnosticCollector diagnostics, int level) {
+	this.cip = cip;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
 	this.level = level;
@@ -97,20 +103,20 @@ public class ClassSetter implements TreeVisitor {
 	if (superclass != null)
 	    setType (superclass);
 	visitSuperInterfaces (c.getSuperInterfaces ());
-	containingTypeName.push (cth.getFullName (c));
+	containingTypeName.push (cip.getFullName (c));
 	registerTypeParameters (c.getTypeParameters ());
 	return true;
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	containingTypeName.push (cth.getFullName (e));
+	containingTypeName.push (cip.getFullName (e));
 	visitSuperInterfaces (e.getSuperInterfaces ());
 	registerTypeParameters (null);
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	containingTypeName.push (cth.getFullName (i));
+	containingTypeName.push (cip.getFullName (i));
 	ExtendsInterfaces ei = i.getExtendsInterfaces ();
 	if (ei != null)
 	    visitSuperInterfaces (ei.get ());
@@ -119,7 +125,7 @@ public class ClassSetter implements TreeVisitor {
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	containingTypeName.push (cth.getFullName (a));
+	containingTypeName.push (cip.getFullName (a));
 	registerTypeParameters (null);
 	return true;
     }
@@ -128,7 +134,7 @@ public class ClassSetter implements TreeVisitor {
 	setType (ct);
 	if (ct.getFullName () != null) {
 	    containingTypeName.push (ct.getFullName ());
-	    containingTypeName.push (cth.getFullName (b));
+	    containingTypeName.push (cip.getFullName (b));
 	    registerTypeParameters (null);
 	    return true;
 	}
@@ -304,7 +310,7 @@ public class ClassSetter implements TreeVisitor {
 	for (int s = scts.size (); i < s; i++) {
 	    SimpleClassType sct = scts.get (i);
 	    String directInnerClass = currentOuterClass + "$" + sct.getId ();
-	    if (validFullName (directInnerClass)) {
+	    if (cip.hasType (directInnerClass)) {
 		currentOuterClass = directInnerClass;
 	    } else {
 		currentOuterClass = checkSuperClasses (currentOuterClass, sct.getId ());
@@ -321,13 +327,13 @@ public class ClassSetter implements TreeVisitor {
 	    return "generic type: " + id;
 	}
 
-	if (validFullName (id))
+	if (cip.hasType (id))
 	    return id;
 
 	// check for inner class
 	for (String ctn : containingTypeName) {
 	    String icn = ctn + "$" + id;
-	    if (validFullName (icn))
+	    if (cip.hasType (icn))
 		return icn;
 	}
 
@@ -345,7 +351,7 @@ public class ClassSetter implements TreeVisitor {
 	List<String> superclasses = getSuperClasses (fullCtn);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "$" + id;
-	    if (validFullName (icn))
+	    if (cip.hasType (icn))
 		return icn;
 	    String ssn = checkSuperClasses (superclass, id);
 	    if (ssn != null)
@@ -355,11 +361,9 @@ public class ClassSetter implements TreeVisitor {
     }
 
     private List<String> getSuperClasses (String type) {
-	Optional<List<String>> supers = cth.getSuperTypes (type);
-	if (supers.isPresent ())
-	    return supers.get ();
 	try {
-	    return crh.getSuperTypes (type);
+	    Optional<List<String>> supers = cip.getSuperTypes (type);
+	    return supers.isPresent () ? supers.get () : Collections.emptyList ();
 	} catch (IOException e) {
 	    completed = false;
 	    if (mayReport ())
@@ -370,18 +374,18 @@ public class ClassSetter implements TreeVisitor {
 
     private String resolveUsingImports (String id, ParsePosition pos) {
 	ImportHolder i = ih.stid.get (id);
-	if (i != null && validFullName (i.cas.name)) {
+	if (i != null && cip.hasType (i.cas.name)) {
 	    i.markUsed ();
 	    return i.cas.name;
 	}
 	String fqn = tryTypeImportOnDemand (id, pos);
-	if (fqn != null && validFullName (fqn))
+	if (fqn != null && cip.hasType (fqn))
 	    return fqn;
 	fqn = trySingleStaticImport (id);
-	if (fqn != null && validFullName (fqn))
+	if (fqn != null && cip.hasType (fqn))
 	    return fqn;
 	fqn = tryStaticImportOnDemand (id);
-	if (fqn != null && validFullName (fqn))
+	if (fqn != null && cip.hasType (fqn))
 	    return fqn;
 
 	return null;
@@ -398,7 +402,7 @@ public class ClassSetter implements TreeVisitor {
 	List<String> matches = new ArrayList<> ();
 	for (ImportHolder ih : ih.tiod) {
 	    String t = ih.cas.name + ih.cas.sep + id;
-	    if (validFullName (t)) {
+	    if (cip.hasType (t)) {
 		matches.add (t);
 		ih.markUsed ();
 	    }
@@ -419,22 +423,12 @@ public class ClassSetter implements TreeVisitor {
     private String tryStaticImportOnDemand (String id) {
 	for (StaticImportOnDemandDeclaration siod : ih.siod) {
 	    String fqn = siod.getName ().getDotName () + "$" + id;
-	    if (validFullName (fqn)) {
+	    if (cip.hasType (fqn)) {
 		siod.markUsed ();
 		return fqn;
 	    }
 	}
 	return null;
-    }
-
-    private boolean validFullName (String fqn) {
-	if (cth.getType (fqn) != null)
-	    return true;
-
-	if (crh.hasType (fqn))
-	    return true;
-
-	return false;
     }
 
     private boolean mayReport () {
@@ -450,7 +444,7 @@ public class ClassSetter implements TreeVisitor {
 	public void visit (SingleTypeImportDeclaration i) {
 	    DottedName dn = i.getName ();
 	    ClassAndSeparator cas = getClassName (dn);
-	    if (!validFullName (cas.name) && level == 0) {
+	    if (!cip.hasType (cas.name) && level == 0) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
 							     "Type not found: %s", cas.name));
 		i.markUsed (); // Unused, but already flagged as bad, don't want multiple lines
@@ -481,7 +475,7 @@ public class ClassSetter implements TreeVisitor {
 		if (sb.length () > 0)
 		    sb.append (sep);
 		sb.append (c);
-		if (validFullName (sb.toString ()))
+		if (cip.hasType (sb.toString ()))
 		    sep = '$';
 	    }
 	    return new ClassAndSeparator (sb.toString (), sep);
