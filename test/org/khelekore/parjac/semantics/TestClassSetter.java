@@ -426,11 +426,24 @@ public class TestClassSetter {
 	assert diagnostics.hasError () : "Expected import errors";
     }
 
+    @Test
+    public void testAmbigous () throws IOException {
+	parseAndSetClasses ("package a; class A {}",
+			    "package b; class A {}",
+			    "package c; import a.*; import b.*; class C { A a; }");
+	assert diagnostics.hasError () : "Expected ambigous class";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	// same package wins over star import
+	parseAndSetClasses ("package foo; import bar.*; class A {} class Foo { A a;}",
+			    "package bar; class A {}");
+	assertNoErrors ();
+    }
+
     private void checkImplements (String classToCheck, String wantedInterface) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
     }
-
 
     private void parseAndSetClasses (String... sourceCodes) {
 	List<SyntaxTree> trees = new ArrayList<> ();

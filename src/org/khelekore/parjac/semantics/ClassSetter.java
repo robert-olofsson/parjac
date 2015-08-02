@@ -439,14 +439,18 @@ public class ClassSetter implements TreeVisitor {
 	    i.markUsed ();
 	    return i.cas.name;
 	}
-	String fqn = tryTypeImportOnDemand (id, pos);
+	String fqn;
+	fqn = tryPackagename (id, pos);
 	if (fqn != null && cip.hasType (fqn))
+	    return fqn;
+	fqn = tryTypeImportOnDemand (id, pos);
+	if (fqn != null) // already checked cip.hasType
 	    return fqn;
 	fqn = trySingleStaticImport (id);
 	if (fqn != null && cip.hasType (fqn))
 	    return fqn;
 	fqn = tryStaticImportOnDemand (id);
-	if (fqn != null && cip.hasType (fqn))
+	if (fqn != null) // already checked cip.hasType
 	    return fqn;
 
 	return null;
@@ -457,6 +461,12 @@ public class ClassSetter implements TreeVisitor {
 	    if (names.contains (id))
 		return true;
 	return false;
+    }
+
+    private String tryPackagename (String id, ParsePosition pos) {
+	if (packageName == null)
+	    return null;
+	return packageName.getDotName () + "." + id;
     }
 
     private String tryTypeImportOnDemand (String id, ParsePosition pos) {
@@ -543,8 +553,6 @@ public class ClassSetter implements TreeVisitor {
 	}
 
 	private void addDefaultPackages () {
-	    if (packageName != null)
-		tiod.add (new ImportHolder (null, getClassName (packageName)));
 	    tiod.add (new ImportHolder (null, new ClassAndSeparator ("java.lang", '.')));
 	}
     }
