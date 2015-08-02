@@ -37,7 +37,8 @@ public class FieldAccess extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this)) {
-	    from.visit (visitor);
+	    if (from != null)
+		from.visit (visitor);
 	}
     }
 
