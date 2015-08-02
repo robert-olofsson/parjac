@@ -7,7 +7,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class ExplicitConstructorInvocation extends PositionNode {
-    private final TreeNode type;
+    private TreeNode type;
     private final TypeArguments types;
     private final Token where;
     private final ConstructorArguments args;
@@ -33,6 +33,14 @@ public class ExplicitConstructorInvocation extends PositionNode {
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + types + " " + where + " " + args + "}";
+    }
+
+    public TreeNode getType () {
+	return type;
+    }
+
+    public void setType (TreeNode type) {
+	this.type = type;
     }
 
     @Override public void visit (TreeVisitor visitor) {

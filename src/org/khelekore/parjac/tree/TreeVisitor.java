@@ -5,7 +5,6 @@ public interface TreeVisitor {
 	return true;
     }
 
-    /* Visit the types */
     /**
      * @return true to visit subtree, false to stop tree traversal.
      *         The endType will be called no matter what.
@@ -77,6 +76,9 @@ public interface TreeVisitor {
     default void endMethod (MethodDeclaration m) {
     }
 
+    default void visit (MethodBody b) {
+    }
+
     /**
      * @return true to visit subtree, false to stop tree traversal
      *         The endBlock will be called no matter what.
@@ -118,10 +120,79 @@ public interface TreeVisitor {
     default void visit (Assignment a) {
     }
 
+    default void visit (ClassInstanceCreationExpression c) {
+    }
+
     default void visit (UntypedClassInstanceCreationExpression c) {
     }
 
     default boolean visit (MethodInvocation m) {
 	return true;
+    }
+
+    default boolean visit (LambdaExpression l) {
+	return true;
+    }
+
+    default boolean visit (ArrayAccess a) {
+	return true;
+    }
+
+    default boolean visit (FieldAccess f) {
+	return true;
+    }
+
+    default void visit (LabeledStatement l) {
+    }
+
+    default void visit (ThrowStatement t) {
+    }
+
+    default void visit (SynchronizedStatement s) {
+    }
+
+    default boolean visit (IfThenStatement i) {
+	return true;
+    }
+
+    default boolean visit (WhileStatement w) {
+	return true;
+    }
+
+    default boolean visit (DoStatement d) {
+	return true;
+    }
+
+    default boolean visit (BasicForStatement f) {
+	return true;
+    }
+
+    default boolean visit (EnhancedForStatement f) {
+	return true;
+    }
+
+    default boolean visit (SwitchStatement s) {
+	return true;
+    }
+
+    default boolean visit (SwitchBlock s) {
+	return true;
+    }
+
+    default boolean visit (SwitchBlockStatementGroup s) {
+	return true;
+    }
+
+    default boolean visit (TryStatement s) {
+	return true;
+    }
+
+    default void visit (Finally f) {
+    }
+
+    default void visit (CatchClause c) {
+    }
+
+    default void visit (BreakStatement b) {
     }
 }

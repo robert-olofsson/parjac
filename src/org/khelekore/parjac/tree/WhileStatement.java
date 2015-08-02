@@ -18,4 +18,19 @@ public class WhileStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + " " + statement + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    exp.visit (visitor);
+	    statement.visit (visitor);
+	}
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
+
+    public TreeNode getStatement () {
+	return statement;
+    }
 }

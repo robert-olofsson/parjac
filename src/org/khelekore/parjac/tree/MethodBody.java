@@ -23,6 +23,10 @@ public abstract class MethodBody extends PositionNode {
 	@Override public boolean isEmpty () {
 	    return true;
 	}
+
+	@Override public Block getBlock () {
+	    return null;
+	}
     }
 
     public static class BlockBody extends MethodBody {
@@ -41,7 +45,12 @@ public abstract class MethodBody extends PositionNode {
 	    return false;
 	}
 
+	@Override public Block getBlock () {
+	    return block;
+	}
+
 	public void visit (TreeVisitor visitor) {
+	    visitor.visit (this);
 	    block.visit (visitor);
 	}
     }
@@ -59,4 +68,7 @@ public abstract class MethodBody extends PositionNode {
     protected abstract String getStringDesc ();
 
     public abstract boolean isEmpty ();
+
+    public abstract Block getBlock ();
+
 }

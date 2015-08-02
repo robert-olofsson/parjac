@@ -7,7 +7,6 @@ import java.util.List;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
-import org.khelekore.parjac.tree.ZOMEntry;
 
 public class FieldDeclaration extends PositionNode {
     private final List<TreeNode> annotations;

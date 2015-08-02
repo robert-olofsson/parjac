@@ -19,4 +19,9 @@ public class SynchronizedStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + expression + " " + block + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	block.visit (visitor);
+    }
 }

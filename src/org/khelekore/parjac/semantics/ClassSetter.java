@@ -19,7 +19,6 @@ import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.*;
-import org.khelekore.parjac.tree.Result.TypeResult;
 
 public class ClassSetter implements TreeVisitor {
     private final ClassInformationProvider cip;
@@ -31,6 +30,16 @@ public class ClassSetter implements TreeVisitor {
     private final Deque<Set<String>> types = new ArrayDeque<> ();
     private final int level;
     private boolean completed = true;
+
+    /* TODO: make sure that we replace all of these DottedName:s with correct things
+      PrimaryNoNewArray: (foo.bar.class, foo.bar.this)
+      * ClassInstanceCreationExpression:  (foo.bar.new Baz())
+      * FieldAccess: (foo.bar.Baz.super.asdf)
+      * ArrayAccess:
+      * MethodInvocation:
+      MethodReference:   foo.Bar.super::<Whatever>methodName, MethodReference.SuperMethodReference
+      PostfixExpression:
+    */
 
     public static void fillInClasses (ClassInformationProvider cip,
 				      List<SyntaxTree> trees,
@@ -44,15 +53,7 @@ public class ClassSetter implements TreeVisitor {
 	    Queue<SyntaxTree> rest2 = new ConcurrentLinkedQueue<SyntaxTree> ();
 	    rest.parallelStream ().forEach (t -> fillInClasses (cip, t, diagnostics, rest2, 1));
 	}
-	// TODO: replace DottedName with identifier and classes where possible
-	// TODO: "foo = 2;" parses to "Assignment (DottedName(foo), =, 2)"
-	// TODO: "foo.bar.baz()" parses to "MethodInvocation(DottedName(foo.bar), baz()"
-	// TODO: has to be that way, since we can always write fully qualified names
-	// TODO: ExplicitConstructorInvocation, PrimaryNoNewArray, ClassInstanceCreationExpression,
-	// TODO: FieldAccess, ArrayAccess, MethodInvocation, MethodReference, LeftHandSide,
-	// TODO: PostfixExpression
-	// TODO: can probably replace inside block.
-	trees.forEach (t -> checkUnusedInport (t, diagnostics));
+	trees.parallelStream().forEach (t -> checkUnusedInport (t, diagnostics));
     }
 
     private static void fillInClasses (ClassInformationProvider cip,
@@ -168,6 +169,13 @@ public class ClassSetter implements TreeVisitor {
 	types.pop ();
     }
 
+    @Override public void visit (ExplicitConstructorInvocation eci) {
+	TreeNode type = eci.getType ();
+	if (type instanceof DottedName) {
+	    eci.setType (replaceWithChainedFieldAccess ((DottedName)type));
+	}
+    }
+
     @Override public void visit (FieldDeclaration f) {
 	setType (f.getType ());
     }
@@ -176,7 +184,7 @@ public class ClassSetter implements TreeVisitor {
 	registerTypeParameters (m.getTypeParameters ());
 	Result r = m.getResult ();
 	if (r instanceof Result.TypeResult)
-	    setType (((TypeResult)r).get ());
+	    setType (r.getReturnType ());
 	setTypes (m.getParameters ());
 	return true;
     }
@@ -185,16 +193,69 @@ public class ClassSetter implements TreeVisitor {
 	types.pop ();
     }
 
+    @Override public void visit (Assignment a) {
+	TreeNode lhs = a.lhs ();
+	if (lhs instanceof DottedName) {
+	    a.lhs (replaceWithChainedFieldAccess ((DottedName)lhs));
+	}
+    }
+
+    @Override public void visit (ClassInstanceCreationExpression c) {
+	TreeNode from = c.getFrom ();
+	if (from instanceof DottedName) {
+	    c.setFrom (replaceWithChainedFieldAccess((DottedName)from));
+	}
+    }
+
     @Override public void visit (UntypedClassInstanceCreationExpression c) {
 	setType (c.getId ());
     }
 
     @Override public boolean visit (MethodInvocation m) {
 	TreeNode on = m.getOn ();
+	if (on instanceof DottedName) {
+	    on = replaceWithChainedFieldAccess ((DottedName)on);
+	    m.setOn (on);
+	}
 	if (on instanceof ClassType) {
 	    setType ((ClassType)on);
 	}
 	return true;
+    }
+
+    @Override public boolean visit (ArrayAccess a) {
+	TreeNode from = a.getFrom ();
+	if (from instanceof DottedName) {
+	    a.setFrom (replaceWithChainedFieldAccess((DottedName)from));
+	}
+	return true;
+    }
+
+    private TreeNode replaceWithChainedFieldAccess (DottedName dn) {
+	TreeNode current = null;
+	final ParsePosition pos = dn.getParsePosition ();
+	StringBuilder sb = new StringBuilder ();
+	ClassType ct = null;
+	List<String> parts = dn.getParts ();
+	for (int i = 0, s = parts.size (); i < s; i++) {
+	    String p = parts.get (i);
+	    if (i > 0)
+		sb.append (".");
+	    sb.append (p);
+	    String outerClass = ct == null ? resolve (sb.toString (), pos) : null;
+	    if (outerClass != null) {
+		DottedName pdn = new DottedName (parts.subList (0, i + 1), pos);
+		ct = pdn.toClassType ();
+		ct.setFullName (outerClass);
+		current = ct;
+		continue;
+	    }
+	    if (current != null)
+		current = new FieldAccess (current, p, pos);
+	    else
+		current = new Identifier (p, pos);
+	}
+	return current;
     }
 
     private void registerTypeParameters (TypeParameters tps) {

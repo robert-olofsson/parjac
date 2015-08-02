@@ -18,4 +18,9 @@ public class LambdaExpression extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + parameters + " -> " + body + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this))
+	    body.visit (visitor);
+    }
 }

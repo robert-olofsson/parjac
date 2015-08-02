@@ -5,7 +5,7 @@ import java.util.Deque;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class Assignment extends PositionNode {
-    private final TreeNode lhs;
+    private TreeNode lhs;
     private final OperatorTokenType op;
     private final TreeNode rhs;
 
@@ -22,10 +22,17 @@ public class Assignment extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
+	lhs.visit (visitor);
+	rhs.visit (visitor);
     }
 
     public TreeNode lhs () {
 	return lhs;
+    }
+
+    /** Replace the left hand side, typically done when replacing dotted name */
+    public void lhs (TreeNode lhs) {
+	this.lhs = lhs;
     }
 
     public OperatorTokenType getOperator () {

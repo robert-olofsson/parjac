@@ -9,6 +9,6 @@ Some things:
    inspect performance.
 *) The lexer is hand written.
 *) The parser is basically a earley parser, but uses a cache for
-   the predicted states.
+   the predicted states. Inspiration from the marpa project.
 *) Tests are done with testng.
 *) Uses asm for bytecode handling.

@@ -24,7 +24,32 @@ public class FieldAccess extends PositionNode {
 	id = ((Identifier)parts.pop ()).get ();
     }
 
+    public FieldAccess (TreeNode from, String id, ParsePosition pos) {
+	super (pos);
+	this.from = from;
+	isSuper = false;
+	this.id = id;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + from + " " + isSuper + " " + id + "}";
+    }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    from.visit (visitor);
+	}
+    }
+
+    public TreeNode getFrom () {
+	return from;
+    }
+
+    public boolean isSuper () {
+	return isSuper;
+    }
+
+    public String getFieldId () {
+	return id;
     }
 }

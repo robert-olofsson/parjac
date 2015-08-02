@@ -42,4 +42,32 @@ public class TryStatement extends PositionNode {
 	return getClass ().getSimpleName () + "{" + resources + " " +
 	    block + " " + catches + " " + finallyBlock + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    if (resources != null)
+		resources.visit (visitor);
+	    block.visit (visitor);
+	    if (catches != null)
+		catches.visit (visitor);
+	    if (finallyBlock != null)
+		finallyBlock.visit (visitor);
+	}
+    }
+
+    public ResourceList getResources () {
+	return resources;
+    }
+
+    public Block getBlock () {
+	return block;
+    }
+
+    public Catches getCatches () {
+	return catches;
+    }
+
+    public Finally getFinallyBlock () {
+	return finallyBlock;
+    }
 }

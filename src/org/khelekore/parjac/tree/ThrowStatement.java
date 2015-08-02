@@ -15,4 +15,9 @@ public class ThrowStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	exp.visit (visitor);
+    }
 }

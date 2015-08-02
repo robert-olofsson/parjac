@@ -21,6 +21,7 @@ import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.semantics.NameModifierChecker;
+import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -123,10 +124,12 @@ public class Compiler {
 	trees.parallelStream ().forEach (t -> cip.addTypes (t));
 
 	runTimed (() -> ClassSetter.fillInClasses (cip, trees, diagnostics), "Setting classes");
+	if (settings.getDebug ())
+	    trees.forEach (t -> System.err.println ("class set tree: " + t));
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
-	// check that there is at least one constructor
-	// check that there are returns, even in void methods
 	// Check types of fields and assignments
+	runTimed (() -> checkReturns (trees), "Checking returns");
+	// check that there is at least one constructor
 	// Check matching methods
 	// Check generics
     }
@@ -139,6 +142,15 @@ public class Compiler {
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();
+    }
+
+    private void checkReturns (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> checkReturns (t, diagnostics));
+    }
+
+    private void checkReturns (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	ReturnChecker ra = new ReturnChecker (tree, diagnostics);
+	ra.run ();
     }
 
     private void optimize (List<SyntaxTree> trees) {

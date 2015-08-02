@@ -13,6 +13,12 @@ public class ReturnStatement extends PositionNode {
 	exp = r.size () > 2 ? parts.pop () : null;
     }
 
+    /** Create a void return */
+    public ReturnStatement (ParsePosition pos) {
+	super (pos);
+	exp = null;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + "}";
     }
@@ -28,5 +34,9 @@ public class ReturnStatement extends PositionNode {
 
     public boolean hasExpression () {
 	return exp != null;
+    }
+
+    public TreeNode getExpression () {
+	return exp;
     }
 }

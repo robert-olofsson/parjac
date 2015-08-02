@@ -26,4 +26,19 @@ public class SwitchBlockStatementGroup extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + labels + " " + blockStatements + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    labels.forEach (l -> l.visit (visitor));
+	    blockStatements.visit (visitor);
+	}
+    }
+
+    public List<SwitchLabel> getLabels () {
+	return labels;
+    }
+
+    public TreeNode getStatements () {
+	return blockStatements;
+    }
 }

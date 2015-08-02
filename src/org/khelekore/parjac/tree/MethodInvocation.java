@@ -7,7 +7,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
 public class MethodInvocation extends PositionNode {
-    private final TreeNode on;
+    private TreeNode on;
     private final TypeArguments types;
     private final boolean isSuper;
     private final UntypedMethodInvocation mi;
@@ -43,12 +43,19 @@ public class MethodInvocation extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	if (visitor.visit (this))
+	if (visitor.visit (this)) {
+	    if (on != null)
+		on.visit (visitor);
 	    mi.visit (visitor);
+	}
     }
 
     public TreeNode getOn () {
 	return on;
+    }
+
+    public void setOn (TreeNode on) {
+	this.on = on;
     }
 
     public TypeArguments getTypeArguments () {

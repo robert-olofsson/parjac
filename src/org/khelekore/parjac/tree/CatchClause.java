@@ -17,4 +17,13 @@ public class CatchClause extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + cfp + " " + block + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	block.visit (visitor);
+    }
+
+    public Block getBlock () {
+	return block;
+    }
 }

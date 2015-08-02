@@ -18,4 +18,19 @@ public class DoStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + statement + " " + exp + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    statement.visit (visitor);
+	    exp.visit (visitor);
+	}
+    }
+
+    public TreeNode getStatement () {
+	return statement;
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
 }

@@ -95,7 +95,7 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endConstructor (ConstructorDeclaration c) {
 	MethodInfo mi = methods.removeLast ();
 	mi.mv.visitInsn (RETURN);
-	mi.mv.visitMaxs (mi.maxStack, mi.maxLocals);
+	mi.mv.visitMaxs (0, 0);
         mi.mv.visitEnd ();
     }
 
@@ -105,8 +105,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
 	    mi.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-	    mi.maxStack = Math.max (mi.maxStack, 1);
-	    mi.maxLocals = Math.max (mi.maxLocals, 1);
 	}
 	return true;
     }
@@ -141,28 +139,21 @@ public class BytecodeGenerator implements TreeVisitor {
 					cw.visitMethod (mods, m.getMethodName (),
 							sb.toString (), null, null));
 	methods.addLast (mi);
-
-	/* Hello world example
-	// pushes the 'out' field (of type PrintStream) of the System class
-	mw.visitFieldInsn(GETSTATIC, "java/lang/System", "out",
-			  "Ljava/io/PrintStream;");
-	// pushes the "Hello World!" String constant
-	mw.visitLdcInsn("Hello world!");
-	// invokes the 'println' method (defined in the PrintStream class)
-	mw.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-			   "(Ljava/lang/String;)V", false);
-	mw.visitInsn(RETURN);
-	// this code uses a maximum of two stack elements and two local
-	// variables
-	mw.visitMaxs(2, 2);
-	*/
 	return true;
     }
 
     @Override public void endMethod (MethodDeclaration m) {
 	MethodInfo mi = methods.removeLast ();
-	mi.mv.visitMaxs (mi.maxStack, mi.maxLocals);
+	if (m.getResult () instanceof Result.VoidResult && methodMissingReturn (m)) {
+	    mi.mv.visitInsn (RETURN);
+	}
+	mi.mv.visitMaxs (0, 0);
         mi.mv.visitEnd ();
+    }
+
+    private boolean methodMissingReturn (MethodDeclaration md) {
+	MethodBody b = md.getBody ();
+	return !b.isEmpty () && b.getBlock ().lastIsNotThrowOrReturn ();
     }
 
     private boolean hasVarargs (FormalParameterList ls) {
@@ -201,7 +192,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (tn instanceof Result.VoidResult) {
 	    sb.append ("V");
 	} else if (tn instanceof Result.TypeResult) {
-	    appendType (((Result.TypeResult)tn).get (), sb);
+	    appendType (((Result.TypeResult)tn).getReturnType (), sb);
 	} else {
 	    throw new IllegalStateException ("Unhandled result type: " + tn);
 	}
@@ -269,7 +260,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	MethodInfo mi = methods.peekLast ();
 	if (r.hasExpression ()) {
 	    Result.TypeResult tr = (TypeResult)mi.result;
-	    TreeNode tn = tr.get ();
+	    TreeNode tn = tr.getReturnType ();
 	    if (tn instanceof PrimitiveTokenType) {
 		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
 		Token t = ptt.get ();
@@ -309,7 +300,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    mi.mv.visitLdcInsn (i);
 	}
-	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     @Override public void visit (DoubleLiteral dv) {
@@ -326,7 +316,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    mi.mv.visitLdcInsn (d);
 	}
-	mi.maxStack = Math.max (mi.maxStack, 2);
     }
 
     @Override public void visit (FloatLiteral fv) {
@@ -345,7 +334,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    mi.mv.visitLdcInsn (f);
 	}
-	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     @Override public void visit (StringLiteral sv) {
@@ -354,7 +342,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	    return;
 	MethodInfo mi = methods.peekLast ();
 	mi.mv.visitLdcInsn (sv.get ());
-	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     @Override public void visit (BooleanLiteral bv) {
@@ -364,7 +351,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	MethodInfo mi = methods.peekLast ();
 	boolean f = bv.get ();
 	mi.mv.visitInsn (f ? ICONST_1 : ICONST_0);
-	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     @Override public void visit (NullLiteral nv) {
@@ -373,7 +359,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	    return;
 	MethodInfo mi = methods.peekLast ();
 	mi.mv.visitInsn (ACONST_NULL);
-	mi.maxStack = Math.max (mi.maxStack, 1);
     }
 
     @Override public void visit (Assignment a) {
@@ -392,13 +377,42 @@ public class BytecodeGenerator implements TreeVisitor {
 	*/
     }
 
+    @Override public boolean visit (MethodInvocation m) {
+	TreeNode on = m.getOn ();
+	if (on != null) {
+	    on.visit (this);
+	}
+	ArgumentList al = m.getArgumentList ();
+	if (al != null) {
+	    al.visit (this);
+	}
+	MethodInfo mi = methods.peekLast ();
+	mi.mv.visitMethodInsn (INVOKEVIRTUAL, "java/io/PrintStream", m.getId (),
+			       "(Ljava/lang/String;)V", false);
+	return false;
+    }
+
+    @Override public boolean visit (FieldAccess f) {
+	TreeNode tn = f.getFrom ();
+	if (tn instanceof ClassType) {
+	    ClassType ct = (ClassType)tn;
+	    String classSignature = ct.getFullName ().replace ('.', '/');
+	    MethodInfo mi = methods.peekLast ();
+	    mi.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
+				  "Ljava/io/PrintStream;");
+	    return false;
+	} else {
+	    return true;
+	}
+    }
+
     private class ClassWriterHolder {
 	private final TreeNode tn;
 	private final ClassWriter cw;
 
 	public ClassWriterHolder (TreeNode tn) {
 	    this.tn = tn;
-	    cw = new ClassWriter (0);
+	    cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 	}
 
 	@Override public String toString () {
@@ -465,9 +479,6 @@ public class BytecodeGenerator implements TreeVisitor {
     private static class MethodInfo {
 	public final Result result;
 	public final MethodVisitor mv;
-
-	public int maxStack = 0;
-	public int maxLocals = 0;
 
 	public MethodInfo (Result result, MethodVisitor mv) {
 	    this.result = result;

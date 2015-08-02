@@ -6,7 +6,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ClassInstanceCreationExpression extends PositionNode {
-    private final TreeNode from;
+    private TreeNode from;
     private final UntypedClassInstanceCreationExpression ucice;
 
     public ClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
@@ -26,6 +26,15 @@ public class ClassInstanceCreationExpression extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
 	ucice.visit (visitor);
+    }
+
+    public TreeNode getFrom () {
+	return from;
+    }
+
+    public void setFrom (TreeNode from) {
+	this.from = from;
     }
 }

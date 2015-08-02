@@ -16,4 +16,8 @@ public class BreakStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
 }

@@ -23,4 +23,15 @@ public class Block extends PositionNode {
 	    statements.forEach (s -> s.visit (visitor));
 	visitor.endBlock ();
     }
+
+    public List<TreeNode> getStatements () {
+	return statements;
+    }
+
+    public boolean lastIsNotThrowOrReturn () {
+	if (statements == null)
+	    return true;
+	TreeNode tn = statements.get (statements.size () - 1);
+	return !(tn instanceof ReturnStatement || tn instanceof ThrowStatement);
+    }
 }

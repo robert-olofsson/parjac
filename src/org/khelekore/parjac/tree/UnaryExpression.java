@@ -22,8 +22,8 @@ public class UnaryExpression extends PositionNode {
 	TreeNode conversionNode = parts.pop ();
 	Token conversion = ((OperatorTokenType)conversionNode).get ();
 	TreeNode exp = parts.pop ();
-	if (exp instanceof LiteralValue) {
-	    LiteralValue lv = (LiteralValue)exp;
+	if (exp instanceof NumericValue) {
+	    NumericValue lv = (NumericValue)exp;
 	    if (conversion == Token.MINUS)
 		return lv.getNegated ();
 	    // For plus we just return the actual value

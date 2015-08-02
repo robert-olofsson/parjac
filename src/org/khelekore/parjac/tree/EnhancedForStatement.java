@@ -27,4 +27,32 @@ public class EnhancedForStatement extends PositionNode {
 	return getClass ().getSimpleName () + "{for (" + modifiers + " " +
 	    type + " " + vdi + " : " + exp + ") " + statement + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    if (exp != null)
+		exp.visit (visitor);
+	    statement.visit (visitor);
+	}
+    }
+
+    public List<TreeNode> getModifiers () {
+	return modifiers;
+    }
+
+    public TreeNode getType () {
+	return type;
+    }
+
+    public VariableDeclaratorId getVdi () {
+	return vdi;
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
+
+    public TreeNode getStatement () {
+	return statement;
+    }
 }

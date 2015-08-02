@@ -18,4 +18,20 @@ public class SwitchStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{switch (" + exp + ")" + block + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    exp.visit (visitor);
+	    block.visit (visitor);
+	}
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
+
+    public SwitchBlock getBlock () {
+	return block;
+    }
+
 }

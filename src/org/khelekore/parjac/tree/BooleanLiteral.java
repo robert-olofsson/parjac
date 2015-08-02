@@ -1,8 +1,9 @@
 package org.khelekore.parjac.tree;
 
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.lexer.Token;
 
-public class BooleanLiteral extends PositionNode {
+public class BooleanLiteral extends PositionNode implements LiteralValue {
     private final boolean value;
 
     public BooleanLiteral (boolean value, ParsePosition pos) {
@@ -20,5 +21,9 @@ public class BooleanLiteral extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
+    }
+
+    @Override public Token getLiteralType () {
+	return Token.BOOLEAN;
     }
 }

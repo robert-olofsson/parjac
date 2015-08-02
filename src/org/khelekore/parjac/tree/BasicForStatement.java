@@ -41,4 +41,32 @@ public class BasicForStatement extends PositionNode {
 	return getClass ().getSimpleName () + "{for (" + forInit + "; " +
 	    exp + "; " + forUpdate + ") " + statement + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    if (forInit != null)
+		forInit.visit (visitor);
+	    if (exp != null)
+		exp.visit (visitor);
+	    if (forUpdate != null)
+		forUpdate.visit (visitor);
+	    statement.visit (visitor);
+	}
+    }
+
+    public TreeNode getForInit () {
+	return forInit;
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
+
+    public StatementExpressionList getForUpdate () {
+	return forUpdate;
+    }
+
+    public TreeNode getStatement () {
+	return statement;
+    }
 }

@@ -19,6 +19,10 @@ public abstract class Result extends PositionNode {
 	@Override protected String getStringDesc () {
 	    return "";
 	}
+
+	public TreeNode getReturnType () {
+	    throw new IllegalStateException ("Void methods do not have a return type");
+	}
     }
 
     public static class TypeResult extends Result {
@@ -33,7 +37,7 @@ public abstract class Result extends PositionNode {
 	    return type.toString ();
 	}
 
-	public TreeNode get () {
+	public TreeNode getReturnType () {
 	    return type;
 	}
     }
@@ -49,4 +53,6 @@ public abstract class Result extends PositionNode {
     }
 
     protected abstract String getStringDesc ();
+
+    public abstract TreeNode getReturnType ();
 }

@@ -20,4 +20,26 @@ public class IfThenStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + " " + ifStatement + " " + elseStatement + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    exp.visit (visitor);
+	    ifStatement.visit (visitor);
+	    if (elseStatement != null)
+		elseStatement.visit (visitor);
+	}
+    }
+
+    public TreeNode getExp () {
+	return exp;
+    }
+
+    public TreeNode getIfStatement () {
+	return ifStatement;
+    }
+
+    public TreeNode getElseStatement () {
+	return elseStatement;
+    }
+
 }

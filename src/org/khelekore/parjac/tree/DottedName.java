@@ -42,6 +42,10 @@ public class DottedName extends PositionNode {
 	return parts.equals (dn.parts);
     }
 
+    public int size () {
+	return parts.size ();
+    }
+
     public List<String> getParts () {
 	return parts;
     }

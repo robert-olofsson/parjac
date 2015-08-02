@@ -15,4 +15,13 @@ public class Finally extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + block + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	block.visit (visitor);
+    }
+
+    public Block getBlock () {
+	return block;
+    }
 }

@@ -19,4 +19,9 @@ public class LabeledStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + " : " + statement + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	statement.visit (visitor);
+    }
 }
