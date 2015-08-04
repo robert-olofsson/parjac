@@ -1,16 +1,9 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.parser.TestParseHelper;
 import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.EnumDeclaration;
@@ -20,33 +13,10 @@ import org.khelekore.parjac.tree.InterfaceTypeList;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SimpleClassType;
-import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TypeArguments;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class TestClassSetter {
-    private Grammar g;
-    private CompilerDiagnosticCollector diagnostics;
-    private ClassResourceHolder crh;
-    private ClassInformationProvider cip;
-
-    @BeforeClass
-    public void beforeClass () throws IOException {
-	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
-	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
-				       // Can not use instance field
-				       new CompilerDiagnosticCollector ());
-	crh.scanClassPath ();
-    }
-
-    @BeforeMethod
-    public void createDiagnostics () {
-	diagnostics = new CompilerDiagnosticCollector ();
-	CompiledTypesHolder cth = new CompiledTypesHolder ();
-	cip = new ClassInformationProvider (crh, cth);
-    }
+public class TestClassSetter extends TestBase {
 
     @Test
     public void testExtendsNonExisting () throws IOException {
@@ -445,17 +415,6 @@ public class TestClassSetter {
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
     }
 
-    private void parseAndSetClasses (String... sourceCodes) {
-	List<SyntaxTree> trees = new ArrayList<> ();
-	for (String code : sourceCodes) {
-	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, null, diagnostics);
-	    assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	    cip.addTypes (st);
-	    trees.add (st);
-	}
-	ClassSetter.fillInClasses (cip, trees, diagnostics);
-    }
-
     private void checkSuperTypeName (String classToCheck, String expectedSuperType) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	assertClassType (cd.getSuperClass (), expectedSuperType);
@@ -480,16 +439,5 @@ public class TestClassSetter {
     private void assertClassType (ClassType ct, String expectedType) {
 	assert ct.getFullName ().equals (expectedType) : "Got wrong type: " +
 	    ct.getFullName () + ", expected: " + expectedType;
-    }
-
-    private void assertNoErrors () {
-	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
-    }
-
-    private String getDiagnostics () {
-	Locale loc = Locale.getDefault ();
-	return diagnostics.getDiagnostics ().
-	    map (c -> c.getMessage (loc)).
-	    collect (Collectors.joining ("\n"));
     }
 }

@@ -1,41 +1,12 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.parser.TestParseHelper;
 import org.khelekore.parjac.tree.SyntaxTree;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class TestReturnChecker {
-    private Grammar g;
-    private CompilerDiagnosticCollector diagnostics;
-    private ClassResourceHolder crh;
-    private ClassInformationProvider cip;
-
-    @BeforeClass
-    public void beforeClass () throws IOException {
-	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
-	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
-				       // Can not use instance field
-				       new CompilerDiagnosticCollector ());
-	crh.scanClassPath ();
-    }
-
-    @BeforeMethod
-    public void createDiagnostics () {
-	diagnostics = new CompilerDiagnosticCollector ();
-	CompiledTypesHolder cth = new CompiledTypesHolder ();
-	cip = new ClassInformationProvider (crh, cth);
-    }
+public class TestReturnChecker extends TestBase {
 
     @Test
     public void testVoid () throws IOException {
@@ -369,24 +340,8 @@ public class TestReturnChecker {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
-    private void parseAndSetClasses (String code) {
-	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
-	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	cip.addTypes (st);
-	List<SyntaxTree> trees = Collections.singletonList (st);
-	ClassSetter.fillInClasses (cip, trees, diagnostics);
-	ReturnChecker rc = new ReturnChecker (st, diagnostics);
+    protected void handleSyntaxTree (SyntaxTree tree) {
+	ReturnChecker rc = new ReturnChecker (tree, diagnostics);
 	rc.run ();
-    }
-
-    private void assertNoErrors () {
- 	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
-    }
-
-    private String getDiagnostics () {
-	Locale loc = Locale.getDefault ();
-	return diagnostics.getDiagnostics ().
-	    map (c -> c.getMessage (loc)).
-	    collect (Collectors.joining ("\n"));
     }
 }

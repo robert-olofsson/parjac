@@ -1,40 +1,12 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.grammar.Grammar;
-import org.khelekore.parjac.parser.TestParseHelper;
 import org.khelekore.parjac.tree.SyntaxTree;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class TestNameModifierChecker {
-    private Grammar g;
-    private CompilerDiagnosticCollector diagnostics;
-    private ClassResourceHolder crh;
-    private ClassInformationProvider cip;
-
-    @BeforeClass
-    public void beforeClass () throws IOException {
-	g = TestParseHelper.getJavaGrammarFromFile ("CompilationUnit", false);
-	crh = new ClassResourceHolder (Collections.<Path>emptyList (),
-				       // Can not use instance field
-				       new CompilerDiagnosticCollector ());
-	crh.scanClassPath ();
-    }
-
-    @BeforeMethod
-    public void createDiagnostics () {
-	diagnostics = new CompilerDiagnosticCollector ();
-	CompiledTypesHolder cth = new CompiledTypesHolder ();
-	cip = new ClassInformationProvider (crh, cth);
-    }
+public class TestNameModifierChecker extends TestBase {
 
     @Test
     public void testClass () throws IOException {
@@ -59,9 +31,9 @@ public class TestNameModifierChecker {
     private void test (String type) throws IOException {
 	parseAndSetClasses (type + " Foo {}");
 	assertNoErrors ();
-	parseAndSetClasses ("public " + type + " Foo {}");
+	parseAndSetClass ("Foo.java", "public " + type + " Foo {}");
 	assertNoErrors ();
-	parseAndSetClasses ("public " + type + " Bar {}");
+	parseAndSetClass ("Foo.java", "public " + type + " Bar {}");
 	assert diagnostics.hasError () : "Expected to find errors";
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("protected " + type + " Foo {}");
@@ -263,25 +235,8 @@ public class TestNameModifierChecker {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
-    private void parseAndSetClasses (String code) {
-	SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, code, "Foo.java", diagnostics);
-	assert st != null : "Failed to parse:"  + code + ": " + getDiagnostics ();
-	// We need classes to be correctly filled in for NameModifierChecker to work
-	cip.addTypes (st);
-	ClassSetter cs = new ClassSetter (cip, st, diagnostics, 0);
-	cs.fillIn ();
-	NameModifierChecker nmc = new NameModifierChecker (cip, st, diagnostics);
+    protected void handleSyntaxTree (SyntaxTree tree) {
+	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();
-    }
-
-    private void assertNoErrors () {
- 	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
-    }
-
-    private String getDiagnostics () {
-	Locale loc = Locale.getDefault ();
-	return diagnostics.getDiagnostics ().
-	    map (c -> c.getMessage (loc)).
-	    collect (Collectors.joining ("\n"));
     }
 }
