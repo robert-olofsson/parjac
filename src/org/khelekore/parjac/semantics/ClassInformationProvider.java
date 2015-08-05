@@ -18,7 +18,7 @@ public class ClassInformationProvider {
     }
 
     public boolean hasType (String fqn) {
-	return crh.hasType (fqn) || cth.hasType (fqn);
+	return cth.hasType (fqn) || crh.hasType (fqn);
     }
 
     public void scanClassPath () throws IOException {
