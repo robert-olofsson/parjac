@@ -62,7 +62,7 @@ public class JavaTreeBuilder {
 	register (g, "InterfaceTypeList", constructored (InterfaceTypeList::new));
 	register (g, "ClassBody", constructored (ClassBody::new));
 	register (g, "FieldDeclaration", diagnosed (FieldDeclaration::new));
-	register (g, "VariableDeclaratorList", constructored (VariableDeclaratorList::new));
+	register (g, "VariableDeclaratorList", constructored ((r, d, p) -> new VariableDeclaratorList (r, d, p)));
 	register (g, "VariableDeclarator", constructored (VariableDeclarator::new));
 	register (g, "VariableDeclaratorId", constructored (VariableDeclaratorId::new));
 	register (g, "UnannClassType", constructored (UnannClassType::build));
@@ -122,7 +122,7 @@ public class JavaTreeBuilder {
 	register (g, "BlockStatements", constructored (BlockStatements::new));
 	register (g, "LocalVariableDeclarationStatement",
 		  constructored (LocalVariableDeclarationStatement::new));
-	register (g, "LocalVariableDeclaration", constructored (LocalVariableDeclaration::new));
+	register (g, "LocalVariableDeclaration", diagnosed (LocalVariableDeclaration::new));
 	register (g, "EmptyStatement", constructored (EmptyStatement::new));
 	register (g, "LabeledStatement", constructored (LabeledStatement::new));
 	register (g, "LabeledStatementNoShortIf", constructored (LabeledStatement::new));
@@ -141,8 +141,8 @@ public class JavaTreeBuilder {
 	register (g, "BasicForStatement", constructored (BasicForStatement::new));
 	register (g, "BasicForStatementNoShortIf", constructored (BasicForStatement::new));
 	register (g, "StatementExpressionList", constructored (StatementExpressionList::new));
-	register (g, "EnhancedForStatement", constructored (EnhancedForStatement::new));
-	register (g, "EnhancedForStatementNoShortIf", constructored (EnhancedForStatement::new));
+	register (g, "EnhancedForStatement", diagnosed (EnhancedForStatement::new));
+	register (g, "EnhancedForStatementNoShortIf", diagnosed (EnhancedForStatement::new));
 	register (g, "BreakStatement", constructored (BreakStatement::new));
 	register (g, "ContinueStatement", constructored (ContinueStatement::new));
 	register (g, "ReturnStatement", constructored (ReturnStatement::new));

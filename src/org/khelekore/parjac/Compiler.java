@@ -20,6 +20,7 @@ import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
+import org.khelekore.parjac.semantics.FieldAndMethodScanner;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -127,6 +128,7 @@ public class Compiler {
 	if (settings.getDebug ())
 	    trees.forEach (t -> System.err.println ("class set tree: " + t));
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
+	runTimed (() -> storeFieldsAndMethods (trees), "Storing fields and methods");
 	// Check types of fields and assignments
 	runTimed (() -> checkReturns (trees), "Checking returns");
 	// check that there is at least one constructor
@@ -142,6 +144,15 @@ public class Compiler {
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();
+    }
+
+    private void storeFieldsAndMethods (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> storeFieldsAndMethods (t, diagnostics));
+    }
+
+    private void storeFieldsAndMethods (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	FieldAndMethodScanner fms = new FieldAndMethodScanner (tree, diagnostics);
+	fms.scan ();
     }
 
     private void checkReturns (List<SyntaxTree> trees) {

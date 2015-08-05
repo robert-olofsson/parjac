@@ -195,4 +195,7 @@ public interface TreeVisitor {
 
     default void visit (BreakStatement b) {
     }
+
+    default void visit (LocalVariableDeclaration l) {
+    }
 }

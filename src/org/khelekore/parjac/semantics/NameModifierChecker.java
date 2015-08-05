@@ -17,6 +17,8 @@ import org.khelekore.parjac.tree.TreeVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
 
+/** Check filename and modifier flags.
+ */
 public class NameModifierChecker implements TreeVisitor {
     private final ClassInformationProvider cip;
     private final SyntaxTree tree;

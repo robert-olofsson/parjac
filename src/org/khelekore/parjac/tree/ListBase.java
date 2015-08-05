@@ -23,6 +23,11 @@ public abstract class ListBase<T extends TreeNode> extends PositionNode {
 	}
     }
 
+    public ListBase (List<T> ls, ParsePosition pos) {
+	super (pos);
+	this.ls = ls;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{ls: " + ls + "}";
     }

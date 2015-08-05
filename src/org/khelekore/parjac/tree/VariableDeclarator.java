@@ -20,6 +20,12 @@ public class VariableDeclarator extends PositionNode {
 	}
     }
 
+    public VariableDeclarator (VariableDeclaratorId vdi, TreeNode initializer, ParsePosition pos) {
+	super (pos);
+	this.vdi = vdi;
+	this.initializer = initializer;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{vdi: " + vdi + " = " + initializer + "}";
     }
