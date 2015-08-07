@@ -55,7 +55,7 @@ public class ClassInformationProvider {
 	if ((tn = getType (fqn)) != null) {
 	    // TODO: this can probably fail
 	    NormalClassDeclaration clz = (NormalClassDeclaration)tn;
-	    return clz.getAccessFlags ();
+	    return clz.getFlags ();
 	} else {
 	    return crh.getClassModifiers (fqn);
 	}

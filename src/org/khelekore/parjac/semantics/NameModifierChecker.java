@@ -15,7 +15,7 @@ import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.khelekore.parjac.semantics.FlagsHelper.*;
 
 /** Check filename and modifier flags.
  */
@@ -37,7 +37,7 @@ public class NameModifierChecker implements TreeVisitor {
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
-	checkNameAndFlags (c.getId (), c, c.getAccessFlags ());
+	checkNameAndFlags (c.getId (), c, c.getFlags ());
 	level++;
 	ClassType ct = c.getSuperClass ();
 	if (ct != null) {
@@ -56,19 +56,19 @@ public class NameModifierChecker implements TreeVisitor {
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	checkNameAndFlags (e.getId (), e, e.getAccessFlags ());
+	checkNameAndFlags (e.getId (), e, e.getFlags ());
 	level++;
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	checkNameAndFlags (i.getId (), i, i.getAccessFlags ());
+	checkNameAndFlags (i.getId (), i, i.getFlags ());
 	level++;
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	checkNameAndFlags (a.getId (), a, a.getAccessFlags ());
+	checkNameAndFlags (a.getId (), a, a.getFlags ());
 	level++;
 	return true;
     }
@@ -121,6 +121,7 @@ public class NameModifierChecker implements TreeVisitor {
 	if (isFinal (flags) && isVolatile (flags))
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
 							 "Field may not be both final and volatile"));
+	// TODO: need to check static for inner classes
     }
 
     @Override public boolean visit (MethodDeclaration m) {
@@ -167,49 +168,5 @@ public class NameModifierChecker implements TreeVisitor {
 	if (count > 1)
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
 							 "Type has too many access flags"));
-    }
-
-    private boolean isPublic (int accessFlags) {
-	return (accessFlags & ACC_PUBLIC) == ACC_PUBLIC;
-    }
-
-    private boolean isProtected (int accessFlags) {
-	return (accessFlags & ACC_PROTECTED) == ACC_PROTECTED;
-    }
-
-    private boolean isPrivate (int accessFlags) {
-	return (accessFlags & ACC_PRIVATE) == ACC_PRIVATE;
-    }
-
-    private boolean isFinal (int f) {
-	return (f & ACC_FINAL) == ACC_FINAL;
-    }
-
-    private boolean isVolatile (int f) {
-	return (f & ACC_VOLATILE) == ACC_VOLATILE;
-    }
-
-    private boolean isNative (int f) {
-	return (f & ACC_NATIVE) == ACC_NATIVE;
-    }
-
-    private boolean isStrictFp (int f) {
-	return (f & ACC_STRICT) == ACC_STRICT;
-    }
-
-    private boolean isAbstract (int f) {
-	return (f & ACC_ABSTRACT) == ACC_ABSTRACT;
-    }
-
-    private boolean isStatic (int f) {
-	return (f & ACC_STATIC) == ACC_STATIC;
-    }
-
-    private boolean isSynchronized (int f) {
-	return (f & ACC_SYNCHRONIZED) == ACC_SYNCHRONIZED;
-    }
-
-    private boolean isInterface (int f) {
-	return (f & ACC_INTERFACE) == ACC_INTERFACE;
     }
 }

@@ -23,7 +23,7 @@ public class EnhancedForStatement extends PositionNode {
 	VariableDeclarator vd = new VariableDeclarator (vdi, null, pos);
 	List<VariableDeclarator> ls = Collections.singletonList (vd);
 	VariableDeclaratorList variables = new VariableDeclaratorList (ls, pos);
-	lvd = new LocalVariableDeclaration (pos, modifiers, type, variables, path, diagnostics);
+	lvd = new LocalVariableDeclaration (modifiers, type, variables, pos, path, diagnostics);
 	parts.pop (); // ':'
 	exp = parts.pop ();
 	statement = parts.pop ();

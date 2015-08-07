@@ -70,6 +70,10 @@ public class TestBase {
 	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
     }
 
+    protected void assertNoWarnings () {
+	assert !diagnostics.hasWarning () : "Got warnings: " + getDiagnostics ();
+    }
+
     protected String getDiagnostics () {
 	Locale loc = Locale.getDefault ();
 	return diagnostics.getDiagnostics ().

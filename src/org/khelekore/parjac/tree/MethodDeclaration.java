@@ -2,36 +2,25 @@ package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
 import java.util.Deque;
-import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class MethodDeclaration extends PositionNode {
-    private final List<TreeNode> annotations;
-    private final int flags;
+public class MethodDeclaration extends FlaggedType {
     private final MethodHeader header;
     private final MethodBody body;
 
     public MethodDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos,
 			      Path path, CompilerDiagnosticCollector diagnostics) {
-	super (pos);
-	List<TreeNode> modifiers = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
-	annotations = ModifierHelper.getAnnotations (modifiers);
-	int mflags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
-	flags = getFlags (mflags, modifiers);
+	super (r.size () > 2, parts, pos, path, diagnostics);
 	header = (MethodHeader)parts.pop ();
 	body = (MethodBody)parts.pop ();
     }
 
-    public int getFlags (int flags, List<TreeNode> modifiers) {
-	return flags;
-    }
-
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" +
-	    annotations + " " + flags + " " + " " + header + " " + body + "}";
+	    getAnnotations () + " " + getFlags () + " " + " " + header + " " + body + "}";
     }
 
     public void visit (TreeVisitor visitor) {
@@ -42,14 +31,6 @@ public class MethodDeclaration extends PositionNode {
 
     public TypeParameters getTypeParameters () {
 	return header.getTypeParameters ();
-    }
-
-    public List<TreeNode> getAnnotations () {
-	return annotations;
-    }
-
-    public int getFlags () {
-	return flags;
     }
 
     public Result getResult () {

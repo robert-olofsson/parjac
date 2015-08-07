@@ -14,10 +14,10 @@ public class LocalVariableDeclaration extends VariableDeclaration {
 	super (r, 2, parts, pos, path, diagnostics);
     }
 
-    public LocalVariableDeclaration (ParsePosition pos, List<TreeNode> modifiers,
-				     TreeNode type, VariableDeclaratorList variables,
+    public LocalVariableDeclaration (List<TreeNode> modifiers, TreeNode type,
+				     VariableDeclaratorList variables, ParsePosition pos,
 				     Path path, CompilerDiagnosticCollector diagnostics) {
-	super (pos, modifiers, type, variables, path, diagnostics);
+	super (modifiers, type, variables, pos, path, diagnostics);
     }
 
     @Override public void visit (TreeVisitor visitor) {

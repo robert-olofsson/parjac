@@ -26,6 +26,8 @@ import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.VariableDeclaration;
 import org.khelekore.parjac.tree.VariableDeclarator;
 
+import static org.khelekore.parjac.semantics.FlagsHelper.*;
+
 /** Store fields and methods and generate errors for duplicates.
  */
 public class FieldAndMethodScanner implements TreeVisitor {
@@ -43,22 +45,22 @@ public class FieldAndMethodScanner implements TreeVisitor {
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, isStatic (c.getFlags ()));
 	return true;
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, isStatic (e.getFlags ()));
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, isStatic (i.getFlags ()));
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, isStatic (a.getFlags ()));
 	return true;
     }
 
@@ -67,7 +69,7 @@ public class FieldAndMethodScanner implements TreeVisitor {
     }
 
     @Override public boolean anonymousClass (ClassType ct, ClassBody b) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, false);
 	return true;
     }
 
@@ -80,7 +82,7 @@ public class FieldAndMethodScanner implements TreeVisitor {
     }
 
     @Override public boolean visit (ConstructorDeclaration c) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, false);
 	return true;
     }
 
@@ -89,7 +91,7 @@ public class FieldAndMethodScanner implements TreeVisitor {
     }
 
     @Override public boolean visit (MethodDeclaration m) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, isStatic (m.getFlags ()));
 	// TODO: store method information
 	return true;
     }
@@ -102,17 +104,8 @@ public class FieldAndMethodScanner implements TreeVisitor {
 	l.getVariables ().get ().forEach (v -> storeField (l, v));
     }
 
-    @Override public boolean visit (Block b) {
-	currentScope = new Scope (currentScope);
-	return true;
-    }
-
-    @Override public void endBlock () {
-	currentScope = currentScope.endScope ();
-    }
-
     @Override public boolean visit (BasicForStatement f) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, currentScope.isStatic);
 	TreeNode init = f.getForInit ();
 	if (init != null)
 	    init.visit (this);
@@ -122,7 +115,7 @@ public class FieldAndMethodScanner implements TreeVisitor {
     }
 
     @Override public boolean visit (EnhancedForStatement f) {
-	currentScope = new Scope (currentScope);
+	currentScope = new Scope (currentScope, currentScope.isStatic);
 	visit (f.getLocalVariableDeclaration ());
 	visitStatementsWithoutScope (f.getStatement ());
 	currentScope = currentScope.endScope ();
@@ -143,7 +136,7 @@ public class FieldAndMethodScanner implements TreeVisitor {
     private void storeField (VariableDeclaration fd, VariableDeclarator vd) {
 	FieldInformation fi = new FieldInformation (vd.getId (), fd);
 	boolean currentScopeHas = currentScope.has (fi.name);
-	FieldInformation f = currentScope.find (fi.name);
+	FieldInformation f = currentScope.find (fi.name, isStatic (fd.getFlags ()));
 	if (!currentScopeHas && f != null) {
 	    diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), vd.getParsePosition (),
 							   "Field %s shadows another variable", fi.name));
@@ -158,18 +151,23 @@ public class FieldAndMethodScanner implements TreeVisitor {
 
     private static class Scope {
 	private final Scope parent;
+	private final boolean isStatic;
 	private Map<String, FieldInformation> variables = Collections.emptyMap ();
 
-	public Scope (Scope parent) {
+	public Scope (Scope parent, boolean isStatic) {
 	    this.parent = parent;
+	    this.isStatic = isStatic;
 	}
 
-	public FieldInformation find (String id) {
+	public FieldInformation find (String id, boolean isStatic) {
 	    Scope s = this;
 	    while (s != null) {
-		FieldInformation fi = s.variables.get (id);
-		if (fi != null)
-		    return fi;
+		isStatic |= s.isStatic;
+		if (!isStatic || s.isStatic) {
+		    FieldInformation fi = s.variables.get (id);
+		    if (fi != null && (!isStatic || isStatic (fi.var.getFlags ())))
+			return fi;
+		}
 		s = s.parent;
 	    }
 	    return null;
@@ -192,10 +190,11 @@ public class FieldAndMethodScanner implements TreeVisitor {
 
     private static class FieldInformation {
 	private final String name;
+	private VariableDeclaration var;
 
-	public FieldInformation (String name, VariableDeclaration field) {
+	public FieldInformation (String name, VariableDeclaration var) {
 	    this.name = name;
-	    // TODO: probably want to store field here
+	    this.var = var;
 	}
     }
 }

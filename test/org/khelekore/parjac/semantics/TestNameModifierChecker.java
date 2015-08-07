@@ -235,6 +235,17 @@ public class TestNameModifierChecker extends TestBase {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
+    /* TODO: re-enable test
+    @Test
+    public void testInnerStatic () throws IOException {
+	parseAndSetClasses ("class Foo { class Bar { static int bar; } }");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { static class Bar { static int bar; } }");
+	assertNoErrors ();
+    }
+    */
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();

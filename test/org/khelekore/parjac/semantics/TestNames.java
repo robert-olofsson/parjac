@@ -52,6 +52,15 @@ public class TestNames extends TestBase {
 	assert diagnostics.hasWarning () : "Expected to find shadowing warning";
     }
 
+    /* TODO: re-enable test
+    @Test
+    public void testInnerClassShadowingFieldLast () throws IOException {
+	parseAndSetClasses ("class Foo { class Bar { int a; } int a; }");
+	assertNoErrors ();
+	assert diagnostics.hasWarning () : "Expected to find shadowing warning";
+    }
+    */
+
     @Test
     public void testInnerClass () throws IOException {
 	parseAndSetClasses ("class Foo {\n" +
@@ -62,6 +71,22 @@ public class TestNames extends TestBase {
 			    "}}");
 	assertNoErrors ();
     }
+
+    @Test
+    public void testStaticNoShadow () throws IOException {
+	parseAndSetClasses ("class Foo { int a; static void foo () { int a = 0; }}");
+	assertNoErrors ();
+	assertNoWarnings ();
+    }
+
+    /* TODO: re-enable test
+    @Test
+    public void testStaticShadow () throws IOException {
+	parseAndSetClasses ("class Foo { static int a; static void foo () { int a = 0; }}");
+	assertNoErrors ();
+	assert diagnostics.hasWarning () : "Expected to find shadowing warning";
+    }
+    */
 
     @Test
     public void testBasicFor () throws IOException {
@@ -94,7 +119,7 @@ public class TestNames extends TestBase {
 
     @Test
     public void testShadowing () throws IOException {
-	parseAndSetClasses ("class Foo { void foo () { int a = 3; { int a = 5;}}}");
+	parseAndSetClasses ("class Foo { int a; void foo () { int a = 3; }}");
 	assertNoErrors ();
 	assert diagnostics.hasWarning () : "Expected to find shadowing warning";
     }

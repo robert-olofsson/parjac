@@ -124,6 +124,11 @@ public class Compiler {
     private void checkSemantics (List<SyntaxTree> trees) {
 	trees.parallelStream ().forEach (t -> cip.addTypes (t));
 
+	/*
+	 * 1: Set classes for fields, method parameters and method returns, setup scopes
+	 *    Scope hangs on class, method, for-clause and try (with resource) clause
+	 * 2: Set classes for local variables, field access and expressions
+	 */
 	runTimed (() -> ClassSetter.fillInClasses (cip, trees, diagnostics), "Setting classes");
 	if (settings.getDebug ())
 	    trees.forEach (t -> System.err.println ("class set tree: " + t));

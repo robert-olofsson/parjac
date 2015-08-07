@@ -437,14 +437,14 @@ public class BytecodeGenerator implements TreeVisitor {
 		if (ct != null) {
 		    supername = ct.getFullName ().replace ('.', '/');
 		}
-		flags = ncd.getAccessFlags ();
+		flags = ncd.getFlags ();
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
 		supername = "java.lang.Enum<" + ed.getId () + ">";
-		flags = (ed.getAccessFlags () | ACC_FINAL);
+		flags = (ed.getFlags () | ACC_FINAL);
 	    } else if (tn instanceof NormalInterfaceDeclaration) {
 		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
-		flags = i.getAccessFlags () | ACC_INTERFACE;
+		flags = i.getFlags () | ACC_INTERFACE;
 	    }
 	    // TODO: handle interface flags
 	    return new SuperAndFlags (supername, flags);
