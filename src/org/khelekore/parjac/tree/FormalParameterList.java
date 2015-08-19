@@ -12,7 +12,7 @@ public class FormalParameterList extends PositionNode {
     public FormalParameterList (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
 	rp = r.size () > 1 ? (ReceiverParameter)parts.pop () : null;
-	fps = (NormalFormalParameterList)parts.pop ();
+	fps = rp == null || r.size () > 2 ? (NormalFormalParameterList)parts.pop () : null;
     }
 
     @Override public String toString () {

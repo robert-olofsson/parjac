@@ -74,8 +74,8 @@ public class JavaTreeBuilder {
 	register (g, "MethodDeclarator", constructored (MethodDeclarator::new));
 	register (g, "FormalParameterList", constructored (FormalParameterList::new));
 	register (g, "NormalFormalParameterList", constructored (NormalFormalParameterList::new));
-	register (g, "FormalParameter", constructored (FormalParameter::new));
-	register (g, "LastFormalParameter", constructored (LastFormalParameter::build));
+	register (g, "FormalParameter", diagnosed (FormalParameter::new));
+	register (g, "LastFormalParameter", diagnosed (LastFormalParameter::build));
 	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
 	register (g, "Throws", constructored (Throws::new));
 	register (g, "MethodBody", constructored (MethodBody::build));

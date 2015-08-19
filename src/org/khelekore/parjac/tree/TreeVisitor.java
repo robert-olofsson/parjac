@@ -33,6 +33,9 @@ public interface TreeVisitor {
     default boolean visit (AnnotationTypeDeclaration a) {
 	return true;
     }
+    /** Ends the visit of the current type */
+    default void endType () {
+    }
     /**
      * @return true to visit subtree, false to stop tree traversal
      *         The endAnonymousClass will be called no matter what.
@@ -42,9 +45,6 @@ public interface TreeVisitor {
     }
 
     default void endAnonymousClass (ClassType ct, ClassBody b) {
-    }
-    /** Ends the visit of the current type */
-    default void endType () {
     }
 
     /**

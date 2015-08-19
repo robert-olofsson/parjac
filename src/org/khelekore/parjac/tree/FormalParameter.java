@@ -1,28 +1,33 @@
 package org.khelekore.parjac.tree;
 
+import java.nio.file.Path;
 import java.util.Deque;
-import java.util.List;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class FormalParameter extends PositionNode {
-    private final List<TreeNode> annotations;
+public class FormalParameter extends FlaggedType {
     private final TreeNode type;
     private final VariableDeclaratorId vdi;
 
-    public FormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
-	super (pos);
-	annotations = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
+    public FormalParameter (Rule r, Deque<TreeNode> parts, ParsePosition pos,
+			    Path path, CompilerDiagnosticCollector diagnostics) {
+	super (r.size () > 2, parts, pos, path, diagnostics);
 	type = parts.pop ();
 	vdi = (VariableDeclaratorId)parts.pop ();
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + annotations + " " + type + " " + vdi + "}";
+	return getClass ().getSimpleName () + "{" + getAnnotations () + " " + getFlags () +
+	    " " + type + " " + vdi + "}";
     }
 
     public TreeNode getType () {
 	return type;
+    }
+
+    public String getId () {
+	return vdi.getId ();
     }
 }

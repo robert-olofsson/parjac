@@ -28,6 +28,10 @@ public class ClassType extends Multipart<SimpleClassType> {
 	return fqn.replace ('.', '/');
     }
 
+    @Override public String getExpressionType () {
+	return fqn;
+    }
+
     public static ClassType build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return new ClassType ((SimpleClassType)parts.pop (), pos);

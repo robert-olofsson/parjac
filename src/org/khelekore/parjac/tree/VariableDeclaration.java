@@ -41,4 +41,8 @@ public abstract class VariableDeclaration extends FlaggedType {
     public VariableDeclaratorList getVariables () {
 	return variables;
     }
+
+    @Override public String getExpressionType () {
+	return type.getExpressionType ();
+    }
 }

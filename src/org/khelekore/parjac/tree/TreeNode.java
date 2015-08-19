@@ -10,4 +10,8 @@ public interface TreeNode {
 
     /** Get the parse position for this node */
     ParsePosition getParsePosition ();
+
+    default String getExpressionType () {
+	return null;
+    }
 }

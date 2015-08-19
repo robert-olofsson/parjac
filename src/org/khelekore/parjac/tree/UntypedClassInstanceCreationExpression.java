@@ -72,4 +72,8 @@ public class UntypedClassInstanceCreationExpression extends PositionNode {
     public ClassType getId () {
 	return id;
     }
+
+    @Override public String getExpressionType () {
+	return id.getFullName ();
+    }
 }

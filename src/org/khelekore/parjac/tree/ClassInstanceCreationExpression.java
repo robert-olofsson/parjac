@@ -26,6 +26,8 @@ public class ClassInstanceCreationExpression extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
+	if (from != null)
+	    from.visit (visitor);
 	visitor.visit (this);
 	ucice.visit (visitor);
     }
@@ -36,5 +38,9 @@ public class ClassInstanceCreationExpression extends PositionNode {
 
     public void setFrom (TreeNode from) {
 	this.from = from;
+    }
+
+    public UntypedClassInstanceCreationExpression getUntypedClassInstanceCreationExpression () {
+	return ucice;
     }
 }

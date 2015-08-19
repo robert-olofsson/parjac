@@ -3,7 +3,6 @@ package org.khelekore.parjac.semantics;
 import java.io.IOException;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.tree.SyntaxTree;
 import org.testng.annotations.Test;
 
 public class TestNames extends TestBase {
@@ -122,10 +121,5 @@ public class TestNames extends TestBase {
 	parseAndSetClasses ("class Foo { int a; void foo () { int a = 3; }}");
 	assertNoErrors ();
 	assert diagnostics.hasWarning () : "Expected to find shadowing warning";
-    }
-
-    protected void handleSyntaxTree (SyntaxTree tree) {
-	FieldAndMethodScanner fams = new FieldAndMethodScanner (tree, diagnostics);
-	fams.scan ();
     }
 }

@@ -78,10 +78,16 @@ public class TestClassSetter extends TestBase {
     }
 
     @Test
-    public void testInnerClass () throws IOException {
+    public void testInnerClassField () throws IOException {
 	parseAndSetClasses ("package foo.bar; class Foo { class Bar {} Bar bar;}");
 	assertNoErrors ();
 	checkField ("foo.bar.Foo", 1, "foo.bar.Foo$Bar");
+    }
+
+    @Test
+    public void testInnerClassLocal () throws IOException {
+	parseAndSetClasses ("package foo.bar; class Foo { class Bar {} void f () { new Bar ();}}");
+	assertNoErrors ();
     }
 
     @Test
@@ -147,7 +153,7 @@ public class TestClassSetter extends TestBase {
     public void testGenericMethodType () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "class Foo {\n" +
-			    "    <T> T foo (T t) { T t; }\n" +
+			    "    <T> T foo (T t) { T t2; }\n" +
 			    "}");
 	assertNoErrors ();
     }
@@ -407,6 +413,38 @@ public class TestClassSetter extends TestBase {
 	// same package wins over star import
 	parseAndSetClasses ("package foo; import bar.*; class A {} class Foo { A a;}",
 			    "package bar; class A {}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMethodParams () throws IOException {
+	parseAndSetClasses ("class Foo { String foo (String a, String b) { return a + b; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInnerClasses () throws IOException {
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { static void a () { new A ().new B ();}}");
+	assertNoErrors ();
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { static A a = new A ();\n" +
+			    "                       static void a () { a.new B ();}}");
+	assertNoErrors ();
+	// same as above, but different order
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { static void a () { a.new B ();}\n" +
+			    "                       static A a = new A ();}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { A a = null;\n" +
+			    "                       void a () { a.new B ();}}");
+	assertNoErrors ();
+	// same as above, but different order
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { void a () { a.new B ();}\n" +
+			    "                       A a = new A ();}");
 	assertNoErrors ();
     }
 
