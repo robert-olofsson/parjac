@@ -15,7 +15,7 @@ public class SiblingVisitor implements TreeVisitor {
     @Override public boolean visit (AnnotationTypeDeclaration a) {
 	return false;
     }
-    @Override public boolean anonymousClass (ClassType ct, ClassBody b) {
+    @Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	return false;
     }
     @Override public boolean visit (ConstructorDeclaration c) {

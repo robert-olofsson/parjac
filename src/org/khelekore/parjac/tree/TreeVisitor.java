@@ -40,7 +40,7 @@ public interface TreeVisitor {
      * @return true to visit subtree, false to stop tree traversal
      *         The endAnonymousClass will be called no matter what.
      */
-    default boolean anonymousClass (ClassType ct, ClassBody b) {
+    default boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	return true;
     }
 
@@ -123,9 +123,6 @@ public interface TreeVisitor {
     default void visit (ClassInstanceCreationExpression c) {
     }
 
-    default void visit (UntypedClassInstanceCreationExpression c) {
-    }
-
     default boolean visit (MethodInvocation m) {
 	return true;
     }
@@ -197,5 +194,8 @@ public interface TreeVisitor {
     }
 
     default void visit (LocalVariableDeclaration l) {
+    }
+
+    default void visit (CastExpression c) {
     }
 }

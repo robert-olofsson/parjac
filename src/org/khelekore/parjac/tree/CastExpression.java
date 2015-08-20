@@ -21,4 +21,17 @@ public class CastExpression extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + additionalBounds + " " + expression + "}";
     }
+
+    @Override public String getExpressionType () {
+	return type.getExpressionType ();
+    }
+
+    public TreeNode getType () {
+	return type;
+    }
+
+    public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	expression.visit (visitor);
+    }
 }

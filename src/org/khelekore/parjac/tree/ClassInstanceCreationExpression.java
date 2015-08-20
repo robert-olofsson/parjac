@@ -1,35 +1,55 @@
 package org.khelekore.parjac.tree;
 
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ClassInstanceCreationExpression extends PositionNode {
     private TreeNode from;
-    private final UntypedClassInstanceCreationExpression ucice;
+    private final TypeArguments typeArguments;
+    private final List<TreeNode> annotations;
+    private final ClassType id;
+    private final TreeNode typeArgumentsOrDiamond;
+    private final ArgumentList args;
+    private final ClassBody body;
 
     public ClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
-	from = parts.pop ();
-	ucice = (UntypedClassInstanceCreationExpression)parts.pop ();
+	if (r.size () > 1)
+	    from = parts.pop ();
+	UntypedClassInstanceCreationExpression u = (UntypedClassInstanceCreationExpression)parts.pop ();
+	typeArguments = u.getTypeArguments ();
+	annotations = u.getAnnotations ();
+	id = u.getId ();
+	typeArgumentsOrDiamond = u.getTypeArgumentsOrDiamond ();
+	args = u.getArgumentList ();
+	body = u.getBody ();
     }
 
     public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
-	if (r.size () == 1)
-	    return parts.pop ();
 	return new ClassInstanceCreationExpression (r, parts, pos);
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + from + "." + ucice + "}";
+	return getClass ().getSimpleName () + "{" + from + "." + "new " + typeArguments +
+	    " " + annotations + " " + id + " " + typeArgumentsOrDiamond + "(" + args + ") " +
+	    body + "}";
     }
 
     public void visit (TreeVisitor visitor) {
-	if (from != null)
+	if (from != null) {
 	    from.visit (visitor);
+	}
+	if (args != null)
+	    args.visit (visitor);
 	visitor.visit (this);
-	ucice.visit (visitor);
+	if (body != null) {
+	    if (visitor.anonymousClass (from, id, body))
+		body.visit (visitor);
+	    visitor.endAnonymousClass (id, body);
+	}
     }
 
     public TreeNode getFrom () {
@@ -40,7 +60,15 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	this.from = from;
     }
 
-    public UntypedClassInstanceCreationExpression getUntypedClassInstanceCreationExpression () {
-	return ucice;
+    public TypeArguments getTypeArguments () {
+	return typeArguments;
+    }
+
+    public ClassType getId () {
+	return id;
+    }
+
+    @Override public String getExpressionType () {
+	return id.getFullName ();
     }
 }

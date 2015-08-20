@@ -446,6 +446,23 @@ public class TestClassSetter extends TestBase {
 			    "package foo; class C { void a () { a.new B ();}\n" +
 			    "                       A a = new A ();}");
 	assertNoErrors ();
+
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { A a = new A ();\n" +
+			    "                       static void a () { a.new B ();}}");
+	assert diagnostics.hasError () : "Can not use non static field in static method";
+    }
+
+    @Test
+    public void testCastType () throws IOException {
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { static Object a = new A();\n" +
+			    "                       static void a () { ((A)a).new B ();}}");
+	assertNoErrors ();
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { static Object a = new A();\n" +
+			    "                       static void a () { ((A)a).new B () {};}}");
+	assertNoErrors ();
     }
 
     private void checkImplements (String classToCheck, String wantedInterface) {

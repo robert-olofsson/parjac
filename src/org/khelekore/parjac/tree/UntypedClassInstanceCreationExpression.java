@@ -54,26 +54,27 @@ public class UntypedClassInstanceCreationExpression extends PositionNode {
 	    id + " " + typeArgumentsOrDiamond + "(" + args + ") " + body + "}";
     }
 
-    @Override public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	if (args != null)
-	    args.visit (visitor);
-	if (body != null) {
-	    if (visitor.anonymousClass (id, body))
-		body.visit (visitor);
-	    visitor.endAnonymousClass (id, body);
-	}
-    }
-
     public TypeArguments getTypeArguments () {
 	return typeArguments;
+    }
+
+    public List<TreeNode> getAnnotations () {
+	return annotations;
     }
 
     public ClassType getId () {
 	return id;
     }
 
-    @Override public String getExpressionType () {
-	return id.getFullName ();
+    public TreeNode getTypeArgumentsOrDiamond () {
+	return typeArgumentsOrDiamond;
+    }
+
+    public ArgumentList getArgumentList () {
+	return args;
+    }
+
+    public ClassBody getBody () {
+	return body;
     }
 }

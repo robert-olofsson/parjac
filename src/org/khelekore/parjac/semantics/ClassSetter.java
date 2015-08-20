@@ -27,6 +27,7 @@ public class ClassSetter {
     private final DottedName packageName;
     private final ImportHandler ih = new ImportHandler ();
     private Deque<String> containingTypeName = new ArrayDeque<> ();
+    // Type parameters, should probably be moved into scope instead
     private final Deque<Set<String>> types = new ArrayDeque<> ();
     private final Map<TreeNode, Scope> scopes = new HashMap<> ();
 
@@ -168,14 +169,15 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public boolean anonymousClass (ClassType ct, ClassBody b) {
-	    setType (ct, this);
+	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
+	    currentScope = new Scope (currentScope, false);
+	    scopes.put (b, currentScope);
+
+	    // Most anonymous classes have no specified outer so easy to handle
 	    if (ct.getFullName () != null) {
 		containingTypeName.push (ct.getFullName ());
 		containingTypeName.push (cip.getFullName (b));
 		registerTypeParameters (null);
-		currentScope = new Scope (currentScope, false);
-		scopes.put (b, currentScope);
 		return true;
 	    }
 	    // No need to continue here
@@ -202,10 +204,6 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public void visit (FieldDeclaration f) {
-	    setType (f.getType (), this);
-	}
-
 	@Override public boolean visit (MethodDeclaration m) {
 	    registerTypeParameters (m.getTypeParameters ());
 	    Result r = m.getResult ();
@@ -220,6 +218,36 @@ public class ClassSetter {
 
 	@Override public void endMethod (MethodDeclaration m) {
 	    currentScope = currentScope.endScope ();
+	}
+
+	@Override public void visit (ClassInstanceCreationExpression c) {
+	    TreeNode from = c.getFrom ();
+	    if (from == null) {
+		setType (c.getId (), this);
+	    } else {
+		if (from instanceof DottedName) {
+		    from = replaceWithChainedFieldAccess((DottedName)from, currentScope, this);
+		    c.setFrom (from);
+		}
+		if (from.getExpressionType () != null) {
+		    Deque<String> save = containingTypeName;
+		    containingTypeName = new ArrayDeque<> ();
+		    String type = from.getExpressionType ();
+		    if (type != null)
+			containingTypeName.push (type);
+		    setType (c.getId (), this);
+		    containingTypeName = save;
+		} else {
+		    setIncomplete ();
+		    if (mayReport ())
+			diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
+								     "Unknown expression type for: %s", from));
+		}
+	    }
+	}
+
+	@Override public void visit (CastExpression c) {
+	    setType (c.getType (), this);
 	}
 
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
@@ -253,17 +281,18 @@ public class ClassSetter {
 	private void addFields (TreeNode tn, Scope scope) {
 	    tn.visit (new FieldFinder (scope));
 	}
-    }
 
-    private class FieldFinder extends SiblingVisitor {
-	private final Scope scope;
+	private class FieldFinder extends SiblingVisitor {
+	    private final Scope scope;
 
-	public FieldFinder (Scope scope) {
-	    this.scope = scope;
-	}
+	    public FieldFinder (Scope scope) {
+		this.scope = scope;
+	    }
 
-	@Override public void visit (FieldDeclaration f) {
-	    f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
+	    @Override public void visit (FieldDeclaration f) {
+		setType (f.getType (), ScopeSetter.this);
+		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
+	    }
 	}
     }
 
@@ -307,10 +336,11 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public boolean anonymousClass (ClassType ct, ClassBody b) {
+	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	    currentScope = scopes.get (b);
 	    containingTypeName.push (ct.getFullName ());
 	    containingTypeName.push (cip.getFullName (b));
+	    registerTypeParameters (null);
 	    return true;
 	}
 
@@ -353,28 +383,6 @@ public class ClassSetter {
 	    if (lhs instanceof DottedName) {
 		a.lhs (replaceWithChainedFieldAccess ((DottedName)lhs, currentScope, this));
 	    }
-	}
-
-	@Override public void visit (ClassInstanceCreationExpression c) {
-	    TreeNode from = c.getFrom ();
-	    if (from instanceof DottedName) {
-		from = replaceWithChainedFieldAccess((DottedName)from, currentScope, this);
-		c.setFrom (from);
-	    }
-	    UntypedClassInstanceCreationExpression ucice = c.getUntypedClassInstanceCreationExpression ();
-	    if (from != null) {
-		Deque<String> save = containingTypeName;
-		containingTypeName = new ArrayDeque<> ();
-		String type = from.getExpressionType ();
-		if (type != null)
-		    containingTypeName.push (type);
-		visit (ucice);
-		containingTypeName = save;
-	    } // No need for else, we will get the UCICE below directly anyway
-	}
-
-	@Override public void visit (UntypedClassInstanceCreationExpression c) {
-	    setType (c.getId (), this);
 	}
 
 	@Override public boolean visit (MethodInvocation m) {

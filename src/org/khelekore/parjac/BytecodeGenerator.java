@@ -57,7 +57,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	return true;
     }
 
-    @Override public boolean anonymousClass (ClassType ct, ClassBody b) {
+    @Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	pushClass (b);
 	return true;
     }

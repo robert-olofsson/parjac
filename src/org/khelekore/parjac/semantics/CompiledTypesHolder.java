@@ -102,7 +102,7 @@ public class CompiledTypesHolder {
 	    return true;
 	}
 
-	@Override public boolean anonymousClass (ClassType ct, ClassBody b) {
+	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	    pushClass (generateAnonId (), b);
 	    return true;
 	}
