@@ -288,6 +288,15 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public boolean visit (SwitchBlock s) {
+	    addScope (s, Scope.Type.LOCAL);
+	    return true;
+	}
+
+	@Override public  void endSwitchBlock () {
+	    currentScope = currentScope.endScope ();
+	}
+
 	@Override public boolean visit (ArrayAccess a) {
 	    TreeNode from = a.getFrom ();
 	    if (from instanceof DottedName) {

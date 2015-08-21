@@ -38,6 +38,7 @@ public class SwitchBlock extends PositionNode {
 	    if (groups != null)
 		groups.forEach (s -> s.visit (visitor));
 	}
+	visitor.endSwitchBlock ();
     }
 
     public List<SwitchBlockStatementGroup> getGroups () {

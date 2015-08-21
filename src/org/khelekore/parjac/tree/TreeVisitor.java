@@ -179,6 +179,9 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default void endSwitchBlock () {
+    }
+
     default boolean visit (SwitchBlockStatementGroup s) {
 	return true;
     }
