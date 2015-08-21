@@ -204,6 +204,13 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public void visit (ExplicitConstructorInvocation eci) {
+	    TreeNode type = eci.getType ();
+	    if (type instanceof DottedName) {
+		eci.setType (replaceWithChainedFieldAccess ((DottedName)type, currentScope, this));
+	    }
+	}
+
 	@Override public boolean visit (MethodDeclaration m) {
 	    registerTypeParameters (m.getTypeParameters ());
 	    Result r = m.getResult ();
@@ -229,6 +236,14 @@ public class ClassSetter {
 		    from = replaceWithChainedFieldAccess((DottedName)from, currentScope, this);
 		    c.setFrom (from);
 		}
+		if (from.getExpressionType () == null && from instanceof Identifier) {
+		    Identifier i = (Identifier)from;
+		    FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
+		    if (fi != null) {
+			i = new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ());
+			c.setFrom (i);
+		    }
+		}
 		if (from.getExpressionType () != null) {
 		    Deque<String> save = containingTypeName;
 		    containingTypeName = new ArrayDeque<> ();
@@ -244,6 +259,11 @@ public class ClassSetter {
 								     "Unknown expression type for: %s", from));
 		}
 	    }
+	}
+
+	@Override public void visit (LocalVariableDeclaration l) {
+	    setType (l.getType (), this);
+	    l.getVariables ().get ().forEach (v -> currentScope.tryToAdd (l, v, tree, diagnostics));
 	}
 
 	@Override public void visit (CastExpression c) {
@@ -357,17 +377,6 @@ public class ClassSetter {
 	    types.pop ();
 	}
 
-	@Override public void visit (ExplicitConstructorInvocation eci) {
-	    TreeNode type = eci.getType ();
-	    if (type instanceof DottedName) {
-		eci.setType (replaceWithChainedFieldAccess ((DottedName)type, currentScope, this));
-	    }
-	}
-
-	@Override public void visit (FieldDeclaration f) {
-	    // TODO: handle VariableInitializer
-	}
-
 	@Override public boolean visit (MethodDeclaration m) {
 	    currentScope = scopes.get (m);
 	    return true;
@@ -403,10 +412,6 @@ public class ClassSetter {
 		a.setFrom (replaceWithChainedFieldAccess((DottedName)from, currentScope, this));
 	    }
 	    return true;
-	}
-
-	@Override public void visit (LocalVariableDeclaration l) {
-	    l.getVariables ().get ().forEach (v -> currentScope.tryToAdd (l, v, tree, diagnostics));
 	}
 
 	@Override public boolean visit (BasicForStatement f) {

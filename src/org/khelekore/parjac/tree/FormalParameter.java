@@ -30,4 +30,8 @@ public class FormalParameter extends FlaggedType {
     public String getId () {
 	return vdi.getId ();
     }
+
+    @Override public String getExpressionType () {
+	return type.getExpressionType ();
+    }
 }

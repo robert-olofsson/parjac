@@ -7,9 +7,7 @@ public class Identifier extends PositionNode {
     private final String expressionType;
 
     public Identifier (String value, ParsePosition pos) {
-	super (pos);
-	this.value = value;
-	this.expressionType = null;
+	this (value, pos, null);
     }
 
     public Identifier (String value, ParsePosition pos, String type) {

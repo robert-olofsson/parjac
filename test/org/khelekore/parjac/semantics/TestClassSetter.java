@@ -465,6 +465,20 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testInnerLocalFieldTypes () throws IOException {
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { void a () { A a = new A(); a.new B ();}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInnerMethodFieldType () throws IOException {
+	parseAndSetClasses ("package foo; class A { class B {}}",
+			    "package foo; class C { void a (A a) { a.new B ();}}");
+	assertNoErrors ();
+    }
+
     private void checkImplements (String classToCheck, String wantedInterface) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);
