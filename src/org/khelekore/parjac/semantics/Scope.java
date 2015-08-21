@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.FlaggedType;
 import org.khelekore.parjac.tree.FormalParameter;
 import org.khelekore.parjac.tree.LastFormalParameter;
@@ -71,13 +72,16 @@ public class Scope {
 	String name = fi.getName ();
 	FieldInformation<?> f = find (name, FlagsHelper.isStatic (ft.getFlags ()));
 	if (f != null) {
+	    ParsePosition fpp = f.getParsePosition ();
 	    if (f.getClassLevel () == classLevel) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), fi.getParsePosition (),
-							     "Field %s already defined", name));
+							     "Field %s already defined at %d:%d", name,
+							     fpp.getLineNumber (), fpp.getTokenColumn ()));
 		return;
 	    } else {
 		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), fi.getParsePosition (),
-							       "Field %s shadows another variable", name));
+							       "Field %s shadows variable at %d:%d", name,
+							       fpp.getLineNumber (), fpp.getTokenColumn ()));
 	    }
 	}
 	add (fi);
