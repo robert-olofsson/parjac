@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
@@ -25,8 +26,8 @@ public class ClassInformationProvider {
 	crh.scanClassPath ();
     }
 
-    public void addTypes (SyntaxTree tree) {
-	cth.addTypes (tree);
+    public void addTypes (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	cth.addTypes (tree, diagnostics);
     }
 
     public TreeNode getType (String fqn) {

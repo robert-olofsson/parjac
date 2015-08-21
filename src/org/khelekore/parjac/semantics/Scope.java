@@ -15,17 +15,33 @@ import org.khelekore.parjac.tree.VariableDeclarator;
 
 public class Scope {
     private final Scope parent;
+    private final Type type;
     private final boolean isStatic;
+    private final int classLevel;
     private Map<String, FieldInformation<?>> variables = Collections.emptyMap ();
 
-    public Scope (Scope parent, boolean isStatic) {
+    public enum Type { CLASS, LOCAL };
+
+    public Scope (Scope parent, Type type, boolean isStatic) {
 	this.parent = parent;
+	this.type = type;
 	this.isStatic = isStatic;
+	if (parent == null) {
+	    classLevel = 0;
+	} else {
+	    int add = 0;
+	    if (type == Type.CLASS)
+		add++;
+	    if (parent.type == Type.CLASS)
+		add++;
+	    classLevel = parent.classLevel + add;
+	}
     }
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{parent: " + parent +
-	    ", isStatic: " + isStatic + ", variables: " + variables + "}";
+	    ", type: "  + type + ", classLevel: " + classLevel + ", isStatic: " + isStatic +
+	    ", variables: " + variables + "}";
     }
 
     public boolean isStatic () {
@@ -36,32 +52,35 @@ public class Scope {
      */
     public void tryToAdd (VariableDeclaration fd, VariableDeclarator vd,
 			  SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<VariableDeclaration> (vd.getId (), fd), fd, tree, diagnostics);
+	tryToAdd (new FieldInformation<VariableDeclaration> (vd.getId (), fd, classLevel),
+		  fd, tree, diagnostics);
     }
 
     public void tryToAdd (FormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<FormalParameter> (fp.getId (), fp), fp, tree, diagnostics);
+	tryToAdd (new FieldInformation<FormalParameter> (fp.getId (), fp, classLevel),
+		  fp, tree, diagnostics);
     }
 
     public void tryToAdd (LastFormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<LastFormalParameter> (fp.getId (), fp), fp, tree, diagnostics);
+	tryToAdd (new FieldInformation<LastFormalParameter> (fp.getId (), fp, classLevel),
+		  fp, tree, diagnostics);
     }
 
     private void tryToAdd (FieldInformation<?> fi, FlaggedType ft,
 			   SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	String name = fi.getName ();
-	boolean currentScopeHas = has (name);
 	FieldInformation<?> f = find (name, FlagsHelper.isStatic (ft.getFlags ()));
-	if (!currentScopeHas && f != null) {
-	    diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), fi.getParsePosition (),
-							   "Field %s shadows another variable", name));
+	if (f != null) {
+	    if (f.getClassLevel () == classLevel) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), fi.getParsePosition (),
+							     "Field %s already defined", name));
+		return;
+	    } else {
+		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), fi.getParsePosition (),
+							       "Field %s shadows another variable", name));
+	    }
 	}
-	if (currentScopeHas) {
-	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), fi.getParsePosition (),
-							 "Field %s already defined", name));
-	} else {
-	    add (fi);
-	}
+	add (fi);
     }
 
     /** Try to find a variable named id in this and all parent Scopes. */

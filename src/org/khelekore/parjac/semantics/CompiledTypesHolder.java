@@ -7,18 +7,21 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.*;
 
 public class CompiledTypesHolder {
     private Map<String, TreeNode> name2node = new HashMap<> ();
     private Map<TreeNode, String> node2fqn = new HashMap<> ();
 
-    public void addTypes (SyntaxTree tree) {
-	tree.getCompilationUnit ().visit (new ClassMapper ());
+    public void addTypes (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	tree.getCompilationUnit ().visit (new ClassMapper (tree, diagnostics));
     }
 
     public Set<String> getTypes () {
@@ -74,8 +77,15 @@ public class CompiledTypesHolder {
     }
 
     private class ClassMapper implements TreeVisitor {
+	private final SyntaxTree tree;
+	private final CompilerDiagnosticCollector diagnostics;
 	private DottedName packageName;
 	private final Deque<ClassId> classes = new ArrayDeque<> ();
+
+	public ClassMapper (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	    this.tree = tree;
+	    this.diagnostics = diagnostics;
+	}
 
 	@Override public boolean visit (CompilationUnit cu) {
 	    packageName = cu.getPackage ();
@@ -123,6 +133,10 @@ public class CompiledTypesHolder {
 
 	private void pushClass (String id, TreeNode tn) {
 	    ClassId cid = new ClassId (id);
+	    if (classes.contains (cid)) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							     "Class: %s already defined", id));
+	    }
 	    classes.addLast (cid);
 	    String fullId = getFullId ();
 	    String name = getFQN (packageName, fullId);
@@ -149,6 +163,21 @@ public class CompiledTypesHolder {
 
 	public ClassId (String id) {
 	    this.id = id;
+	}
+
+	@Override public int hashCode () {
+	    return id.hashCode ();
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    ClassId c = (ClassId)o;
+	    return Objects.equals (id, c.id);
 	}
 
 	@Override public String toString () {

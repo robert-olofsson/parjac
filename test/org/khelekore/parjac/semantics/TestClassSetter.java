@@ -479,6 +479,25 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testIfScope () throws IOException {
+	parseAndSetClasses ("package foo; class A { void a () {\n" +
+			    "    boolean b = false;\n" +
+			    "    if (b) { String a = \"foo\"; }\n" +
+			    "    if (b) { String a = \"bar\"; }\n" +
+			    "}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testForScope () throws IOException {
+	parseAndSetClasses ("package foo; class A { void a () {\n" +
+			    "    for (int i = 0; i < 3; i++) { String a = \"foo\"; }\n" +
+			    "    for (int i = 0; i < 3; i++) { String a = \"foo\"; }\n" +
+			    "}}");
+	assertNoErrors ();
+    }
+
     private void checkImplements (String classToCheck, String wantedInterface) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);

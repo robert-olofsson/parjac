@@ -52,6 +52,7 @@ public class BasicForStatement extends PositionNode {
 		forUpdate.visit (visitor);
 	    statement.visit (visitor);
 	}
+	visitor.endFor ();
     }
 
     public TreeNode getForInit () {

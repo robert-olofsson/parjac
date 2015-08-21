@@ -40,6 +40,7 @@ public class EnhancedForStatement extends PositionNode {
 		exp.visit (visitor);
 	    statement.visit (visitor);
 	}
+	visitor.endFor ();
     }
 
     public LocalVariableDeclaration getLocalVariableDeclaration () {

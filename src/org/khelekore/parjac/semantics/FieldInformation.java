@@ -6,10 +6,12 @@ import org.khelekore.parjac.tree.FlaggedType;
 public class FieldInformation<T extends FlaggedType> {
     private final String name;
     private final T var;
+    private final int classLevel;
 
-    public FieldInformation (String name, T var) {
+    public FieldInformation (String name, T var, int classLevel) {
 	this.name = name;
 	this.var = var;
+	this.classLevel = classLevel;
     }
 
     @Override public String toString () {
@@ -18,6 +20,10 @@ public class FieldInformation<T extends FlaggedType> {
 
     public String getName () {
 	return name;
+    }
+
+    public int getClassLevel () {
+	return classLevel;
     }
 
     public T getVariableDeclaration () {

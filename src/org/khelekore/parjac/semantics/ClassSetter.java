@@ -36,7 +36,6 @@ public class ClassSetter {
      *      Setup a Scope
      *      Find fields, set type on them, add to scope of class
      *      Find methods, set type on arguments and add to scope of method
-     *  For each part of the class (restarting from top of class)
      *      Set type of expression
      */
     public static void fillInClasses (ClassInformationProvider cip,
@@ -55,9 +54,6 @@ public class ClassSetter {
 	    Queue<ClassSetter> rest2 = new ConcurrentLinkedQueue<> ();
 	    rest.parallelStream ().forEach (cs -> cs.addScopes (rest2, 1));
 	}
-	if (diagnostics.hasError ())
-	    return;
-	classSetters.parallelStream ().forEach (cs -> cs.typeExpressions ());
 	if (diagnostics.hasError ())
 	    return;
 	classSetters.parallelStream ().forEach (cs -> cs.checkUnusedInport ());
@@ -84,18 +80,14 @@ public class ClassSetter {
      * MethodReference:   foo.Bar.super::<Whatever>methodName, MethodReference.SuperMethodReference
      * PostfixExpression:
      */
-    private void addScopes (Queue<ClassSetter> rest, int level) {
+    public void addScopes (Queue<ClassSetter> rest, int level) {
 	ScopeSetter ss = new ScopeSetter (level);
 	tree.getCompilationUnit ().visit (ss);
 	if (!ss.completed ())
 	    rest.add (this);
     }
 
-    private void typeExpressions () {
-	tree.getCompilationUnit ().visit (new TypeSetter ());
-    }
-
-    private void checkUnusedInport () {
+    public void checkUnusedInport () {
 	List<ImportDeclaration> imports = tree.getCompilationUnit ().getImports ();
 	imports.stream ().filter (i -> !i.hasBeenUsed ()).forEach (i -> checkUnusedImport (i));
     }
@@ -170,7 +162,7 @@ public class ClassSetter {
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    currentScope = new Scope (currentScope, false);
+	    currentScope = new Scope (currentScope, Scope.Type.CLASS, false);
 	    scopes.put (b, currentScope);
 
 	    // Most anonymous classes have no specified outer so easy to handle
@@ -191,6 +183,8 @@ public class ClassSetter {
 		containingTypeName.pop ();
 	    }
 	}
+
+	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
 
 	@Override public boolean visit (ConstructorDeclaration c) {
 	    registerTypeParameters (c.getTypeParameters ());
@@ -227,23 +221,26 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public boolean visit (Block b) {
+	    addScope (b, Scope.Type.LOCAL);
+	    return true;
+	}
+
+	@Override public void endBlock () {
+	    currentScope = currentScope.endScope ();
+	}
+
+	@Override public void visit (Assignment a) {
+	    TreeNode lhs = a.lhs ();
+	    a.lhs (replaceAndSetType (lhs));
+	}
+
 	@Override public void visit (ClassInstanceCreationExpression c) {
 	    TreeNode from = c.getFrom ();
 	    if (from == null) {
 		setType (c.getId (), this);
 	    } else {
-		if (from instanceof DottedName) {
-		    from = replaceWithChainedFieldAccess((DottedName)from, currentScope, this);
-		    c.setFrom (from);
-		}
-		if (from.getExpressionType () == null && from instanceof Identifier) {
-		    Identifier i = (Identifier)from;
-		    FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
-		    if (fi != null) {
-			i = new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ());
-			c.setFrom (i);
-		    }
-		}
+		c.setFrom (replaceAndSetType (from));
 		if (from.getExpressionType () != null) {
 		    Deque<String> save = containingTypeName;
 		    containingTypeName = new ArrayDeque<> ();
@@ -261,6 +258,12 @@ public class ClassSetter {
 	    }
 	}
 
+	@Override public boolean visit (MethodInvocation m) {
+	    TreeNode on = m.getOn ();
+	    m.setOn (replaceAndSetType (on));
+	    return true;
+	}
+
 	@Override public void visit (LocalVariableDeclaration l) {
 	    setType (l.getType (), this);
 	    l.getVariables ().get ().forEach (v -> currentScope.tryToAdd (l, v, tree, diagnostics));
@@ -270,15 +273,49 @@ public class ClassSetter {
 	    setType (c.getType (), this);
 	}
 
-	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
+	@Override public boolean visit (BasicForStatement f) {
+	    addScope (f, Scope.Type.LOCAL);
+	    return true;
+	}
+
+	@Override public boolean visit (EnhancedForStatement f) {
+	    addScope (f, Scope.Type.LOCAL);
+	    return true;
+	}
+
+	@Override public void endFor () {
+	    currentScope = currentScope.endScope ();
+	}
+
+	@Override public boolean visit (ArrayAccess a) {
+	    TreeNode from = a.getFrom ();
+	    if (from instanceof DottedName) {
+		a.setFrom (replaceWithChainedFieldAccess((DottedName)from, currentScope, this));
+	    }
+	    return true;
+	}
+
+	private TreeNode replaceAndSetType (TreeNode tn) {
+	    if (tn instanceof DottedName) {
+		tn = replaceWithChainedFieldAccess((DottedName)tn, currentScope, this);
+	    }
+	    if (tn.getExpressionType () == null && tn instanceof Identifier) {
+		Identifier i = (Identifier)tn;
+		FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
+		if (fi != null) {
+		    tn = new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ());
+		}
+	    }
+	    return tn;
+	}
 
 	private void addScopeAndFields (FlaggedType ft, TreeNode part) {
-	    addScope (ft);
+	    addScope (ft, Scope.Type.CLASS);
 	    addFields (part, currentScope);
 	}
 
 	private void addScopeAndParameters (FlaggedType ft, FormalParameterList fpl) {
-	    addScope (ft);
+	    addScope (ft, Scope.Type.LOCAL);
 	    if (fpl != null) {
 		NormalFormalParameterList pl = fpl.getParameters ();
 		if (pl != null) {
@@ -293,9 +330,14 @@ public class ClassSetter {
 	    }
 	}
 
-	private void addScope (FlaggedType ft) {
-	    currentScope = new Scope (currentScope, FlagsHelper.isStatic (ft.getFlags ()));
+	private void addScope (FlaggedType ft, Scope.Type type) {
+	    currentScope = new Scope (currentScope, type, FlagsHelper.isStatic (ft.getFlags ()));
 	    scopes.put (ft, currentScope);
+	}
+
+	private void addScope (TreeNode tn, Scope.Type type) {
+	    currentScope = new Scope (currentScope, type, currentScope.isStatic ());
+	    scopes.put (tn, currentScope);
 	}
 
 	private void addFields (TreeNode tn, Scope scope) {
@@ -312,134 +354,6 @@ public class ClassSetter {
 	    @Override public void visit (FieldDeclaration f) {
 		setType (f.getType (), ScopeSetter.this);
 		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
-	    }
-	}
-    }
-
-    private class TypeSetter implements TreeVisitor, ErrorHandler {
-	private Scope currentScope = null;
-
-	public boolean mayReport () {
-	    return true;
-	}
-
-	public void setIncomplete () {
-	    // Ignore for now, we have already reported an error
-	}
-
-	@Override public boolean visit (NormalClassDeclaration c) {
-	    currentScope = scopes.get (c);
-	    containingTypeName.push (cip.getFullName (c));
-	    return true;
-	}
-
-	@Override public boolean visit (EnumDeclaration e) {
-	    currentScope = scopes.get (e);
-	    containingTypeName.push (cip.getFullName (e));
-	    return true;
-	}
-
-	@Override public boolean visit (NormalInterfaceDeclaration i) {
-	    currentScope = scopes.get (i);
-	    containingTypeName.push (cip.getFullName (i));
-	    return true;
-	}
-
-	@Override public boolean visit (AnnotationTypeDeclaration a) {
-	    currentScope = scopes.get (a);
-	    containingTypeName.push (cip.getFullName (a));
-	    return true;
-	}
-
-	@Override public void endType () {
-	    containingTypeName.pop ();
-	    currentScope = currentScope.endScope ();
-	}
-
-	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    currentScope = scopes.get (b);
-	    containingTypeName.push (ct.getFullName ());
-	    containingTypeName.push (cip.getFullName (b));
-	    registerTypeParameters (null);
-	    return true;
-	}
-
-	@Override public void endAnonymousClass (ClassType ct, ClassBody b) {
-	    currentScope = currentScope.endScope ();
-	    containingTypeName.pop ();
-	}
-
-	@Override public boolean visit (ConstructorDeclaration c) {
-	    return true;
-	}
-
-	@Override public void endConstructor (ConstructorDeclaration c) {
-	    types.pop ();
-	}
-
-	@Override public boolean visit (MethodDeclaration m) {
-	    currentScope = scopes.get (m);
-	    return true;
-	}
-
-	@Override public void endMethod (MethodDeclaration m) {
-	    types.pop ();
-	    currentScope = currentScope.endScope ();
-	}
-
-	@Override public void visit (Assignment a) {
-	    TreeNode lhs = a.lhs ();
-	    if (lhs instanceof DottedName) {
-		a.lhs (replaceWithChainedFieldAccess ((DottedName)lhs, currentScope, this));
-	    }
-	}
-
-	@Override public boolean visit (MethodInvocation m) {
-	    TreeNode on = m.getOn ();
-	    if (on instanceof DottedName) {
-		on = replaceWithChainedFieldAccess ((DottedName)on, currentScope, this);
-		m.setOn (on);
-	    }
-	    if (on instanceof ClassType) {
-		setType ((ClassType)on, this);
-	    }
-	    return true;
-	}
-
-	@Override public boolean visit (ArrayAccess a) {
-	    TreeNode from = a.getFrom ();
-	    if (from instanceof DottedName) {
-		a.setFrom (replaceWithChainedFieldAccess((DottedName)from, currentScope, this));
-	    }
-	    return true;
-	}
-
-	@Override public boolean visit (BasicForStatement f) {
-	    currentScope = new Scope (currentScope, currentScope.isStatic ());
-	    TreeNode init = f.getForInit ();
-	    if (init != null)
-		init.visit (this);
-	    visitStatementsWithoutScope (f.getStatement ());
-	    currentScope = currentScope.endScope ();
-	    return false;
-	}
-
-	@Override public boolean visit (EnhancedForStatement f) {
-	    currentScope = new Scope (currentScope, currentScope.isStatic ());
-	    visit (f.getLocalVariableDeclaration ());
-	    visitStatementsWithoutScope (f.getStatement ());
-	    currentScope = currentScope.endScope ();
-	    return false;
-	}
-
-	private void visitStatementsWithoutScope (TreeNode tn) {
-	    if (tn instanceof Block) {
-		Block b = (Block)tn;
-		List<TreeNode> statements = b.getStatements ();
-		if (statements != null)
-		    statements.forEach (s -> s.visit (this));
-	    } else {
-		tn.visit (this);
 	    }
 	}
     }

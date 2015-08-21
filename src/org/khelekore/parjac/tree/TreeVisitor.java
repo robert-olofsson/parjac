@@ -168,6 +168,9 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default void endFor () {
+    }
+
     default boolean visit (SwitchStatement s) {
 	return true;
     }

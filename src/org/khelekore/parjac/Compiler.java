@@ -121,8 +121,9 @@ public class Compiler {
     }
 
     private void checkSemantics (List<SyntaxTree> trees) {
-	trees.parallelStream ().forEach (t -> cip.addTypes (t));
-
+	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
+	if (diagnostics.hasError ())
+	    return;
 	/*
 	 * 1: Set classes for fields, method parameters and method returns, setup scopes
 	 *    Scope hangs on class, method, for-clause and try (with resource) clause
@@ -131,9 +132,15 @@ public class Compiler {
 	runTimed (() -> ClassSetter.fillInClasses (cip, trees, diagnostics), "Setting classes");
 	if (settings.getDebug ())
 	    trees.forEach (t -> System.err.println ("class set tree: " + t));
+	if (diagnostics.hasError ())
+	    return;
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
+	if (diagnostics.hasError ())
+	    return;
 	// Check types of fields and assignments
 	runTimed (() -> checkReturns (trees), "Checking returns");
+	if (diagnostics.hasError ())
+	    return;
 	// check that there is at least one constructor
 	// Check matching methods
 	// Check generics

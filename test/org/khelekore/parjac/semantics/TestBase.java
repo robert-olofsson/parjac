@@ -55,7 +55,7 @@ public class TestBase {
 	for (Source s : sourceCodes) {
 	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, s.sourceCode, s.sourcePath, diagnostics);
 	    assert st != null : "Failed to parse:"  + s.sourceCode + ": " + getDiagnostics ();
-	    cip.addTypes (st);
+	    cip.addTypes (st, diagnostics);
 	    trees.add (st);
 	}
 	ClassSetter.fillInClasses (cip, trees, diagnostics);
