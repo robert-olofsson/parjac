@@ -260,7 +260,8 @@ public class ClassSetter {
 
 	@Override public boolean visit (MethodInvocation m) {
 	    TreeNode on = m.getOn ();
-	    m.setOn (replaceAndSetType (on));
+	    if (on != null)
+		m.setOn (replaceAndSetType (on));
 	    return true;
 	}
 
