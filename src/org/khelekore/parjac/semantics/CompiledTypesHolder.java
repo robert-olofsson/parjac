@@ -93,27 +93,27 @@ public class CompiledTypesHolder {
 	}
 
 	@Override public boolean visit (NormalClassDeclaration c) {
-	    pushClass (c.getId (), c);
+	    pushClass (c.getId (), c, false);
 	    return true;
 	}
 
 	@Override public boolean visit (EnumDeclaration e) {
-	    pushClass (e.getId (), e);
+	    pushClass (e.getId (), e, false);
 	    return true;
 	}
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
-	    pushClass (i.getId (), i);
+	    pushClass (i.getId (), i, false);
 	    return true;
 	}
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
-	    pushClass (a.getId (), a);
+	    pushClass (a.getId (), a, false);
 	    return true;
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    pushClass (generateAnonId (), b);
+	    pushClass (generateAnonId (), b, true);
 	    return true;
 	}
 
@@ -131,9 +131,9 @@ public class CompiledTypesHolder {
 	    classes.removeLast ();
 	}
 
-	private void pushClass (String id, TreeNode tn) {
+	private void pushClass (String id, TreeNode tn, boolean anonymous) {
 	    ClassId cid = new ClassId (id);
-	    if (classes.contains (cid)) {
+	    if (!anonymous && classes.contains (cid)) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
 							     "Class: %s already defined", id));
 	    }

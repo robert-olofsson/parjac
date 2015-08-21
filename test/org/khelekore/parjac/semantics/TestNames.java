@@ -152,4 +152,14 @@ public class TestNames extends TestBase {
 	parseAndSetClasses ("class Foo { class Foo {}}");
 	assert diagnostics.hasError () : "Expected illegal name";
     }
+
+    @Test
+    public void testAnonymousNames () throws IOException {
+	parseAndSetClasses ("class Foo { void f () {\n" +
+			    "    Runnable r = new Runnable () {\n" +
+			    "        public void run () {\n" +
+			    "            Runnable s = new Runnable () { public void run () {}};\n" +
+			    "        }};}}");
+	assertNoErrors ();
+    }
 }
