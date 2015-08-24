@@ -404,8 +404,8 @@ public class TestClassSetter extends TestBase {
 
     @Test
     public void testAmbigous () throws IOException {
-	parseAndSetClasses ("package a; class A {}",
-			    "package b; class A {}",
+	parseAndSetClasses ("package a; public class A {}",
+			    "package b; public class A {}",
 			    "package c; import a.*; import b.*; class C { A a; }");
 	assert diagnostics.hasError () : "Expected ambigous class";
 	diagnostics = new CompilerDiagnosticCollector ();
@@ -414,6 +414,33 @@ public class TestClassSetter extends TestBase {
 	parseAndSetClasses ("package foo; import bar.*; class A {} class Foo { A a;}",
 			    "package bar; class A {}");
 	assertNoErrors ();
+    }
+
+    @Test
+    public void testAmbigousIgnoringAccessResource () throws IOException {
+	// java.awt.EventQueue contains Queue-class, but with default access
+	parseAndSetClasses ("package foo;\n" +
+			    "import java.util.*;\n" +
+			    "import java.awt.*;\n" +
+			    "class Foo { Queue q; }\n");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testAmbigousIgnoringAccessCompiled () throws IOException {
+	parseAndSetClasses ("package a; class F {}\n",
+			    "package b; public class F {}\n",
+			    "package c; import a.*; import b.*; class C { F f; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testStaticImportWins () throws IOException {
+	parseAndSetClasses ("package a; public class I {}",
+			    "package b; public class B { public static class I {}}",
+			    "package c; import a.*; import b.B.*; import static b.B.I; class C { I i; }");
+	assertNoErrors ();
+	checkField ("c.C", 0, "b.B$I");
     }
 
     @Test
@@ -495,6 +522,47 @@ public class TestClassSetter extends TestBase {
 			    "    for (int i = 0; i < 3; i++) { String a = \"foo\"; }\n" +
 			    "    for (int i = 0; i < 3; i++) { String a = \"foo\"; }\n" +
 			    "}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testAccessToProtectedInnerFromBase () throws IOException {
+	parseAndSetClasses ("package a; public class A { protected enum E {}}",
+			    "package b; import a.*; class B extends A { E e; }");
+	assertNoErrors ();
+	parseAndSetClasses ("package a; class A { protected enum E {}}",
+			    "package a; public class B extends A {}",
+			    "package c; import a.B; class C extends B { E e; }");
+	assertNoErrors ();
+	parseAndSetClasses ("package a; public class A { protected enum E {}}",
+			    "package b; class B { a.A.E e; }");
+	assert diagnostics.hasError () : "a.A.E is protected so can not be used in B";
+    }
+
+    @Test
+    public void testAccessToPrivateInner () throws IOException {
+	parseAndSetClasses ("package a; public class A { void a () { return new E ();} private class E {} }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testImplementsMember () throws IOException {
+	// Tests two things
+	// 1: implemented interfaces are part of super types
+	// 2: interface members are public when no access level is given
+	parseAndSetClasses ("package a; public interface A { static enum E {}}",
+			    "package b; import a.A; class B implements A { E e; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testAnonymousAccess () throws IOException {
+	parseAndSetClasses ("package a; public class A { protected class E {}}",
+			    "package b; import a.A; class B { void f () { new A() { E e; }; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("package a; public class A { protected class E {}}",
+			    "package b; import a.A; class B { void f () { new A() { void e () {E e;}}; }}");
 	assertNoErrors ();
     }
 

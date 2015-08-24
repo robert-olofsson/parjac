@@ -18,8 +18,11 @@ public class ClassInformationProvider {
 	this.cth = cth;
     }
 
-    public boolean hasType (String fqn) {
-	return cth.hasType (fqn) || crh.hasType (fqn);
+    public LookupResult hasVisibleType (String fqn) {
+	LookupResult res = cth.hasVisibleType (fqn);
+	if (res.getFound ())
+	    return res;
+	return crh.hasVisibleType (fqn);
     }
 
     public void scanClassPath () throws IOException {

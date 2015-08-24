@@ -2,6 +2,7 @@ package org.khelekore.parjac.semantics;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -17,8 +18,9 @@ import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.*;
 
 public class CompiledTypesHolder {
-    private Map<String, TreeNode> name2node = new HashMap<> ();
-    private Map<TreeNode, String> node2fqn = new HashMap<> ();
+    private Map<String, NodeInformation> name2node = new HashMap<> ();
+    private Map<TreeNode, NodeInformation> node2fqn = new HashMap<> ();
+    private Map<TreeNode, ClassType> anonSuperClasses = new HashMap<> ();
 
     public void addTypes (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tree.getCompilationUnit ().visit (new ClassMapper (tree, diagnostics));
@@ -28,15 +30,24 @@ public class CompiledTypesHolder {
 	return name2node.keySet ();
     }
 
-    public boolean hasType (String fqn) {
-	return name2node.containsKey (fqn);
+    public LookupResult hasVisibleType (String fqn) {
+	NodeInformation ni = name2node.get (fqn);
+	if (ni == null)
+	    return LookupResult.NOT_FOUND;
+	int flags = 0;
+	if (ni.tn instanceof FlaggedType)
+	    flags = ((FlaggedType)ni.tn).getFlags ();
+	return new LookupResult (true, flags);
     }
 
     /** Get the outer tree node for a given fully qualified name,
      *  that is "some.package.Foo$Bar".
      */
     public TreeNode getType (String fqn) {
-	return name2node.get (fqn);
+	NodeInformation ni = name2node.get (fqn);
+	if (ni == null)
+	    return null;
+	return ni.tn;
     }
 
     public String getFilename (TreeNode tn) {
@@ -45,7 +56,10 @@ public class CompiledTypesHolder {
 
     /** Get the class id, something like "some.package.Foo$Bar$1". */
     public String getFullName (TreeNode tn) {
-	return node2fqn.get (tn);
+	NodeInformation ni = node2fqn.get (tn);
+	if (ni == null)
+	    return null;
+	return ni.fqn;
     }
 
     public Optional<List<String>> getSuperTypes (String type) {
@@ -72,6 +86,12 @@ public class CompiledTypesHolder {
 		    cts.stream ().map (ct -> ct.getFullName ()).collect (Collectors.toList ());
 		return Optional.of (ret);
 	    }
+	} else if (tn instanceof ClassBody) {
+	    ClassType ct = anonSuperClasses.get (tn);
+	    if (ct != null) {
+		List<String> ret = Arrays.asList (ct.getFullName ());
+		return Optional.of (ret);
+	    }
 	}
 	return Optional.empty ();
     }
@@ -93,27 +113,28 @@ public class CompiledTypesHolder {
 	}
 
 	@Override public boolean visit (NormalClassDeclaration c) {
-	    pushClass (c.getId (), c, false);
+	    pushClass (c.getId (), c);
 	    return true;
 	}
 
 	@Override public boolean visit (EnumDeclaration e) {
-	    pushClass (e.getId (), e, false);
+	    pushClass (e.getId (), e);
 	    return true;
 	}
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
-	    pushClass (i.getId (), i, false);
+	    pushClass (i.getId (), i);
 	    return true;
 	}
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
-	    pushClass (a.getId (), a, false);
+	    pushClass (a.getId (), a);
 	    return true;
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    pushClass (generateAnonId (), b, true);
+	    anonSuperClasses.put (b, ct);
+	    pushAnonymousClass (generateAnonId (), b);
 	    return true;
 	}
 
@@ -131,6 +152,14 @@ public class CompiledTypesHolder {
 	    classes.removeLast ();
 	}
 
+	private void pushClass (String id, FlaggedType ft) {
+	    pushClass (id, ft, false);
+	}
+
+	private void pushAnonymousClass (String id, TreeNode tn) {
+	    pushClass (id, tn, true);
+	}
+
 	private void pushClass (String id, TreeNode tn, boolean anonymous) {
 	    ClassId cid = new ClassId (id);
 	    if (!anonymous && classes.contains (cid)) {
@@ -140,9 +169,10 @@ public class CompiledTypesHolder {
 	    classes.addLast (cid);
 	    String fullId = getFullId ();
 	    String name = getFQN (packageName, fullId);
+	    NodeInformation ni = new NodeInformation (tn, name);
 	    synchronized (name2node) {
-		name2node.put (name, tn);
-		node2fqn.put (tn, name);
+		name2node.put (name, ni);
+		node2fqn.put (tn, ni);
 	    }
 	}
 
@@ -182,6 +212,16 @@ public class CompiledTypesHolder {
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{id: " + id + ", anonId: " + anonId + "}";
+	}
+    }
+
+    private static class NodeInformation {
+	private final TreeNode tn;
+	private final String fqn;
+
+	public NodeInformation (TreeNode tn, String fqn) {
+	    this.tn = tn;
+	    this.fqn = fqn;
 	}
     }
 }

@@ -6,10 +6,11 @@ import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.objectweb.asm.Opcodes;
 
 public abstract class FlaggedType extends PositionNode {
     private final List<TreeNode> annotations;
-    private final int flags;
+    private int flags;
 
     public FlaggedType (boolean popModifiers, Deque<TreeNode> parts, ParsePosition pos,
 			Path path, CompilerDiagnosticCollector diagnostics) {
@@ -34,6 +35,10 @@ public abstract class FlaggedType extends PositionNode {
 
     public int getFlags () {
 	return flags;
+    }
+
+    public void makePublic () {
+	flags |= Opcodes.ACC_PUBLIC;
     }
 
     public List<TreeNode> getAnnotations () {

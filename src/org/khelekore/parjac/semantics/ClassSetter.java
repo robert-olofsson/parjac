@@ -162,14 +162,13 @@ public class ClassSetter {
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    currentScope = new Scope (currentScope, Scope.Type.CLASS, false);
-	    scopes.put (b, currentScope);
+	    addScope (b, Scope.Type.CLASS);
 
-	    // Most anonymous classes have no specified outer so easy to handle
 	    if (ct.getFullName () != null) {
 		containingTypeName.push (ct.getFullName ());
 		containingTypeName.push (cip.getFullName (b));
 		registerTypeParameters (null);
+		addFields (b, currentScope);
 		return true;
 	    }
 	    // No need to continue here
@@ -179,9 +178,11 @@ public class ClassSetter {
 
 	@Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	    if (ct.getFullName () != null) {
-		endType ();
+		types.pop ();
+		containingTypeName.pop ();
 		containingTypeName.pop ();
 	    }
+	    currentScope = currentScope.endScope ();
 	}
 
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
@@ -521,7 +522,7 @@ public class ClassSetter {
 	for (int s = scts.size (); i < s; i++) {
 	    SimpleClassType sct = scts.get (i);
 	    String directInnerClass = currentOuterClass + "$" + sct.getId ();
-	    if (cip.hasType (directInnerClass)) {
+	    if (hasVisibleType (directInnerClass)) {
 		currentOuterClass = directInnerClass;
 	    } else {
 		currentOuterClass = checkSuperClasses (currentOuterClass, sct.getId (), eh);
@@ -538,7 +539,7 @@ public class ClassSetter {
 	    return "generic type: " + id;
 	}
 
-	if (cip.hasType (id))
+	if (hasVisibleType (id))
 	    return id;
 
 	String fqn = resolveInnerClass (id, eh);
@@ -552,7 +553,7 @@ public class ClassSetter {
 	// Check for inner class
 	for (String ctn : containingTypeName) {
 	    String icn = ctn + "$" + id;
-	    if (cip.hasType (icn))
+	    if (hasVisibleType (icn))
 		return icn;
 	}
 
@@ -569,7 +570,7 @@ public class ClassSetter {
 	List<String> superclasses = getSuperClasses (fullCtn, eh);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "$" + id;
-	    if (cip.hasType (icn))
+	    if (hasVisibleType (icn))
 		return icn;
 	    String ssn = checkSuperClasses (superclass, id, eh);
 	    if (ssn != null)
@@ -592,19 +593,19 @@ public class ClassSetter {
 
     private String resolveUsingImports (String id, ParsePosition pos) {
 	ImportHolder i = ih.stid.get (id);
-	if (i != null && cip.hasType (i.cas.name)) {
+	if (i != null && hasVisibleType (i.cas.name)) {
 	    i.markUsed ();
 	    return i.cas.name;
 	}
 	String fqn;
 	fqn = tryPackagename (id, pos);
-	if (fqn != null && cip.hasType (fqn))
+	if (fqn != null && hasVisibleType (fqn))
+	    return fqn;
+	fqn = trySingleStaticImport (id);
+	if (fqn != null && hasVisibleType (fqn))
 	    return fqn;
 	fqn = tryTypeImportOnDemand (id, pos);
 	if (fqn != null) // already checked cip.hasType
-	    return fqn;
-	fqn = trySingleStaticImport (id);
-	if (fqn != null && cip.hasType (fqn))
 	    return fqn;
 	fqn = tryStaticImportOnDemand (id);
 	if (fqn != null) // already checked cip.hasType
@@ -630,7 +631,7 @@ public class ClassSetter {
 	List<String> matches = new ArrayList<> ();
 	for (ImportHolder ih : ih.tiod) {
 	    String t = ih.cas.name + ih.cas.sep + id;
-	    if (cip.hasType (t)) {
+	    if (hasVisibleType (t)) {
 		matches.add (t);
 		ih.markUsed ();
 	    }
@@ -651,7 +652,7 @@ public class ClassSetter {
     private String tryStaticImportOnDemand (String id) {
 	for (StaticImportOnDemandDeclaration siod : ih.siod) {
 	    String fqn = siod.getName ().getDotName () + "$" + id;
-	    if (cip.hasType (fqn)) {
+	    if (hasVisibleType (fqn)) {
 		siod.markUsed ();
 		return fqn;
 	    }
@@ -668,7 +669,7 @@ public class ClassSetter {
 	public void visit (SingleTypeImportDeclaration i) {
 	    DottedName dn = i.getName ();
 	    ClassAndSeparator cas = getClassName (dn);
-	    if (!cip.hasType (cas.name)) {
+	    if (!hasVisibleType (cas.name)) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
 							     "Type not found: %s", cas.name));
 		i.markUsed (); // Unused, but already flagged as bad, don't want multiple lines
@@ -699,7 +700,7 @@ public class ClassSetter {
 		if (sb.length () > 0)
 		    sb.append (sep);
 		sb.append (c);
-		if (cip.hasType (sb.toString ()))
+		if (hasVisibleType (sb.toString ()))
 		    sep = '$';
 	    }
 	    return new ClassAndSeparator (sb.toString (), sep);
@@ -708,6 +709,57 @@ public class ClassSetter {
 	private void addDefaultPackages () {
 	    tiod.add (new ImportHolder (null, new ClassAndSeparator ("java.lang", '.')));
 	}
+    }
+
+    private boolean hasVisibleType (String fqn) {
+	String currentClass = containingTypeName.peek ();
+	String topLevelClass = containingTypeName.peekLast ();
+	return hasVisibleType (fqn, currentClass, topLevelClass);
+    }
+
+    private boolean hasVisibleType (String fqn, String currentClass, String topLevelClass) {
+	LookupResult r = cip.hasVisibleType (fqn);
+	if (!r.getFound ())
+	    return false;
+	if (FlagsHelper.isPublic (r.getAccessFlags ())) {
+	    return true;
+	} else if (FlagsHelper.isProtected (r.getAccessFlags ())) {
+	    return samePackage (fqn, packageName) || insideSuperClass (fqn, currentClass);
+	} else if (FlagsHelper.isPrivate (r.getAccessFlags ())) {
+	    return sameTopLevelClass (fqn, topLevelClass);
+	}
+	// No access level
+	return samePackage (fqn, packageName);
+    }
+
+    private boolean samePackage (String fqn, DottedName pkg) {
+	String start = pkg == null ? "" : pkg.getDotName ();
+	return fqn.length () > start.length () && fqn.startsWith (start) &&
+	    fqn.indexOf ('.', fqn.length ()) == -1;
+    }
+
+    private boolean insideSuperClass (String fqn, String currentClass) {
+	try {
+	    Optional<List<String>> supers = cip.getSuperTypes (currentClass);
+	    if (supers.isPresent ()) {
+		for (String s :  supers.get ()) {
+		    if (fqn.length () > s.length () && fqn.startsWith (s) &&
+			fqn.charAt (s.length ()) == '$') {
+			return true;
+		    }
+		    if (insideSuperClass (fqn, s))
+			return true;
+		}
+	    }
+	} catch (IOException e) {
+	    return false;
+	}
+	return false;
+    }
+
+    private boolean sameTopLevelClass (String fqn, String topLevelClass) {
+	return fqn.length () > topLevelClass.length () && fqn.startsWith (topLevelClass) &&
+	    fqn.charAt (topLevelClass.length ()) == '$';
     }
 
     private static class ImportHolder {

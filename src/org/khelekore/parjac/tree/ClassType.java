@@ -25,6 +25,7 @@ public class ClassType extends Multipart<SimpleClassType> {
     }
 
     public String getSlashName () {
+	if (fqn == null) System.err.println ("ugh: " + this);
 	return fqn.replace ('.', '/');
     }
 

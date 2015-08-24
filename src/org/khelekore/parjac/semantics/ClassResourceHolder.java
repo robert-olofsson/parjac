@@ -80,7 +80,7 @@ public class ClassResourceHolder {
 	}
     }
 
-    public boolean hasType (String fqn) {
+    public LookupResult hasVisibleType (String fqn) {
 	Result r = foundClasses.get (fqn);
 	if (r != null) {
 	    try {
@@ -91,7 +91,9 @@ public class ClassResourceHolder {
 		r = null;
 	    }
 	}
-	return r != null;
+	if (r == null)
+	    return LookupResult.NOT_FOUND;
+	return new LookupResult (true, r.node.access);
     }
 
     public Optional<List<String>> getSuperTypes (String fqn) throws IOException {

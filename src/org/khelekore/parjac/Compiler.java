@@ -20,6 +20,7 @@ import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
+import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -124,6 +125,7 @@ public class Compiler {
 	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
 	if (diagnostics.hasError ())
 	    return;
+	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
 	/*
 	 * 1: Set classes for fields, method parameters and method returns, setup scopes
 	 *    Scope hangs on class, method, for-clause and try (with resource) clause
@@ -144,6 +146,11 @@ public class Compiler {
 	// check that there is at least one constructor
 	// Check matching methods
 	// Check generics
+    }
+
+    private void flagInterfaceMembersAsPublic (SyntaxTree tree) {
+	InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (tree);
+	imfs.reflag ();
     }
 
     private void checkNamesAndModifiers (List<SyntaxTree> trees) {

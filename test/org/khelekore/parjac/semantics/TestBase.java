@@ -56,6 +56,8 @@ public class TestBase {
 	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, s.sourceCode, s.sourcePath, diagnostics);
 	    assert st != null : "Failed to parse:"  + s.sourceCode + ": " + getDiagnostics ();
 	    cip.addTypes (st, diagnostics);
+	    InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (st);
+	    imfs.reflag ();
 	    trees.add (st);
 	}
 	ClassSetter.fillInClasses (cip, trees, diagnostics);
