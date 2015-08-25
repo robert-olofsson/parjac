@@ -231,6 +231,12 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public boolean visit (ReturnStatement r) {
+	    if (r.hasExpression ())
+		r.setExpression (replaceAndSetType (r.getExpression ()));
+	    return true;
+	}
+
 	@Override public void visit (Assignment a) {
 	    TreeNode lhs = a.lhs ();
 	    a.lhs (replaceAndSetType (lhs));

@@ -70,8 +70,6 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
-    /** This can not work until we set type on fields */
-    /* TODO: enable this
     @Test
     public void testIntVariableReturn () throws IOException {
 	parseAndSetClasses ("class Foo { int bar () { int i = 3; return i; } }");
@@ -79,7 +77,6 @@ public class TestReturnChecker extends TestBase {
 	parseAndSetClasses ("class Foo { int i = 3; int bar () { return i; } }");
 	assertNoErrors ();
     }
-    */
 
     @Test
     public void testIfReturn () throws IOException {
@@ -336,7 +333,16 @@ public class TestReturnChecker extends TestBase {
 
     @Test
     public void testIntVariableBadReturn () throws IOException {
-	parseAndSetClasses ("class Foo { String bar () {int i = 3; return i; } }");
+ 	parseAndSetClasses ("class Foo { String bar () {int i = 3; return i; } }");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testNullReturn () throws IOException {
+ 	parseAndSetClasses ("class Foo { String bar () { return null; } }");
+	assertNoErrors ();
+
+ 	parseAndSetClasses ("class Foo { int bar () { return null; } }");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 

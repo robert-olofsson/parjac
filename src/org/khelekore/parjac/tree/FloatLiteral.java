@@ -1,7 +1,6 @@
 package org.khelekore.parjac.tree;
 
 import org.khelekore.parjac.lexer.ParsePosition;
-import org.khelekore.parjac.lexer.Token;
 
 public class FloatLiteral extends PositionNode implements LiteralValue, NumericValue {
     private final float value;
@@ -27,7 +26,7 @@ public class FloatLiteral extends PositionNode implements LiteralValue, NumericV
 	return new FloatLiteral (-value, getParsePosition ());
     }
 
-    @Override public Token getLiteralType () {
-	return Token.FLOAT;
+    @Override public String getExpressionType () {
+	return "F";
     }
 }

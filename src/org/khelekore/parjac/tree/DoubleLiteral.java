@@ -1,7 +1,6 @@
 package org.khelekore.parjac.tree;
 
 import org.khelekore.parjac.lexer.ParsePosition;
-import org.khelekore.parjac.lexer.Token;
 
 public class DoubleLiteral extends PositionNode implements LiteralValue, NumericValue {
     private final double value;
@@ -27,7 +26,7 @@ public class DoubleLiteral extends PositionNode implements LiteralValue, Numeric
 	return new DoubleLiteral (-value, getParsePosition ());
     }
 
-    @Override public Token getLiteralType () {
-	return Token.DOUBLE;
+    @Override public String getExpressionType () {
+	return "D";
     }
 }

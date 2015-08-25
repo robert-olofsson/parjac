@@ -1,22 +1,20 @@
 package org.khelekore.parjac.semantics;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
-import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.BasicForStatement;
 import org.khelekore.parjac.tree.Block;
 import org.khelekore.parjac.tree.BlockStatements;
 import org.khelekore.parjac.tree.BooleanLiteral;
 import org.khelekore.parjac.tree.BreakStatement;
 import org.khelekore.parjac.tree.Catches;
-import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.DoStatement;
 import org.khelekore.parjac.tree.EnhancedForStatement;
 import org.khelekore.parjac.tree.Finally;
 import org.khelekore.parjac.tree.IfThenStatement;
-import org.khelekore.parjac.tree.LiteralValue;
 import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
 import org.khelekore.parjac.tree.NullLiteral;
@@ -24,7 +22,6 @@ import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.Result;
 import org.khelekore.parjac.tree.ReturnStatement;
 import org.khelekore.parjac.tree.SameTypeTreeVisitor;
-import org.khelekore.parjac.tree.StringLiteral;
 import org.khelekore.parjac.tree.SwitchBlock;
 import org.khelekore.parjac.tree.SwitchBlockStatementGroup;
 import org.khelekore.parjac.tree.SwitchLabel;
@@ -34,7 +31,6 @@ import org.khelekore.parjac.tree.ThrowStatement;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TryStatement;
-import org.khelekore.parjac.tree.UnannArrayType;
 import org.khelekore.parjac.tree.WhileStatement;
 
 public class ReturnChecker implements TreeVisitor {
@@ -241,35 +237,15 @@ public class ReturnChecker implements TreeVisitor {
     }
 
     private boolean match (TreeNode result, TreeNode exp) {
-	if (exp instanceof LiteralValue) {
-	    LiteralValue lv = (LiteralValue)exp;
-	    Token expToken = lv.getLiteralType ();
-
-	    if (result instanceof PrimitiveTokenType) {
-		PrimitiveTokenType ptt = (PrimitiveTokenType)result;
-		Token resultToken = ptt.get ();
-		if (resultToken == expToken)
-		    return true;
-	    } else {
-		return false;
-	    }
-	}
-
-	// TODO: check result type better, but need types set on statements first
+	String expType = exp.getExpressionType ();
+	String resultType = result.getExpressionType ();
+	if (Objects.equals (expType, resultType))
+	    return true;
 	if (result instanceof PrimitiveTokenType) {
-	    // TODO: check exp type
+	    // need to allow for implicit upcast
 	} else {
 	    if (exp instanceof NullLiteral)
 		return true;
-	    if (result instanceof ClassType) {
-		ClassType ct = (ClassType)result;
-		if (ct.getFullName ().equals ("java.lang.String") &&
-		    exp instanceof StringLiteral)
-		    return true;
-		// TODO: check other class match
-	    } else if (result instanceof UnannArrayType) {
-		// TODO: check this
-	    }
 	}
 	return false;
     }

@@ -6,7 +6,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class ReturnStatement extends PositionNode {
-    private final TreeNode exp;
+    private TreeNode exp;
 
     public ReturnStatement (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
@@ -38,5 +38,15 @@ public class ReturnStatement extends PositionNode {
 
     public TreeNode getExpression () {
 	return exp;
+    }
+
+    public void setExpression (TreeNode exp) {
+	this.exp = exp;
+    }
+
+    @Override public String getExpressionType () {
+	if (exp != null)
+	    return exp.getExpressionType ();
+	return "V";
     }
 }

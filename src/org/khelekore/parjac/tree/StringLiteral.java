@@ -21,4 +21,8 @@ public class StringLiteral extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
     }
+
+    @Override public String getExpressionType () {
+	return "java.lang.String";
+    }
 }

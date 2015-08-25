@@ -1,7 +1,6 @@
 package org.khelekore.parjac.tree;
 
 import org.khelekore.parjac.lexer.ParsePosition;
-import org.khelekore.parjac.lexer.Token;
 
 public class CharLiteral extends PositionNode implements LiteralValue, NumericValue {
     private final char value;
@@ -23,7 +22,7 @@ public class CharLiteral extends PositionNode implements LiteralValue, NumericVa
 	return new IntLiteral (-value, getParsePosition ());
     }
 
-    @Override public Token getLiteralType () {
-	return Token.CHAR;
+    @Override public String getExpressionType () {
+	return "C";
     }
 }
