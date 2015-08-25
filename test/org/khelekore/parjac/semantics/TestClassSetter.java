@@ -566,6 +566,13 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testOuterInheritedInnerClassAccess () throws IOException {
+	parseAndSetClasses ("package a; public class A { protected static class E {}}",
+			    "package b; import a.A; class B extends A { public class C { void f () { E e; }}}");
+	assertNoErrors ();
+    }
+
     private void checkImplements (String classToCheck, String wantedInterface) {
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType (classToCheck);
 	checkOneInterface (cd.getSuperInterfaces (), wantedInterface);

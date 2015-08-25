@@ -712,19 +712,18 @@ public class ClassSetter {
     }
 
     private boolean hasVisibleType (String fqn) {
-	String currentClass = containingTypeName.peek ();
 	String topLevelClass = containingTypeName.peekLast ();
-	return hasVisibleType (fqn, currentClass, topLevelClass);
+	return hasVisibleType (fqn, topLevelClass);
     }
 
-    private boolean hasVisibleType (String fqn, String currentClass, String topLevelClass) {
+    private boolean hasVisibleType (String fqn, String topLevelClass) {
 	LookupResult r = cip.hasVisibleType (fqn);
 	if (!r.getFound ())
 	    return false;
 	if (FlagsHelper.isPublic (r.getAccessFlags ())) {
 	    return true;
 	} else if (FlagsHelper.isProtected (r.getAccessFlags ())) {
-	    return samePackage (fqn, packageName) || insideSuperClass (fqn, currentClass);
+	    return samePackage (fqn, packageName) || insideSuperClass (fqn);
 	} else if (FlagsHelper.isPrivate (r.getAccessFlags ())) {
 	    return sameTopLevelClass (fqn, topLevelClass);
 	}
@@ -736,6 +735,13 @@ public class ClassSetter {
 	String start = pkg == null ? "" : pkg.getDotName ();
 	return fqn.length () > start.length () && fqn.startsWith (start) &&
 	    fqn.indexOf ('.', fqn.length ()) == -1;
+    }
+
+    private boolean insideSuperClass (String fqn) {
+	for (String c : containingTypeName)
+	    if (insideSuperClass (fqn, c))
+		return true;
+	return false;
     }
 
     private boolean insideSuperClass (String fqn, String currentClass) {
