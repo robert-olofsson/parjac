@@ -168,7 +168,7 @@ public class Compiler {
     }
 
     private void checkReturns (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	ReturnChecker ra = new ReturnChecker (tree, diagnostics);
+	ReturnChecker ra = new ReturnChecker (cip, tree, diagnostics);
 	ra.run ();
     }
 

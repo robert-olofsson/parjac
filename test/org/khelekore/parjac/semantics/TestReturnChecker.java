@@ -79,6 +79,41 @@ public class TestReturnChecker extends TestBase {
     }
 
     @Test
+    public void testUpcastVariableReturn () throws IOException {
+	parseAndSetClasses ("class Foo { short bar () { byte i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { int bar () { byte i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { long bar () { byte i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { int bar () { short i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { long bar () { short i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { int bar () { char i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { long bar () { char i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { long bar () { int i = 3; return i; } }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { double bar () { float i = 3; return i; } }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testSuperClassReturn () throws IOException {
+	parseAndSetClasses ("class Foo { Object bar () { String s = \"hello\"; return s; } }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testImlementedInterfaceReturn () throws IOException {
+	parseAndSetClasses ("interface Bar {}",
+			    "class Foo implements Bar { Bar bar () { Foo f = null; return f; } }");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testIfReturn () throws IOException {
 	parseAndSetClasses ("class Foo {\n" +
 			    "int bar () {\n" +
@@ -347,7 +382,7 @@ public class TestReturnChecker extends TestBase {
     }
 
     protected void handleSyntaxTree (SyntaxTree tree) {
-	ReturnChecker rc = new ReturnChecker (tree, diagnostics);
+	ReturnChecker rc = new ReturnChecker (cip, tree, diagnostics);
 	rc.run ();
     }
 }

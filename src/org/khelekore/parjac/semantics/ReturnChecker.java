@@ -1,9 +1,16 @@
 package org.khelekore.parjac.semantics;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.BasicForStatement;
 import org.khelekore.parjac.tree.Block;
@@ -34,10 +41,13 @@ import org.khelekore.parjac.tree.TryStatement;
 import org.khelekore.parjac.tree.WhileStatement;
 
 public class ReturnChecker implements TreeVisitor {
+    private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
 
-    public ReturnChecker (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+    public ReturnChecker (ClassInformationProvider cip, SyntaxTree tree,
+			  CompilerDiagnosticCollector diagnostics) {
+	this.cip = cip;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
     }
@@ -237,15 +247,49 @@ public class ReturnChecker implements TreeVisitor {
     }
 
     private boolean match (TreeNode result, TreeNode exp) {
+	// TODO: we can not really do this since classes may be named "I"
 	String expType = exp.getExpressionType ();
 	String resultType = result.getExpressionType ();
 	if (Objects.equals (expType, resultType))
 	    return true;
+	// Ok, not a direct match
 	if (result instanceof PrimitiveTokenType) {
 	    // need to allow for implicit upcast
-	} else {
-	    if (exp instanceof NullLiteral)
-		return true;
+	    return mayBeAutoCasted (expType, resultType);
+	}
+	if (exp instanceof NullLiteral)
+	    return true;
+	return isSubType (expType, resultType);
+    }
+
+    private final static Map<String, List<String>> ALLOWED_UPCASTS = new HashMap<> ();
+    static {
+	ALLOWED_UPCASTS.put ("B", Arrays.asList ("S", "I", "J"));
+	ALLOWED_UPCASTS.put ("S", Arrays.asList ("I", "J"));
+	ALLOWED_UPCASTS.put ("C", Arrays.asList ("I", "J"));
+	ALLOWED_UPCASTS.put ("I", Arrays.asList ("J"));
+	ALLOWED_UPCASTS.put ("F", Arrays.asList ("D"));
+    }
+
+    private boolean mayBeAutoCasted (String from, String to) {
+	List<String> l = ALLOWED_UPCASTS.get (from);
+	return l != null && l.contains (to);
+    }
+
+    private boolean isSubType (String sub, String sup) {
+	try {
+	    Optional<List<String>> supers = cip.getSuperTypes (sub);
+	    if (supers.isPresent ()) {
+		List<String> l = supers.get ();
+		for (String s : l) {
+		    if (s.equals (sup))
+			return true;
+		    if (isSubType (s, sup))
+			return true;
+		}
+	    }
+	} catch (IOException e) {
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to load super classes for %s", sub));
 	}
 	return false;
     }
