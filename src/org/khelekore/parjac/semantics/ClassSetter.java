@@ -124,34 +124,38 @@ public class ClassSetter {
 	    if (superclass != null)
 		setType (superclass, this);
 	    visitSuperInterfaces (c.getSuperInterfaces (), this);
-	    containingTypeName.push (cip.getFullName (c));
-	    registerTypeParameters (c.getTypeParameters ());
-	    addScopeAndFields (c, c.getBody ());
+	    String fqn = cip.getFullName (c);
+	    containingTypeName.push (fqn);
+	    registerTypeParameters (c.getTypeParameters (), this);
+	    addScopeAndFields (fqn, c, c.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (EnumDeclaration e) {
-	    containingTypeName.push (cip.getFullName (e));
+	    String fqn = cip.getFullName (e);
+	    containingTypeName.push (fqn);
 	    visitSuperInterfaces (e.getSuperInterfaces (), this);
-	    registerTypeParameters (null);
-	    addScopeAndFields (e, e.getBody ());
+	    registerTypeParameters (null, this);
+	    addScopeAndFields (fqn, e, e.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
-	    containingTypeName.push (cip.getFullName (i));
+	    String fqn = cip.getFullName (i);
+	    containingTypeName.push (fqn);
 	    ExtendsInterfaces ei = i.getExtendsInterfaces ();
 	    if (ei != null)
 		visitSuperInterfaces (ei.get (), this);
-	    registerTypeParameters (i.getTypeParameters ());
-	    addScopeAndFields (i, i.getBody ());
+	    registerTypeParameters (i.getTypeParameters (), this);
+	    addScopeAndFields (fqn, i, i.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
-	    containingTypeName.push (cip.getFullName (a));
-	    registerTypeParameters (null);
-	    addScopeAndFields (a, a.getBody ());
+	    String fqn = cip.getFullName (a);
+	    containingTypeName.push (fqn);
+	    registerTypeParameters (null, this);
+	    addScopeAndFields (fqn, a, a.getBody ());
 	    return true;
 	}
 
@@ -166,9 +170,10 @@ public class ClassSetter {
 
 	    if (ct.getFullName () != null) {
 		containingTypeName.push (ct.getFullName ());
-		containingTypeName.push (cip.getFullName (b));
-		registerTypeParameters (null);
-		addFields (b, currentScope);
+		String fqn = cip.getFullName (b);
+		containingTypeName.push (fqn);
+		registerTypeParameters (null, this);
+		addFields (fqn, b, currentScope);
 		return true;
 	    }
 	    // No need to continue here
@@ -188,7 +193,7 @@ public class ClassSetter {
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
 
 	@Override public boolean visit (ConstructorDeclaration c) {
-	    registerTypeParameters (c.getTypeParameters ());
+	    registerTypeParameters (c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
 	    addScopeAndParameters (c, c.getParameters ());
 	    // TODO: store method information
@@ -207,7 +212,7 @@ public class ClassSetter {
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
-	    registerTypeParameters (m.getTypeParameters ());
+	    registerTypeParameters (m.getTypeParameters (), this);
 	    Result r = m.getResult ();
 	    if (r instanceof Result.TypeResult)
 		setType (r.getReturnType (), this);
@@ -326,9 +331,9 @@ public class ClassSetter {
 	    return tn;
 	}
 
-	private void addScopeAndFields (FlaggedType ft, TreeNode part) {
+	private void addScopeAndFields (String fqn, FlaggedType ft, TreeNode part) {
 	    addScope (ft, Scope.Type.CLASS);
-	    addFields (part, currentScope);
+	    addFields (fqn, part, currentScope);
 	}
 
 	private void addScopeAndParameters (FlaggedType ft, FormalParameterList fpl) {
@@ -357,8 +362,9 @@ public class ClassSetter {
 	    scopes.put (tn, currentScope);
 	}
 
-	private void addFields (TreeNode tn, Scope scope) {
+	private void addFields (String fqn, TreeNode tn, Scope scope) {
 	    tn.visit (new FieldFinder (scope));
+	    cip.registerFields (fqn, scope.getVariables ());
 	}
 
 	private class FieldFinder extends SiblingVisitor {
@@ -414,11 +420,23 @@ public class ClassSetter {
 	return current;
     }
 
-    private void registerTypeParameters (TypeParameters tps) {
+    private void registerTypeParameters (TypeParameters tps, ErrorHandler eh) {
 	if (tps != null) {
 	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
+	    tps.get ().forEach (b -> checkClasses (b, eh));
 	} else {
 	    types.push (Collections.emptySet ());
+	}
+    }
+
+    private void checkClasses (TypeParameter tp, ErrorHandler eh) {
+	TypeBound b = tp.getTypeBound ();
+	if (b != null) {
+	    setType (b.getType (), eh);
+	    List<AdditionalBound> ls = b.getAdditionalBounds ();
+	    if (ls != null) {
+		ls.forEach (ab -> setType (ab.getType (), eh));
+	    }
 	}
     }
 

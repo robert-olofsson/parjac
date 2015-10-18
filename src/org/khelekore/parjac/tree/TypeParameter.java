@@ -32,4 +32,8 @@ public class TypeParameter extends PositionNode {
     public String getId () {
 	return id;
     }
+
+    public TypeBound getTypeBound () {
+	return typeBound;
+    }
 }

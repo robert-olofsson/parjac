@@ -19,4 +19,12 @@ public class TypeBound extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + ct + " " + additionalBounds + "}";
     }
+
+    public ClassType getType () {
+	return ct;
+    }
+
+    public List<AdditionalBound> getAdditionalBounds () {
+	return additionalBounds;
+    }
 }

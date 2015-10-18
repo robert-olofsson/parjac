@@ -17,4 +17,8 @@ public class AdditionalBound extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + ct + "}";
     }
+
+    public ClassType getType () {
+	return ct;
+    }
 }

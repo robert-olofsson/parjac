@@ -2,7 +2,9 @@ package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
@@ -12,10 +14,12 @@ import org.khelekore.parjac.tree.TreeNode;
 public class ClassInformationProvider {
     private final ClassResourceHolder crh;
     private final CompiledTypesHolder cth;
+    private Map<String, Map<String, FieldInformation<?>>> classFields;
 
     public ClassInformationProvider (ClassResourceHolder crh, CompiledTypesHolder cth) {
 	this.crh = crh;
 	this.cth = cth;
+	classFields = new ConcurrentHashMap<> ();
     }
 
     public LookupResult hasVisibleType (String fqn) {
@@ -63,5 +67,16 @@ public class ClassInformationProvider {
 	} else {
 	    return crh.getClassModifiers (fqn);
 	}
+    }
+
+    public void registerFields (String fqn, Map<String, FieldInformation<?>> fields) {
+	classFields.put (fqn, fields);
+    }
+
+    public FieldInformation<?> getFieldInformation (String fqn, String field) {
+	Map<String, FieldInformation<?>> m = classFields.get (fqn);
+	if (m == null)
+	    return null;
+	return m.get (field);
     }
 }

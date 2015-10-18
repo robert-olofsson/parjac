@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.tree.AdditionalBound;
 import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.EnumDeclaration;
@@ -14,6 +15,9 @@ import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SimpleClassType;
 import org.khelekore.parjac.tree.TypeArguments;
+import org.khelekore.parjac.tree.TypeBound;
+import org.khelekore.parjac.tree.TypeParameter;
+import org.khelekore.parjac.tree.TypeParameters;
 import org.testng.annotations.Test;
 
 public class TestClassSetter extends TestBase {
@@ -571,6 +575,25 @@ public class TestClassSetter extends TestBase {
 	parseAndSetClasses ("package a; public class A { protected static class E {}}",
 			    "package b; import a.A; class B extends A { public class C { void f () { E e; }}}");
 	assertNoErrors ();
+    }
+
+    @Test
+    public void testTypeParameters () throws IOException {
+	parseAndSetClasses ("class A<T extends Runnable & java.io.Serializable> {}");
+	assertNoErrors ();
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType ("A");
+	TypeParameters tps = cd.getTypeParameters ();
+	List<TypeParameter> ls = tps.get ();
+	assert ls.size () == 1;
+	TypeParameter tp = ls.get (0);
+	TypeBound b = tp.getTypeBound ();
+	assert b != null;
+	assert b.getType () != null;
+	assert b.getType ().getFullName ().equals ("java.lang.Runnable");
+	List<AdditionalBound> abs = b.getAdditionalBounds ();
+	assert abs != null;
+	assert abs.size () == 1;
+	assert abs.get (0).getType ().getFullName ().equals ("java.io.Serializable");
     }
 
     private void checkImplements (String classToCheck, String wantedInterface) {

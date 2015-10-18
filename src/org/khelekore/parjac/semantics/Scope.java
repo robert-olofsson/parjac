@@ -114,4 +114,8 @@ public class Scope {
     public Scope endScope () {
 	return parent;
     }
+
+    public Map<String, FieldInformation<?>> getVariables () {
+	return Collections.unmodifiableMap (variables);
+    }
 }
