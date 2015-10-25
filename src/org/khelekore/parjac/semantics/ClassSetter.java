@@ -72,7 +72,7 @@ public class ClassSetter {
     }
 
     /* TODO: make sure that we replace all of these DottedName:s with correct things
-     * PrimaryNoNewArray: (foo.bar.class, foo.bar.this)
+     * PrimaryNoNewArray: (foo.bar.class, foo.Bar.this)
      * * ClassInstanceCreationExpression:  (foo.bar.new Baz())
      * * FieldAccess: (foo.bar.Baz.super.asdf)
      * * ArrayAccess:
