@@ -12,7 +12,6 @@ import org.khelekore.parjac.tree.ExtendsInterfaces;
 import org.khelekore.parjac.tree.FieldDeclaration;
 import org.khelekore.parjac.tree.InterfaceTypeList;
 import org.khelekore.parjac.tree.MethodDeclaration;
-import org.khelekore.parjac.tree.MethodHeader;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SimpleClassType;
