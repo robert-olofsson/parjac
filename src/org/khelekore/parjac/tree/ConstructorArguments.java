@@ -13,6 +13,11 @@ public class ConstructorArguments extends PositionNode {
 	args = r.size () > 3 ? (ArgumentList)parts.pop () : null;
     }
 
+    public ConstructorArguments (ArgumentList args) {
+	super (null);
+	this.args = args;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{(" + args + ");}";
     }

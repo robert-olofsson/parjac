@@ -20,6 +20,7 @@ import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
+import org.khelekore.parjac.semantics.ConstructorChecker;
 import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
@@ -144,6 +145,9 @@ public class Compiler {
 	if (diagnostics.hasError ())
 	    return;
 	// check that there is at least one constructor
+	runTimed (() -> checkConstructors (trees), "Checking constructors");
+	if (diagnostics.hasError ())
+	    return;
 	// Check matching methods
 	// Check generics
     }
@@ -170,6 +174,15 @@ public class Compiler {
     private void checkReturns (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	ReturnChecker ra = new ReturnChecker (cip, tree, diagnostics);
 	ra.run ();
+    }
+
+    private void checkConstructors (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> checkConstructors (t, diagnostics));
+    }
+
+    private void checkConstructors (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	ConstructorChecker cc = new ConstructorChecker (cip, tree, diagnostics);
+	cc.run ();
     }
 
     private void optimize (List<SyntaxTree> trees) {

@@ -31,6 +31,13 @@ public class ExplicitConstructorInvocation extends PositionNode {
 	args = (ConstructorArguments)parts.pop ();
     }
 
+    public ExplicitConstructorInvocation (TypeArguments types, Token where, ConstructorArguments args) {
+	super (null);
+	this.types = types;
+	this.where = where;
+	this.args = args;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + types + " " + where + " " + args + "}";
     }

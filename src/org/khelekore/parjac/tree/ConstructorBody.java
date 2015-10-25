@@ -25,6 +25,12 @@ public class ConstructorBody extends PositionNode {
 	}
     }
 
+    public ConstructorBody (ExplicitConstructorInvocation eci, BlockStatements statements) {
+	super (null);
+	this.eci = eci;
+	this.statements = statements;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + eci + " " + statements + "}";
     }

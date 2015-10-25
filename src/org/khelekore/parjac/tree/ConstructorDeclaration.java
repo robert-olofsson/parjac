@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -24,6 +25,13 @@ public class ConstructorDeclaration extends FlaggedType {
 	body = (ConstructorBody)parts.pop ();
     }
 
+    public ConstructorDeclaration (ConstructorDeclarator declarator, Throws throwsClause, ConstructorBody body) {
+	super (Collections.emptyList (), null, null, null);
+	this.declarator = declarator;
+	this.throwsClause = throwsClause;
+	this.body = body;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + getAnnotations () + " " + getFlags () +
 	    " " + declarator + " " + throwsClause + " " + body + "}";
@@ -33,6 +41,10 @@ public class ConstructorDeclaration extends FlaggedType {
 	if (visitor.visit (this))
 	    body.visit (visitor);
 	visitor.endConstructor (this);
+    }
+
+    public String getId () {
+	return declarator.getId ();
     }
 
     public TypeParameters getTypeParameters () {

@@ -1,6 +1,6 @@
 package org.khelekore.parjac.tree;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
@@ -17,7 +17,7 @@ public abstract class BodyBase extends PositionNode {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
 	    declarations = ze.get ();
 	} else {
-	    declarations = Collections.emptyList ();
+	    declarations = new ArrayList<> ();
 	}
     }
 

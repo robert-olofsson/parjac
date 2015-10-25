@@ -83,7 +83,7 @@ public class JavaTreeBuilder {
 	register (g, "StaticInitializer", constructored (StaticInitializer::new));
 	register (g, "ConstructorDeclaration", diagnosed (ConstructorDeclaration::new));
 	register (g, "ConstructorDeclarator", constructored (ConstructorDeclarator::new));
-	register (g, "ConstructorBody", constructored (ConstructorBody::new));
+	register (g, "ConstructorBody", constructored ((r, d, p) -> new ConstructorBody (r, d, p)));
 	register (g, "ExplicitConstructorInvocation",
 		  constructored (ExplicitConstructorInvocation::new));
 	register (g, "ConstructorArguments", constructored (ConstructorArguments::new));

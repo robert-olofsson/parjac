@@ -28,8 +28,19 @@ public class ConstructorDeclarator extends PositionNode {
 	}
     }
 
+    public ConstructorDeclarator (TypeParameters types, String id, FormalParameterList params) {
+	super (null);
+	this.types = types;
+	this.id = id;
+	this.params = params;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + types + " " + id + "(" + params + ")}";
+    }
+
+    public String getId () {
+	return id;
     }
 
     public TypeParameters getTypeParameters () {
