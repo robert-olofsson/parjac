@@ -142,7 +142,6 @@ public class TestNameModifierChecker extends TestBase {
 
 	parseAndSetClasses ("interface Foo { void bar () {} }");
 	assert diagnostics.hasError () : "Expected to find errors";
-	diagnostics = new CompilerDiagnosticCollector ();
     }
 
     @Test
