@@ -101,7 +101,7 @@ public class Compiler {
 						    diagnostics, settings.getDebug ());
 	    SyntaxTree tree = parser.parse ();
 	    long end = System.nanoTime ();
-	    if (settings.getDebug ())
+	    if (settings.getDebug () && settings.getReportTime ())
 		reportTime ("Parsing " + path, start, end);
 	    return tree;
 	} catch (MalformedInputException e) {
