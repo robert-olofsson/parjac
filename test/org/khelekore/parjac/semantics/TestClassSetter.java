@@ -11,6 +11,8 @@ import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.ExtendsInterfaces;
 import org.khelekore.parjac.tree.FieldDeclaration;
 import org.khelekore.parjac.tree.InterfaceTypeList;
+import org.khelekore.parjac.tree.MethodDeclaration;
+import org.khelekore.parjac.tree.MethodHeader;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SimpleClassType;
@@ -578,22 +580,40 @@ public class TestClassSetter extends TestBase {
     }
 
     @Test
-    public void testTypeParameters () throws IOException {
+    public void testClassTypeParameters () throws IOException {
 	parseAndSetClasses ("class A<T extends Runnable & java.io.Serializable> {}");
 	assertNoErrors ();
 	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType ("A");
-	TypeParameters tps = cd.getTypeParameters ();
+	checkTypeParameters (cd.getTypeParameters (), 1, "java.lang.Runnable", "java.io.Serializable");
+    }
+
+    @Test
+    public void testMethodTypeParameters () throws IOException {
+	parseAndSetClasses ("import java.io.InputStream;\n" +
+			    "import java.io.Serializable;\n" +
+			    "class A {\n" +
+			    "    <T extends InputStream & Serializable> T create () { return null; }\n" +
+			    "}");
+	assertNoErrors ();
+	NormalClassDeclaration cd = (NormalClassDeclaration)cip.getType ("A");
+	ClassBody body = cd.getBody ();
+	MethodDeclaration m = (MethodDeclaration)body.getDeclarations ().get (0);
+	checkTypeParameters (m.getTypeParameters (), 1, "java.io.InputStream", "java.io.Serializable");
+    }
+
+    private void checkTypeParameters (TypeParameters tps, int numParams,
+				      String bound1, String additionalBound) {
 	List<TypeParameter> ls = tps.get ();
-	assert ls.size () == 1;
+	assert ls.size () == numParams;
 	TypeParameter tp = ls.get (0);
 	TypeBound b = tp.getTypeBound ();
 	assert b != null;
 	assert b.getType () != null;
-	assert b.getType ().getFullName ().equals ("java.lang.Runnable");
+	assert b.getType ().getFullName ().equals (bound1);
 	List<AdditionalBound> abs = b.getAdditionalBounds ();
 	assert abs != null;
 	assert abs.size () == 1;
-	assert abs.get (0).getType ().getFullName ().equals ("java.io.Serializable");
+	assert abs.get (0).getType ().getFullName ().equals (additionalBound);
     }
 
     private void checkImplements (String classToCheck, String wantedInterface) {
