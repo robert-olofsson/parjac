@@ -12,3 +12,16 @@ Some things:
    the predicted states. Inspiration from the marpa project.
 *) Tests are done with testng.
 *) Uses asm for bytecode handling.
+
+Building:
+"gradle build"
+
+Running:
+"gradle run -Pargs='-i /some/source/dir -d /some/output/dir'"
+
+Gradle is icky when it comes to handling command line arguments.
+
+Alternative building and running:
+"./compile.sh" and "./run.sh -i /some/source/dir -d /some/output/dir",
+but note that this requires that the dependencies are found in the
+libs folder.
