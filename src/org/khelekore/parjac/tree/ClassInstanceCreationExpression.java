@@ -68,7 +68,7 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	return id;
     }
 
-    @Override public String getExpressionType () {
-	return id.getFullName ();
+    @Override public ExpressionType getExpressionType () {
+	return new ExpressionType (id.getFullName ());
     }
 }

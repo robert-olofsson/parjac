@@ -44,9 +44,9 @@ public class ReturnStatement extends PositionNode {
 	this.exp = exp;
     }
 
-    @Override public String getExpressionType () {
+    @Override public ExpressionType getExpressionType () {
 	if (exp != null)
 	    return exp.getExpressionType ();
-	return "V";
+	return ExpressionType.VOID;
     }
 }

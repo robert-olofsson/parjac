@@ -26,7 +26,7 @@ public class DoubleLiteral extends PositionNode implements LiteralValue, Numeric
 	return new DoubleLiteral (-value, getParsePosition ());
     }
 
-    @Override public String getExpressionType () {
-	return "D";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.DOUBLE;
     }
 }

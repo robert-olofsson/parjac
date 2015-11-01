@@ -42,7 +42,7 @@ public abstract class VariableDeclaration extends FlaggedType {
 	return variables;
     }
 
-    @Override public String getExpressionType () {
+    @Override public ExpressionType getExpressionType () {
 	return type.getExpressionType ();
     }
 }

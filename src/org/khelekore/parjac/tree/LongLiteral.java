@@ -22,7 +22,7 @@ public class LongLiteral extends PositionNode implements LiteralValue, NumericVa
 	return new LongLiteral (-value, getParsePosition ());
     }
 
-    @Override public String getExpressionType () {
-	return "J";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.LONG;
     }
 }

@@ -22,7 +22,7 @@ public class CastExpression extends PositionNode {
 	return getClass ().getSimpleName () + "{" + type + " " + additionalBounds + " " + expression + "}";
     }
 
-    @Override public String getExpressionType () {
+    @Override public ExpressionType getExpressionType () {
 	return type.getExpressionType ();
     }
 

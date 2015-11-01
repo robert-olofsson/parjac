@@ -256,9 +256,9 @@ public class ClassSetter {
 		if (from.getExpressionType () != null) {
 		    Deque<String> save = containingTypeName;
 		    containingTypeName = new ArrayDeque<> ();
-		    String type = from.getExpressionType ();
+		    ExpressionType type = from.getExpressionType ();
 		    if (type != null)
-			containingTypeName.push (type);
+			containingTypeName.push (type.getClassName ());
 		    setType (c.getId (), this);
 		    containingTypeName = save;
 		} else {

@@ -15,4 +15,8 @@ public class NullLiteral extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
     }
+
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.NULL;
+    }
 }

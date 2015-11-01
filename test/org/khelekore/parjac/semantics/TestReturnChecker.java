@@ -107,7 +107,7 @@ public class TestReturnChecker extends TestBase {
     }
 
     @Test
-    public void testImlementedInterfaceReturn () throws IOException {
+    public void testImplementedInterfaceReturn () throws IOException {
 	parseAndSetClasses ("interface Bar {}",
 			    "class Foo implements Bar { Bar bar () { Foo f = null; return f; } }");
 	assertNoErrors ();
@@ -379,6 +379,13 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
 
  	parseAndSetClasses ("class Foo { int bar () { return null; } }");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testNameClashWithPrimitive () throws IOException {
+ 	parseAndSetClasses ("class I {}\n" +
+			    "class Foo { int bar () { I i; return i; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 

@@ -22,7 +22,7 @@ public class CharLiteral extends PositionNode implements LiteralValue, NumericVa
 	return new IntLiteral (-value, getParsePosition ());
     }
 
-    @Override public String getExpressionType () {
-	return "C";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.CHAR;
     }
 }

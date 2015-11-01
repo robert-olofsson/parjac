@@ -8,24 +8,24 @@ public class PrimitiveTokenType extends TokenTypeBase {
 	super (type, pos);
     }
 
-    @Override public String getExpressionType () {
+    @Override public ExpressionType getExpressionType () {
 	switch (get ()) {
 	case BYTE:
-	    return "B";
+	    return ExpressionType.BYTE;
 	case SHORT:
-	    return "S";
+	    return ExpressionType.SHORT;
 	case INT:
-	    return "I";
+	    return ExpressionType.INT;
 	case LONG:
-	    return "J";
+	    return ExpressionType.LONG;
 	case CHAR:
-	    return "C";
+	    return ExpressionType.CHAR;
 	case FLOAT:
-	    return "F";
+	    return ExpressionType.FLOAT;
 	case DOUBLE:
-	    return "D";
+	    return ExpressionType.DOUBLE;
 	case BOOLEAN:
-	    return "Z";
+	    return ExpressionType.BOOLEAN;
 	default:
 	    return null;
 	}

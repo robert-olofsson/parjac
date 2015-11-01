@@ -26,7 +26,7 @@ public class FloatLiteral extends PositionNode implements LiteralValue, NumericV
 	return new FloatLiteral (-value, getParsePosition ());
     }
 
-    @Override public String getExpressionType () {
-	return "F";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.FLOAT;
     }
 }

@@ -22,7 +22,7 @@ public class StringLiteral extends PositionNode {
 	visitor.visit (this);
     }
 
-    @Override public String getExpressionType () {
-	return "java.lang.String";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.STRING;
     }
 }

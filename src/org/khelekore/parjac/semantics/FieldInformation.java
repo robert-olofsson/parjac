@@ -1,6 +1,7 @@
 package org.khelekore.parjac.semantics;
 
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.FlaggedType;
 
 public class FieldInformation<T extends FlaggedType> {
@@ -38,7 +39,7 @@ public class FieldInformation<T extends FlaggedType> {
 	return FlagsHelper.isStatic (var.getFlags ());
     }
 
-    public String getExpressionType () {
+    public ExpressionType getExpressionType () {
 	return var.getExpressionType ();
     }
 }

@@ -19,11 +19,11 @@ import org.khelekore.parjac.tree.BreakStatement;
 import org.khelekore.parjac.tree.Catches;
 import org.khelekore.parjac.tree.DoStatement;
 import org.khelekore.parjac.tree.EnhancedForStatement;
+import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.Finally;
 import org.khelekore.parjac.tree.IfThenStatement;
 import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
-import org.khelekore.parjac.tree.NullLiteral;
 import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.Result;
 import org.khelekore.parjac.tree.ReturnStatement;
@@ -240,50 +240,59 @@ public class ReturnChecker implements TreeVisitor {
 	    if (!match (type, exp)) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     rs.getParsePosition (),
-							     "Wrong return type"));
+							     "Wrong return type: found: " +
+							     exp.getExpressionType () +
+							     ", expected: " +
+							     type.getExpressionType ()));
 	    }
 	}
     }
 
     private boolean match (TreeNode result, TreeNode exp) {
 	// TODO: we can not really do this since classes may be named "I"
-	String expType = exp.getExpressionType ();
-	String resultType = result.getExpressionType ();
+	ExpressionType expType = exp.getExpressionType ();
+	ExpressionType resultType = result.getExpressionType ();
 	if (Objects.equals (expType, resultType))
 	    return true;
+	if (resultType == null || expType == null)
+	    return false;
+	if (resultType.isPrimitiveType () != expType.isPrimitiveType ())
+	    return false;
 	// Ok, not a direct match
 	if (result instanceof PrimitiveTokenType) {
 	    // need to allow for implicit upcast
 	    return mayBeAutoCasted (expType, resultType);
 	}
-	if (exp instanceof NullLiteral)
+	if (expType == ExpressionType.NULL)
 	    return true;
 	return isSubType (expType, resultType);
     }
 
-    private final static Map<String, List<String>> ALLOWED_UPCASTS = new HashMap<> ();
+    private final static Map<ExpressionType, List<ExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
     static {
-	ALLOWED_UPCASTS.put ("B", Arrays.asList ("S", "I", "J"));
-	ALLOWED_UPCASTS.put ("S", Arrays.asList ("I", "J"));
-	ALLOWED_UPCASTS.put ("C", Arrays.asList ("I", "J"));
-	ALLOWED_UPCASTS.put ("I", Arrays.asList ("J"));
-	ALLOWED_UPCASTS.put ("F", Arrays.asList ("D"));
+	ALLOWED_UPCASTS.put (ExpressionType.BYTE,
+			     Arrays.asList (ExpressionType.SHORT, ExpressionType.INT, ExpressionType.LONG));
+	ALLOWED_UPCASTS.put (ExpressionType.SHORT,
+			     Arrays.asList (ExpressionType.INT, ExpressionType.LONG));
+	ALLOWED_UPCASTS.put (ExpressionType.CHAR, Arrays.asList (ExpressionType.INT, ExpressionType.LONG));
+	ALLOWED_UPCASTS.put (ExpressionType.INT, Arrays.asList (ExpressionType.LONG));
+	ALLOWED_UPCASTS.put (ExpressionType.FLOAT, Arrays.asList (ExpressionType.DOUBLE));
     }
 
-    private boolean mayBeAutoCasted (String from, String to) {
-	List<String> l = ALLOWED_UPCASTS.get (from);
+    private boolean mayBeAutoCasted (ExpressionType from, ExpressionType to) {
+	List<ExpressionType> l = ALLOWED_UPCASTS.get (from);
 	return l != null && l.contains (to);
     }
 
-    private boolean isSubType (String sub, String sup) {
+    private boolean isSubType (ExpressionType sub, ExpressionType sup) {
 	try {
-	    Optional<List<String>> supers = cip.getSuperTypes (sub);
+	    Optional<List<String>> supers = cip.getSuperTypes (sub.getClassName());
 	    if (supers.isPresent ()) {
 		List<String> l = supers.get ();
 		for (String s : l) {
-		    if (s.equals (sup))
+		    if (s.equals (sup.getClassName ()))
 			return true;
-		    if (isSubType (s, sup))
+		    if (isSubType (new ExpressionType (s), sup))
 			return true;
 		}
 	    }

@@ -22,7 +22,7 @@ public class BooleanLiteral extends PositionNode implements LiteralValue {
 	visitor.visit (this);
     }
 
-    @Override public String getExpressionType () {
-	return "Z";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.BOOLEAN;
     }
 }

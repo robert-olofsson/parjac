@@ -26,7 +26,7 @@ public class IntLiteral extends PositionNode implements LiteralValue, NumericVal
 	return new IntLiteral (-value, getParsePosition ());
     }
 
-    @Override public String getExpressionType () {
-	return "I";
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.INT;
     }
 }
