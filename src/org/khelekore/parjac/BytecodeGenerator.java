@@ -92,6 +92,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	methods.addLast (mi);
 	return true;
     }
+
     @Override public void endConstructor (ConstructorDeclaration c) {
 	MethodInfo mi = methods.removeLast ();
 	mi.mv.visitInsn (RETURN);
