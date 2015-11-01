@@ -354,6 +354,7 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
     public void testInnerClass () throws IOException {
 	parseAndSetClasses ("class Foo {\n" +
 			    "int bar () {\n" +
