@@ -1,7 +1,8 @@
-apply plugin: 'java'
+apply plugin: 'application'
 
 sourceCompatibility = 1.8
 version = '1.0'
+mainClassName = 'org.khelekore.parjac.batch.Main'
 
 sourceSets {
     main {
@@ -40,4 +41,10 @@ test {
 
 task showMeCache << {
   configurations.compile.each { println it }
+}
+
+run {
+    if(project.hasProperty('args')){
+        args project.args.split('\\s')
+    }
 }
