@@ -47,7 +47,7 @@ public class TestConstructorChecker extends TestBase {
     }
 
     protected void handleSyntaxTree (SyntaxTree tree) {
-	ConstructorChecker cc = new ConstructorChecker (cip, tree, diagnostics);
+	ConstructorChecker cc = new ConstructorChecker (tree, diagnostics);
 	cc.run ();
     }
 }

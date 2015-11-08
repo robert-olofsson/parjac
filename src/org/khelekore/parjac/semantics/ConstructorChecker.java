@@ -26,13 +26,11 @@ import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 
 public class ConstructorChecker {
-    private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
 
-    public ConstructorChecker (ClassInformationProvider cip, SyntaxTree tree,
+    public ConstructorChecker (SyntaxTree tree,
 			       CompilerDiagnosticCollector diagnostics) {
-	this.cip = cip;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
     }

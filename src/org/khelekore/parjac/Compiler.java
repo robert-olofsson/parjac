@@ -181,7 +181,7 @@ public class Compiler {
     }
 
     private void checkConstructors (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	ConstructorChecker cc = new ConstructorChecker (cip, tree, diagnostics);
+	ConstructorChecker cc = new ConstructorChecker (tree, diagnostics);
 	cc.run ();
     }
 
