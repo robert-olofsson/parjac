@@ -1,4 +1,4 @@
-package org.khelekore.parjac.semantics;
+ package org.khelekore.parjac.semantics;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,10 @@ import java.util.jar.JarFile;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public class ClassResourceHolder {
     private final List<Path> classPathEntries;
@@ -93,7 +96,7 @@ public class ClassResourceHolder {
 	}
 	if (r == null)
 	    return LookupResult.NOT_FOUND;
-	return new LookupResult (true, r.node.access);
+	return new LookupResult (true, r.accessFlags);
     }
 
     public Optional<List<String>> getSuperTypes (String fqn) throws IOException {
@@ -108,28 +111,31 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
-	return r.node.access;
+	return r.accessFlags;
     }
 
     private static abstract class Result {
-	private ClassNode node;
+	private String superClass;
 	private List<String> superTypes;
+	private int accessFlags;
 
 	public synchronized void ensureNodeIsLoaded () throws IOException {
-	    if (node != null)
+	    if (superClass != null)
 		return;
-	    node = readNode ();
-
-	    superTypes = new ArrayList<> ((node.superName != null ? 1 : 0) +
-					  (node.interfaces != null ? node.interfaces.size () : 0));
-	    @SuppressWarnings ("unchecked") List<String> interfaces = node.interfaces;
-	    if (node.superName != null)
-		superTypes.add (node.superName.replace ('/', '.'));
-	    if (interfaces != null)
-		interfaces.forEach (i -> superTypes.add (i.replace ('/', '.')));
+	    readNode ();
 	}
 
-	public abstract ClassNode readNode () throws IOException;
+	public abstract void readNode () throws IOException;
+
+	protected void readNode (InputStream is) throws IOException {
+	    try {
+		ClassReader cr = new ClassReader (is);
+		ClassInfoExtractor cie = new ClassInfoExtractor (this);
+		cr.accept (cie, ClassReader.SKIP_CODE);
+	    } catch (RuntimeException e) {
+		throw new IOException ("Failed to read class: ", e);
+	    }
+	}
 
 	public abstract String getPath ();
     }
@@ -141,9 +147,9 @@ public class ClassResourceHolder {
 	    this.path = path;
 	}
 
-	public ClassNode readNode () throws IOException {
+	@Override public void readNode () throws IOException {
 	    try (InputStream is = Files.newInputStream (path)) {
-		return ClassResourceHolder.readNode (is);
+		readNode (is);
 	    }
 	}
 
@@ -161,13 +167,13 @@ public class ClassResourceHolder {
 	    this.name = name;
 	}
 
-	public ClassNode readNode () throws IOException {
+	@Override public void readNode () throws IOException {
 	    // I tried to cache the jarfiles, but that made things a lot slower
 	    // due to less multi threading. Do if someone can prove it makes sense
 	    try (JarFile jf = new JarFile (jarfile.toFile ())) {
 		JarEntry e = jf.getJarEntry (name);
 		try (InputStream jis = jf.getInputStream (e)) {
-		    return ClassResourceHolder.readNode (jis);
+		    readNode (jis);
 		}
 	    }
 	}
@@ -177,14 +183,47 @@ public class ClassResourceHolder {
 	}
     }
 
-    private static ClassNode readNode (InputStream is) throws IOException {
-	try {
-	    ClassReader cr = new ClassReader (is);
-	    ClassNode cn = new ClassNode ();
-	    cr.accept (cn, 0);
-	    return cn;
-	} catch (RuntimeException e) {
-	    throw new IOException ("Failed to read class: ", e);
+    private static class ClassInfoExtractor extends ClassVisitor {
+	private final Result r;
+
+	public ClassInfoExtractor (Result r) {
+	    super (Opcodes.ASM5);
+	    this.r = r;
+	}
+
+	@Override public void visit (int version, int access, String name,
+				     String signature, String superName,
+				     String[] interfaces) {
+	    if (superName != null) // java.lang.Object have null superName
+		r.superClass = superName.replace ('/', '.');
+	    r.accessFlags = access;
+	    r.superTypes = new ArrayList<> (interfaces == null ? 1 : 1 + interfaces.length);
+	    r.superTypes.add (r.superClass);
+	    if (interfaces != null) {
+		for (String i : interfaces)
+		    r.superTypes.add (i.replace ('/', '.'));
+	    }
+	}
+
+	@Override public void visitSource (String source, String debug) {
+	}
+
+	@Override public void visitEnd () {
+	}
+
+	@Override public void visitInnerClass (String name, String outerName,
+					       String innerName, int access) {
+	}
+
+	@Override public FieldVisitor visitField (int access, String name, String desc,
+						  String signature, Object value) {
+	    return null;
+	}
+
+	@Override public MethodVisitor visitMethod (int access, String name,
+						    String desc, String signature,
+						    String[] exceptions) {
+	    return null;
 	}
     }
 }
