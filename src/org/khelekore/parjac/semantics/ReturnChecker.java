@@ -239,7 +239,7 @@ public class ReturnChecker implements TreeVisitor {
 							     rs.getParsePosition (),
 							     "Wrong return type: found: %s" +
 							     ", expected: %s",
-							     exp.getExpressionType (), exp,
+							     exp.getExpressionType (),
 							     type.getExpressionType ()));
 	    }
 	}
