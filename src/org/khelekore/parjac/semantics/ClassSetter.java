@@ -410,8 +410,8 @@ public class ClassSetter {
 		return new MethodInformation (m.getFlags (),
 					      m.getMethodName (),
 					      m.getDescription (),
-					      null,
-					      EMTPY);
+					      null,   // TODO: fill in
+					      EMTPY); // TODO: fill in
 	    }
 	}
     }
