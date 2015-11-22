@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
