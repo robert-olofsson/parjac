@@ -48,4 +48,8 @@ public class MethodDeclaration extends FlaggedType {
     public MethodBody getBody () {
 	return body;
     }
+
+    @Override public ExpressionType getExpressionType () {
+	return getResult ().getExpressionType ();
+    }
 }

@@ -15,11 +15,13 @@ public class ClassInformationProvider {
     private final ClassResourceHolder crh;
     private final CompiledTypesHolder cth;
     private Map<String, Map<String, FieldInformation<?>>> classFields;
+    private Map<String, Map<String, List<MethodInformation>>> classMethods;
 
     public ClassInformationProvider (ClassResourceHolder crh, CompiledTypesHolder cth) {
 	this.crh = crh;
 	this.cth = cth;
 	classFields = new ConcurrentHashMap<> ();
+	classMethods = new ConcurrentHashMap<> ();
     }
 
     public LookupResult hasVisibleType (String fqn) {
@@ -73,10 +75,22 @@ public class ClassInformationProvider {
 	classFields.put (fqn, fields);
     }
 
+    public void registerMethod (String fqn, Map<String, List<MethodInformation>> methods) {
+	classMethods.put (fqn, methods);
+    }
+
     public FieldInformation<?> getFieldInformation (String fqn, String field) {
 	Map<String, FieldInformation<?>> m = classFields.get (fqn);
 	if (m == null)
 	    return null;
 	return m.get (field);
+    }
+
+    public Map<String, List<MethodInformation>> getMethods (String fqn) {
+	if ((getType (fqn)) != null) {
+	    return classMethods.get (fqn);
+	} else {
+	    return crh.getMethods (fqn);
+	}
     }
 }

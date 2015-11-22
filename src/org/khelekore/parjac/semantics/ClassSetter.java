@@ -236,10 +236,10 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public boolean visit (ReturnStatement r) {
+	// Need to set the expression type before we can replace things
+	@Override public void endReturn (ReturnStatement r) {
 	    if (r.hasExpression ())
 		r.setExpression (replaceAndSetType (r.getExpression ()));
-	    return true;
 	}
 
 	@Override public void visit (Assignment a) {
@@ -274,6 +274,12 @@ public class ClassSetter {
 	    TreeNode on = m.getOn ();
 	    if (on != null)
 		m.setOn (replaceAndSetType (on));
+	    ArgumentList al = m.getArgumentList ();
+	    if (al != null) {
+		List<TreeNode> ls = al.get ();
+		for (int i = 0, s = ls.size (); i < s; i++)
+		    ls.set (i, replaceAndSetType (ls.get (i)));
+	    }
 	    return true;
 	}
 
@@ -363,14 +369,14 @@ public class ClassSetter {
 	}
 
 	private void addFields (String fqn, TreeNode tn, Scope scope) {
-	    tn.visit (new FieldFinder (scope));
+	    tn.visit (new FieldRegistrator (scope));
 	    cip.registerFields (fqn, scope.getVariables ());
 	}
 
-	private class FieldFinder extends SiblingVisitor {
+	private class FieldRegistrator extends SiblingVisitor {
 	    private final Scope scope;
 
-	    public FieldFinder (Scope scope) {
+	    public FieldRegistrator (Scope scope) {
 		this.scope = scope;
 	    }
 

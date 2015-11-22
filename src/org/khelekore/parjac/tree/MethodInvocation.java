@@ -11,6 +11,7 @@ public class MethodInvocation extends PositionNode {
     private final TypeArguments types;
     private final boolean isSuper;
     private final UntypedMethodInvocation mi;
+    private ExpressionType returnType;
 
     public MethodInvocation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	super (ppos);
@@ -32,9 +33,17 @@ public class MethodInvocation extends PositionNode {
 	mi = (UntypedMethodInvocation)parts.pop ();
     }
 
+    public MethodInvocation (UntypedMethodInvocation mi, ParsePosition ppos) {
+	super (ppos);
+	on = null;
+	types = null;
+	isSuper = false;
+	this.mi = mi;
+    }
+
     public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
-	    return parts.pop ();
+	    return new MethodInvocation ((UntypedMethodInvocation)parts.pop (), pos);
 	return new MethodInvocation (r, parts, pos);
     }
 
@@ -72,5 +81,13 @@ public class MethodInvocation extends PositionNode {
 
     public ArgumentList getArgumentList () {
 	return mi.getArgumentList ();
+    }
+
+    public void setReturnType (ExpressionType returnType) {
+	this.returnType = returnType;
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	return returnType;
     }
 }

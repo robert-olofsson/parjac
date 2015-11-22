@@ -206,43 +206,13 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     private void appendType (TreeNode tn, StringBuilder sb) {
-	if (tn instanceof PrimitiveTokenType) {
-	    sb.append (getPrimitiveType (((PrimitiveTokenType)tn).get ()));
-	} else if (tn instanceof ClassType) {
-	    ClassType ct = (ClassType)tn;
-	    sb.append ("L");
-	    sb.append (ct.getSlashName ());
-	    sb.append (";");
+	if (tn instanceof PrimitiveTokenType || tn instanceof ClassType) {
+	    sb.append (tn.getExpressionType ().getDescriptor ());
 	} else {
 	    UnannArrayType at = (UnannArrayType)tn;
 	    for (int i = 0, s = at.getDims ().get ().size (); i < s; i++)
 		sb.append ("[");
 	    appendType (at.getType (), sb);
-	}
-    }
-
-    private String getPrimitiveType (Token t) {
-	switch (t) {
-	case BYTE:
-	    return "B";
-	case SHORT:
-	    return "S";
-	case INT:
-	    return "I";
-	case LONG:
-	    return "J";
-	case CHAR:
-	    return "C";
-	case FLOAT:
-	    return "F";
-	case DOUBLE:
-	    return "D";
-	case BOOLEAN:
-	    return "Z";
-	case VOID:
-	    return "V";
-	default:
-	    throw new IllegalStateException ("Not a primitive type: " + t);
 	}
     }
 

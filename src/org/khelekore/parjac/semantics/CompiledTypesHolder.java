@@ -64,6 +64,8 @@ public class CompiledTypesHolder {
 
     public Optional<List<String>> getSuperTypes (String type) {
 	TreeNode tn = getType (type);
+	if (tn == null)
+	    return Optional.empty ();
 	if (tn instanceof NormalClassDeclaration) {
 	    NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
 	    List<String> ret = new ArrayList<> ();
@@ -72,6 +74,8 @@ public class CompiledTypesHolder {
 		if (ct.getFullName () == null)
 		    return Optional.of (Collections.<String>emptyList ());
 		ret.add (ct.getFullName ());
+	    } else {
+		ret.add ("java.lang.Object");
 	    }
 	    InterfaceTypeList ifs = ncd.getSuperInterfaces ();
 	    if (ifs != null)

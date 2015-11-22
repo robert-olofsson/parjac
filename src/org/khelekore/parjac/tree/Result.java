@@ -23,6 +23,10 @@ public abstract class Result extends PositionNode {
 	public TreeNode getReturnType () {
 	    throw new IllegalStateException ("Void methods do not have a return type");
 	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return ExpressionType.VOID;
+	}
     }
 
     public static class TypeResult extends Result {
@@ -39,6 +43,10 @@ public abstract class Result extends PositionNode {
 
 	public TreeNode getReturnType () {
 	    return type;
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return type.getExpressionType ();
 	}
     }
 

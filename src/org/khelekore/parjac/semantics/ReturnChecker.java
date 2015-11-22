@@ -1,10 +1,7 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -240,9 +237,9 @@ public class ReturnChecker implements TreeVisitor {
 	    if (!match (type, exp)) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     rs.getParsePosition (),
-							     "Wrong return type: found: " +
-							     exp.getExpressionType () +
-							     ", expected: " +
+							     "Wrong return type: found: %s" +
+							     ", expected: %s",
+							     exp.getExpressionType (),
 							     type.getExpressionType ()));
 	    }
 	}
@@ -261,27 +258,11 @@ public class ReturnChecker implements TreeVisitor {
 	// Ok, not a direct match
 	if (result instanceof PrimitiveTokenType) {
 	    // need to allow for implicit upcast
-	    return mayBeAutoCasted (expType, resultType);
+	    return ExpressionType.mayBeAutoCasted (expType, resultType);
 	}
 	if (expType == ExpressionType.NULL)
 	    return true;
 	return isSubType (expType, resultType);
-    }
-
-    private final static Map<ExpressionType, List<ExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
-    static {
-	ALLOWED_UPCASTS.put (ExpressionType.BYTE,
-			     Arrays.asList (ExpressionType.SHORT, ExpressionType.INT, ExpressionType.LONG));
-	ALLOWED_UPCASTS.put (ExpressionType.SHORT,
-			     Arrays.asList (ExpressionType.INT, ExpressionType.LONG));
-	ALLOWED_UPCASTS.put (ExpressionType.CHAR, Arrays.asList (ExpressionType.INT, ExpressionType.LONG));
-	ALLOWED_UPCASTS.put (ExpressionType.INT, Arrays.asList (ExpressionType.LONG));
-	ALLOWED_UPCASTS.put (ExpressionType.FLOAT, Arrays.asList (ExpressionType.DOUBLE));
-    }
-
-    private boolean mayBeAutoCasted (ExpressionType from, ExpressionType to) {
-	List<ExpressionType> l = ALLOWED_UPCASTS.get (from);
-	return l != null && l.contains (to);
     }
 
     private boolean isSubType (ExpressionType sub, ExpressionType sup) {

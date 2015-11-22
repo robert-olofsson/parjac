@@ -22,6 +22,7 @@ import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.semantics.ConstructorChecker;
 import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
+import org.khelekore.parjac.semantics.MethodInvocationSetter;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -140,6 +141,7 @@ public class Compiler {
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	if (diagnostics.hasError ())
 	    return;
+	runTimed (() -> setMethodInvocations (trees), "Setting method invocations");
 	// Check types of fields and assignments
 	runTimed (() -> checkReturns (trees), "Checking returns");
 	if (diagnostics.hasError ())
@@ -165,6 +167,15 @@ public class Compiler {
     private void checkNamesAndModifiers (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	NameModifierChecker nmc = new NameModifierChecker (cip, tree, diagnostics);
 	nmc.check ();
+    }
+
+    private void setMethodInvocations (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> setMethodInvocations (t, diagnostics));
+    }
+
+    private void setMethodInvocations (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	MethodInvocationSetter mis = new MethodInvocationSetter (cip, tree, diagnostics);
+	mis.run ();
     }
 
     private void checkReturns (List<SyntaxTree> trees) {

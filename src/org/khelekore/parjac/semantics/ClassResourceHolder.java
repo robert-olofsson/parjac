@@ -1,4 +1,4 @@
- package org.khelekore.parjac.semantics;
+package org.khelekore.parjac.semantics;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ public class ClassResourceHolder {
 		r.ensureNodeIsLoaded ();
 	    } catch (IOException e) {
 		diagnostics.report (new NoSourceDiagnostics ("Failed to load class from: " +
-							     r.getPath ()));
+							     r.getPath () + ", " + e));
 		r = null;
 	    }
 	}
@@ -114,10 +115,18 @@ public class ClassResourceHolder {
 	return r.accessFlags;
     }
 
+    public Map<String, List<MethodInformation>> getMethods (String fqn) {
+	Result r = foundClasses.get (fqn);
+	if (r == null)
+	    throw new IllegalArgumentException ("No such class: " + fqn);
+	return r.methods;
+    }
+
     private static abstract class Result {
 	private String superClass;
 	private List<String> superTypes;
 	private int accessFlags;
+	private Map<String, List<MethodInformation>> methods = new HashMap<> ();
 
 	public synchronized void ensureNodeIsLoaded () throws IOException {
 	    if (superClass != null)
@@ -132,6 +141,7 @@ public class ClassResourceHolder {
 		ClassReader cr = new ClassReader (is);
 		ClassInfoExtractor cie = new ClassInfoExtractor (this);
 		cr.accept (cie, ClassReader.SKIP_CODE);
+		methods = Collections.unmodifiableMap (methods);
 	    } catch (RuntimeException e) {
 		throw new IOException ("Failed to read class: ", e);
 	    }
@@ -197,8 +207,14 @@ public class ClassResourceHolder {
 	    if (superName != null) // java.lang.Object have null superName
 		r.superClass = superName.replace ('/', '.');
 	    r.accessFlags = access;
-	    r.superTypes = new ArrayList<> (interfaces == null ? 1 : 1 + interfaces.length);
-	    r.superTypes.add (r.superClass);
+	    int size = 0;
+	    if (r.superClass != null)
+		size++;
+	    if (interfaces != null)
+		size += interfaces.length;
+	    r.superTypes = new ArrayList<> (size);
+	    if (r.superClass != null)
+		r.superTypes.add (r.superClass);
 	    if (interfaces != null) {
 		for (String i : interfaces)
 		    r.superTypes.add (i.replace ('/', '.'));
@@ -223,6 +239,13 @@ public class ClassResourceHolder {
 	@Override public MethodVisitor visitMethod (int access, String name,
 						    String desc, String signature,
 						    String[] exceptions) {
+	    MethodInformation mi = new MethodInformation (access, name, desc, signature, exceptions);
+	    List<MethodInformation> ls = r.methods.get (name);
+	    if (ls == null) {
+		ls = new ArrayList<> ();
+		r.methods.put (name, ls);
+	    }
+	    ls.add (mi);
 	    return null;
 	}
     }

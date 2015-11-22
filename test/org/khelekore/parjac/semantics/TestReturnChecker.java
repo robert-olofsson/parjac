@@ -10,106 +10,106 @@ public class TestReturnChecker extends TestBase {
 
     @Test
     public void testVoid () throws IOException {
-	parseAndSetClasses ("class Foo { void bar () {} }");
+	parseAndSetClasses ("class Foo { void bar () {}}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { void bar () { return; } }");
+	parseAndSetClasses ("class Foo { void bar () { return; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testVoidIntReturn () throws IOException {
-	parseAndSetClasses ("class Foo { void bar () { return 3; } }");
+	parseAndSetClasses ("class Foo { void bar () { return 3; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testInt () throws IOException {
-	parseAndSetClasses ("class Foo { int bar () { return 3; } }");
+	parseAndSetClasses ("class Foo { int bar () { return 3; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testReturnUnreachableCode () throws IOException {
-	parseAndSetClasses ("class Foo { int a; int bar () { return 3; a = 2; } }");
+	parseAndSetClasses ("class Foo { int a; int bar () { return 3; a = 2; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testThrowUnreachableCode () throws IOException {
-	parseAndSetClasses ("class Foo { int a; int bar () { throw new RuntimeException(); a = 2; } }");
+	parseAndSetClasses ("class Foo { int a; int bar () { throw new RuntimeException(); a = 2; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testIntMissingReturn () throws IOException {
-	parseAndSetClasses ("class Foo { int bar () {} }");
+	parseAndSetClasses ("class Foo { int bar () {}}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testIntVoidReturn () throws IOException {
-	parseAndSetClasses ("class Foo { int bar () { return; } }");
+	parseAndSetClasses ("class Foo { int bar () { return; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testIntStringReturn () throws IOException {
-	parseAndSetClasses ("class Foo { int bar () { return \"bad\"; } }");
+	parseAndSetClasses ("class Foo { int bar () { return \"bad\"; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testStringIntReturn () throws IOException {
-	parseAndSetClasses ("class Foo { String bar () { return 4; } }");
+	parseAndSetClasses ("class Foo { String bar () { return 4; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testStringReturn () throws IOException {
-	parseAndSetClasses ("class Foo { String bar () { return \"good\"; } }");
+	parseAndSetClasses ("class Foo { String bar () { return \"good\"; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testIntVariableReturn () throws IOException {
-	parseAndSetClasses ("class Foo { int bar () { int i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { int bar () { int i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { int i = 3; int bar () { return i; } }");
+	parseAndSetClasses ("class Foo { int i = 3; int bar () { return i; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testUpcastVariableReturn () throws IOException {
-	parseAndSetClasses ("class Foo { short bar () { byte i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { short bar () { byte i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { int bar () { byte i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { int bar () { byte i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { long bar () { byte i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { long bar () { byte i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { int bar () { short i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { int bar () { short i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { long bar () { short i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { long bar () { short i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { int bar () { char i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { int bar () { char i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { long bar () { char i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { long bar () { char i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { long bar () { int i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { long bar () { int i = 3; return i; }}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo { double bar () { float i = 3; return i; } }");
+	parseAndSetClasses ("class Foo { double bar () { float i = 3; return i; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testSuperClassReturn () throws IOException {
-	parseAndSetClasses ("class Foo { Object bar () { String s = \"hello\"; return s; } }");
+	parseAndSetClasses ("class Foo { Object bar () { String s = \"hello\"; return s; }}");
 	assertNoErrors ();
     }
 
     @Test
     public void testImplementedInterfaceReturn () throws IOException {
 	parseAndSetClasses ("interface Bar {}",
-			    "class Foo implements Bar { Bar bar () { Foo f = null; return f; } }");
+			    "class Foo implements Bar { Bar bar () { Foo f = null; return f; }}");
 	assertNoErrors ();
     }
 
@@ -369,18 +369,56 @@ public class TestReturnChecker extends TestBase {
 
     @Test
     public void testIntVariableBadReturn () throws IOException {
- 	parseAndSetClasses ("class Foo { String bar () {int i = 3; return i; } }");
+ 	parseAndSetClasses ("class Foo { String bar () {int i = 3; return i; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
     public void testNullReturn () throws IOException {
- 	parseAndSetClasses ("class Foo { String bar () { return null; } }");
+ 	parseAndSetClasses ("class Foo { String bar () { return null; }}");
 	assertNoErrors ();
 
- 	parseAndSetClasses ("class Foo { int bar () { return null; } }");
+ 	parseAndSetClasses ("class Foo { int bar () { return null; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
+
+    @Test
+    public void testExternalMethodReturn () throws IOException {
+ 	parseAndSetClasses ("class Foo { int bar () { return Integer.parseInt (\"3\"); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { int bar () { return Integer.parseInt (\"3\", 16); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { short s; int bar () { return Integer.hashCode(s); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { Object bar () { return getClass (); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { static Foo a; static int bar () { return System.identityHashCode (a); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { int bar () { return Integer.thisMethodShouldNotExist(); }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    /*
+    @Test
+    public void testInternalMethodReturn () throws IOException {
+ 	parseAndSetClasses ("class Foo { int foo () { return 3; } int bar () { return foo (); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testExternalFieldReturn () throws IOException {
+ 	parseAndSetClasses ("import java.awt.Point;\n" +
+			    "class Foo { int bar () { Point p = new Point(3, 7); return p.x; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInternalFieldReturn () throws IOException {
+ 	parseAndSetClasses ("class P { public int x; }\n" +
+			    "class Q { int bar () { P p = new P (); return p.x; }}");
+	assertNoErrors ();
+    }
+    */
 
     @Test
     public void testNameClashWithPrimitive () throws IOException {
@@ -390,6 +428,8 @@ public class TestReturnChecker extends TestBase {
     }
 
     protected void handleSyntaxTree (SyntaxTree tree) {
+	MethodInvocationSetter mis = new MethodInvocationSetter (cip, tree, diagnostics);
+	mis.run ();
 	ReturnChecker rc = new ReturnChecker (cip, tree, diagnostics);
 	rc.run ();
     }

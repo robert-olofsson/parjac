@@ -1,6 +1,6 @@
 package org.khelekore.parjac.tree;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
@@ -15,7 +15,8 @@ public abstract class ListBase<T extends TreeNode> extends PositionNode {
 	super (pos);
 	@SuppressWarnings("unchecked")T vd = (T)parts.pop ();
 	if (r.size () == 1) {
-	    ls = Collections.singletonList (vd);
+	    ls = new ArrayList<> (1);
+	    ls.add (vd);
 	} else {
 	    ZOMEntry ze = (ZOMEntry)parts.pop ();
 	    ls = ze.get ();

@@ -71,4 +71,8 @@ public class NormalClassDeclaration extends FlaggedType {
 	    body.visit (visitor);
 	visitor.endType ();
     }
+
+    @Override public ExpressionType getExpressionType () {
+	return null;
+    }
 }
