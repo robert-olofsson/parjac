@@ -45,11 +45,26 @@ public class MethodDeclaration extends FlaggedType {
 	return header.getParameters ();
     }
 
+    public Throws getThrows () {
+	return header.getThrows ();
+    }
+
     public MethodBody getBody () {
 	return body;
     }
 
     @Override public ExpressionType getExpressionType () {
 	return getResult ().getExpressionType ();
+    }
+
+    public String getDescription () {
+	StringBuilder sb = new StringBuilder ();
+	sb.append ("(");
+	FormalParameterList fpl = getParameters ();
+	if (fpl != null)
+	    fpl.appendDescription (sb);
+	sb.append (")");
+	sb.append (getResult ().getExpressionType ().getDescriptor ());
+	return sb.toString ();
     }
 }

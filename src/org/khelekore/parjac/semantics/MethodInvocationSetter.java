@@ -98,7 +98,6 @@ public class MethodInvocationSetter implements TreeVisitor {
 	    String fqn = clzType.getClassName ();
 	    String name = m.getId ();
 	    ArgumentList al = m.getArgumentList ();
-	    // System.err.println ("About to look up method: " + fqn + "." + name + ", args: " + al);
 	    try {
 		MethodInformation mi = findMatching (fqn, name, al);
 		if (mi == null) {

@@ -38,4 +38,8 @@ public class MethodHeader extends PositionNode {
     public FormalParameterList getParameters () {
 	return untypedHeader.getParameters ();
     }
+
+    public Throws getThrows () {
+	return untypedHeader.getThrows ();
+    }
 }

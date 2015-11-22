@@ -54,4 +54,14 @@ public class ConstructorDeclaration extends FlaggedType {
     public FormalParameterList getParameters () {
 	return declarator.getParameters ();
     }
+
+    public String getDescription () {
+	StringBuilder sb = new StringBuilder ();
+	sb.append ("(");
+	FormalParameterList fpl = getParameters ();
+	if (fpl != null)
+	    fpl.appendDescription (sb);
+	sb.append (")V");
+	return sb.toString ();
+    }
 }

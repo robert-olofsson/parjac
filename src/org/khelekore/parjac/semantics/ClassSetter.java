@@ -26,10 +26,12 @@ public class ClassSetter {
     private final CompilerDiagnosticCollector diagnostics;
     private final DottedName packageName;
     private final ImportHandler ih = new ImportHandler ();
-    private Deque<String> containingTypeName = new ArrayDeque<> ();
+    private Deque<BodyPart> containingTypes = new ArrayDeque<> ();
     // Type parameters, should probably be moved into scope instead
     private final Deque<Set<String>> types = new ArrayDeque<> ();
     private final Map<TreeNode, Scope> scopes = new HashMap<> ();
+
+    private final static String[] EMTPY = new String[0];
 
     /** High level description:
      *  For each class:
@@ -125,7 +127,7 @@ public class ClassSetter {
 		setType (superclass, this);
 	    visitSuperInterfaces (c.getSuperInterfaces (), this);
 	    String fqn = cip.getFullName (c);
-	    containingTypeName.push (fqn);
+	    containingTypes.push (new BodyPart (fqn, c.getBody ()));
 	    registerTypeParameters (c.getTypeParameters (), this);
 	    addScopeAndFields (fqn, c, c.getBody ());
 	    return true;
@@ -133,7 +135,7 @@ public class ClassSetter {
 
 	@Override public boolean visit (EnumDeclaration e) {
 	    String fqn = cip.getFullName (e);
-	    containingTypeName.push (fqn);
+	    containingTypes.push (new BodyPart (fqn, e.getBody ()));
 	    visitSuperInterfaces (e.getSuperInterfaces (), this);
 	    registerTypeParameters (null, this);
 	    addScopeAndFields (fqn, e, e.getBody ());
@@ -142,7 +144,7 @@ public class ClassSetter {
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
 	    String fqn = cip.getFullName (i);
-	    containingTypeName.push (fqn);
+	    containingTypes.push (new BodyPart (fqn, i.getBody ()));
 	    ExtendsInterfaces ei = i.getExtendsInterfaces ();
 	    if (ei != null)
 		visitSuperInterfaces (ei.get (), this);
@@ -153,25 +155,24 @@ public class ClassSetter {
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
 	    String fqn = cip.getFullName (a);
-	    containingTypeName.push (fqn);
+	    containingTypes.push (new BodyPart (fqn, a.getBody ()));
 	    registerTypeParameters (null, this);
 	    addScopeAndFields (fqn, a, a.getBody ());
 	    return true;
 	}
 
 	@Override public void endType () {
-	    containingTypeName.pop ();
+	    registerMethods (containingTypes.pop ());
 	    types.pop ();
 	    currentScope = currentScope.endScope ();
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
 	    addScope (b, Scope.Type.CLASS);
-
 	    if (ct.getFullName () != null) {
-		containingTypeName.push (ct.getFullName ());
+		containingTypes.push (new BodyPart (ct.getFullName (), null));
 		String fqn = cip.getFullName (b);
-		containingTypeName.push (fqn);
+		containingTypes.push (new BodyPart (fqn, b));
 		registerTypeParameters (null, this);
 		addFields (fqn, b, currentScope);
 		return true;
@@ -184,8 +185,8 @@ public class ClassSetter {
 	@Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	    if (ct.getFullName () != null) {
 		types.pop ();
-		containingTypeName.pop ();
-		containingTypeName.pop ();
+		registerMethods (containingTypes.pop ());
+		containingTypes.pop ();
 	    }
 	    currentScope = currentScope.endScope ();
 	}
@@ -254,13 +255,13 @@ public class ClassSetter {
 	    } else {
 		c.setFrom (replaceAndSetType (from));
 		if (from.getExpressionType () != null) {
-		    Deque<String> save = containingTypeName;
-		    containingTypeName = new ArrayDeque<> ();
+		    Deque<BodyPart> save = containingTypes;
+		    containingTypes = new ArrayDeque<> ();
 		    ExpressionType type = from.getExpressionType ();
 		    if (type != null)
-			containingTypeName.push (type.getClassName ());
+			containingTypes.push (new BodyPart (type.getClassName (), null));
 		    setType (c.getId (), this);
-		    containingTypeName = save;
+		    containingTypes = save;
 		} else {
 		    setIncomplete ();
 		    if (mayReport ())
@@ -384,6 +385,48 @@ public class ClassSetter {
 		setType (f.getType (), ScopeSetter.this);
 		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
 	    }
+	}
+
+	private void registerMethods (BodyPart bp) {
+	    MethodRegistrator mr = new MethodRegistrator ();
+	    bp.body.visit (mr);
+	    cip.registerMethods (bp.fqn, mr.methods);
+	}
+
+	private class MethodRegistrator extends SiblingVisitor {
+	    Map<String, List<MethodInformation>> methods = new HashMap<> ();
+	    @Override public boolean visit (MethodDeclaration m) {
+		String name = m.getMethodName ();
+		List<MethodInformation> ls = methods.get (name);
+		if (ls == null) {
+		    ls = new ArrayList<> ();
+		    methods.put (name, ls);
+		}
+		ls.add (getMethodInformation (m));
+		return false;
+	    }
+
+	    private MethodInformation getMethodInformation (MethodDeclaration m) {
+		return new MethodInformation (m.getFlags (),
+					      m.getMethodName (),
+					      m.getDescription (),
+					      null,
+					      EMTPY);
+	    }
+	}
+    }
+
+    private static class BodyPart {
+	private final String fqn;
+	private final TreeNode body;
+
+	public BodyPart (String fqn, TreeNode body) {
+	    this.fqn = fqn;
+	    this.body = body;
+	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{" + fqn + ", " + body + "}";
 	}
     }
 
@@ -581,15 +624,15 @@ public class ClassSetter {
 
     private String resolveInnerClass (String id, ErrorHandler eh) {
 	// Check for inner class
-	for (String ctn : containingTypeName) {
-	    String icn = ctn + "$" + id;
+	for (BodyPart ctn : containingTypes) {
+	    String icn = ctn.fqn + "$" + id;
 	    if (hasVisibleType (icn))
 		return icn;
 	}
 
 	// Check for inner class of super classes
-	for (String ctn : containingTypeName) {
-	    String fqn = checkSuperClasses (ctn, id, eh);
+	for (BodyPart ctn : containingTypes) {
+	    String fqn = checkSuperClasses (ctn.fqn, id, eh);
 	    if (fqn != null)
 		return fqn;
 	}
@@ -742,7 +785,7 @@ public class ClassSetter {
     }
 
     private boolean hasVisibleType (String fqn) {
-	String topLevelClass = containingTypeName.peekLast ();
+	String topLevelClass = containingTypes.isEmpty () ? null : containingTypes.peekLast ().fqn;
 	return hasVisibleType (fqn, topLevelClass);
     }
 
@@ -768,8 +811,8 @@ public class ClassSetter {
     }
 
     private boolean insideSuperClass (String fqn) {
-	for (String c : containingTypeName)
-	    if (insideSuperClass (fqn, c))
+	for (BodyPart c : containingTypes)
+	    if (insideSuperClass (fqn, c.fqn))
 		return true;
 	return false;
     }

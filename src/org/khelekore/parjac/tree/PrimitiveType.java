@@ -20,4 +20,8 @@ public class PrimitiveType extends PositionNode {
 	return getClass ().getSimpleName () + "{annotations: " + annotations +
 	    ", type: " + type + "}";
     }
+
+    @Override public ExpressionType getExpressionType () {
+	return type.getExpressionType ();
+    }
 }

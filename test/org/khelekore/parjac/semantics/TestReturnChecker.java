@@ -398,13 +398,21 @@ public class TestReturnChecker extends TestBase {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
-    /*
     @Test
     public void testInternalMethodReturn () throws IOException {
  	parseAndSetClasses ("class Foo { int foo () { return 3; } int bar () { return foo (); }}");
 	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { int foo (int i) { return 3; } int bar () { return foo (3); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo { int foo (Object o) { return 3; } int bar () { return foo (\"foo\"); }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class Foo {\n" +
+			    "  byte foo (int i, long l) { return (byte)3; }\n" +
+			    "  int bar () { return foo (3, 4); }}");
+	assertNoErrors ();
     }
 
+    /*
     @Test
     public void testExternalFieldReturn () throws IOException {
  	parseAndSetClasses ("import java.awt.Point;\n" +

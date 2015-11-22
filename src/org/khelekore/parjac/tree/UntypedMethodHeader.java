@@ -32,4 +32,8 @@ public class UntypedMethodHeader extends PositionNode {
     public FormalParameterList getParameters () {
 	return declarator.getParameters ();
     }
+
+    public Throws getThrows () {
+	return thrown;
+    }
 }

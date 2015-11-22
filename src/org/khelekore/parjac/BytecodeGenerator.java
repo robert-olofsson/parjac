@@ -84,11 +84,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (hasVarargs (c.getParameters ()))
 	    mods |= ACC_VARARGS;
 
-	StringBuilder sb = new StringBuilder ();
-	appendParameters (c.getParameters (), sb);
-	sb.append ("V");
 	MethodInfo mi = new MethodInfo (new Result.VoidResult (null),
-					cw.visitMethod (mods, "<init>", sb.toString (), null, null));
+					cw.visitMethod (mods, "<init>", c.getDescription (), null, null));
 	methods.addLast (mi);
 	return true;
     }
@@ -134,11 +131,9 @@ public class BytecodeGenerator implements TreeVisitor {
 	int mods = m.getFlags ();
 	if (hasVarargs (m.getParameters ()))
 	    mods |= ACC_VARARGS;
-	StringBuilder sb = new StringBuilder ();
-	appendSignature (m, sb);
         MethodInfo mi = new MethodInfo (m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
-							sb.toString (), null, null));
+							m.getDescription (), null, null));
 	methods.addLast (mi);
 	return true;
     }
@@ -164,39 +159,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	    return lfp != null;
 	}
 	return false;
-    }
-
-    private void appendSignature (MethodDeclaration m, StringBuilder sb) {
-	appendParameters (m.getParameters (), sb);
-	appendResultType (m.getResult (), sb);
-    }
-
-    private void appendParameters (FormalParameterList ls, StringBuilder sb) {
-	sb.append ("(");
-	if (ls != null) {
-	    NormalFormalParameterList fps = ls.getParameters ();
-	    List<FormalParameter> args = fps.getFormalParameters ();
-	    if (args != null) {
-		for (FormalParameter fp : args)
-		    appendType (fp.getType (), sb);
-	    }
-	    LastFormalParameter lfp = fps.getLastFormalParameter ();
-	    if (lfp != null) {
-		sb.append ("[");
-		appendType (lfp.getType (), sb);
-	    }
-	}
-	sb.append (")");
-    }
-
-    private void appendResultType (TreeNode tn, StringBuilder sb) {
-	if (tn instanceof Result.VoidResult) {
-	    sb.append ("V");
-	} else if (tn instanceof Result.TypeResult) {
-	    appendType (((Result.TypeResult)tn).getReturnType (), sb);
-	} else {
-	    throw new IllegalStateException ("Unhandled result type: " + tn);
-	}
     }
 
     private String getType (TreeNode tn) {

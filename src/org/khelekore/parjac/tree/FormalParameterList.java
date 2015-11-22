@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
@@ -21,5 +22,17 @@ public class FormalParameterList extends PositionNode {
 
     public NormalFormalParameterList getParameters () {
 	return fps;
+    }
+
+    public void appendDescription (StringBuilder sb) {
+	NormalFormalParameterList nfpl = getParameters ();
+	List<FormalParameter> ls = nfpl.getFormalParameters ();
+	if (ls != null) {
+	    for (FormalParameter fp : ls)
+		sb.append (fp.getExpressionType ().getDescriptor ());
+	}
+	LastFormalParameter lfp = nfpl.getLastFormalParameter ();
+	if (lfp != null)
+	    sb.append (lfp.getExpressionType ().getDescriptor ());
     }
 }

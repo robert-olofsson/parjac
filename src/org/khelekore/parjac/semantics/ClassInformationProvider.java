@@ -75,7 +75,7 @@ public class ClassInformationProvider {
 	classFields.put (fqn, fields);
     }
 
-    public void registerMethod (String fqn, Map<String, List<MethodInformation>> methods) {
+    public void registerMethods (String fqn, Map<String, List<MethodInformation>> methods) {
 	classMethods.put (fqn, methods);
     }
 
