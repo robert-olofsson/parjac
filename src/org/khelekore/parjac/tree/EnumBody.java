@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -34,8 +36,16 @@ public class EnumBody extends PositionNode {
 	return enumBodyDeclarations.getDeclarations ();
     }
 
-    public void visit (TreeVisitor visitor) {
+    @Override public void visit (TreeVisitor visitor) {
+	if (constants != null)
+	    constants.visit (visitor);
 	if (enumBodyDeclarations != null)
 	    enumBodyDeclarations.visit (visitor);
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
+	if (enumBodyDeclarations != null)
+	    return Collections.singleton (enumBodyDeclarations);
+	return Collections.emptyList ();
     }
 }

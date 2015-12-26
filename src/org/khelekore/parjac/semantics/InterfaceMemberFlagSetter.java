@@ -8,7 +8,7 @@ import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.FieldDeclaration;
-import org.khelekore.parjac.tree.FlaggedType;
+import org.khelekore.parjac.tree.FlaggedTypeBase;
 import org.khelekore.parjac.tree.MethodDeclaration;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
@@ -81,7 +81,7 @@ public class InterfaceMemberFlagSetter {
 	    return true;
 	}
 
-	private void reflag (FlaggedType ft) {
+	private void reflag (FlaggedTypeBase ft) {
 	    if (types.peek ()) {
 		int flags = ft.getFlags ();
 		if (!FlagsHelper.isPrivate (flags) && !FlagsHelper.isProtected (flags))

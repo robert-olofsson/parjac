@@ -246,7 +246,6 @@ public class ReturnChecker implements TreeVisitor {
     }
 
     private boolean match (TreeNode result, TreeNode exp) {
-	// TODO: we can not really do this since classes may be named "I"
 	ExpressionType expType = exp.getExpressionType ();
 	ExpressionType resultType = result.getExpressionType ();
 	if (Objects.equals (expType, resultType))

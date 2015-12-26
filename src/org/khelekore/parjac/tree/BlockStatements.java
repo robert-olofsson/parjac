@@ -1,5 +1,6 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -32,5 +33,9 @@ public class BlockStatements extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	statements.forEach (s -> s.visit (visitor));
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return statements;
     }
 }

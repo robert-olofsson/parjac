@@ -220,7 +220,6 @@ public class ClassSetter {
 	    setTypes (m.getParameters (), this);
 
 	    addScopeAndParameters (m, m.getParameters ());
-	    // TODO: store method information
 	    return true;
 	}
 
@@ -384,6 +383,12 @@ public class ClassSetter {
 	    @Override public void visit (FieldDeclaration f) {
 		setType (f.getType (), ScopeSetter.this);
 		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
+	    }
+
+	    @Override public boolean visit (EnumConstant c) {
+		c.setType (containingTypes.peek ().fqn);
+		scope.tryToAdd (c, tree, diagnostics);
+		return false;
 	    }
 	}
 

@@ -10,7 +10,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 
 /** Base class for fields and method variables.
  */
-public abstract class VariableDeclaration extends FlaggedType {
+public abstract class VariableDeclaration extends FlaggedTypeBase {
     private final TreeNode type;
     private final VariableDeclaratorList variables;
 

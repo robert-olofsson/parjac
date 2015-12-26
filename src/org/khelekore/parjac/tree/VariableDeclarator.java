@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -33,6 +35,12 @@ public class VariableDeclarator extends PositionNode {
     public void visit (TreeVisitor visitor) {
 	if (initializer != null)
 	    initializer.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (initializer != null)
+	    return Collections.singleton (initializer);
+	return Collections.emptyList ();
     }
 
     public String getId () {

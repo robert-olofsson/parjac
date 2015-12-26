@@ -66,6 +66,12 @@ public class ExpressionType {
     }
 
     public static ExpressionType get (Type t) {
+	if (t.getSort () == Type.ARRAY) {
+	    // int dims = t.getDimensions ();
+	    Type tt = t.getElementType ();
+	    // TODO: deal with dimensions
+	    return get (tt);
+	}
 	if (t.getSort () == Type.OBJECT)
 	    return new ExpressionType (t.getInternalName ().replace ('/', '.'));
 	for (ExpressionType et : primitives)

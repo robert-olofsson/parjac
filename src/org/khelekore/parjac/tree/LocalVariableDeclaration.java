@@ -1,6 +1,8 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -23,5 +25,9 @@ public class LocalVariableDeclaration extends VariableDeclaration {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	getVariables ().visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (getVariables ());
     }
 }

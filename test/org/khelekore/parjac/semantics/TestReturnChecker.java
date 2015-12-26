@@ -412,7 +412,14 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
-    /*
+    @Test
+    public void testChainedInternalMethodReturn () throws IOException {
+ 	parseAndSetClasses ("class P { Q q () { return new Q ();}}\n" +
+			    "class Q { int i () { return 3; }}\n" +
+			    "class R { int bar () { P p = new P (); return p.q ().i (); }}");
+	assertNoErrors ();
+    }
+
     @Test
     public void testExternalFieldReturn () throws IOException {
  	parseAndSetClasses ("import java.awt.Point;\n" +
@@ -425,8 +432,46 @@ public class TestReturnChecker extends TestBase {
  	parseAndSetClasses ("class P { public int x; }\n" +
 			    "class Q { int bar () { P p = new P (); return p.x; }}");
 	assertNoErrors ();
+ 	parseAndSetClasses ("class P { public String x; }\n" +
+			    "class Q { String bar () { P p = new P (); return p.x; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { public String x; }\n" +
+			    "class Q { Object bar () { P p = new P (); return p.x; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { public long x; }\n" +
+			    "class Q { int bar () { P p = new P (); return p.x; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
     }
-    */
+
+    @Test
+    public void testChainedInternalFieldReturn () throws IOException {
+ 	parseAndSetClasses ("class P { public Q q; }\n" +
+			    "class Q { public int i; }\n" +
+			    "class R { int bar () { P p = new P (); return p.q.i; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testReturnNew () throws IOException {
+ 	parseAndSetClasses ("class P { }\n" +
+			    "class Q { P p () { return new P (); }}");
+	assertNoErrors ();
+
+ 	parseAndSetClasses ("class P { }\n" +
+			    "class Q { P p () { return new P () {}; }}");
+	assertNoErrors ();
+
+ 	parseAndSetClasses ("interface P { }\n" +
+			    "class Q { P p () { return new P () {}; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testReturnEnum () throws IOException {
+ 	parseAndSetClasses ("enum E { A, B, C }\n" +
+			    "class Q { E e () { return E.A; }}");
+	assertNoErrors ();
+    }
 
     @Test
     public void testNameClashWithPrimitive () throws IOException {
@@ -436,7 +481,7 @@ public class TestReturnChecker extends TestBase {
     }
 
     protected void handleSyntaxTree (SyntaxTree tree) {
-	MethodInvocationSetter mis = new MethodInvocationSetter (cip, tree, diagnostics);
+	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();
 	ReturnChecker rc = new ReturnChecker (cip, tree, diagnostics);
 	rc.run ();

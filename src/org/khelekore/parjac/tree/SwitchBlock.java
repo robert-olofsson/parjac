@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -39,6 +41,12 @@ public class SwitchBlock extends PositionNode {
 		groups.forEach (s -> s.visit (visitor));
 	}
 	visitor.endSwitchBlock ();
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (groups != null)
+	    return groups;
+	return Collections.emptyList ();
     }
 
     public List<SwitchBlockStatementGroup> getGroups () {

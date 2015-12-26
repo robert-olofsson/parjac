@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -31,5 +32,9 @@ public abstract class BodyBase extends PositionNode {
 
     public void visit (TreeVisitor visitor) {
 	declarations.forEach (d -> d.visit (visitor));
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return declarations;
     }
 }

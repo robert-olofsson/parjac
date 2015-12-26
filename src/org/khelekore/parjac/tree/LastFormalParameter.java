@@ -9,7 +9,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 /** Vararg parameter */
-public class LastFormalParameter extends FlaggedType {
+public class LastFormalParameter extends FlaggedTypeBase {
     private final TreeNode type;
     private final List<TreeNode> annotations;
     private final VariableDeclaratorId vdi;

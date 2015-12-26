@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 
@@ -8,7 +9,7 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class ConstructorDeclaration extends FlaggedType {
+public class ConstructorDeclaration extends FlaggedTypeBase {
     private final ConstructorDeclarator declarator;
     private final Throws throwsClause;
     private final ConstructorBody body;
@@ -41,6 +42,10 @@ public class ConstructorDeclaration extends FlaggedType {
 	if (visitor.visit (this))
 	    body.visit (visitor);
 	visitor.endConstructor (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (body);
     }
 
     public String getId () {

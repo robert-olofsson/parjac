@@ -1,47 +1,11 @@
 package org.khelekore.parjac.tree;
 
-import java.nio.file.Path;
-import java.util.Deque;
 import java.util.List;
 
-import org.khelekore.parjac.CompilerDiagnosticCollector;
-import org.khelekore.parjac.lexer.ParsePosition;
-import org.objectweb.asm.Opcodes;
+public interface FlaggedType extends TreeNode {
+    /** Get the access modifier flags */
+    int getFlags ();
 
-public abstract class FlaggedType extends PositionNode {
-    private final List<TreeNode> annotations;
-    private int flags;
-
-    public FlaggedType (boolean popModifiers, Deque<TreeNode> parts, ParsePosition pos,
-			Path path, CompilerDiagnosticCollector diagnostics) {
-	super (pos);
-	List<TreeNode> modifiers = popModifiers ? ((ZOMEntry)parts.pop ()).get () : null;
-	annotations = ModifierHelper.getAnnotations (modifiers);
-	int mflags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
-	flags = getFlags (mflags, modifiers);
-    }
-
-    public FlaggedType (List<TreeNode> modifiers, ParsePosition pos,
-			Path path, CompilerDiagnosticCollector diagnostics) {
-	super (pos);
-	annotations = ModifierHelper.getAnnotations (modifiers);
-	int mflags = ModifierHelper.getModifiers (modifiers, path, diagnostics);
-	flags = getFlags (mflags, modifiers);
-    }
-
-    public int getFlags (int flags, List<TreeNode> modifiers) {
-	return flags;
-    }
-
-    public int getFlags () {
-	return flags;
-    }
-
-    public void makePublic () {
-	flags |= Opcodes.ACC_PUBLIC;
-    }
-
-    public List<TreeNode> getAnnotations () {
-	return annotations;
-    }
+    /** Get the annotations on this tree node */
+    List<TreeNode> getAnnotations ();
 }

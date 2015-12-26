@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class Multipart<T extends TreeNode> extends PositionNode {
+public abstract class Multipart<T extends TreeNode> extends PositionNode {
     private List<T> data;
 
     public Multipart (T t, ParsePosition pos) {

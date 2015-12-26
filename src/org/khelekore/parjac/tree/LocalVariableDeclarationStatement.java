@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -19,5 +21,9 @@ public class LocalVariableDeclarationStatement extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	lvd.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (lvd);
     }
 }

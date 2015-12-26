@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -28,6 +30,12 @@ public class IfThenStatement extends PositionNode {
 	    if (elseStatement != null)
 		elseStatement.visit (visitor);
 	}
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (elseStatement != null)
+	    return Arrays.asList (exp, ifStatement, elseStatement);
+	return Arrays.asList (exp, ifStatement);
     }
 
     public TreeNode getExp () {

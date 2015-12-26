@@ -22,7 +22,7 @@ import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.semantics.ConstructorChecker;
 import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
-import org.khelekore.parjac.semantics.MethodInvocationSetter;
+import org.khelekore.parjac.semantics.FieldAndMethodSetter;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -127,7 +127,6 @@ public class Compiler {
 	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
 	if (diagnostics.hasError ())
 	    return;
-	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
 	/*
 	 * 1: Set classes for fields, method parameters and method returns, setup scopes
 	 *    Scope hangs on class, method, for-clause and try (with resource) clause
@@ -138,6 +137,7 @@ public class Compiler {
 	    trees.forEach (t -> System.err.println ("class set tree: " + t));
 	if (diagnostics.hasError ())
 	    return;
+	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	if (diagnostics.hasError ())
 	    return;
@@ -174,7 +174,7 @@ public class Compiler {
     }
 
     private void setMethodInvocations (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	MethodInvocationSetter mis = new MethodInvocationSetter (cip, tree, diagnostics);
+	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();
     }
 

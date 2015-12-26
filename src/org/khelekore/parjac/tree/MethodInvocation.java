@@ -1,5 +1,8 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -57,6 +60,16 @@ public class MethodInvocation extends PositionNode {
 		on.visit (visitor);
 	    mi.visit (visitor);
 	}
+    }
+
+    @Override public void simpleVisit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (on != null)
+	    return Arrays.asList (on, mi);
+	return Collections.singleton (mi);
     }
 
     public TreeNode getOn () {

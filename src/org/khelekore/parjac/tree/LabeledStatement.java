@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -23,5 +25,9 @@ public class LabeledStatement extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	statement.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (statement);
     }
 }

@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -42,6 +44,15 @@ public class ConstructorBody extends PositionNode {
 	    if (statements != null)
 		statements.visit (visitor);
 	}
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	ArrayList<TreeNode> ls = new ArrayList<> (2);
+	if (eci != null)
+	    ls.add (eci);
+	if (statements != null)
+	    ls.add (statements);
+	return ls;
     }
 
     public ExplicitConstructorInvocation getConstructorInvocation () {

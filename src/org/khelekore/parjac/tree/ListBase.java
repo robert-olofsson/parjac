@@ -1,6 +1,7 @@
 package org.khelekore.parjac.tree;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -37,8 +38,12 @@ public abstract class ListBase<T extends TreeNode> extends PositionNode {
 	return ls;
     }
 
-    public void visit (TreeVisitor visitor) {
+    @Override public void visit (TreeVisitor visitor) {
 	ls.forEach (t -> t.visit (visitor));
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
+	return ls;
     }
 
     public int size () {

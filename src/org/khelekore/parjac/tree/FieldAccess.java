@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -10,6 +12,7 @@ public class FieldAccess extends PositionNode {
     private final TreeNode from;
     private final boolean isSuper;
     private final String id;
+    private ExpressionType returnType;
 
     public FieldAccess (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	super (ppos);
@@ -42,6 +45,16 @@ public class FieldAccess extends PositionNode {
 	}
     }
 
+    @Override public void simpleVisit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (from != null)
+	    return Collections.singleton (from);
+	return Collections.emptyList ();
+    }
+
     public TreeNode getFrom () {
 	return from;
     }
@@ -52,5 +65,13 @@ public class FieldAccess extends PositionNode {
 
     public String getFieldId () {
 	return id;
+    }
+
+    public void setReturnType (ExpressionType returnType) {
+	this.returnType = returnType;
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	return returnType;
     }
 }

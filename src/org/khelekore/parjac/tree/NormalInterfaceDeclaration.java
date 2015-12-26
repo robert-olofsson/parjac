@@ -1,6 +1,8 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -8,7 +10,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
 
-public class NormalInterfaceDeclaration extends FlaggedType {
+public class NormalInterfaceDeclaration extends FlaggedTypeBase {
     private final String id;
     private final TypeParameters types;
     private final ExtendsInterfaces extendsInterfaces;
@@ -59,5 +61,9 @@ public class NormalInterfaceDeclaration extends FlaggedType {
 	if (visitor.visit (this))
 	    body.visit (visitor);
 	visitor.endType ();
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (body);
     }
 }

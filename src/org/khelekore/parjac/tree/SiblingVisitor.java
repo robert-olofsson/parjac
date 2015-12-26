@@ -24,6 +24,9 @@ public class SiblingVisitor implements TreeVisitor {
     @Override public boolean visit (ConstructorBody cb) {
 	return false;
     }
+    @Override public boolean visit (EnumConstant e) {
+	return false;
+    }
     @Override public boolean visit (MethodDeclaration m) {
 	return false;
     }

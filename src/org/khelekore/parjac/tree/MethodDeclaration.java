@@ -1,13 +1,15 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class MethodDeclaration extends FlaggedType {
+public class MethodDeclaration extends FlaggedTypeBase {
     private final MethodHeader header;
     private final MethodBody body;
 
@@ -27,6 +29,10 @@ public class MethodDeclaration extends FlaggedType {
 	if (visitor.visit (this))
 	    body.visit (visitor);
 	visitor.endMethod (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (body);
     }
 
     public TypeParameters getTypeParameters () {

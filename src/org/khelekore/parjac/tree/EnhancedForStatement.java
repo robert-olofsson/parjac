@@ -1,6 +1,8 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -36,11 +38,14 @@ public class EnhancedForStatement extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this)) {
 	    visitor.visit (lvd);
-	    if (exp != null)
-		exp.visit (visitor);
+	    exp.visit (visitor);
 	    statement.visit (visitor);
 	}
 	visitor.endFor ();
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Arrays.asList (lvd, exp, statement);
     }
 
     public LocalVariableDeclaration getLocalVariableDeclaration () {

@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -54,5 +56,9 @@ public class ExplicitConstructorInvocation extends PositionNode {
 	visitor.visit (this);
 	args.visit (visitor);
 	visitor.endExplicitConstructorInvocation (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (args);
     }
 }

@@ -15,29 +15,31 @@ import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.ExpressionType;
+import org.khelekore.parjac.tree.FieldAccess;
 import org.khelekore.parjac.tree.MethodInvocation;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
+import org.khelekore.parjac.tree.TreeWalker;
 import org.objectweb.asm.Type;
 
-public class MethodInvocationSetter implements TreeVisitor {
+public class FieldAndMethodSetter implements TreeVisitor {
     private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private final Deque<TreeNode> containingClasses = new ArrayDeque<> ();
 
-    public MethodInvocationSetter (ClassInformationProvider cip, SyntaxTree tree,
-				   CompilerDiagnosticCollector diagnostics) {
+    public FieldAndMethodSetter (ClassInformationProvider cip, SyntaxTree tree,
+				 CompilerDiagnosticCollector diagnostics) {
 	this.cip = cip;
 	this.tree = tree;
 	this.diagnostics = diagnostics;
     }
 
     public void run () {
-	tree.getCompilationUnit ().visit (this);
+	TreeWalker.walkBottomUp (this, tree.getCompilationUnit ());
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
@@ -151,6 +153,12 @@ public class MethodInvocationSetter implements TreeVisitor {
 	    if (!et.match (arguments[i++]))
 		return false;
 	}
+	return true;
+    }
+
+    @Override public boolean visit (FieldAccess f) {
+	f.setReturnType (cip.getFieldType (f.getFrom ().getExpressionType ().getClassName (),
+					   f.getFieldId ()));
 	return true;
     }
 }

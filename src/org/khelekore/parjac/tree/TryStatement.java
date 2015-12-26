@@ -1,6 +1,9 @@
 package org.khelekore.parjac.tree;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
@@ -53,6 +56,18 @@ public class TryStatement extends PositionNode {
 	    if (finallyBlock != null)
 		finallyBlock.visit (visitor);
 	}
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	List<TreeNode> ls = new ArrayList<> ();
+	if (resources != null)
+	    ls.add (resources);
+	ls.add (block);
+	if (catches != null)
+	    ls.add (catches);
+	if (finallyBlock != null)
+	    ls.add (finallyBlock);
+	return ls;
     }
 
     public ResourceList getResources () {

@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
@@ -29,5 +31,9 @@ public class ArrayAccess extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this))
 	    exp.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (exp);
     }
 }

@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -52,6 +54,17 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	}
     }
 
+    public Collection<? extends TreeNode> getChildNodes () {
+	List<TreeNode> ls = new ArrayList<> ();
+	if (from != null)
+	    ls.add (from);
+	if (args != null)
+	    ls.add (args);
+	if (body != null)
+	    ls.add (body);
+	return ls;
+    }
+
     public TreeNode getFrom () {
 	return from;
     }
@@ -66,6 +79,10 @@ public class ClassInstanceCreationExpression extends PositionNode {
 
     public ClassType getId () {
 	return id;
+    }
+
+    public boolean hasBody ()  {
+	return body != null;
     }
 
     @Override public ExpressionType getExpressionType () {

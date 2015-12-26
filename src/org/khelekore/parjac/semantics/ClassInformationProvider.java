@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
@@ -80,10 +81,25 @@ public class ClassInformationProvider {
     }
 
     public FieldInformation<?> getFieldInformation (String fqn, String field) {
-	Map<String, FieldInformation<?>> m = classFields.get (fqn);
-	if (m == null)
-	    return null;
-	return m.get (field);
+	if ((getType (fqn)) != null) {
+	    Map<String, FieldInformation<?>> m = classFields.get (fqn);
+	    if (m == null)
+		return null;
+	    return m.get (field);
+	} else {
+	    throw new IllegalStateException ("not implemented yet");
+	}
+    }
+
+    public ExpressionType getFieldType (String fqn, String field) {
+	if ((getType (fqn)) != null) {
+	    Map<String, FieldInformation<?>> m = classFields.get (fqn);
+	    if (m == null)
+		return null;
+	    return m.get (field).getExpressionType ();
+	} else {
+	    return crh.getFieldType (fqn, field);
+	}
     }
 
     public Map<String, List<MethodInformation>> getMethods (String fqn) {

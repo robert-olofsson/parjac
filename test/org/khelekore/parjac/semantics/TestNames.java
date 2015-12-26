@@ -162,4 +162,16 @@ public class TestNames extends TestBase {
 			    "        }};}}");
 	assertNoErrors ();
     }
+
+    @Test
+    public void testEnumDuplicatesConstants () throws IOException {
+	parseAndSetClasses ("enum E { A, B, A }");
+	assert diagnostics.hasError () : "Expected duplicate variables";
+    }
+
+    @Test
+    public void testEnumConstantAndFieldClash () throws IOException {
+	parseAndSetClasses ("enum E { A, B, C; int B; }");
+	assert diagnostics.hasError () : "Expected duplicate variables";
+    }
 }

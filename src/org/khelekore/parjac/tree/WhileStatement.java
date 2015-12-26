@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -24,6 +26,10 @@ public class WhileStatement extends PositionNode {
 	    exp.visit (visitor);
 	    statement.visit (visitor);
 	}
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Arrays.asList (exp, statement);
     }
 
     public TreeNode getExpression () {

@@ -1,13 +1,15 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class AnnotationTypeDeclaration extends FlaggedType {
+public class AnnotationTypeDeclaration extends FlaggedTypeBase {
     private final String id;
     private final AnnotationTypeBody body;
 
@@ -35,5 +37,9 @@ public class AnnotationTypeDeclaration extends FlaggedType {
 	if (visitor.visit (this))
 	    body.visit (visitor);
 	visitor.endType ();
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (body);
     }
 }

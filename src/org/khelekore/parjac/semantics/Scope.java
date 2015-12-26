@@ -7,6 +7,7 @@ import java.util.Map;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.tree.EnumConstant;
 import org.khelekore.parjac.tree.FlaggedType;
 import org.khelekore.parjac.tree.FormalParameter;
 import org.khelekore.parjac.tree.LastFormalParameter;
@@ -65,6 +66,11 @@ public class Scope {
     public void tryToAdd (LastFormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (new FieldInformation<LastFormalParameter> (fp.getId (), fp, classLevel),
 		  fp, tree, diagnostics);
+    }
+
+    public void tryToAdd (EnumConstant c, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	tryToAdd (new FieldInformation<EnumConstant> (c.getId (), c, classLevel),
+		  c, tree, diagnostics);
     }
 
     private void tryToAdd (FieldInformation<?> fi, FlaggedType ft,

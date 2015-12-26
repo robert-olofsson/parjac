@@ -17,11 +17,13 @@ import java.util.jar.JarFile;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.tree.ExpressionType;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 public class ClassResourceHolder {
     private final List<Path> classPathEntries;
@@ -90,6 +92,7 @@ public class ClassResourceHolder {
 	    try {
 		r.ensureNodeIsLoaded ();
 	    } catch (IOException e) {
+		e.printStackTrace();
 		diagnostics.report (new NoSourceDiagnostics ("Failed to load class from: " +
 							     r.getPath () + ", " + e));
 		r = null;
@@ -122,10 +125,18 @@ public class ClassResourceHolder {
 	return r.methods;
     }
 
+    public ExpressionType getFieldType (String fqn, String field) {
+	Result r = foundClasses.get (fqn);
+	if (r == null)
+	    throw new IllegalArgumentException ("No such class: " + fqn);
+	return r.fieldTypes.get (field);
+    }
+
     private static abstract class Result {
 	private String superClass;
 	private List<String> superTypes;
 	private int accessFlags;
+	private Map<String, ExpressionType> fieldTypes = new HashMap<> ();
 	private Map<String, List<MethodInformation>> methods = new HashMap<> ();
 
 	public synchronized void ensureNodeIsLoaded () throws IOException {
@@ -233,12 +244,16 @@ public class ClassResourceHolder {
 
 	@Override public FieldVisitor visitField (int access, String name, String desc,
 						  String signature, Object value) {
+	    // desc is type, signature is only there if field is generic type
+	    Type type = Type.getType (desc);
+	    r.fieldTypes.put (name, ExpressionType.get (type));
 	    return null;
 	}
 
 	@Override public MethodVisitor visitMethod (int access, String name,
 						    String desc, String signature,
 						    String[] exceptions) {
+	    // desc is type, signature is only there if field is generic type
 	    MethodInformation mi = new MethodInformation (access, name, desc, signature, exceptions);
 	    List<MethodInformation> ls = r.methods.get (name);
 	    if (ls == null) {

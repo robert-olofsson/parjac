@@ -1,6 +1,8 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -16,5 +18,9 @@ public class FieldDeclaration extends VariableDeclaration {
     public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	getVariables ().visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Collections.singleton (getVariables ());
     }
 }

@@ -66,6 +66,11 @@ public interface TreeVisitor {
 
     default void visit (FieldDeclaration f) {
     }
+
+    default boolean visit (EnumConstant e) {
+	return true;
+    }
+
     /**
      * @return true to visit subtree, false to stop tree traversal
      *         The endMethod will be called no matter what.

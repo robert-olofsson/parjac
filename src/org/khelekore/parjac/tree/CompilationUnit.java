@@ -1,5 +1,6 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -63,5 +64,9 @@ public class CompilationUnit extends PositionNode {
     public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this) && types != null)
 	    types.forEach (t -> t.visit (visitor));
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return types;
     }
 }

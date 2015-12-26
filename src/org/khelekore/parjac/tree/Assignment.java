@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 
 import org.khelekore.parjac.lexer.ParsePosition;
@@ -24,6 +26,10 @@ public class Assignment extends PositionNode {
 	visitor.visit (this);
 	lhs.visit (visitor);
 	rhs.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	return Arrays.asList (lhs, rhs);
     }
 
     public TreeNode lhs () {

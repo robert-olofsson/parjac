@@ -7,7 +7,7 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
-public class FormalParameter extends FlaggedType {
+public class FormalParameter extends FlaggedTypeBase {
     private final TreeNode type;
     private final VariableDeclaratorId vdi;
 

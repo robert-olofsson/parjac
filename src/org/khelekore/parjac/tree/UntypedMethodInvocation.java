@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -22,6 +24,12 @@ public class UntypedMethodInvocation extends PositionNode {
     public void visit (TreeVisitor visitor) {
 	if (args != null)
 	    args.visit (visitor);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (args != null)
+	    return Collections.singleton (args);
+	return Collections.emptyList ();
     }
 
     public String getId () {

@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -30,6 +32,12 @@ public class ReturnStatement extends PositionNode {
 	    }
 	}
 	visitor.endReturn (this);
+    }
+
+    public Collection<? extends TreeNode> getChildNodes () {
+	if (exp == null)
+	    return Collections.emptyList ();
+	return Collections.singleton (exp);
     }
 
     public boolean hasExpression () {

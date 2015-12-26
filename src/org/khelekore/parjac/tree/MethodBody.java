@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
@@ -52,6 +54,10 @@ public abstract class MethodBody extends PositionNode {
 	public void visit (TreeVisitor visitor) {
 	    visitor.visit (this);
 	    block.visit (visitor);
+	}
+
+	public Collection<? extends TreeNode> getChildNodes () {
+	    return Collections.singleton (block);
 	}
     }
 
