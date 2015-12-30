@@ -3,9 +3,11 @@ package org.khelekore.parjac.semantics;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
@@ -107,7 +109,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 								 m.getParsePosition (),
 								 "No matching method found"));
 		} else {
-		    m.setReturnType (ExpressionType.get (Type.getReturnType (mi.getDesc ())));
+		    m.setDescription (mi.getDesc ());
 		}
 	    } catch (IOException e) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
@@ -121,8 +123,12 @@ public class FieldAndMethodSetter implements TreeVisitor {
     private MethodInformation findMatching (String fqn, String name, ArgumentList al) throws IOException {
 	Deque<String> typesToCheck = new ArrayDeque<> ();
 	typesToCheck.addLast (fqn);
+	Set<String> visitedTypes = new HashSet<> ();
 	while (!typesToCheck.isEmpty ()) {
 	    String clz = typesToCheck.removeFirst ();
+	    if (visitedTypes.contains (clz))
+		continue;
+	    visitedTypes.add (clz);
 	    Map<String, List<MethodInformation>> methods = cip.getMethods (clz);
 	    if (methods != null) {
 		List<MethodInformation> ls = methods.get (name);

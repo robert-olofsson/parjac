@@ -319,8 +319,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	    al.visit (this);
 	}
 	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitMethodInsn (INVOKEVIRTUAL, "java/io/PrintStream", m.getId (),
-			       "(Ljava/lang/String;)V", false);
+	mi.mv.visitMethodInsn (INVOKEVIRTUAL, on.getExpressionType ().getSlashName (),
+			       m.getId (), m.getDescription (), false);
 	return false;
     }
 
@@ -331,7 +331,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    String classSignature = ct.getFullName ().replace ('.', '/');
 	    MethodInfo mi = methods.peekLast ();
 	    mi.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
-				  "Ljava/io/PrintStream;");
+				  f.getExpressionType ().getDescriptor ());
 	    return false;
 	} else {
 	    return true;

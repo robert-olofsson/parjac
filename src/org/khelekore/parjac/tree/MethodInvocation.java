@@ -8,12 +8,14 @@ import java.util.Deque;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
+import org.objectweb.asm.Type;
 
 public class MethodInvocation extends PositionNode {
     private TreeNode on;
     private final TypeArguments types;
     private final boolean isSuper;
     private final UntypedMethodInvocation mi;
+    private String desc; // method description something like: "(Ljava/lang/String;)V"
     private ExpressionType returnType;
 
     public MethodInvocation (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
@@ -96,11 +98,16 @@ public class MethodInvocation extends PositionNode {
 	return mi.getArgumentList ();
     }
 
-    public void setReturnType (ExpressionType returnType) {
-	this.returnType = returnType;
+    public void setDescription (String desc) {
+	this.desc = desc;
+	this.returnType = ExpressionType.get (Type.getReturnType (desc));
     }
 
     @Override public ExpressionType getExpressionType () {
 	return returnType;
+    }
+
+    public String getDescription () {
+	return desc;
     }
 }

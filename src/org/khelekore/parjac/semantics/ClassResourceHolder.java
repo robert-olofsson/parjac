@@ -88,26 +88,17 @@ public class ClassResourceHolder {
 
     public LookupResult hasVisibleType (String fqn) {
 	Result r = foundClasses.get (fqn);
-	if (r != null) {
-	    try {
-		r.ensureNodeIsLoaded ();
-	    } catch (IOException e) {
-		e.printStackTrace();
-		diagnostics.report (new NoSourceDiagnostics ("Failed to load class from: " +
-							     r.getPath () + ", " + e));
-		r = null;
-	    }
-	}
-	if (r == null)
-	    return LookupResult.NOT_FOUND;
-	return new LookupResult (true, r.accessFlags);
+	if (r != null)
+	    if (loadNoCheckedException (r))
+		return new LookupResult (true, r.accessFlags);
+	return LookupResult.NOT_FOUND;
     }
 
     public Optional<List<String>> getSuperTypes (String fqn) throws IOException {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    return Optional.empty ();
-	r.ensureNodeIsLoaded ();
+	loadNoCheckedException (r);
 	return Optional.of (r.superTypes);
     }
 
@@ -115,6 +106,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
+	loadNoCheckedException (r);
 	return r.accessFlags;
     }
 
@@ -122,6 +114,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
+	loadNoCheckedException (r);
 	return r.methods;
     }
 
@@ -129,7 +122,20 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
+	loadNoCheckedException (r);
 	return r.fieldTypes.get (field);
+    }
+
+    private boolean loadNoCheckedException (Result r) {
+	try {
+	    r.ensureNodeIsLoaded ();
+	    return true;
+	} catch (IOException e) {
+	    e.printStackTrace();
+	    diagnostics.report (new NoSourceDiagnostics ("Failed to load class from: " +
+							 r.getPath () + ", " + e));
+	}
+	return false;
     }
 
     private static abstract class Result {

@@ -25,4 +25,13 @@ public class ArrayType extends PositionNode {
     public Dims getDims () {
 	return dims;
     }
+
+    public int getDimensions () {
+	return dims.size ();
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	ExpressionType base = type.getExpressionType ();
+	return ExpressionType.array (base, getDimensions ());
+    }
 }

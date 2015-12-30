@@ -12,22 +12,23 @@ public class ExpressionType {
     private final String className;
     private final String slashName;
     private final boolean isPrimitive;
+    private final int dims;
     private final int type;
 
-    public static final ExpressionType BYTE = new ExpressionType ("B", true, Type.BYTE);
-    public static final ExpressionType SHORT = new ExpressionType ("S", true, Type.SHORT);
-    public static final ExpressionType CHAR = new ExpressionType ("C", true, Type.CHAR);
-    public static final ExpressionType INT = new ExpressionType ("I", true, Type.INT);
-    public static final ExpressionType LONG = new ExpressionType ("J", true, Type.LONG);
-    public static final ExpressionType FLOAT = new ExpressionType ("F", true, Type.FLOAT);
-    public static final ExpressionType DOUBLE = new ExpressionType ("D", true, Type.DOUBLE);
-    public static final ExpressionType BOOLEAN = new ExpressionType ("Z", true, Type.BOOLEAN);
+    public static final ExpressionType BYTE = new ExpressionType ("B", true, Type.BYTE, 0);
+    public static final ExpressionType SHORT = new ExpressionType ("S", true, Type.SHORT, 0);
+    public static final ExpressionType CHAR = new ExpressionType ("C", true, Type.CHAR, 0);
+    public static final ExpressionType INT = new ExpressionType ("I", true, Type.INT, 0);
+    public static final ExpressionType LONG = new ExpressionType ("J", true, Type.LONG, 0);
+    public static final ExpressionType FLOAT = new ExpressionType ("F", true, Type.FLOAT, 0);
+    public static final ExpressionType DOUBLE = new ExpressionType ("D", true, Type.DOUBLE, 0);
+    public static final ExpressionType BOOLEAN = new ExpressionType ("Z", true, Type.BOOLEAN, 0);
 
-    public static final ExpressionType VOID = new ExpressionType ("V", true, Type.VOID);
-    public static final ExpressionType NULL = new ExpressionType ("null", false, -1);
+    public static final ExpressionType VOID = new ExpressionType ("V", true, Type.VOID, 0);
+    public static final ExpressionType NULL = new ExpressionType ("null", false, -1, 0);
 
-    public static final ExpressionType STRING = new ExpressionType ("java.lang.String", false, Type.OBJECT);
-    public static final ExpressionType OBJECT = new ExpressionType ("java.lang.Object", false, Type.OBJECT);
+    public static final ExpressionType STRING = new ExpressionType ("java.lang.String", false, Type.OBJECT, 0);
+    public static final ExpressionType OBJECT = new ExpressionType ("java.lang.Object", false, Type.OBJECT, 0);
 
     private static final ExpressionType[] primitives =
     { BYTE, SHORT, CHAR, INT, LONG, FLOAT, DOUBLE, BOOLEAN, VOID };
@@ -49,20 +50,29 @@ public class ExpressionType {
     /**
      * @param className fully qualified class name "foo.bar.Baz"
      */
-    private ExpressionType (String className, boolean isPrimitive, int type) {
+    private ExpressionType (String className, boolean isPrimitive, int type, int dims) {
 	if (className == null)
 	    throw new NullPointerException ("className may not be null");
-	this.className = className;
-	slashName = isPrimitive ? className : className.replace ('.', '/');
 	this.isPrimitive = isPrimitive;
 	this.type = type;
+	this.dims = dims;
+	String cn = className;
+	String sn = className;
+	if (!isPrimitive)
+	    sn = className.replace ('.', '/');
+	this.className = cn;
+	this.slashName = sn;
     }
 
     /**
      * @param className fully qualified class name "foo.bar.Baz"
      */
     public ExpressionType (String className) {
-	this (className, false, Type.OBJECT);
+	this (className, false, Type.OBJECT, 0);
+    }
+
+    public static ExpressionType array (ExpressionType base, int dims) {
+	return new ExpressionType (base.className, false, Type.ARRAY, dims);
     }
 
     public static ExpressionType get (Type t) {
@@ -104,6 +114,14 @@ public class ExpressionType {
 	return isPrimitive;
     }
 
+    public boolean isArray () {
+	return dims > 0;
+    }
+
+    public int getDimensions () {
+	return dims;
+    }
+
     public boolean isClassType () {
 	return !isPrimitive;
     }
@@ -119,9 +137,12 @@ public class ExpressionType {
     }
 
     public String getDescriptor () {
-	if (isPrimitive)
-	    return slashName;
-	return "L" + slashName + ";";
+	String res = slashName;
+	if (!isPrimitive)
+	    res = "L" + slashName + ";";
+	if (isArray ())
+	    res = repeat ("[", dims) + res;
+	return res;
     }
 
     public String getPrimitiveName () {
@@ -148,5 +169,12 @@ public class ExpressionType {
 	    if (et.type == t.getSort ())
 		return true;
 	return false;
+    }
+
+    private static String repeat (String s, int times) {
+	StringBuilder sb = new StringBuilder ();
+	for (int i = 0; i < times; i++)
+	    sb.append (s);
+	return sb.toString ();
     }
 }
