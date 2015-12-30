@@ -77,10 +77,8 @@ public class ExpressionType {
 
     public static ExpressionType get (Type t) {
 	if (t.getSort () == Type.ARRAY) {
-	    // int dims = t.getDimensions ();
-	    Type tt = t.getElementType ();
-	    // TODO: deal with dimensions
-	    return get (tt);
+	    ExpressionType base = get (t.getElementType ());
+	    return array (base, t.getDimensions ());
 	}
 	if (t.getSort () == Type.OBJECT)
 	    return new ExpressionType (t.getInternalName ().replace ('/', '.'));
@@ -99,6 +97,7 @@ public class ExpressionType {
 	    return false;
 	ExpressionType e = (ExpressionType)o;
 	return e.isPrimitive == isPrimitive &&
+	    e.dims == dims &&
 	    e.className.equals (className);
     }
 

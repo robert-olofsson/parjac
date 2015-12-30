@@ -109,7 +109,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 								 m.getParsePosition (),
 								 "No matching method found"));
 		} else {
-		    m.setDescription (mi.getDesc ());
+		    m.setMethodInformation (mi);
 		}
 	    } catch (IOException e) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),

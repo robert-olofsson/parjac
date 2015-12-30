@@ -8,6 +8,7 @@ import java.util.Deque;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
+import org.khelekore.parjac.semantics.FlagsHelper;
 import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 import org.objectweb.asm.ClassWriter;
@@ -310,17 +311,24 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (MethodInvocation m) {
+	String owner;
 	TreeNode on = m.getOn ();
 	if (on != null) {
 	    on.visit (this);
+	    owner = on.getExpressionType ().getSlashName ();
+	} else {
+	    owner = cip.getFullName (classes.peekLast ().tn);
+	    owner = owner.replace ('.', '/');
 	}
 	ArgumentList al = m.getArgumentList ();
 	if (al != null) {
 	    al.visit (this);
 	}
 	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitMethodInsn (INVOKEVIRTUAL, on.getExpressionType ().getSlashName (),
-			       m.getId (), m.getDescription (), false);
+	int opCode = INVOKEVIRTUAL;
+	if (FlagsHelper.isStatic (m.getActualMethodFlags ()))
+	    opCode = INVOKESTATIC;
+	mi.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), false);
 	return false;
     }
 

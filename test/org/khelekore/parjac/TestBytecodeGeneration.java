@@ -96,6 +96,28 @@ public class TestBytecodeGeneration {
 	}
     }
 
+    @Test
+    public void testSimpleExternalMethodCall () throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRun ("public class Foo { public static int foo () {" +
+				    " return Integer.parseInt (\"3\"); }}");
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
+
+	ret = compileAndRun ("public class Foo { public static int foo () {" +
+			     " return \"Hello World!\".length (); }}");
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 12 == (Integer)ret : "Got wrong result, expected 12, got: " + ret;
+    }
+
+    @Test
+    public void testSimpleInternalMethodCall () throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRun ("public class Foo { " +
+				    "static int a () { return 3; }" +
+				    "public static int foo () { return a (); }}");
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s);
 	Method m = c.getMethod ("foo");
