@@ -118,6 +118,15 @@ public class TestBytecodeGeneration {
 	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
     }
 
+    @Test
+    public void testInnerClassInternalMethodCall () throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRun ("public class Foo { " +
+				    "static class A { static int a () { return 3; }}" +
+				    "public static int foo () { return A.a (); }}");
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s);
 	Method m = c.getMethod ("foo");
@@ -127,7 +136,7 @@ public class TestBytecodeGeneration {
     private Class<?> getClass (String s) throws ReflectiveOperationException {
 	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
 	SourceProvider sp = new StringSourceProvider (Paths.get ("Foo.java"), s);
-	MemoryBytecodeWriter bw = new MemoryBytecodeWriter ();
+	final MemoryBytecodeWriter bw = new MemoryBytecodeWriter ();
 	List<Path> classPathEntries = Collections.emptyList ();
 	CompilationArguments settings =
 	    new CompilationArguments (sp, bw, classPathEntries, false, false);
@@ -138,9 +147,9 @@ public class TestBytecodeGeneration {
 		forEach (d -> System.err.println (d.getMessage (Locale.getDefault ())));
 	    assert false : "Compilation generated errors";
 	}
-	final byte[] b = bw.getBytecode (Paths.get ("Foo.class"));
 	ClassLoader cl = new ClassLoader () {
 	    protected Class<?> findClass (String name) throws ClassNotFoundException {
+		byte[] b = bw.getBytecode (Paths.get (name + ".class"));
 		return defineClass (name, b, 0, b.length);
 	    }
 	};
