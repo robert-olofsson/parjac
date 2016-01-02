@@ -20,6 +20,10 @@ public class Identifier extends PositionNode {
 	return getClass ().getSimpleName () + "{" + value + ", " + expressionType + "}";
     }
 
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
     public String get () {
 	return value;
     }

@@ -99,7 +99,7 @@ public class Scope {
 	while (s != null) {
 	    isStatic |= s.isStatic;
 	    FieldInformation<?> fi = s.variables.get (id);
-	    if (fi != null && (!isStatic || fi.isStatic()))
+	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic()))
 		return fi;
 	    s = s.parent;
 	}

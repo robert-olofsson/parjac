@@ -36,6 +36,8 @@ import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TryStatement;
 import org.khelekore.parjac.tree.WhileStatement;
 
+/** Test that we return correct types from methods and if and while checks.
+ */
 public class ReturnChecker implements TreeVisitor {
     private final ClassInformationProvider cip;
     private final SyntaxTree tree;
@@ -114,6 +116,7 @@ public class ReturnChecker implements TreeVisitor {
 	}
 
 	@Override public boolean visit (IfThenStatement i) {
+	    checkBoolean (i.getExpression ());
 	    boolean statementEnds = checkStatement (i.getIfStatement ());
 	    boolean elseEnds = false;
 	    TreeNode elseStatement = i.getElseStatement ();
@@ -124,11 +127,13 @@ public class ReturnChecker implements TreeVisitor {
 	}
 
 	@Override public boolean visit (WhileStatement w) {
+	    checkBoolean (w.getExpression ());
 	    checkExpressionStatement (w.getExpression (), w.getStatement ());
 	    return false;
 	}
 
 	@Override public boolean visit (DoStatement d) {
+	    checkBoolean (d.getExpression ());
 	    checkExpressionStatement (d.getExpression (), d.getStatement ());
 	    return false;
 	}
@@ -216,6 +221,15 @@ public class ReturnChecker implements TreeVisitor {
 		ends = true;
 	    }
 	    return false;
+	}
+
+	private void checkBoolean (TreeNode tn) {
+	    if (tn.getExpressionType () != ExpressionType.BOOLEAN) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     tn.getParsePosition (),
+							     "Not a boolean expression: %s",
+							     tn.getExpressionType ()));
+	    }
 	}
     }
 

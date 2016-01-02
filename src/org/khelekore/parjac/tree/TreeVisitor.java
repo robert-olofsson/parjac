@@ -209,4 +209,7 @@ public interface TreeVisitor {
 
     default void visit (CastExpression c) {
     }
+
+    default void visit (Identifier i) {
+    }
 }

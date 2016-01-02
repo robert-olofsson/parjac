@@ -317,9 +317,15 @@ public class ClassSetter {
 
 	@Override public boolean visit (ArrayAccess a) {
 	    TreeNode from = a.getFrom ();
-	    if (from instanceof DottedName) {
+	    if (from instanceof DottedName)
 		a.setFrom (replaceWithChainedFieldAccess((DottedName)from, currentScope, this));
-	    }
+	    return true;
+	}
+
+	@Override public boolean visit (IfThenStatement i) {
+	    TreeNode tn = i.getExpression ();
+	    if (tn instanceof DottedName)
+		i.setExpression (replaceAndSetType (tn));
 	    return true;
 	}
 

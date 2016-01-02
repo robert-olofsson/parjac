@@ -150,7 +150,6 @@ public class Compiler {
 	runTimed (() -> checkConstructors (trees), "Checking constructors");
 	if (diagnostics.hasError ())
 	    return;
-	// Check matching methods
 	// Check generics
     }
 

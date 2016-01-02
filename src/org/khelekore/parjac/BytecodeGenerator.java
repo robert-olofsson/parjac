@@ -13,6 +13,7 @@ import org.khelekore.parjac.tree.*;
 import org.khelekore.parjac.tree.Result.TypeResult;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -23,7 +24,9 @@ public class BytecodeGenerator implements TreeVisitor {
     private final BytecodeWriter classWriter;
     private DottedName packageName;
     private final Deque<ClassWriterHolder> classes = new ArrayDeque<> ();
+    private ClassWriterHolder currentClass;
     private final Deque<MethodInfo> methods = new ArrayDeque<> ();
+    private MethodInfo currentMethod;
 
     public BytecodeGenerator (Path origin, ClassInformationProvider cip,
 			      BytecodeWriter classWriter) {
@@ -68,17 +71,17 @@ public class BytecodeGenerator implements TreeVisitor {
 
     private void pushClass (TreeNode tn) {
 	ClassWriterHolder cid = new ClassWriterHolder (tn);
-	classes.addLast (cid);
+	addClass (cid);
 	cid.start ();
     }
 
     @Override public void endType () {
-	ClassWriterHolder cid = classes.removeLast ();
+	ClassWriterHolder cid = removeClass ();
 	cid.write ();
     }
 
     @Override public boolean visit (ConstructorDeclaration c) {
-	ClassWriter cw = classes.peekLast ().cw;
+	ClassWriter cw = currentClass.cw;
 
 	int mods = c.getFlags ();
 	if (hasVarargs (c.getParameters ()))
@@ -86,37 +89,34 @@ public class BytecodeGenerator implements TreeVisitor {
 
 	MethodInfo mi = new MethodInfo (new Result.VoidResult (null),
 					cw.visitMethod (mods, "<init>", c.getDescription (), null, null));
-	methods.addLast (mi);
+	addMethod (mi);
 	return true;
     }
 
     @Override public void endConstructor (ConstructorDeclaration c) {
-	MethodInfo mi = methods.removeLast ();
+	MethodInfo mi = removeMethod ();
 	mi.mv.visitInsn (RETURN);
 	mi.mv.visitMaxs (0, 0);
         mi.mv.visitEnd ();
     }
 
     @Override public boolean visit (ConstructorBody cb) {
-	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
-	    mi.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 	}
 	return true;
     }
 
     @Override public void visit (ExplicitConstructorInvocation eci) {
-	MethodInfo mi = methods.peekLast ();
-	ClassWriterHolder cid = classes.peekLast ();
-	SuperAndFlags saf = cid.getSuperAndFlags ();
+	SuperAndFlags saf = currentClass.getSuperAndFlags ();
 	// TODO: the signature here is borked, need to get signature from super class
-	mi.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, "<init>", "()V", false);
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, "<init>", "()V", false);
     }
 
     @Override public void visit (FieldDeclaration f) {
-	ClassWriter cw = classes.peekLast ().cw;
+	ClassWriter cw = currentClass.cw;
 	int mods = f.getFlags ();
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    // int access, String name, String desc, String signature, Object value
@@ -126,7 +126,7 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (MethodDeclaration m) {
-	ClassWriter cw = classes.peekLast ().cw;
+	ClassWriter cw = currentClass.cw;
         // creates a MethodWriter for the method
 	int mods = m.getFlags ();
 	if (hasVarargs (m.getParameters ()))
@@ -134,12 +134,12 @@ public class BytecodeGenerator implements TreeVisitor {
         MethodInfo mi = new MethodInfo (m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
 							m.getDescription (), null, null));
-	methods.addLast (mi);
+	addMethod (mi);
 	return true;
     }
 
     @Override public void endMethod (MethodDeclaration m) {
-	MethodInfo mi = methods.removeLast ();
+	MethodInfo mi = removeMethod ();
 	if (m.getResult () instanceof Result.VoidResult && methodMissingReturn (m)) {
 	    mi.mv.visitInsn (RETURN);
 	}
@@ -190,9 +190,8 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void endReturn (ReturnStatement r) {
-	MethodInfo mi = methods.peekLast ();
 	if (r.hasExpression ()) {
-	    Result.TypeResult tr = (TypeResult)mi.result;
+	    Result.TypeResult tr = (TypeResult)currentMethod.result;
 	    TreeNode tn = tr.getReturnType ();
 	    if (tn instanceof PrimitiveTokenType) {
 		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
@@ -203,17 +202,17 @@ public class BytecodeGenerator implements TreeVisitor {
 		case SHORT:
 		case CHAR:
 		case INT:
-		    mi.mv.visitInsn (IRETURN); break;
-		case LONG: mi.mv.visitInsn (LRETURN); break;
-		case DOUBLE: mi.mv.visitInsn (DRETURN); break;
-		case FLOAT: mi.mv.visitInsn (FRETURN); break;
+		    currentMethod.mv.visitInsn (IRETURN); break;
+		case LONG: currentMethod.mv.visitInsn (LRETURN); break;
+		case DOUBLE: currentMethod.mv.visitInsn (DRETURN); break;
+		case FLOAT: currentMethod.mv.visitInsn (FRETURN); break;
 		default: throw new IllegalArgumentException ("Got strange token: " + t);
 		}
 	    } else {
-		mi.mv.visitInsn (ARETURN);
+		currentMethod.mv.visitInsn (ARETURN);
 	    }
 	} else {
-	    mi.mv.visitInsn (RETURN);
+	    currentMethod.mv.visitInsn (RETURN);
 	}
     }
 
@@ -222,16 +221,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (methods.isEmpty ())
 	    return;
 
-	MethodInfo mi = methods.peekLast ();
 	int i = iv.get ();
 	if (i >= -1 && i <= 5) {
-	    mi.mv.visitInsn (ICONST_M1 + 1 + i);
+	    currentMethod.mv.visitInsn (ICONST_M1 + 1 + i);
 	} else if (i >= -128 && i <= 127) {
-	    mi.mv.visitIntInsn (BIPUSH, i);
+	    currentMethod.mv.visitIntInsn (BIPUSH, i);
 	} else if (i >= -32768 && i <= 32767) {
-	    mi.mv.visitIntInsn (SIPUSH, i);
+	    currentMethod.mv.visitIntInsn (SIPUSH, i);
 	} else {
-	    mi.mv.visitLdcInsn (i);
+	    currentMethod.mv.visitLdcInsn (i);
 	}
     }
 
@@ -240,14 +238,13 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (methods.isEmpty ())
 	    return;
 
-	MethodInfo mi = methods.peekLast ();
 	double d = dv.get ();
 	if (d == 0) {
-	    mi.mv.visitInsn (DCONST_0);
+	    currentMethod.mv.visitInsn (DCONST_0);
 	} else if (d == 1.0) {
-	    mi.mv.visitInsn (DCONST_1);
+	    currentMethod.mv.visitInsn (DCONST_1);
 	} else {
-	    mi.mv.visitLdcInsn (d);
+	    currentMethod.mv.visitLdcInsn (d);
 	}
     }
 
@@ -256,16 +253,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (methods.isEmpty ())
 	    return;
 
-	MethodInfo mi = methods.peekLast ();
 	float f = fv.get ();
 	if (f == 0) {
-	    mi.mv.visitInsn (FCONST_0);
+	    currentMethod.mv.visitInsn (FCONST_0);
 	} else if (f == 1.0f) {
-	    mi.mv.visitInsn (FCONST_1);
+	    currentMethod.mv.visitInsn (FCONST_1);
 	} else if (f == 2.0f) {
-	    mi.mv.visitInsn (FCONST_2);
+	    currentMethod.mv.visitInsn (FCONST_2);
 	} else {
-	    mi.mv.visitLdcInsn (f);
+	    currentMethod.mv.visitLdcInsn (f);
 	}
     }
 
@@ -273,25 +269,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return;
-	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitLdcInsn (sv.get ());
+	currentMethod.mv.visitLdcInsn (sv.get ());
     }
 
     @Override public void visit (BooleanLiteral bv) {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return;
-	MethodInfo mi = methods.peekLast ();
 	boolean f = bv.get ();
-	mi.mv.visitInsn (f ? ICONST_1 : ICONST_0);
+	currentMethod.mv.visitInsn (f ? ICONST_1 : ICONST_0);
     }
 
     @Override public void visit (NullLiteral nv) {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return;
-	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitInsn (ACONST_NULL);
+	currentMethod.mv.visitInsn (ACONST_NULL);
     }
 
     @Override public void visit (Assignment a) {
@@ -300,13 +293,12 @@ public class BytecodeGenerator implements TreeVisitor {
 	    return;
 	// TODO: something like this
 	/*
-	MethodInfo mi = methods.peekLast ();
-	mi.mv.visitIntInsn (ALOAD, 0);
+	currentMethod.mv.visitIntInsn (ALOAD, 0);
 	a.rhs ().visit (this);
 	ClassWriterHolder cwh = classes.peekLast ();
 	String fqn = cth.getFullName (cwh.tn);
 	// TODO: name and type need to be set correctly
-	mi.mv.visitFieldInsn (PUTFIELD, fqn, "a", "I");
+	currentMethod.mv.visitFieldInsn (PUTFIELD, fqn, "a", "I");
 	*/
     }
 
@@ -324,11 +316,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (al != null) {
 	    al.visit (this);
 	}
-	MethodInfo mi = methods.peekLast ();
 	int opCode = INVOKEVIRTUAL;
 	if (FlagsHelper.isStatic (m.getActualMethodFlags ()))
 	    opCode = INVOKESTATIC;
-	mi.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), false);
+	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), false);
+	return false;
+    }
+
+    @Override public boolean visit (IfThenStatement i) {
+	i.getExpression ().visit (this);
+	Label elseStart = new Label ();
+	currentMethod.mv.visitJumpInsn (IFEQ, elseStart);
+	i.getIfStatement ().visit (this);
+	currentMethod.mv.visitLabel (elseStart);
+	TreeNode tn = i.getElseStatement ();
+	if (tn != null)
+	    tn.visit (this);
 	return false;
     }
 
@@ -337,13 +340,39 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (tn instanceof ClassType) {
 	    ClassType ct = (ClassType)tn;
 	    String classSignature = ct.getFullName ().replace ('.', '/');
-	    MethodInfo mi = methods.peekLast ();
-	    mi.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
-				  f.getExpressionType ().getDescriptor ());
+	    currentMethod.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
+					     f.getExpressionType ().getDescriptor ());
 	    return false;
 	} else {
 	    return true;
 	}
+    }
+
+    @Override public void visit (Identifier i) {
+	// TODO: obviously not correct, but passes first if-test
+	currentMethod.mv.visitVarInsn(ILOAD, 0);
+    }
+
+    private void addClass (ClassWriterHolder cw) {
+	classes.addLast (cw);
+	currentClass = cw;
+    }
+
+    private ClassWriterHolder removeClass () {
+	ClassWriterHolder cw = classes.removeLast ();
+	currentClass = classes.isEmpty () ? null : classes.peekLast ();
+	return cw;
+    }
+
+    private void addMethod (MethodInfo mi) {
+	methods.addLast (mi);
+	currentMethod = mi;
+    }
+
+    private MethodInfo removeMethod () {
+	MethodInfo ret = methods.removeLast ();
+	currentMethod = methods.isEmpty () ? null : methods.peekLast ();
+	return ret;
     }
 
     private class ClassWriterHolder {

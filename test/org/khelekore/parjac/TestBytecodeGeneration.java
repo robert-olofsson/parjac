@@ -127,15 +127,28 @@ public class TestBytecodeGeneration {
 	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
     }
 
+    @Test
+    public void testSimpleIf () throws IOException, ReflectiveOperationException {
+	String s = "public class IF { public static int i (boolean b) { if (b) return 3; return 4; }}";
+	Class<?> c = getClass (s, "IF");
+	Method m = c.getMethod ("i", Boolean.TYPE);
+	Object ret = m.invoke (null, Boolean.TRUE);
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
+	ret = m.invoke (null, Boolean.FALSE);
+	assert ret instanceof Integer : "Got wrong type back: " + ret;
+	assert 4 == (Integer)ret : "Got wrong result, expected 4, got: " + ret;
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
-	Class<?> c = getClass (s);
+	Class<?> c = getClass (s, "Foo");
 	Method m = c.getMethod ("foo");
 	return m.invoke (null);
     }
 
-    private Class<?> getClass (String s) throws ReflectiveOperationException {
+    private Class<?> getClass (String s, String className) throws ReflectiveOperationException {
 	CompilerDiagnosticCollector diagnostics = new CompilerDiagnosticCollector ();
-	SourceProvider sp = new StringSourceProvider (Paths.get ("Foo.java"), s);
+	SourceProvider sp = new StringSourceProvider (Paths.get (className + ".java"), s);
 	final MemoryBytecodeWriter bw = new MemoryBytecodeWriter ();
 	List<Path> classPathEntries = Collections.emptyList ();
 	CompilationArguments settings =
@@ -153,6 +166,6 @@ public class TestBytecodeGeneration {
 		return defineClass (name, b, 0, b.length);
 	    }
 	};
-	return cl.loadClass ("Foo");
+	return cl.loadClass (className);
     }
 }
