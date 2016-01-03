@@ -502,6 +502,36 @@ public class TestReturnChecker extends TestBase {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
+    @Test
+    public void testTwoPartNull () throws IOException {
+ 	parseAndSetClasses ("class P { int m () { return 3 + null; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { return null + 3; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testTwoPartBitHandling () throws IOException {
+ 	parseAndSetClasses ("class P { int m () { float f = 3f & 7; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { float f = 7 | 3f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { float f = 7 ^ 3f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { int i = 7 << 3f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { int i = 7 >> 1f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { int i = 7d >>> 1f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

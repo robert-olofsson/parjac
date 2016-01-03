@@ -54,4 +54,12 @@ public class TwoPartExpression extends PositionNode {
     public Token getOperator () {
 	return op.get ();
     }
+
+    public TreeNode getLeft () {
+	return exp1;
+    }
+
+    public TreeNode getRight () {
+	return exp2;
+    }
 }

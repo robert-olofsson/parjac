@@ -91,6 +91,8 @@ public class ExpressionType {
     public static ExpressionType bigger (ExpressionType e1, ExpressionType e2) {
 	if (mayBeAutoCasted (e1, e2))
 	    return e2;
+	if (e1 == NULL)
+	    return e2;
 	return e1;
     }
 
@@ -181,5 +183,9 @@ public class ExpressionType {
 	for (int i = 0; i < times; i++)
 	    sb.append (s);
 	return sb.toString ();
+    }
+
+    public boolean isIntegralType () {
+	return this == BYTE || this == SHORT || this == CHAR || this == INT || this == LONG;
     }
 }

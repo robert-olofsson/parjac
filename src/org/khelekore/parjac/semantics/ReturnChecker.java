@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
+import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.tree.BasicForStatement;
 import org.khelekore.parjac.tree.Block;
 import org.khelekore.parjac.tree.BlockStatements;
@@ -34,9 +35,11 @@ import org.khelekore.parjac.tree.ThrowStatement;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TryStatement;
+import org.khelekore.parjac.tree.TwoPartExpression;
 import org.khelekore.parjac.tree.WhileStatement;
 
-/** Test that we return correct types from methods and if and while checks.
+/** Test that we return correct types from methods and if and while checks as
+ *  well as two part things.
  */
 public class ReturnChecker implements TreeVisitor {
     private final ClassInformationProvider cip;
@@ -104,7 +107,7 @@ public class ReturnChecker implements TreeVisitor {
 	@Override public boolean visit (ReturnStatement r) {
 	    ends = true;
 	    checkType (r, res);
-	    return false;
+	    return true;
 	}
 
 	@Override public void visit (ThrowStatement t) {
@@ -230,6 +233,36 @@ public class ReturnChecker implements TreeVisitor {
 							     "Not a boolean expression: %s, node: %s",
 							     tn.getExpressionType (), tn));
 	    }
+	}
+
+	@Override public boolean visit (TwoPartExpression t) {
+	    Token op = t.getOperator ();
+	    TreeNode lhs = t.getLeft ();
+	    TreeNode rhs = t.getRight ();
+	    if (lhs.getExpressionType () == ExpressionType.NULL) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     lhs.getParsePosition (),
+							     "Can not use null on left hand side of: %s", op));
+	    }
+	    if (rhs.getExpressionType () == ExpressionType.NULL) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     rhs.getParsePosition (),
+							     "Can not use null on right hand side of: %s", op));
+	    }
+	    if (op.isBitOrShiftOperator ()) {
+		// TODO: need to check for wrapper types
+		if (!lhs.getExpressionType ().isIntegralType ()) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+								 lhs.getParsePosition (),
+								 "Operator: %s require integral types", op));
+		}
+		if (!rhs.getExpressionType ().isIntegralType ()) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+								 rhs.getParsePosition (),
+								 "Operator: %s require integral types", op));
+		}
+	    }
+	    return true;
 	}
     }
 
