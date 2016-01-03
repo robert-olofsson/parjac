@@ -205,13 +205,6 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public void visit (ExplicitConstructorInvocation eci) {
-	    TreeNode type = eci.getType ();
-	    if (type instanceof DottedName) {
-		eci.setType (replaceWithChainedFieldAccess ((DottedName)type, currentScope, this));
-	    }
-	}
-
 	@Override public boolean visit (MethodDeclaration m) {
 	    registerTypeParameters (m.getTypeParameters (), this);
 	    Result r = m.getResult ();
@@ -292,6 +285,44 @@ public class ClassSetter {
 	    setType (c.getType (), this);
 	}
 
+	@Override public void visit (DottedName d) {
+	    d.setChainedFieldAccess (replaceWithChainedFieldAccess (d, currentScope, this));
+	}
+
+	private TreeNode replaceWithChainedFieldAccess (DottedName dn, Scope scope, ErrorHandler eh) {
+	    TreeNode current = null;
+	    final ParsePosition pos = dn.getParsePosition ();
+	    StringBuilder sb = new StringBuilder ();
+	    ClassType ct = null;
+	    List<String> parts = dn.getParts ();
+	    for (int i = 0, s = parts.size (); i < s; i++) {
+		String p = parts.get (i);
+		if (i == 0) {
+		    FieldInformation<?> fi = scope.find (p, scope.isStatic ());
+		    if (fi != null) {
+			current = new Identifier (p, pos, fi.getExpressionType ());
+			continue;
+		    }
+		} else {
+		    sb.append (".");
+		}
+		sb.append (p);
+		String outerClass = ct == null ? resolve (sb.toString (), pos, eh) : null;
+		if (outerClass != null) {
+		    DottedName pdn = new DottedName (parts.subList (0, i + 1), pos);
+		    ct = pdn.toClassType ();
+		    ct.setFullName (outerClass);
+		    current = ct;
+		    continue;
+		}
+		if (current != null)
+		    current = new FieldAccess (current, p, pos);
+		else
+		    current = new Identifier (p, pos);
+	    }
+	    return current;
+	}
+
 	@Override public boolean visit (BasicForStatement f) {
 	    addScope (f, Scope.Type.LOCAL);
 	    return true;
@@ -315,24 +346,7 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public boolean visit (ArrayAccess a) {
-	    TreeNode from = a.getFrom ();
-	    if (from instanceof DottedName)
-		a.setFrom (replaceWithChainedFieldAccess((DottedName)from, currentScope, this));
-	    return true;
-	}
-
-	@Override public boolean visit (IfThenStatement i) {
-	    TreeNode tn = i.getExpression ();
-	    if (tn instanceof DottedName)
-		i.setExpression (replaceAndSetType (tn));
-	    return true;
-	}
-
 	private TreeNode replaceAndSetType (TreeNode tn) {
-	    if (tn instanceof DottedName) {
-		tn = replaceWithChainedFieldAccess((DottedName)tn, currentScope, this);
-	    }
 	    if (tn.getExpressionType () == null && tn instanceof Identifier) {
 		Identifier i = (Identifier)tn;
 		FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
@@ -444,40 +458,6 @@ public class ClassSetter {
     private void visitSuperInterfaces (InterfaceTypeList superInterfaces, ErrorHandler eh) {
 	if (superInterfaces != null)
 	    setTypes (superInterfaces, eh);
-    }
-
-    private TreeNode replaceWithChainedFieldAccess (DottedName dn, Scope scope, ErrorHandler eh) {
-	TreeNode current = null;
-	final ParsePosition pos = dn.getParsePosition ();
-	StringBuilder sb = new StringBuilder ();
-	ClassType ct = null;
-	List<String> parts = dn.getParts ();
-	for (int i = 0, s = parts.size (); i < s; i++) {
-	    String p = parts.get (i);
-	    if (i == 0) {
-		FieldInformation<?> fi = scope.find (p, scope.isStatic ());
-		if (fi != null) {
-		    current = new Identifier (p, pos, fi.getExpressionType ());
-		    continue;
-		}
-	    } else {
-		sb.append (".");
-	    }
-	    sb.append (p);
-	    String outerClass = ct == null ? resolve (sb.toString (), pos, eh) : null;
-	    if (outerClass != null) {
-		DottedName pdn = new DottedName (parts.subList (0, i + 1), pos);
-		ct = pdn.toClassType ();
-		ct.setFullName (outerClass);
-		current = ct;
-		continue;
-	    }
-	    if (current != null)
-		current = new FieldAccess (current, p, pos);
-	    else
-		current = new Identifier (p, pos);
-	}
-	return current;
     }
 
     private void registerTypeParameters (TypeParameters tps, ErrorHandler eh) {

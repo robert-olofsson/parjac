@@ -141,7 +141,9 @@ public class Compiler {
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	if (diagnostics.hasError ())
 	    return;
-	runTimed (() -> setMethodInvocations (trees), "Setting method invocations");
+	runTimed (() -> setMethodInvocations (trees), "Setting fields and method types");
+	if (diagnostics.hasError ())
+	    return;
 	// Check types of fields and assignments
 	runTimed (() -> checkReturns (trees), "Checking returns");
 	if (diagnostics.hasError ())

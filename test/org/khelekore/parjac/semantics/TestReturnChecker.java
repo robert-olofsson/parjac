@@ -493,6 +493,15 @@ public class TestReturnChecker extends TestBase {
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 
+    @Test
+    public void testAutoExtend () throws IOException {
+ 	parseAndSetClasses ("class P { int m () { return 3 + 4L; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { int m () { return 3L + 4; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

@@ -8,7 +8,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class IfThenStatement extends PositionNode {
-    private TreeNode exp;
+    private final TreeNode exp;
     private final TreeNode ifStatement;
     private final TreeNode elseStatement;
 
@@ -40,10 +40,6 @@ public class IfThenStatement extends PositionNode {
 
     public TreeNode getExpression () {
 	return exp;
-    }
-
-    public void setExpression (TreeNode exp) {
-	this.exp = exp;
     }
 
     public TreeNode getIfStatement () {

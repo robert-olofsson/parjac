@@ -212,4 +212,14 @@ public interface TreeVisitor {
 
     default void visit (Identifier i) {
     }
+
+    default void visit (DottedName d) {
+    }
+
+    default void visit (UnaryExpression u) {
+    }
+
+    default boolean visit (TwoPartExpression t) {
+	return true;
+    }
 }

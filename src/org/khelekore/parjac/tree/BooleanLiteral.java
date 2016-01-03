@@ -15,7 +15,7 @@ public class BooleanLiteral extends PositionNode implements LiteralValue {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{}";
+	return getClass ().getSimpleName () + "{" + value + "}";
     }
 
     @Override public void visit (TreeVisitor visitor) {

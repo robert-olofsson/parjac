@@ -1,9 +1,12 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.lexer.Token;
 
 public class TwoPartExpression extends PositionNode {
     private final TreeNode exp1;
@@ -25,5 +28,30 @@ public class TwoPartExpression extends PositionNode {
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp1 + " " + op + " " + exp2 + "}";
+    }
+
+    @Override public void visit (TreeVisitor visitor) {
+	if (visitor.visit (this)) {
+	    exp1.visit (visitor);
+	    exp2.visit (visitor);
+	}
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	if (op.get ().isLogicalOperator ())
+	    return ExpressionType.BOOLEAN;
+	return ExpressionType.bigger (exp1.getExpressionType (), exp2.getExpressionType ());
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
+	return Arrays.asList (exp1, exp2);
+    }
+
+    public boolean hasPrimitiveParts () {
+	return exp1.getExpressionType ().isPrimitiveType ();
+    }
+
+    public Token getOperator () {
+	return op.get ();
     }
 }

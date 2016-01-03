@@ -131,13 +131,54 @@ public class TestBytecodeGeneration {
     public void testSimpleIf () throws IOException, ReflectiveOperationException {
 	String s = "public class IF { public static int i (boolean b) { if (b) return 3; return 4; }}";
 	Class<?> c = getClass (s, "IF");
-	Method m = c.getMethod ("i", Boolean.TYPE);
-	Object ret = m.invoke (null, Boolean.TRUE);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 3);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 4);
+    }
+
+    @Test
+    public void testNegatedIf () throws IOException, ReflectiveOperationException {
+	String s = "public class IF { public static int i (boolean b) { if (!b) return 3; return 4; }}";
+	Class<?> c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 4);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 3);
+    }
+
+    @Test
+    public void testBooleanComparisson () throws IOException, ReflectiveOperationException {
+	// oddly enough javac actually compiles differently for a == false and false == a
+	String s = "public class IF { public static int i (boolean b) { if (b == false) return 3; return 4; }}";
+	Class<?> c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 4);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 3);
+
+	s = "public class IF { public static int i (boolean b) { if (false == b) return 3; return 4; }}";
+	c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 4);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 3);
+    }
+
+    @Test
+    public void testIntComparisson () throws IOException, ReflectiveOperationException {
+	String s = "public class IF { public static int i (int a) { if (a == 3) return 3; return 4; }}";
+	Class<?> c = getClass (s, "IF");
+	checkIfReturn (c, "i", Integer.TYPE, 3, 3);
+	checkIfReturn (c, "i", Integer.TYPE, 17, 4);
+    }
+
+    @Test
+    public void testObjectComparisson () throws IOException, ReflectiveOperationException {
+	String s = "public class IF { public static int i (Object o) { if (o == null) return 3; return 4; }}";
+	Class<?> c = getClass (s, "IF");
+	checkIfReturn (c, "i", Object.class, null, 3);
+	checkIfReturn (c, "i", Object.class, new Object (), 4);
+    }
+
+    private void checkIfReturn (Class<?> c, String methodName, Class<?> argumentType,
+				Object argument, int expectedResult) throws ReflectiveOperationException {
+	Method m = c.getMethod (methodName, argumentType);
+	Object ret = m.invoke (null, argument);
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
-	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
-	ret = m.invoke (null, Boolean.FALSE);
-	assert ret instanceof Integer : "Got wrong type back: " + ret;
-	assert 4 == (Integer)ret : "Got wrong result, expected 4, got: " + ret;
+	assert expectedResult == (Integer)ret : "Got wrong result, expected " + expectedResult + ", got: " + ret;
     }
 
     private Object compileAndRun (String s) throws ReflectiveOperationException {

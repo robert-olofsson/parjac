@@ -276,8 +276,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return;
-	boolean f = bv.get ();
-	currentMethod.mv.visitInsn (f ? ICONST_1 : ICONST_0);
+	currentMethod.mv.visitInsn (bv.get () ? ICONST_1 : ICONST_0);
     }
 
     @Override public void visit (NullLiteral nv) {
@@ -326,13 +325,51 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public boolean visit (IfThenStatement i) {
 	i.getExpression ().visit (this);
 	Label elseStart = new Label ();
-	currentMethod.mv.visitJumpInsn (IFEQ, elseStart);
+	int operator = IFEQ;
+	TreeNode exp = i.getExpression ();
+	if (exp instanceof UnaryExpression) {
+	    operator = IFNE;
+	} else if (exp instanceof TwoPartExpression) {
+	    operator = getTwoPartJump ((TwoPartExpression)exp);
+	}
+	currentMethod.mv.visitJumpInsn (operator, elseStart);
 	i.getIfStatement ().visit (this);
 	currentMethod.mv.visitLabel (elseStart);
 	TreeNode tn = i.getElseStatement ();
 	if (tn != null)
 	    tn.visit (this);
 	return false;
+    }
+
+    private int getTwoPartJump (TwoPartExpression t) {
+	// Remember that we jump to the else part so reversed return values
+	if (t.hasPrimitiveParts ()) {
+	    switch (t.getOperator ()) {
+	    case DOUBLE_EQUAL:
+		return IF_ICMPNE;
+	    case NOT_EQUAL:
+		return IF_ICMPEQ;
+	    case LT:
+		return IF_ICMPGE;
+	    case GE:
+		return IF_ICMPLT;
+	    case GT:
+		return IF_ICMPLE;
+	    case LE:
+		return IF_ICMPGT;
+	    default:
+		throw new IllegalStateException ("unhandled jump type: " + t);
+	    }
+	} else {
+	    switch (t.getOperator ()) {
+	    case DOUBLE_EQUAL:
+		return IF_ACMPNE;
+	    case NOT_EQUAL:
+		return IF_ACMPEQ;
+	    default:
+		throw new IllegalStateException ("unhandled jump type: " + t);
+	    }
+	}
     }
 
     @Override public boolean visit (FieldAccess f) {
@@ -350,7 +387,10 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void visit (Identifier i) {
 	// TODO: obviously not correct, but passes first if-test
-	currentMethod.mv.visitVarInsn(ILOAD, 0);
+	if (i.getExpressionType ().isPrimitiveType ())
+	    currentMethod.mv.visitVarInsn (ILOAD, 0);
+	else
+	    currentMethod.mv.visitVarInsn (ALOAD, 0);
     }
 
     private void addClass (ClassWriterHolder cw) {

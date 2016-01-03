@@ -88,6 +88,12 @@ public class ExpressionType {
 	throw new IllegalArgumentException ("Unknown type: " + t);
     }
 
+    public static ExpressionType bigger (ExpressionType e1, ExpressionType e2) {
+	if (mayBeAutoCasted (e1, e2))
+	    return e2;
+	return e1;
+    }
+
     @Override public boolean equals (Object o) {
 	if (o == this)
 	    return true;

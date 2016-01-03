@@ -17,7 +17,7 @@ public class Identifier extends PositionNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + value + ", " + expressionType + "}";
+	return getClass ().getSimpleName () + "{" + value + ", expType: " + expressionType + "}";
     }
 
     @Override public void visit (TreeVisitor visitor) {

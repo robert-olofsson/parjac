@@ -29,6 +29,7 @@ public class ArrayAccess extends PositionNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
+	from.visit (visitor);
 	if (visitor.visit (this))
 	    exp.visit (visitor);
     }

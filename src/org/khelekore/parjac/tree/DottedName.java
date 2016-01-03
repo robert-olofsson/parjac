@@ -1,6 +1,8 @@
 package org.khelekore.parjac.tree;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,8 +10,13 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 
+/** A dotted name that we do not know what it is until after parse.
+ *  It might be a fully qualified name "java.lang.String" or it might be
+ *  a field access "a.b.c" or it might be a combination "a.b.C.d"
+ */
 public class DottedName extends PositionNode {
     private final List<String> parts;
+    private TreeNode fieldAccess; // the actual nodes
 
     public DottedName (List<String> parts, ParsePosition pos) {
 	super (pos);
@@ -28,7 +35,8 @@ public class DottedName extends PositionNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + parts + "}";
+	return getClass ().getSimpleName () + "{" + parts +
+	    (fieldAccess != null ? ", fieldAccess: " + fieldAccess : "") + "}";
     }
 
     @Override public boolean equals (Object o) {
@@ -70,5 +78,27 @@ public class DottedName extends PositionNode {
 	    ct.add (new SimpleClassType (null, name, null, pos));
 	}
 	return ct;
+    }
+
+    public void setChainedFieldAccess (TreeNode fieldAccess) {
+	this.fieldAccess = fieldAccess;
+    }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	if (fieldAccess != null)
+	    fieldAccess.visit (visitor);
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	if (fieldAccess != null)
+	    return fieldAccess.getExpressionType ();
+	return null;
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
+	if (fieldAccess != null)
+	    return Collections.singleton (fieldAccess);
+	return Collections.emptyList ();
     }
 }

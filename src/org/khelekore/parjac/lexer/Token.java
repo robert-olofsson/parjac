@@ -163,6 +163,9 @@ public enum Token {
 		LEFT_SHIFT_EQUAL, RIGHT_SHIFT_EQUAL, RIGHT_SHIFT_UNSIGNED_EQUAL,
 		INSTANCEOF);
 
+    private static final EnumSet<Token> logicalOperators =
+    EnumSet.of (GT, LT, DOUBLE_EQUAL, GE, LE, NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, INSTANCEOF);
+
     private static final EnumSet<Token> assignmentOperators =
     EnumSet.of (EQUAL, MULTIPLY_EQUAL, DIVIDE_EQUAL, REMAINDER_EQUAL, PLUS_EQUAL, MINUS_EQUAL,
 		LEFT_SHIFT_EQUAL, RIGHT_SHIFT_EQUAL, RIGHT_SHIFT_UNSIGNED_EQUAL,
@@ -246,6 +249,10 @@ public enum Token {
 
     public boolean isOperator () {
 	return operators.contains (this);
+    }
+
+    public boolean isLogicalOperator () {
+	return logicalOperators.contains (this);
     }
 
     public boolean isPrimitive () {

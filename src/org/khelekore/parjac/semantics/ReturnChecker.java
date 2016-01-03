@@ -227,8 +227,8 @@ public class ReturnChecker implements TreeVisitor {
 	    if (tn.getExpressionType () != ExpressionType.BOOLEAN) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     tn.getParsePosition (),
-							     "Not a boolean expression: %s",
-							     tn.getExpressionType ()));
+							     "Not a boolean expression: %s, node: %s",
+							     tn.getExpressionType (), tn));
 	    }
 	}
     }
