@@ -148,7 +148,7 @@ public class Compiler {
 	runTimed (() -> checkReturns (trees), "Checking returns");
 	if (diagnostics.hasError ())
 	    return;
-	// check that there is at least one constructor
+	// Check that there is at least one constructor
 	runTimed (() -> checkConstructors (trees), "Checking constructors");
 	if (diagnostics.hasError ())
 	    return;
