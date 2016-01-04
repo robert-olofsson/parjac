@@ -196,7 +196,7 @@ public class ClassResourceHolder {
 
 	@Override public void readNode () throws IOException {
 	    // I tried to cache the jarfiles, but that made things a lot slower
-	    // due to less multi threading. Do if someone can prove it makes sense
+	    // due to less multi threading. Do if someone can prove it makes sense.
 	    try (JarFile jf = new JarFile (jarfile.toFile ())) {
 		JarEntry e = jf.getJarEntry (name);
 		try (InputStream jis = jf.getInputStream (e)) {

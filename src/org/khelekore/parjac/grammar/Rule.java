@@ -63,7 +63,7 @@ public class Rule {
 	if (o.getClass () != Rule.class)
 	    return false;
 	Rule r = (Rule)o;
-	// Do not check id. We use this to avoid duplicate rules
+	// Do not check id. We use this to avoid duplicate rules.
 	return name.equals (r.name) && parts.equals (r.parts);
     }
 
