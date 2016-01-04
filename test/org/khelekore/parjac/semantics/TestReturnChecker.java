@@ -494,7 +494,18 @@ public class TestReturnChecker extends TestBase {
     }
 
     @Test
-    public void testAutoExtend () throws IOException {
+    public void testUnaryExpression () throws IOException {
+ 	parseAndSetClasses ("class P { int m (int i) { return ~i; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { double m (double i) { return ~i; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { boolean m (boolean b) { return !b; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testTwoPartAutoExtend () throws IOException {
  	parseAndSetClasses ("class P { int m () { return 3 + 4L; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
 	diagnostics = new CompilerDiagnosticCollector ();
@@ -509,6 +520,11 @@ public class TestReturnChecker extends TestBase {
 	diagnostics = new CompilerDiagnosticCollector ();
  	parseAndSetClasses ("class P { int m () { return null + 3; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+ 	parseAndSetClasses ("class P { boolean m (Object o) { return null == o; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { boolean m (Object o) { return o == null; }}");
+	assertNoErrors ();
     }
 
     @Test
@@ -529,6 +545,26 @@ public class TestReturnChecker extends TestBase {
 	assert diagnostics.hasError () : "Expected to find errors";
 	diagnostics = new CompilerDiagnosticCollector ();
  	parseAndSetClasses ("class P { int m () { int i = 7d >>> 1f; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testIncrementDecrement () throws IOException {
+ 	parseAndSetClasses ("class P { int ii (int i) { return i++; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { int ii (int i) { return ++i; }}");
+	assertNoErrors ();
+
+ 	parseAndSetClasses ("class P { float ii (float i) { return i++; }}");
+	assertNoErrors ();
+ 	parseAndSetClasses ("class P { float ii (float i) { return ++i; }}");
+	assertNoErrors ();
+
+ 	parseAndSetClasses ("class P { boolean bi (boolean b) { return ++b; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+ 	parseAndSetClasses ("class P { boolean bi (boolean b) { return b++; }}");
 	assert diagnostics.hasError () : "Expected to find errors";
     }
 

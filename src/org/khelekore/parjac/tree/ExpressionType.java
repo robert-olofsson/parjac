@@ -2,9 +2,11 @@ package org.khelekore.parjac.tree;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.objectweb.asm.Type;
 
@@ -34,12 +36,24 @@ public class ExpressionType {
     { BYTE, SHORT, CHAR, INT, LONG, FLOAT, DOUBLE, BOOLEAN, VOID };
 
     private final static Map<ExpressionType, List<ExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
+    private final static Set<ExpressionType> INTEGRAL_TYPES = new HashSet<> ();
+    private final static Set<ExpressionType> NUMERIC_TYPES = new HashSet<> ();
     static {
 	ALLOWED_UPCASTS.put (BYTE, Arrays.asList (SHORT, INT, LONG));
 	ALLOWED_UPCASTS.put (SHORT, Arrays.asList (INT, LONG));
 	ALLOWED_UPCASTS.put (CHAR, Arrays.asList (INT, LONG));
 	ALLOWED_UPCASTS.put (INT, Arrays.asList (LONG));
 	ALLOWED_UPCASTS.put (FLOAT, Arrays.asList (DOUBLE));
+
+	INTEGRAL_TYPES.add (BYTE);
+	INTEGRAL_TYPES.add (SHORT);
+	INTEGRAL_TYPES.add (CHAR);
+	INTEGRAL_TYPES.add (INT);
+	INTEGRAL_TYPES.add (LONG);
+
+	NUMERIC_TYPES.addAll (INTEGRAL_TYPES);
+	NUMERIC_TYPES.add (FLOAT);
+	NUMERIC_TYPES.add (DOUBLE);
     }
 
     public static boolean mayBeAutoCasted (ExpressionType from, ExpressionType to) {
@@ -186,6 +200,14 @@ public class ExpressionType {
     }
 
     public boolean isIntegralType () {
-	return this == BYTE || this == SHORT || this == CHAR || this == INT || this == LONG;
+	return INTEGRAL_TYPES.contains (this);
+    }
+
+    public boolean isNumericType () {
+	return NUMERIC_TYPES.contains (this);
+    }
+
+    public boolean isBooleanType () {
+	return this == BOOLEAN;
     }
 }

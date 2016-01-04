@@ -222,4 +222,20 @@ public interface TreeVisitor {
     default boolean visit (TwoPartExpression t) {
 	return true;
     }
+
+    default boolean visit (PreIncrementExpression p) {
+	return true;
+    }
+
+    default boolean visit (PostIncrementExpression p) {
+	return true;
+    }
+
+    default boolean visit (PreDecrementExpression p) {
+	return true;
+    }
+
+    default boolean visit (PostDecrementExpression p) {
+	return true;
+    }
 }

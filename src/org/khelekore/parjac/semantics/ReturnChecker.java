@@ -22,6 +22,10 @@ import org.khelekore.parjac.tree.Finally;
 import org.khelekore.parjac.tree.IfThenStatement;
 import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
+import org.khelekore.parjac.tree.PostDecrementExpression;
+import org.khelekore.parjac.tree.PostIncrementExpression;
+import org.khelekore.parjac.tree.PreDecrementExpression;
+import org.khelekore.parjac.tree.PreIncrementExpression;
 import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.Result;
 import org.khelekore.parjac.tree.ReturnStatement;
@@ -36,6 +40,7 @@ import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TryStatement;
 import org.khelekore.parjac.tree.TwoPartExpression;
+import org.khelekore.parjac.tree.UnaryExpression;
 import org.khelekore.parjac.tree.WhileStatement;
 
 /** Test that we return correct types from methods and if and while checks as
@@ -235,34 +240,86 @@ public class ReturnChecker implements TreeVisitor {
 	    }
 	}
 
+	@Override public void visit (UnaryExpression u) {
+	    Token op = u.getOperator ();
+	    switch (op) {
+	    case TILDE:
+		checkIntegralType (u, op);
+		break;
+	    case NOT:
+		checkBooleanType (u, op);
+		break;
+	    default:
+	    }
+	}
+
 	@Override public boolean visit (TwoPartExpression t) {
 	    Token op = t.getOperator ();
 	    TreeNode lhs = t.getLeft ();
 	    TreeNode rhs = t.getRight ();
-	    if (lhs.getExpressionType () == ExpressionType.NULL) {
+	    if (lhs.getExpressionType () == ExpressionType.NULL &&
+		op != Token.DOUBLE_EQUAL && op != Token.NOT_EQUAL) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     lhs.getParsePosition (),
 							     "Can not use null on left hand side of: %s", op));
 	    }
-	    if (rhs.getExpressionType () == ExpressionType.NULL) {
+	    if (rhs.getExpressionType () == ExpressionType.NULL &&
+		op != Token.DOUBLE_EQUAL && op != Token.NOT_EQUAL) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     rhs.getParsePosition (),
 							     "Can not use null on right hand side of: %s", op));
 	    }
 	    if (op.isBitOrShiftOperator ()) {
 		// TODO: need to check for wrapper types
-		if (!lhs.getExpressionType ().isIntegralType ()) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 lhs.getParsePosition (),
-								 "Operator: %s require integral types", op));
-		}
-		if (!rhs.getExpressionType ().isIntegralType ()) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 rhs.getParsePosition (),
-								 "Operator: %s require integral types", op));
-		}
+		checkIntegralType(lhs, op);
+		checkIntegralType(rhs, op);
 	    }
 	    return true;
+	}
+
+	@Override public boolean visit (PreIncrementExpression p) {
+	    checkNumericType (p, Token.INCREMENT);
+	    return true;
+	}
+
+	@Override public boolean visit (PostIncrementExpression p) {
+	    checkNumericType (p, Token.INCREMENT);
+	    return true;
+	}
+
+	@Override public boolean visit (PreDecrementExpression p) {
+	    checkNumericType (p, Token.INCREMENT);
+	    return true;
+	}
+
+	@Override public boolean visit (PostDecrementExpression p) {
+	    checkNumericType (p, Token.INCREMENT);
+	    return true;
+	}
+
+	private void checkIntegralType (TreeNode tn, Token operator) {
+	    ExpressionType et = tn.getExpressionType ();
+	    if (!et.isIntegralType ())
+		reportWrongType (tn, operator, "integral", et);
+	}
+
+	private void checkBooleanType (TreeNode tn, Token operator) {
+	    ExpressionType et = tn.getExpressionType ();
+	    if (!et.isBooleanType ())
+		reportWrongType (tn, operator, "boolean", et);
+	}
+
+	private void checkNumericType (TreeNode tn, Token operator) {
+	    ExpressionType et = tn.getExpressionType ();
+	    if (!et.isNumericType ())
+		reportWrongType (tn, operator, "numeric", et);
+	}
+
+	private void reportWrongType (TreeNode tn, Token operator, String requiredType, ExpressionType et) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							 tn.getParsePosition (),
+							 "Operator: %s require %s type, found: %s",
+							 operator, requiredType, et.toString ()));
 	}
     }
 
