@@ -8,8 +8,8 @@ public interface BytecodeWriter {
     void createDirectory (Path path) throws IOException;
 
     /** Write the given bytecode
-     * @Param path the relative path
-     * @Param data the actual bytecode
+     * @param path the relative path
+     * @param data the actual bytecode
      */
     void write (Path path, byte[] data) throws IOException;
 }
