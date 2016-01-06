@@ -207,6 +207,10 @@ public interface TreeVisitor {
     default void visit (LocalVariableDeclaration l) {
     }
 
+    default boolean visit (VariableDeclarator v) {
+	return true;
+    }
+
     default void visit (CastExpression c) {
     }
 

@@ -33,8 +33,10 @@ public class VariableDeclarator extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	if (initializer != null)
-	    initializer.visit (visitor);
+	if (visitor.visit (this)) {
+	    if (initializer != null)
+		initializer.visit (visitor);
+	}
     }
 
     public Collection<? extends TreeNode> getChildNodes () {
@@ -45,5 +47,9 @@ public class VariableDeclarator extends PositionNode {
 
     public String getId () {
 	return vdi.getId ();
+    }
+
+    public TreeNode getInitializer () {
+	return initializer;
     }
 }

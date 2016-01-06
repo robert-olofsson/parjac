@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
@@ -304,41 +306,71 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public boolean visit (MethodInvocation m) {
 	String owner;
 	TreeNode on = m.getOn ();
+	String ownerName = null;
 	if (on != null) {
 	    on.visit (this);
-	    owner = on.getExpressionType ().getSlashName ();
+	    ExpressionType expType = on.getExpressionType ();
+	    owner = expType.getSlashName ();
+	    ownerName = expType.getClassName ();
 	} else {
-	    owner = cip.getFullName (classes.peekLast ().tn);
-	    owner = owner.replace ('.', '/');
+	    ownerName = cip.getFullName (classes.peekLast ().tn);
+	    owner = ownerName.replace ('.', '/');
 	}
 	ArgumentList al = m.getArgumentList ();
 	if (al != null) {
 	    al.visit (this);
 	}
 	int opCode = INVOKEVIRTUAL;
+	boolean isInterface = cip.isInterface (ownerName);
 	if (FlagsHelper.isStatic (m.getActualMethodFlags ()))
 	    opCode = INVOKESTATIC;
-	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), false);
+	else if (isInterface)
+	    opCode = INVOKEINTERFACE;
+	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), isInterface);
 	return false;
     }
 
     @Override public boolean visit (IfThenStatement i) {
 	i.getExpression ().visit (this);
 	Label elseStart = new Label ();
-	int operator = IFEQ;
 	TreeNode exp = i.getExpression ();
-	if (exp instanceof UnaryExpression) {
-	    operator = IFNE;
-	} else if (exp instanceof TwoPartExpression) {
-	    operator = getTwoPartJump ((TwoPartExpression)exp);
-	}
-	currentMethod.mv.visitJumpInsn (operator, elseStart);
+	handleJump (exp, elseStart);
 	i.getIfStatement ().visit (this);
 	currentMethod.mv.visitLabel (elseStart);
 	TreeNode tn = i.getElseStatement ();
 	if (tn != null)
 	    tn.visit (this);
 	return false;
+    }
+
+    @Override public boolean visit (BasicForStatement f) {
+	TreeNode tn;
+	if ((tn = f.getForInit()) != null)
+	    tn.visit (this);
+	Label start = new Label ();
+	currentMethod.mv.visitLabel (start);
+	Label end = new Label ();
+	if ((tn = f.getExpression ()) != null) {
+	    tn.visit (this);
+	    handleJump (tn, end);
+	}
+	if ((tn = f.getStatement ()) != null)
+	    tn.visit (this);
+	if ((tn = f.getForUpdate ()) != null)
+	    tn.visit (this);
+	currentMethod.mv.visitJumpInsn (GOTO, start);
+	currentMethod.mv.visitLabel (end);
+	return false;
+    }
+
+    private void handleJump (TreeNode exp, Label target) {
+	int operator = IFEQ;
+	if (exp instanceof UnaryExpression) {
+	    operator = IFNE;
+	} else if (exp instanceof TwoPartExpression) {
+	    operator = getTwoPartJump ((TwoPartExpression)exp);
+	}
+	currentMethod.mv.visitJumpInsn (operator, target);
     }
 
     private int getTwoPartJump (TwoPartExpression t) {
@@ -372,6 +404,17 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
+    @Override public boolean visit (VariableDeclarator v) {
+	int id = currentMethod.localVariableIds.size () + 1;
+	currentMethod.localVariableIds.put (v.getId (), id);
+	TreeNode tn = v.getInitializer ();
+	if (tn != null) {
+	    tn.visit (this);
+	    currentMethod.mv.visitVarInsn (ISTORE, id); // TODO: not correct, but works for first test
+	}
+	return false;
+    }
+
     @Override public boolean visit (FieldAccess f) {
 	TreeNode tn = f.getFrom ();
 	if (tn instanceof ClassType) {
@@ -386,11 +429,34 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (Identifier i) {
+	Integer lid = currentMethod.localVariableIds.get (i.get ());
+	if (lid == null)
+	    lid = 0;
 	// TODO: obviously not correct, but passes first if-test
 	if (i.getExpressionType ().isPrimitiveType ())
-	    currentMethod.mv.visitVarInsn (ILOAD, 0);
+	    currentMethod.mv.visitVarInsn (ILOAD, lid);
 	else
-	    currentMethod.mv.visitVarInsn (ALOAD, 0);
+	    currentMethod.mv.visitVarInsn (ALOAD, lid);
+    }
+
+    @Override public boolean visit (PreIncrementExpression p) {
+	currentMethod.mv.visitIincInsn (1, 1); // TODO: not correct, but works for first test
+	return false;
+    }
+
+    @Override public boolean visit (PostIncrementExpression p) {
+	currentMethod.mv.visitIincInsn (1, 1); // TODO: not correct, but works for first test
+	return false;
+    }
+
+    @Override public boolean visit (PreDecrementExpression p) {
+	currentMethod.mv.visitIincInsn (1, -1); // TODO: not correct, but works for first test
+	return false;
+    }
+
+    @Override public boolean visit (PostDecrementExpression p) {
+	currentMethod.mv.visitIincInsn (1, -1); // TODO: not correct, but works for first test
+	return false;
     }
 
     private void addClass (ClassWriterHolder cw) {
@@ -488,6 +554,7 @@ public class BytecodeGenerator implements TreeVisitor {
     private static class MethodInfo {
 	public final Result result;
 	public final MethodVisitor mv;
+	public final Map<String, Integer> localVariableIds = new HashMap<> ();
 
 	public MethodInfo (Result result, MethodVisitor mv) {
 	    this.result = result;

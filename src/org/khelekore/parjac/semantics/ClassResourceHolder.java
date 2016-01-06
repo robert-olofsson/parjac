@@ -126,6 +126,14 @@ public class ClassResourceHolder {
 	return r.fieldTypes.get (field);
     }
 
+    public boolean isInterface (String fqn) {
+	Result r = foundClasses.get (fqn);
+	if (r == null)
+	    throw new IllegalArgumentException ("No such class: " + fqn);
+	loadNoCheckedException (r);
+	return FlagsHelper.isInterface (r.accessFlags);
+    }
+
     private boolean loadNoCheckedException (Result r) {
 	try {
 	    r.ensureNodeIsLoaded ();

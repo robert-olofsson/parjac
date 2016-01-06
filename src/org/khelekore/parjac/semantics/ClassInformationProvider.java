@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
+import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 
@@ -108,5 +109,12 @@ public class ClassInformationProvider {
 	} else {
 	    return crh.getMethods (fqn);
 	}
+    }
+
+    public boolean isInterface (String type) {
+	TreeNode tn = getType (type);
+	if (tn != null)
+	    return tn instanceof NormalInterfaceDeclaration;
+	return crh.isInterface (type);
     }
 }

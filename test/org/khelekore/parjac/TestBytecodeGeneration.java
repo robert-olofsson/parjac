@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.TestParseHelper;
@@ -179,6 +180,19 @@ public class TestBytecodeGeneration {
 	Object ret = m.invoke (null, argument);
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
 	assert expectedResult == (Integer)ret : "Got wrong result, expected " + expectedResult + ", got: " + ret;
+    }
+
+    @Test
+    public void testSimpleFor () throws IOException, ReflectiveOperationException {
+	String s =
+	    "public class FOR { public static void f (Runnable r) {" +
+	    "    for (int i = 0; i < 10; i++) r.run (); }}";
+	Class<?> c = getClass (s, "FOR");
+	AtomicInteger counter = new AtomicInteger (0);
+	Runnable r = () -> counter.incrementAndGet ();
+	Method m = c.getMethod ("f", Runnable.class);
+	m.invoke (null, r);
+	assert counter.get () == 10 : "Got wrong result: " + counter.get ();
     }
 
     private Object compileAndRun (String s) throws ReflectiveOperationException {
