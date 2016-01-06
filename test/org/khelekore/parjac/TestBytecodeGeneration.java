@@ -184,9 +184,18 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testSimpleFor () throws IOException, ReflectiveOperationException {
-	String s =
-	    "public class FOR { public static void f (Runnable r) {" +
+	String s = "public class FOR { public static void f (Runnable r) {" +
 	    "    for (int i = 0; i < 10; i++) r.run (); }}";
+	checkForLoop (s);
+	s = "public class FOR { public static void f (Runnable r) {" +
+	    "    for (int i = 10; i > 0; i--) r.run (); }}";
+	checkForLoop (s);
+	s = "public class FOR { public static void f (Runnable r) {" +
+	    "    for (int i = 10, j = 0; i > j; i--) r.run (); }}";
+	checkForLoop (s);
+    }
+
+    private void checkForLoop (String s) throws IOException, ReflectiveOperationException {
 	Class<?> c = getClass (s, "FOR");
 	AtomicInteger counter = new AtomicInteger (0);
 	Runnable r = () -> counter.incrementAndGet ();
