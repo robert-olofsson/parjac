@@ -38,6 +38,10 @@ test {
   }
 }
 
+javadoc {
+  options.addBooleanOption('Xdoclint:all,-missing', true)
+}
+
 task showMeCache << {
   configurations.compile.each { println it }
 }
