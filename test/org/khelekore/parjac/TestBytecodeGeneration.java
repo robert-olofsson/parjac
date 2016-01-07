@@ -183,6 +183,17 @@ public class TestBytecodeGeneration {
     }
 
     @Test
+    public void testSimpleWhile () throws IOException, ReflectiveOperationException {
+	String s = "public class WHILE { public static void f (Runnable r) {" +
+	    "    int i = 0; while (i < 7) { r.run (); i++; }}}";
+	checkWhileLoop (s);
+    }
+
+    private void checkWhileLoop (String s) throws IOException, ReflectiveOperationException {
+	checkRunnableLoop (s, "WHILE", "f", 7);
+    }
+
+    @Test
     public void testSimpleFor () throws IOException, ReflectiveOperationException {
 	String s = "public class FOR { public static void f (Runnable r) {" +
 	    "    for (int i = 0; i < 10; i++) r.run (); }}";
@@ -196,12 +207,18 @@ public class TestBytecodeGeneration {
     }
 
     private void checkForLoop (String s) throws IOException, ReflectiveOperationException {
-	Class<?> c = getClass (s, "FOR");
+	checkRunnableLoop (s, "FOR", "f", 10);
+    }
+
+    private void checkRunnableLoop (String s, String clzName, String methodName, int expectedLoops)
+	throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass (s, clzName);
 	AtomicInteger counter = new AtomicInteger (0);
 	Runnable r = () -> counter.incrementAndGet ();
-	Method m = c.getMethod ("f", Runnable.class);
+	Method m = c.getMethod (methodName, Runnable.class);
 	m.invoke (null, r);
-	assert counter.get () == 10 : "Got wrong result: " + counter.get ();
+	assert counter.get () == expectedLoops :
+	"Got wrong result: " + counter.get () + ", expected: " + expectedLoops;
     }
 
     private Object compileAndRun (String s) throws ReflectiveOperationException {
