@@ -186,27 +186,26 @@ public class TestBytecodeGeneration {
     public void testSimpleWhile () throws IOException, ReflectiveOperationException {
 	String s = "public class WHILE { public static void f (Runnable r) {" +
 	    "    int i = 0; while (i < 7) { r.run (); i++; }}}";
-	checkWhileLoop (s);
+	checkRunnableLoop (s, "WHILE", "f", 7);
     }
 
-    private void checkWhileLoop (String s) throws IOException, ReflectiveOperationException {
-	checkRunnableLoop (s, "WHILE", "f", 7);
+    @Test
+    public void testSimpleDo () throws IOException, ReflectiveOperationException {
+	String s = "public class DO { public static void f (Runnable r) {" +
+	    "    int i = 0; do { r.run (); i++; } while (i < 8); }}";
+	checkRunnableLoop (s, "DO", "f", 8);
     }
 
     @Test
     public void testSimpleFor () throws IOException, ReflectiveOperationException {
 	String s = "public class FOR { public static void f (Runnable r) {" +
 	    "    for (int i = 0; i < 10; i++) r.run (); }}";
-	checkForLoop (s);
+	checkRunnableLoop (s, "FOR", "f", 10);
 	s = "public class FOR { public static void f (Runnable r) {" +
 	    "    for (int i = 10; i > 0; i--) r.run (); }}";
-	checkForLoop (s);
+	checkRunnableLoop (s, "FOR", "f", 10);
 	s = "public class FOR { public static void f (Runnable r) {" +
 	    "    for (int i = 10, j = 0; i > j; i--) r.run (); }}";
-	checkForLoop (s);
-    }
-
-    private void checkForLoop (String s) throws IOException, ReflectiveOperationException {
 	checkRunnableLoop (s, "FOR", "f", 10);
     }
 

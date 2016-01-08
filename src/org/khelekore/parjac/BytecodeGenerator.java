@@ -359,6 +359,17 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (DoStatement d) {
+	Label start = new Label ();
+	Label end = new Label ();
+	currentMethod.mv.visitLabel (start);
+	TreeNode tn = d.getStatement ();
+	if (tn != null)
+	    tn.visit (this);
+	tn = d.getExpression ();
+	tn.visit (this);
+	handleJump (tn, end);
+	currentMethod.mv.visitJumpInsn (GOTO, start);
+	currentMethod.mv.visitLabel (end);
 	return false;
     }
 
