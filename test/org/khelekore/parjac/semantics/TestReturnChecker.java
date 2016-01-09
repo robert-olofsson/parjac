@@ -150,6 +150,19 @@ public class TestReturnChecker extends TestBase {
 			    "        return 2.0;\n" +
 			    "}}");
 	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo {\n" +
+			    "void bar (int a) {\n" +
+			    "    int b = 0;\n" +
+			    "    if (a > 3) {\n" +
+			    "         b = 2;\n" +
+			    "    } else {\n" +
+			    "         b = 7;\n" +
+			    "    }\n" +
+			    "    b *= 3;\n" +
+			    "}}");
+	assertNoErrors ();
     }
 
     @Test

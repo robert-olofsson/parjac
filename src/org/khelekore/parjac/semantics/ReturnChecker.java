@@ -65,12 +65,17 @@ public class ReturnChecker implements TreeVisitor {
     @Override public boolean visit (MethodDeclaration md) {
 	MethodBody b = md.getBody ();
 	if (!b.isEmpty ()) {
-	    if (!checkBlock (b.getBlock (), md.getResult ()))
+	    if (!checkMethodBlock (b.getBlock (), md.getResult ()))
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     b.getParsePosition (),
 							     "Method missing return"));
 	}
 	return true;
+    }
+
+    private boolean checkMethodBlock (Block b, Result res) {
+	boolean ends = checkStatements (b.getStatements (), res);
+	return ends || res instanceof Result.VoidResult;
     }
 
     private boolean checkBlock (Block b, Result res) {
@@ -94,7 +99,7 @@ public class ReturnChecker implements TreeVisitor {
 		}
 	    }
 	}
-	return ends || res instanceof Result.VoidResult;
+	return ends;
     }
 
     private class StatementChecker extends SameTypeTreeVisitor {
@@ -110,17 +115,17 @@ public class ReturnChecker implements TreeVisitor {
 	}
 
 	@Override public boolean visit (ReturnStatement r) {
-	    ends = true;
+	    setEnds ();
 	    checkType (r, res);
 	    return true;
 	}
 
 	@Override public void visit (ThrowStatement t) {
-	    ends = true;
+	    setEnds ();
 	}
 
 	@Override public void visit (BreakStatement b) {
-	    ends = true;
+	    setEnds ();
 	}
 
 	@Override public boolean visit (IfThenStatement i) {
@@ -159,7 +164,7 @@ public class ReturnChecker implements TreeVisitor {
 	private void checkExpressionStatement (TreeNode exp, TreeNode statement) {
 	    checkStatement (statement);
 	    if (isTrue (exp))
-		ends = true;   // infinite loop!
+		setEnds ();   // infinite loop!
 	}
 
 	private boolean isTrue (TreeNode t) {
@@ -188,7 +193,7 @@ public class ReturnChecker implements TreeVisitor {
 		}
 	    }
 	    if (lastEnds && hasDefault)
-		ends = true;
+		setEnds ();
 	    return false;
 	}
 
@@ -224,9 +229,9 @@ public class ReturnChecker implements TreeVisitor {
 		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
 							       f.getParsePosition (),
 							       "Return in finally"));
-		ends = true;
+		setEnds ();
 	    } else if (blockEnds) {
-		ends = true;
+		setEnds ();
 	    }
 	    return false;
 	}
@@ -320,6 +325,10 @@ public class ReturnChecker implements TreeVisitor {
 							 tn.getParsePosition (),
 							 "Operator: %s require %s type, found: %s",
 							 operator, requiredType, et.toString ()));
+	}
+
+	private void setEnds () {
+	    ends = true;
 	}
     }
 
