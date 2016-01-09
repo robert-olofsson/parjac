@@ -40,10 +40,10 @@ public class ExpressionType {
     private final static Set<ExpressionType> NUMERIC_TYPES = new HashSet<> ();
     private final static Map<ExpressionType, String> PRIMITIVE_NAMES = new HashMap<> ();
     static {
-	ALLOWED_UPCASTS.put (BYTE, Arrays.asList (SHORT, INT, LONG));
-	ALLOWED_UPCASTS.put (SHORT, Arrays.asList (INT, LONG));
-	ALLOWED_UPCASTS.put (CHAR, Arrays.asList (INT, LONG));
-	ALLOWED_UPCASTS.put (INT, Arrays.asList (LONG));
+	ALLOWED_UPCASTS.put (BYTE, Arrays.asList (SHORT, INT, LONG, FLOAT, DOUBLE));
+	ALLOWED_UPCASTS.put (SHORT, Arrays.asList (INT, LONG, FLOAT, DOUBLE));
+	ALLOWED_UPCASTS.put (CHAR, Arrays.asList (INT, LONG, FLOAT, DOUBLE));
+	ALLOWED_UPCASTS.put (INT, Arrays.asList (LONG, FLOAT, DOUBLE));
 	ALLOWED_UPCASTS.put (FLOAT, Arrays.asList (DOUBLE));
 
 	INTEGRAL_TYPES.add (BYTE);

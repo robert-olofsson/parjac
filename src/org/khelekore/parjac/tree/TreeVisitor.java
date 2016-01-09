@@ -204,14 +204,16 @@ public interface TreeVisitor {
     default void visit (BreakStatement b) {
     }
 
-    default void visit (LocalVariableDeclaration l) {
+    default boolean visit (LocalVariableDeclaration l) {
+	return true;
     }
 
     default boolean visit (VariableDeclarator v) {
 	return true;
     }
 
-    default void visit (CastExpression c) {
+    default boolean visit (CastExpression c) {
+	return true;
     }
 
     default void visit (Identifier i) {

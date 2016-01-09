@@ -276,13 +276,15 @@ public class ClassSetter {
 	    return true;
 	}
 
-	@Override public void visit (LocalVariableDeclaration l) {
+	@Override public boolean visit (LocalVariableDeclaration l) {
 	    setType (l.getType (), this);
 	    l.getVariables ().get ().forEach (v -> currentScope.tryToAdd (l, v, tree, diagnostics));
+	    return false;
 	}
 
-	@Override public void visit (CastExpression c) {
+	@Override public boolean visit (CastExpression c) {
 	    setType (c.getType (), this);
+	    return true;
 	}
 
 	@Override public void visit (DottedName d) {

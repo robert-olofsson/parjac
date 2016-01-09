@@ -27,7 +27,6 @@ import org.khelekore.parjac.tree.PostDecrementExpression;
 import org.khelekore.parjac.tree.PostIncrementExpression;
 import org.khelekore.parjac.tree.PreDecrementExpression;
 import org.khelekore.parjac.tree.PreIncrementExpression;
-import org.khelekore.parjac.tree.PrimitiveTokenType;
 import org.khelekore.parjac.tree.Result;
 import org.khelekore.parjac.tree.ReturnStatement;
 import org.khelekore.parjac.tree.SameTypeTreeVisitor;
@@ -246,7 +245,7 @@ public class ReturnChecker implements TreeVisitor {
 	    }
 	}
 
-	@Override public void visit (CastExpression c) {
+	@Override public boolean visit (CastExpression c) {
 	    if (match (c.getType (), c.getExpression ())) {
 		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
 							       c.getParsePosition (),
@@ -254,6 +253,7 @@ public class ReturnChecker implements TreeVisitor {
 							       c.getExpression ().getExpressionType (),
 							       c.getType ().getExpressionType ()));
 	    }
+	    return true;
 	}
 
 	@Override public void visit (UnaryExpression u) {

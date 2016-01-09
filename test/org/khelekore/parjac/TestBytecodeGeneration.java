@@ -220,6 +220,29 @@ public class TestBytecodeGeneration {
 	"Got wrong result: " + counter.get () + ", expected: " + expectedLoops;
     }
 
+    @Test
+    public void testAutoCast () throws IOException, ReflectiveOperationException {
+	testAutoCast ("public class Foo { public static int foo () { byte l = 3; return l; }}", Integer.class);
+	testAutoCast ("public class Foo { public static int foo () { char l = 3; return l; }}", Integer.class);
+	testAutoCast ("public class Foo { public static int foo () { short l = 3; return l; }}", Integer.class);
+
+	testAutoCast ("public class Foo { public static long foo () { int l = 3; return l; }}", Long.class);
+	testAutoCast ("public class Foo { public static long foo () { short l = 3; return l; }}", Long.class);
+	testAutoCast ("public class Foo { public static long foo () { char l = 3; return l; }}", Long.class);
+	testAutoCast ("public class Foo { public static long foo () { byte l = 3; return l; }}", Long.class);
+
+	testAutoCast ("public class Foo { public static double foo () { int l = 3; return l; }}", Double.class);
+	testAutoCast ("public class Foo { public static double foo () { short l = 3; return l; }}", Double.class);
+	testAutoCast ("public class Foo { public static double foo () { char l = 3; return l; }}", Double.class);
+	testAutoCast ("public class Foo { public static double foo () { byte l = 3; return l; }}", Double.class);
+    }
+
+    private void testAutoCast (String s, Class<?> retType) throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRun (s);
+	assert ret.getClass () == retType : "Got wrong type back: " + ret;
+	assert ((Number)ret).intValue () == 3 : "Got wrong result, expected 3, got: " + ret;
+    }
+
     private Object compileAndRun (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s, "Foo");
 	Method m = c.getMethod ("foo");

@@ -8,7 +8,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.FlagsHelper;
 import org.khelekore.parjac.tree.*;
@@ -137,6 +136,15 @@ public class BytecodeGenerator implements TreeVisitor {
 					cw.visitMethod (mods, m.getMethodName (),
 							m.getDescription (), null, null));
 	addMethod (mi);
+	FormalParameterList ls = m.getParameters ();
+	if (ls != null) {
+	    NormalFormalParameterList fpl = m.getParameters ().getParameters ();
+	    for (FormalParameter fp : fpl.getFormalParameters ())
+		currentMethod.localVariableIds.put (fp.getId (), currentMethod.localVariableIds.size ());
+	    LastFormalParameter lfp = fpl.getLastFormalParameter ();
+	    if (lfp != null)
+		currentMethod.localVariableIds.put (lfp.getId (), currentMethod.localVariableIds.size ());
+	}
 	return true;
     }
 
@@ -194,21 +202,24 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endReturn (ReturnStatement r) {
 	if (r.hasExpression ()) {
 	    Result.TypeResult tr = (TypeResult)currentMethod.result;
-	    TreeNode tn = tr.getReturnType ();
-	    if (tn instanceof PrimitiveTokenType) {
-		PrimitiveTokenType ptt = (PrimitiveTokenType)tn;
-		Token t = ptt.get ();
-		switch (t) {
-		case BOOLEAN:
-		case BYTE:
-		case SHORT:
-		case CHAR:
-		case INT:
-		    currentMethod.mv.visitInsn (IRETURN); break;
-		case LONG: currentMethod.mv.visitInsn (LRETURN); break;
-		case DOUBLE: currentMethod.mv.visitInsn (DRETURN); break;
-		case FLOAT: currentMethod.mv.visitInsn (FRETURN); break;
-		default: throw new IllegalArgumentException ("Got strange token: " + t);
+	    ExpressionType et = tr.getReturnType ().getExpressionType ();
+	    ExpressionType actual = r.getExpression ().getExpressionType ();
+	    if (et.isPrimitiveType ()) {
+		outputPrimitiveCasts (actual, et);
+		if (et == ExpressionType.BOOLEAN ||
+		    et == ExpressionType.BYTE ||
+		    et == ExpressionType.SHORT ||
+		    et == ExpressionType.CHAR ||
+		    et == ExpressionType.INT) {
+		    currentMethod.mv.visitInsn (IRETURN);
+		} else if (et == ExpressionType.LONG) {
+		    currentMethod.mv.visitInsn (LRETURN);
+		} else if (et == ExpressionType.DOUBLE) {
+		    currentMethod.mv.visitInsn (DRETURN);
+		} else if (et == ExpressionType.FLOAT) {
+		    currentMethod.mv.visitInsn (FRETURN);
+		} else {
+		    throw new IllegalArgumentException ("Unhandled type: " + et);
 		}
 	    } else {
 		currentMethod.mv.visitInsn (ARETURN);
@@ -434,13 +445,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
-    @Override public boolean visit (VariableDeclarator v) {
-	int id = currentMethod.localVariableIds.size () + 1;
-	currentMethod.localVariableIds.put (v.getId (), id);
-	TreeNode tn = v.getInitializer ();
-	if (tn != null) {
-	    tn.visit (this);
-	    currentMethod.mv.visitVarInsn (ISTORE, id); // TODO: not correct, but works for first test
+    @Override public boolean visit (LocalVariableDeclaration l) {
+	for (VariableDeclarator vd : l.getVariables ().get ()) {
+	    int id = currentMethod.localVariableIds.size ();
+	    currentMethod.localVariableIds.put (vd.getId (), id);
+	    TreeNode tn = vd.getInitializer ();
+	    if (tn != null) {
+		tn.visit (this);
+		currentMethod.mv.visitVarInsn (ISTORE, id); // TODO: not correct, but works for first test
+	    }
 	}
 	return false;
     }
@@ -456,6 +469,91 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    return true;
 	}
+    }
+
+    @Override public boolean visit (CastExpression c) {
+	c.getExpression ().visit (this);
+	ExpressionType target = c.getExpressionType ();
+	if (target.isPrimitiveType ()) {
+	    ExpressionType source = c.getExpression ().getExpressionType ();
+	    outputPrimitiveCasts (source, target);
+	} else {
+	    currentMethod.mv.visitTypeInsn (CHECKCAST, target.getSlashName ());
+	}
+	return false;
+    }
+
+    private void outputPrimitiveCasts (ExpressionType source, ExpressionType target) {
+	if (source == target)
+	    return;
+	if (target == ExpressionType.INT && isIntType (source))
+	    return;
+	if (requireIntConversion (source, target)) {
+	    currentMethod.mv.visitInsn (getCast (source, ExpressionType.INT));
+	    source = ExpressionType.INT;
+	}
+	currentMethod.mv.visitInsn (getCast (source, target));
+    }
+
+    private boolean requireIntConversion (ExpressionType source, ExpressionType target) {
+	if (source == ExpressionType.LONG ||
+	    source == ExpressionType.FLOAT ||
+	    source == ExpressionType.DOUBLE) {
+	    return target == ExpressionType.BYTE ||
+		target == ExpressionType.CHAR ||
+		target == ExpressionType.SHORT;
+	}
+	return false;
+    }
+
+    private int getCast (ExpressionType source, ExpressionType target) {
+	if (target == ExpressionType.BYTE) {
+	    return I2B;
+	} else if (target == ExpressionType.CHAR) {
+	    return I2C;
+	} else if (target == ExpressionType.SHORT) {
+	    return I2S;
+	} else if (target == ExpressionType.INT) {
+	    if (source == ExpressionType.LONG) {
+		return L2I;
+	    } else if (source == ExpressionType.FLOAT) {
+		return F2I;
+	    } else if (source == ExpressionType.DOUBLE) {
+		return D2I;
+	    }
+	} else if (target == ExpressionType.LONG) {
+	    if (isIntType (source)) {
+		return I2L;
+	    } else if (source == ExpressionType.FLOAT) {
+		return F2L;
+	    } else if (source == ExpressionType.DOUBLE) {
+		return D2L;
+	    }
+	} else if (target == ExpressionType.FLOAT) {
+	    if (isIntType (source)) {
+		return I2F;
+	    } else if (source == ExpressionType.LONG) {
+		return L2F;
+	    } else if (source == ExpressionType.DOUBLE) {
+		return D2F;
+	    }
+	} else if (target == ExpressionType.DOUBLE) {
+	    if (isIntType (source)) {
+		return I2D;
+	    } else if (source == ExpressionType.LONG) {
+		return L2D;
+	    } else if (source == ExpressionType.FLOAT) {
+		return F2D;
+	    }
+	}
+	throw new IllegalStateException ("Unable to cast from: " + source + " to "  + target);
+    }
+
+    private boolean isIntType (ExpressionType et) {
+	return et == ExpressionType.BYTE ||
+	    et == ExpressionType.CHAR ||
+	    et == ExpressionType.SHORT ||
+	    et == ExpressionType.INT;
     }
 
     @Override public void visit (Identifier i) {

@@ -37,8 +37,8 @@ public class CastExpression extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	expression.visit (visitor);
+	if (visitor.visit (this))
+	    expression.visit (visitor);
     }
 
     public Collection<? extends TreeNode> getChildNodes () {
