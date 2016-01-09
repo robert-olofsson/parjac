@@ -38,6 +38,7 @@ public class ExpressionType {
     private final static Map<ExpressionType, List<ExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
     private final static Set<ExpressionType> INTEGRAL_TYPES = new HashSet<> ();
     private final static Set<ExpressionType> NUMERIC_TYPES = new HashSet<> ();
+    private final static Map<ExpressionType, String> PRIMITIVE_NAMES = new HashMap<> ();
     static {
 	ALLOWED_UPCASTS.put (BYTE, Arrays.asList (SHORT, INT, LONG));
 	ALLOWED_UPCASTS.put (SHORT, Arrays.asList (INT, LONG));
@@ -54,6 +55,16 @@ public class ExpressionType {
 	NUMERIC_TYPES.addAll (INTEGRAL_TYPES);
 	NUMERIC_TYPES.add (FLOAT);
 	NUMERIC_TYPES.add (DOUBLE);
+
+	PRIMITIVE_NAMES.put (BYTE, "byte");
+	PRIMITIVE_NAMES.put (SHORT, "short");
+	PRIMITIVE_NAMES.put (CHAR, "char");
+	PRIMITIVE_NAMES.put (INT, "int");
+	PRIMITIVE_NAMES.put (LONG, "long");
+	PRIMITIVE_NAMES.put (FLOAT, "float");
+	PRIMITIVE_NAMES.put (DOUBLE, "double");
+	PRIMITIVE_NAMES.put (BOOLEAN, "boolean");
+	PRIMITIVE_NAMES.put (VOID, "void");
     }
 
     public static boolean mayBeAutoCasted (ExpressionType from, ExpressionType to) {
@@ -128,7 +139,7 @@ public class ExpressionType {
     }
 
     @Override public String toString () {
-	return className;
+	return isPrimitive ? PRIMITIVE_NAMES.get (this) : className;
     }
 
     public boolean isPrimitiveType () {

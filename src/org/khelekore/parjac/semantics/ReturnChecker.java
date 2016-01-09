@@ -250,9 +250,9 @@ public class ReturnChecker implements TreeVisitor {
 	    if (match (c.getType (), c.getExpression ())) {
 		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
 							       c.getParsePosition (),
-							       "Unneccessary cast to: %s, already: %s",
-							       c.getType ().getExpressionType (),
-							       c.getExpression ().getExpressionType ()));
+							       "Unneccessary cast from %s to %s",
+							       c.getExpression ().getExpressionType (),
+							       c.getType ().getExpressionType ()));
 	    }
 	}
 
