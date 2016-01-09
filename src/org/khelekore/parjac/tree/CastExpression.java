@@ -32,6 +32,10 @@ public class CastExpression extends PositionNode {
 	return type;
     }
 
+    public TreeNode getExpression () {
+	return expression;
+    }
+
     public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	expression.visit (visitor);

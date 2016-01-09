@@ -14,6 +14,7 @@ import org.khelekore.parjac.tree.Block;
 import org.khelekore.parjac.tree.BlockStatements;
 import org.khelekore.parjac.tree.BooleanLiteral;
 import org.khelekore.parjac.tree.BreakStatement;
+import org.khelekore.parjac.tree.CastExpression;
 import org.khelekore.parjac.tree.Catches;
 import org.khelekore.parjac.tree.DoStatement;
 import org.khelekore.parjac.tree.EnhancedForStatement;
@@ -245,6 +246,16 @@ public class ReturnChecker implements TreeVisitor {
 	    }
 	}
 
+	@Override public void visit (CastExpression c) {
+	    if (match (c.getType (), c.getExpression ())) {
+		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
+							       c.getParsePosition (),
+							       "Unneccessary cast to: %s, already: %s",
+							       c.getType ().getExpressionType (),
+							       c.getExpression ().getExpressionType ()));
+	    }
+	}
+
 	@Override public void visit (UnaryExpression u) {
 	    Token op = u.getOperator ();
 	    switch (op) {
@@ -368,7 +379,7 @@ public class ReturnChecker implements TreeVisitor {
 	if (resultType.isPrimitiveType () != expType.isPrimitiveType ())
 	    return false;
 	// Ok, not a direct match
-	if (result instanceof PrimitiveTokenType) {
+	if (resultType.isPrimitiveType ()) {
 	    // need to allow for implicit upcast
 	    return ExpressionType.mayBeAutoCasted (expType, resultType);
 	}

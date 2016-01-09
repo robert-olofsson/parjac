@@ -101,6 +101,36 @@ public class TestReturnChecker extends TestBase {
     }
 
     @Test
+    public void testDowncast () throws IOException {
+	parseAndSetClasses ("class Foo { float bar () { double d = 3.0; return d; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { float bar () { double d = 3.0; return (float)d; }}");
+	assertNoErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { int bar () { long l = 3; return l; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { int bar () { long l = 3; return (int)l; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { int bar () { int l = 3; return (int)l; }}");
+	assertNoErrors ();
+	assert diagnostics.hasWarning () : "Expected to find useless cast warning";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { Object bar () { String s = \"\"; return s; }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { Object bar () { String s = \"\"; return (Object)s; }}");
+	assertNoErrors ();
+	assert diagnostics.hasWarning () : "Expected to find useless cast warning";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
+    @Test
     public void testSuperClassReturn () throws IOException {
 	parseAndSetClasses ("class Foo { Object bar () { String s = \"hello\"; return s; }}");
 	assertNoErrors ();
