@@ -645,4 +645,22 @@ public class TestClassSetter extends TestBase {
 	assert ct.getFullName ().equals (expectedType) : "Got wrong type: " +
 	    ct.getFullName () + ", expected: " + expectedType;
     }
+
+    @Test
+    public void testMissingField () throws IOException {
+	parseAndSetClasses ("class A { void a () { return b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; return a + b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; int c = b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; int c = a + b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+    }
 }

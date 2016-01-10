@@ -229,12 +229,6 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	// Need to set the expression type before we can replace things
-	@Override public void endReturn (ReturnStatement r) {
-	    if (r.hasExpression ())
-		r.setExpression (replaceAndSetType (r.getExpression ()));
-	}
-
 	@Override public void visit (Assignment a) {
 	    TreeNode lhs = a.lhs ();
 	    a.lhs (replaceAndSetType (lhs));
@@ -290,6 +284,14 @@ public class ClassSetter {
 	@Override public boolean visit (CastExpression c) {
 	    setType (c.getType (), this);
 	    return true;
+	}
+
+	@Override public void visit (Identifier i) {
+	    FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
+	    if (fi == null) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+							     "Cannot find symbol: %s", i.get ()));
+	    }
 	}
 
 	@Override public void visit (DottedName d) {
