@@ -107,6 +107,9 @@ public interface TreeVisitor {
     default void visit (IntLiteral i) {
     }
 
+    default void visit (LongLiteral l) {
+    }
+
     default void visit (DoubleLiteral d) {
     }
 

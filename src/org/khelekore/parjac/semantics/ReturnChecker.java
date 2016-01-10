@@ -9,6 +9,7 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.Assignment;
 import org.khelekore.parjac.tree.BasicForStatement;
 import org.khelekore.parjac.tree.Block;
 import org.khelekore.parjac.tree.BlockStatements;
@@ -21,6 +22,8 @@ import org.khelekore.parjac.tree.EnhancedForStatement;
 import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.Finally;
 import org.khelekore.parjac.tree.IfThenStatement;
+import org.khelekore.parjac.tree.IntLiteral;
+import org.khelekore.parjac.tree.LocalVariableDeclaration;
 import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
 import org.khelekore.parjac.tree.PostDecrementExpression;
@@ -41,6 +44,7 @@ import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TryStatement;
 import org.khelekore.parjac.tree.TwoPartExpression;
 import org.khelekore.parjac.tree.UnaryExpression;
+import org.khelekore.parjac.tree.VariableDeclarator;
 import org.khelekore.parjac.tree.WhileStatement;
 
 /** Test that we return correct types from methods and if and while checks as
@@ -118,6 +122,18 @@ public class ReturnChecker implements TreeVisitor {
 	    setEnds ();
 	    checkType (r, res);
 	    return true;
+	}
+
+	@Override public void visit (Assignment a) {
+	    TreeNode left = a.lhs ();
+	    TreeNode right = a.rhs ();
+	    if (!match (left, right)) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     a.getParsePosition (),
+							     "Can not set: %s to: %s",
+							     left.getExpressionType (),
+							     right.getExpressionType ()));
+	    }
 	}
 
 	@Override public void visit (ThrowStatement t) {
@@ -243,6 +259,20 @@ public class ReturnChecker implements TreeVisitor {
 							     "Not a boolean expression: %s, node: %s",
 							     tn.getExpressionType (), tn));
 	    }
+	}
+
+	@Override public boolean visit (LocalVariableDeclaration l) {
+	    for (VariableDeclarator vd : l.getVariables ().get ()) {
+		TreeNode initializer = vd.getInitializer ();
+		if (initializer != null && !match (l.getType (), initializer)) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+								 initializer.getParsePosition (),
+								 "Wrong type, require: %s, found: %s",
+								 l.getExpressionType (),
+								 initializer.getExpressionType ()));
+		}
+	    }
+	    return true;
 	}
 
 	@Override public boolean visit (CastExpression c) {
@@ -381,7 +411,23 @@ public class ReturnChecker implements TreeVisitor {
 	// Ok, not a direct match
 	if (resultType.isPrimitiveType ()) {
 	    // need to allow for implicit upcast
-	    return ExpressionType.mayBeAutoCasted (expType, resultType);
+	    if (ExpressionType.mayBeAutoCasted (expType, resultType))
+		return true;
+	    if (exp instanceof IntLiteral) {
+		IntLiteral il = (IntLiteral)exp;
+		int v = il.get ();
+		if (resultType == ExpressionType.BYTE) {
+		    if (v < Byte.MAX_VALUE && v > Byte.MIN_VALUE)
+			return true;
+		} else if (resultType == ExpressionType.SHORT) {
+		    if (v < Short.MAX_VALUE && v > Short.MIN_VALUE)
+			return true;
+		} else if (resultType == ExpressionType.CHAR) {
+		    if (v < Character.MAX_VALUE && v > Character.MIN_VALUE)
+			return true;
+		}
+	    }
+	    return false;
 	}
 	if (expType == ExpressionType.NULL)
 	    return true;

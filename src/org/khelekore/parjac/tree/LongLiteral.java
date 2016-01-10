@@ -18,6 +18,10 @@ public class LongLiteral extends PositionNode implements LiteralValue, NumericVa
 	return getClass ().getSimpleName () + "{" + value + "}";
     }
 
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
     @Override public LongLiteral getNegated () {
 	return new LongLiteral (-value, getParsePosition ());
     }

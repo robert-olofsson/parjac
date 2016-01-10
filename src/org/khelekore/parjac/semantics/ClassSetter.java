@@ -278,7 +278,12 @@ public class ClassSetter {
 
 	@Override public boolean visit (LocalVariableDeclaration l) {
 	    setType (l.getType (), this);
-	    l.getVariables ().get ().forEach (v -> currentScope.tryToAdd (l, v, tree, diagnostics));
+	    for (VariableDeclarator v : l.getVariables ().get ()) {
+		TreeNode tn = v.getInitializer ();
+		if (tn != null)
+		    tn.visit (this);
+		currentScope.tryToAdd (l, v, tree, diagnostics);
+	    }
 	    return false;
 	}
 

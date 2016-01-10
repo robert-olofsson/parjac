@@ -222,24 +222,31 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testAutoCast () throws IOException, ReflectiveOperationException {
-	testAutoCast ("public class Foo { public static int foo () { byte l = 3; return l; }}", Integer.class);
-	testAutoCast ("public class Foo { public static int foo () { char l = 3; return l; }}", Integer.class);
-	testAutoCast ("public class Foo { public static int foo () { short l = 3; return l; }}", Integer.class);
+	checkResult ("public class Foo { public static int foo () { byte l = 3; return l; }}", Integer.class);
+	checkResult ("public class Foo { public static int foo () { char l = 3; return l; }}", Integer.class);
+	checkResult ("public class Foo { public static int foo () { short l = 3; return l; }}", Integer.class);
 
-	testAutoCast ("public class Foo { public static long foo () { int l = 3; return l; }}", Long.class);
-	testAutoCast ("public class Foo { public static long foo () { short l = 3; return l; }}", Long.class);
-	testAutoCast ("public class Foo { public static long foo () { char l = 3; return l; }}", Long.class);
-	testAutoCast ("public class Foo { public static long foo () { byte l = 3; return l; }}", Long.class);
+	checkResult ("public class Foo { public static long foo () { int l = 3; return l; }}", Long.class);
+	checkResult ("public class Foo { public static long foo () { short l = 3; return l; }}", Long.class);
+	checkResult ("public class Foo { public static long foo () { char l = 3; return l; }}", Long.class);
+	checkResult ("public class Foo { public static long foo () { byte l = 3; return l; }}", Long.class);
 
-	testAutoCast ("public class Foo { public static double foo () { int l = 3; return l; }}", Double.class);
-	testAutoCast ("public class Foo { public static double foo () { short l = 3; return l; }}", Double.class);
-	testAutoCast ("public class Foo { public static double foo () { char l = 3; return l; }}", Double.class);
-	testAutoCast ("public class Foo { public static double foo () { byte l = 3; return l; }}", Double.class);
+	checkResult ("public class Foo { public static double foo () { int l = 3; return l; }}", Double.class);
+	checkResult ("public class Foo { public static double foo () { short l = 3; return l; }}", Double.class);
+	checkResult ("public class Foo { public static double foo () { char l = 3; return l; }}", Double.class);
+	checkResult ("public class Foo { public static double foo () { byte l = 3; return l; }}", Double.class);
     }
 
-    private void testAutoCast (String s, Class<?> retType) throws IOException, ReflectiveOperationException {
+    @Test
+    public void testNonIntTypes () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static long foo () { long l = 3L; return l; }}", Long.class);
+	checkResult ("public class Foo { public static float foo () { float f = 3.0f; return f; }}", Float.class);
+	checkResult ("public class Foo { public static double foo () { double d = 3.0; return d; }}", Double.class);
+    }
+
+    private void checkResult (String s, Class<?> retType) throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRun (s);
-	assert ret.getClass () == retType : "Got wrong type back: " + ret;
+	assert ret.getClass () == retType : "Got wrong type back: " + ret.getClass ().getName ();
 	assert ((Number)ret).intValue () == 3 : "Got wrong result, expected 3, got: " + ret;
     }
 

@@ -246,6 +246,20 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
+    @Override public void visit (LongLiteral lv) {
+	// We do not handle init blocks yet.
+	if (methods.isEmpty ())
+	    return;
+	long l = lv.get ();
+	if (l == 0) {
+	    currentMethod.mv.visitInsn (LCONST_0);
+	} else if (l == 1) {
+	    currentMethod.mv.visitInsn (LCONST_1);
+	} else {
+	    currentMethod.mv.visitLdcInsn (l);
+	}
+    }
+
     @Override public void visit (DoubleLiteral dv) {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
@@ -452,7 +466,18 @@ public class BytecodeGenerator implements TreeVisitor {
 	    TreeNode tn = vd.getInitializer ();
 	    if (tn != null) {
 		tn.visit (this);
-		currentMethod.mv.visitVarInsn (ISTORE, id); // TODO: not correct, but works for first test
+		int op = ISTORE;
+		ExpressionType et = l.getExpressionType ();
+		if (!et.isPrimitiveType ()) {
+		    op = ASTORE;
+		}else if (et == ExpressionType.LONG) {
+		    op = LSTORE;
+		} else if (et == ExpressionType.FLOAT) {
+		    op = FSTORE;
+		} else  if (et == ExpressionType.DOUBLE) {
+		    op = DSTORE;
+		}
+		currentMethod.mv.visitVarInsn (op, id);
 	    }
 	}
 	return false;
@@ -560,11 +585,18 @@ public class BytecodeGenerator implements TreeVisitor {
 	Integer lid = currentMethod.localVariableIds.get (i.get ());
 	if (lid == null)
 	    lid = 0;
-	// TODO: obviously not correct, but passes first if-test
-	if (i.getExpressionType ().isPrimitiveType ())
-	    currentMethod.mv.visitVarInsn (ILOAD, lid);
-	else
-	    currentMethod.mv.visitVarInsn (ALOAD, lid);
+	ExpressionType et = i.getExpressionType ();
+	int op = ILOAD;
+	if (!et.isPrimitiveType ()) {
+	    op = ALOAD;
+	}else if (et == ExpressionType.LONG) {
+	    op = LLOAD;
+	} else if (et == ExpressionType.FLOAT) {
+	    op = FLOAD;
+	} else  if (et == ExpressionType.DOUBLE) {
+	    op = DLOAD;
+	}
+	currentMethod.mv.visitVarInsn (op, lid);
     }
 
     @Override public boolean visit (PreIncrementExpression p) {
