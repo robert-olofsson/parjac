@@ -174,6 +174,48 @@ public class TestBytecodeGeneration {
 	checkIfReturn (c, "i", Object.class, new Object (), 4);
     }
 
+    @Test
+    public void testFibonacciRecursive () throws IOException, ReflectiveOperationException {
+	String s = "public class Fibonacci { public static int fibonacci (int n) { " +
+	    "if (n == 0) " +
+            "  return 0; " +
+	    "if (n == 1) " +
+            "  return 1; " +
+	    "return fibonacci (n - 1) + fibonacci (n - 2);" +
+	    "}}";
+	Class<?> c = getClass (s, "Fibonacci");
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 0, 0);
+	/* TODO: Make these test cases return the right results
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 1, 1);
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 2, 1);
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 30, 832040);
+	*/
+    }
+
+    @Test
+    public void testFibonacciIterative () throws IOException, ReflectiveOperationException {
+	String s = "public class Fibonacci { public static int fibonacci (int n) { " +
+	    "if (n == 0) " +
+            "  return 0; " +
+	    "int f0 = 0; " +
+	    "int f1 = 1; " +
+	    "int f = 1; " +
+	    "for (int i = 1; i < n; i++) { "+
+	    "  f = f0 + f1; " +
+	    "  f0 = f1; " +
+	    "  f1 = f; " +
+	    "} " +
+	    "return f; " +
+	    "}}";
+	/* TODO: Make the code in the string compile and the test cases return the right results
+	Class<?> c = getClass (s, "Fibonacci");
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 0, 0);
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 1, 1);
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 2, 1);
+	checkIfReturn (c, "fibonacci", Integer.TYPE, 30, 832040);
+	*/
+    }
+
     private void checkIfReturn (Class<?> c, String methodName, Class<?> argumentType,
 				Object argument, int expectedResult) throws ReflectiveOperationException {
 	Method m = c.getMethod (methodName, argumentType);
