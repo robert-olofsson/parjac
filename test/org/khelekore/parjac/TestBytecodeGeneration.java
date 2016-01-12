@@ -244,6 +244,12 @@ public class TestBytecodeGeneration {
 	checkResult ("public class Foo { public static double foo () { double d = 3.0; return d; }}", Double.class);
     }
 
+    @Test
+    public void testSubtraction () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 9; int j = 6; int k; k = i - j; return k; }}", Integer.class);
+    }
+
     private void checkResult (String s, Class<?> retType) throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRun (s);
 	assert ret.getClass () == retType : "Got wrong type back: " + ret.getClass ().getName ();
