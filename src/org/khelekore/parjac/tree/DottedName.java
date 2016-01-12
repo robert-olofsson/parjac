@@ -101,4 +101,8 @@ public class DottedName extends PositionNode {
 	    return Collections.singleton (fieldAccess);
 	return Collections.emptyList ();
     }
+
+    public TreeNode getFieldAccess () {
+	return fieldAccess;
+    }
 }

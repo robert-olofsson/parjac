@@ -229,11 +229,6 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public void visit (Assignment a) {
-	    TreeNode lhs = a.lhs ();
-	    a.lhs (replaceAndSetType (lhs));
-	}
-
 	@Override public void visit (ClassInstanceCreationExpression c) {
 	    TreeNode from = c.getFrom ();
 	    if (from == null) {

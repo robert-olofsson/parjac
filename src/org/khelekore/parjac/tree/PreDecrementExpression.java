@@ -31,4 +31,8 @@ public class PreDecrementExpression extends PositionNode {
     @Override public Collection<? extends TreeNode> getChildNodes () {
 	return Collections.singletonList (exp);
     }
+
+    public TreeNode getExp () {
+	return exp;
+    }
 }

@@ -313,19 +313,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitInsn (ACONST_NULL);
     }
 
-    @Override public void visit (Assignment a) {
+    @Override public boolean visit (Assignment a) {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
-	    return;
-	// TODO: something like this
-	/*
-	currentMethod.mv.visitIntInsn (ALOAD, 0);
+	    return false;
 	a.rhs ().visit (this);
-	ClassWriterHolder cwh = classes.peekLast ();
-	String fqn = cth.getFullName (cwh.tn);
-	// TODO: name and type need to be set correctly
-	currentMethod.mv.visitFieldInsn (PUTFIELD, fqn, "a", "I");
-	*/
+	// TODO: this is pretty ugly, clean it up
+	Identifier i = (Identifier)(((DottedName)a.lhs ()).getFieldAccess ());
+	int id = currentMethod.localVariableIds.get (i.get ());
+	storeValue (id, a.lhs ());
+	return false;
     }
 
     @Override public boolean visit (MethodInvocation m) {
@@ -466,21 +463,25 @@ public class BytecodeGenerator implements TreeVisitor {
 	    TreeNode tn = vd.getInitializer ();
 	    if (tn != null) {
 		tn.visit (this);
-		int op = ISTORE;
-		ExpressionType et = l.getExpressionType ();
-		if (!et.isPrimitiveType ()) {
-		    op = ASTORE;
-		}else if (et == ExpressionType.LONG) {
-		    op = LSTORE;
-		} else if (et == ExpressionType.FLOAT) {
-		    op = FSTORE;
-		} else  if (et == ExpressionType.DOUBLE) {
-		    op = DSTORE;
-		}
-		currentMethod.mv.visitVarInsn (op, id);
+		storeValue (id, l);
 	    }
 	}
 	return false;
+    }
+
+    private void storeValue (int id, TreeNode tn) {
+	int op = ISTORE;
+	ExpressionType et = tn.getExpressionType ();
+	if (!et.isPrimitiveType ()) {
+	    op = ASTORE;
+	}else if (et == ExpressionType.LONG) {
+	    op = LSTORE;
+	} else if (et == ExpressionType.FLOAT) {
+	    op = FSTORE;
+	} else  if (et == ExpressionType.DOUBLE) {
+	    op = DSTORE;
+	}
+	currentMethod.mv.visitVarInsn (op, id);
     }
 
     @Override public boolean visit (FieldAccess f) {
@@ -599,24 +600,133 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitVarInsn (op, lid);
     }
 
+    @Override public boolean visit (TwoPartExpression t) {
+	t.getLeft ().visit (this);
+	t.getRight ().visit (this);
+	int op = getArithmeticOperation (t);
+	if (op != -1)
+	    currentMethod.mv.visitInsn (op);
+	return false;
+    }
+
+    private int getArithmeticOperation (TwoPartExpression t) {
+	ExpressionType et = t.getExpressionType ();
+	if (et == ExpressionType.INT) {
+	    switch (t.getOperator ()) {
+	    case PLUS:
+		return IADD;
+	    case MINUS:
+		return ISUB;
+	    case MULTIPLY:
+		return IMUL;
+	    case DIVIDE:
+		return IDIV;
+	    case REMAINDER:
+		return IREM;
+	    case LEFT_SHIFT:
+		return ISHL;
+	    case RIGHT_SHIFT:
+		return ISHR;
+	    case RIGHT_SHIFT_UNSIGNED:
+		return IUSHR;
+	    case AND:
+		return IAND;
+	    case OR:
+		return IOR;
+	    case XOR:
+		return IXOR;
+	    default:
+		// nothing
+	    }
+	} else if (et == ExpressionType.LONG) {
+	    switch (t.getOperator ()) {
+	    case PLUS:
+		return LADD;
+	    case MINUS:
+		return LSUB;
+	    case MULTIPLY:
+		return LMUL;
+	    case DIVIDE:
+		return LDIV;
+	    case REMAINDER:
+		return LREM;
+	    case LEFT_SHIFT:
+		return LSHL;
+	    case RIGHT_SHIFT:
+		return LSHR;
+	    case RIGHT_SHIFT_UNSIGNED:
+		return LUSHR;
+	    case AND:
+		return LAND;
+	    case OR:
+		return LOR;
+	    case XOR:
+		return LXOR;
+	    default:
+		// nothing
+	    }
+	} else if (et == ExpressionType.FLOAT) {
+	    switch (t.getOperator ()) {
+	    case PLUS:
+		return FADD;
+	    case MINUS:
+		return FSUB;
+	    case MULTIPLY:
+		return FMUL;
+	    case DIVIDE:
+		return FDIV;
+	    case REMAINDER:
+		return FREM;
+	    default:
+		// nothing
+	    }
+	} else if (et == ExpressionType.DOUBLE) {
+	    switch (t.getOperator ()) {
+	    case PLUS:
+		return DADD;
+	    case MINUS:
+		return DSUB;
+	    case MULTIPLY:
+		return DMUL;
+	    case DIVIDE:
+		return DDIV;
+	    case REMAINDER:
+		return DREM;
+	    default:
+		// nothing
+	    }
+	}
+	return -1;
+    }
+
     @Override public boolean visit (PreIncrementExpression p) {
-	currentMethod.mv.visitIincInsn (1, 1); // TODO: not correct, but works for first test
+	currentMethod.mv.visitIincInsn (getId (p.getExp ()), 1);
 	return false;
     }
 
     @Override public boolean visit (PostIncrementExpression p) {
-	currentMethod.mv.visitIincInsn (1, 1); // TODO: not correct, but works for first test
+	currentMethod.mv.visitIincInsn (getId (p.getExp ()), 1);
 	return false;
     }
 
     @Override public boolean visit (PreDecrementExpression p) {
-	currentMethod.mv.visitIincInsn (1, -1); // TODO: not correct, but works for first test
+	currentMethod.mv.visitIincInsn (getId (p.getExp ()), -1);
 	return false;
     }
 
     @Override public boolean visit (PostDecrementExpression p) {
-	currentMethod.mv.visitIincInsn (1, -1); // TODO: not correct, but works for first test
+	currentMethod.mv.visitIincInsn (getId (p.getExp ()), -1);
 	return false;
+    }
+
+    private int getId (TreeNode tn) {
+	if (tn instanceof DottedName)
+	    tn = ((DottedName)tn).getFieldAccess ();
+	if (tn instanceof Identifier) {
+	    Identifier i = (Identifier)tn;
+	    return currentMethod.localVariableIds.get (i.get ());
+	}
+	return 1; // TODO: not correct, but works for now
     }
 
     private void addClass (ClassWriterHolder cw) {

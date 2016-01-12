@@ -125,7 +125,8 @@ public interface TreeVisitor {
     default void visit (NullLiteral s) {
     }
 
-    default void visit (Assignment a) {
+    default boolean visit (Assignment a) {
+	return true;
     }
 
     default void visit (ClassInstanceCreationExpression c) {

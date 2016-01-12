@@ -124,7 +124,7 @@ public class ReturnChecker implements TreeVisitor {
 	    return true;
 	}
 
-	@Override public void visit (Assignment a) {
+	@Override public boolean visit (Assignment a) {
 	    TreeNode left = a.lhs ();
 	    TreeNode right = a.rhs ();
 	    if (!match (left, right)) {
@@ -134,6 +134,7 @@ public class ReturnChecker implements TreeVisitor {
 							     left.getExpressionType (),
 							     right.getExpressionType ()));
 	    }
+	    return true;
 	}
 
 	@Override public void visit (ThrowStatement t) {
