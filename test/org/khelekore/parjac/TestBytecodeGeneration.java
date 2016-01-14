@@ -222,38 +222,110 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testAutoCast () throws IOException, ReflectiveOperationException {
-	checkResult ("public class Foo { public static int foo () { byte l = 3; return l; }}", Integer.class);
-	checkResult ("public class Foo { public static int foo () { char l = 3; return l; }}", Integer.class);
-	checkResult ("public class Foo { public static int foo () { short l = 3; return l; }}", Integer.class);
+	checkResult ("public class Foo { public static int foo () { byte l = 3; return l; }}", Integer.class, 3);
+	checkResult ("public class Foo { public static int foo () { char l = 3; return l; }}", Integer.class, 3);
+	checkResult ("public class Foo { public static int foo () { short l = 3; return l; }}", Integer.class, 3);
 
-	checkResult ("public class Foo { public static long foo () { int l = 3; return l; }}", Long.class);
-	checkResult ("public class Foo { public static long foo () { short l = 3; return l; }}", Long.class);
-	checkResult ("public class Foo { public static long foo () { char l = 3; return l; }}", Long.class);
-	checkResult ("public class Foo { public static long foo () { byte l = 3; return l; }}", Long.class);
+	checkResult ("public class Foo { public static long foo () { int l = 3; return l; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { short l = 3; return l; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { char l = 3; return l; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { byte l = 3; return l; }}", Long.class, 3);
 
-	checkResult ("public class Foo { public static double foo () { int l = 3; return l; }}", Double.class);
-	checkResult ("public class Foo { public static double foo () { short l = 3; return l; }}", Double.class);
-	checkResult ("public class Foo { public static double foo () { char l = 3; return l; }}", Double.class);
-	checkResult ("public class Foo { public static double foo () { byte l = 3; return l; }}", Double.class);
+	checkResult ("public class Foo { public static double foo () { int l = 3; return l; }}", Double.class, 3);
+	checkResult ("public class Foo { public static double foo () { short l = 3; return l; }}", Double.class, 3);
+	checkResult ("public class Foo { public static double foo () { char l = 3; return l; }}", Double.class, 3);
+	checkResult ("public class Foo { public static double foo () { byte l = 3; return l; }}", Double.class, 3);
     }
 
     @Test
     public void testNonIntTypes () throws IOException, ReflectiveOperationException {
-	checkResult ("public class Foo { public static long foo () { long l = 3L; return l; }}", Long.class);
-	checkResult ("public class Foo { public static float foo () { float f = 3.0f; return f; }}", Float.class);
-	checkResult ("public class Foo { public static double foo () { double d = 3.0; return d; }}", Double.class);
+	checkResult ("public class Foo { public static long foo () { long l = 3L; return l; }}",
+		     Long.class, 3);
+	checkResult ("public class Foo { public static float foo () { float f = 3.0f; return f; }}",
+		     Float.class, 3);
+	checkResult ("public class Foo { public static double foo () { double d = 3.0; return d; }}",
+		     Double.class, 3);
     }
 
     @Test
-    public void testSubtraction () throws IOException, ReflectiveOperationException {
-	checkResult ("public class Foo { public static int foo () { " +
-		     "int i = 9; int j = 6; int k; k = i - j; return k; }}", Integer.class);
+    public void testAutoConvertLiterals () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static long foo () { long l = 3; return l; }}",
+		     Long.class, 3);
+	checkResult ("public class Foo { public static float foo () { float l = 3; return l; }}",
+		     Float.class, 3);
+	checkResult ("public class Foo { public static double foo () { double l = 3; return l; }}",
+		     Double.class, 3);
+
+	checkResult ("public class Foo { public static double foo () { double l = 3f; return l; }}",
+		     Double.class, 3);
     }
 
-    private void checkResult (String s, Class<?> retType) throws IOException, ReflectiveOperationException {
+    @Test
+    public void testTwoPartExpressions () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 9; int j = 6; int k; k = i - j; return k; }}", Integer.class, 3);
+
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 9; int j = 6; long k; k = i - j; return k; }}", Long.class, 3);
+    }
+
+    @Test
+    public void testAssignWithOpInt () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 3; i *= 5; return i; }}", Integer.class, 15);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 13; i /= 5; return i; }}", Integer.class, 2);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 13; i %= 5; return i; }}", Integer.class, 3);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 13; i += 5; return i; }}", Integer.class, 18);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 13; i -= 5; return i; }}", Integer.class, 8);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 3; i <<= 2 ; return i; }}", Integer.class, 12);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 12; i >>= 2 ; return i; }}", Integer.class, 3);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 0xffffffff; i >>>= 8 ; return i; }}", Integer.class, 0xffffff);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 0xf; i &= 0x3 ; return i; }}", Integer.class, 3);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 0xa; i ^= 0x3 ; return i; }}", Integer.class, 9);
+	checkResult ("public class Foo { public static int foo () { " +
+		     "int i = 0xa; i |= 0x3 ; return i; }}", Integer.class, 11);
+    }
+
+    @Test
+    public void testAssignWithOpLong () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 3; i *= 5; return i; }}", Long.class, 15);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 13; i /= 5; return i; }}", Long.class, 2);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 13; i %= 5; return i; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 13; i += 5; return i; }}", Long.class, 18);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 13; i -= 5; return i; }}", Long.class, 8);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 3; i <<= 2 ; return i; }}", Long.class, 12);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 12; i >>= 2 ; return i; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 0xffffffff_ffffffffL; i >>>= 62 ; return i; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 0xf; i &= 0x3 ; return i; }}", Long.class, 3);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 0xa; i ^= 0x3 ; return i; }}", Long.class, 9);
+	checkResult ("public class Foo { public static long foo () { " +
+		     "long i = 0xa; i |= 0x3 ; return i; }}", Long.class, 11);
+    }
+
+    private void checkResult (String s, Class<?> retType, int expected)
+	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRun (s);
 	assert ret.getClass () == retType : "Got wrong type back: " + ret.getClass ().getName ();
-	assert ((Number)ret).intValue () == 3 : "Got wrong result, expected 3, got: " + ret;
+	assert ((Number)ret).intValue () == expected : "Got wrong result, expected " + expected + ", got: " + ret;
     }
 
     private Object compileAndRun (String s) throws ReflectiveOperationException {

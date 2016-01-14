@@ -166,6 +166,10 @@ public enum Token {
     private static final EnumSet<Token> logicalOperators =
     EnumSet.of (GT, LT, DOUBLE_EQUAL, GE, LE, NOT_EQUAL, LOGICAL_AND, LOGICAL_OR, INSTANCEOF);
 
+    /** Operators that automatically widen both sides to be the widest type used */
+    private static final EnumSet<Token> autoWideOperators =
+    EnumSet.of (AND, XOR, OR, PLUS, MINUS, MULTIPLY, DIVIDE, REMAINDER);
+
     private static final EnumSet<Token> bitOperators =
     EnumSet.of (AND, XOR, OR, LEFT_SHIFT, RIGHT_SHIFT, RIGHT_SHIFT_UNSIGNED);
 
@@ -256,6 +260,10 @@ public enum Token {
 
     public boolean isLogicalOperator () {
 	return logicalOperators.contains (this);
+    }
+
+    public boolean isAutoWidenOperator () {
+	return autoWideOperators.contains (this);
     }
 
     public boolean isBitOrShiftOperator () {

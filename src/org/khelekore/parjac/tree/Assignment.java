@@ -22,6 +22,10 @@ public class Assignment extends PositionNode {
 	return getClass ().getSimpleName () + "{" + lhs + " " + op + " " + rhs + "}";
     }
 
+    @Override public ExpressionType getExpressionType () {
+	return lhs.getExpressionType ();
+    }
+
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this)) {
 	    lhs.visit (visitor);

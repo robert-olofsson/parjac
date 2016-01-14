@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.FlagsHelper;
 import org.khelekore.parjac.tree.*;
@@ -140,10 +141,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (ls != null) {
 	    NormalFormalParameterList fpl = m.getParameters ().getParameters ();
 	    for (FormalParameter fp : fpl.getFormalParameters ())
-		currentMethod.localVariableIds.put (fp.getId (), currentMethod.localVariableIds.size ());
+		currentMethod.localVariableIds.put (fp.getId (), currentMethod.getId (fp));
 	    LastFormalParameter lfp = fpl.getLastFormalParameter ();
 	    if (lfp != null)
-		currentMethod.localVariableIds.put (lfp.getId (), currentMethod.localVariableIds.size ());
+		currentMethod.localVariableIds.put (lfp.getId (), currentMethod.getId (lfp));
 	}
 	return true;
     }
@@ -317,12 +318,65 @@ public class BytecodeGenerator implements TreeVisitor {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return false;
-	a.rhs ().visit (this);
+	Token t = a.getOperator ().get ();
+	if (t != Token.EQUAL)
+	    a.lhs ().visit (this);
+	TreeNode rhs = a.rhs ();
+	if (!isShiftAssignment (t))
+	    rhs = toType (a.rhs (), a);
+	rhs.visit (this);
+	int op = getAssignmentActionOp (t, a);
+	if (op != -1)
+	    currentMethod.mv.visitInsn (op);
 	// TODO: this is pretty ugly, clean it up
 	Identifier i = (Identifier)(((DottedName)a.lhs ()).getFieldAccess ());
 	int id = currentMethod.localVariableIds.get (i.get ());
 	storeValue (id, a.lhs ());
 	return false;
+    }
+
+    private boolean isShiftAssignment (Token t) {
+	return t == Token.LEFT_SHIFT_EQUAL ||
+	    t == Token.RIGHT_SHIFT_EQUAL ||
+	    t == Token.RIGHT_SHIFT_UNSIGNED_EQUAL;
+    }
+
+    private int getAssignmentActionOp (Token t, Assignment a) {
+	ExpressionType et = a.getExpressionType ();
+	if (et == ExpressionType.INT) {
+	    switch (t) {
+		//*=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=
+	    case MULTIPLY_EQUAL: return IMUL;
+	    case DIVIDE_EQUAL: return IDIV;
+	    case REMAINDER_EQUAL: return IREM;
+	    case PLUS_EQUAL: return IADD;
+	    case MINUS_EQUAL: return ISUB;
+	    case LEFT_SHIFT_EQUAL: return ISHL;
+	    case RIGHT_SHIFT_EQUAL: return ISHR;
+	    case RIGHT_SHIFT_UNSIGNED_EQUAL: return IUSHR;
+	    case BIT_AND_EQUAL: return IAND;
+	    case BIT_XOR_EQUAL: return IXOR;
+	    case BIT_OR_EQUAL: return IOR;
+	    default:
+	    }
+	} else if (et == ExpressionType.LONG) {
+	    switch (t) {
+		//*=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=
+	    case MULTIPLY_EQUAL: return LMUL;
+	    case DIVIDE_EQUAL: return LDIV;
+	    case REMAINDER_EQUAL: return LREM;
+	    case PLUS_EQUAL: return LADD;
+	    case MINUS_EQUAL: return LSUB;
+	    case LEFT_SHIFT_EQUAL: return LSHL;
+	    case RIGHT_SHIFT_EQUAL: return LSHR;
+	    case RIGHT_SHIFT_UNSIGNED_EQUAL: return LUSHR;
+	    case BIT_AND_EQUAL: return LAND;
+	    case BIT_XOR_EQUAL: return LXOR;
+	    case BIT_OR_EQUAL: return LOR;
+	    default:
+	    }
+	}
+	return -1;
     }
 
     @Override public boolean visit (MethodInvocation m) {
@@ -458,11 +512,11 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public boolean visit (LocalVariableDeclaration l) {
 	for (VariableDeclarator vd : l.getVariables ().get ()) {
-	    int id = currentMethod.localVariableIds.size ();
+	    int id = currentMethod.getId (l);
 	    currentMethod.localVariableIds.put (vd.getId (), id);
 	    TreeNode tn = vd.getInitializer ();
 	    if (tn != null) {
-		tn.visit (this);
+		toType (tn, l).visit (this);
 		storeValue (id, l);
 	    }
 	}
@@ -601,12 +655,41 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (TwoPartExpression t) {
-	t.getLeft ().visit (this);
-	t.getRight ().visit (this);
+	TreeNode left = t.getLeft ();
+	TreeNode right = t.getRight ();
+	if (t.getOperator ().isAutoWidenOperator ()) {
+	    left = toType (left, t);
+	    right = toType (right, t);
+	}
+	left.visit (this);
+	right.visit (this);
 	int op = getArithmeticOperation (t);
 	if (op != -1)
 	    currentMethod.mv.visitInsn (op);
 	return false;
+    }
+
+    private TreeNode toType (TreeNode tn, TreeNode wantedType) {
+	ExpressionType et = wantedType.getExpressionType ();
+	ExpressionType current = tn.getExpressionType ();
+	if (!et.equals (current)) {
+	    if (tn instanceof LiteralValue) {
+		if (current == ExpressionType.INT) {
+		    if (et == ExpressionType.LONG)
+			return new LongLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+		    else if (et == ExpressionType.FLOAT)
+			return new FloatLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+		    else if (et == ExpressionType.DOUBLE)
+			return new DoubleLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+		} else if (current == ExpressionType.FLOAT) {
+		    if (et == ExpressionType.DOUBLE)
+			return new DoubleLiteral (((FloatLiteral)tn).get (), tn.getParsePosition ());
+		}
+	    } else {
+		return new CastExpression (wantedType, tn, tn.getParsePosition ());
+	    }
+	}
+	return tn;
     }
 
     private int getArithmeticOperation (TwoPartExpression t) {
@@ -825,10 +908,20 @@ public class BytecodeGenerator implements TreeVisitor {
 	public final Result result;
 	public final MethodVisitor mv;
 	public final Map<String, Integer> localVariableIds = new HashMap<> ();
+	private int nextId = 0;
 
 	public MethodInfo (Result result, MethodVisitor mv) {
 	    this.result = result;
 	    this.mv = mv;
+	}
+
+	public int getId (TreeNode tn) {
+	    ExpressionType et = tn.getExpressionType ();
+	    int ret = nextId;
+	    if (et == ExpressionType.LONG || et == ExpressionType.DOUBLE)
+		nextId++;
+	    nextId++;
+	    return ret;
 	}
 
 	@Override public String toString () {

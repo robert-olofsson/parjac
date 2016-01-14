@@ -20,6 +20,13 @@ public class CastExpression extends PositionNode {
 	expression = parts.pop ();
     }
 
+    public CastExpression (TreeNode type, TreeNode expression, ParsePosition pos) {
+	super (pos);
+	this.type = type;
+	this.additionalBounds = null;
+	this.expression = expression;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + additionalBounds + " " + expression + "}";
     }
