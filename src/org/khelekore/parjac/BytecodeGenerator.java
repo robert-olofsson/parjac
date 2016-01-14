@@ -503,27 +503,19 @@ public class BytecodeGenerator implements TreeVisitor {
 	// Remember that we jump to the else part so reversed return values
 	if (t.hasPrimitiveParts ()) {
 	    switch (t.getOperator ()) {
-	    case DOUBLE_EQUAL:
-		return IF_ICMPNE;
-	    case NOT_EQUAL:
-		return IF_ICMPEQ;
-	    case LT:
-		return IF_ICMPGE;
-	    case GE:
-		return IF_ICMPLT;
-	    case GT:
-		return IF_ICMPLE;
-	    case LE:
-		return IF_ICMPGT;
+	    case DOUBLE_EQUAL: return IF_ICMPNE;
+	    case NOT_EQUAL: return IF_ICMPEQ;
+	    case LT: return IF_ICMPGE;
+	    case GE: return IF_ICMPLT;
+	    case GT: return IF_ICMPLE;
+	    case LE: return IF_ICMPGT;
 	    default:
 		throw new IllegalStateException ("unhandled jump type: " + t);
 	    }
 	} else {
 	    switch (t.getOperator ()) {
-	    case DOUBLE_EQUAL:
-		return IF_ACMPNE;
-	    case NOT_EQUAL:
-		return IF_ACMPEQ;
+	    case DOUBLE_EQUAL: return IF_ACMPNE;
+	    case NOT_EQUAL: return IF_ACMPEQ;
 	    default:
 		throw new IllegalStateException ("unhandled jump type: " + t);
 	    }
