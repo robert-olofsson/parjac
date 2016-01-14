@@ -321,6 +321,34 @@ public class TestBytecodeGeneration {
 		     "long i = 0xa; i |= 0x3 ; return i; }}", Long.class, 11);
     }
 
+    @Test
+    public void testAssignWithOpFloat () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static float foo () { " +
+		     "float i = 3; i *= 5; return i; }}", Float.class, 15);
+	checkResult ("public class Foo { public static float foo () { " +
+		     "float i = 13; i /= 5; return i; }}", Float.class, 2);
+	checkResult ("public class Foo { public static float foo () { " +
+		     "float i = 13; i %= 5; return i; }}", Float.class, 3);
+	checkResult ("public class Foo { public static float foo () { " +
+		     "float i = 13; i += 5; return i; }}", Float.class, 18);
+	checkResult ("public class Foo { public static float foo () { " +
+		     "float i = 13; i -= 5; return i; }}", Float.class, 8);
+    }
+
+    @Test
+    public void testAssignWithOpDouble () throws IOException, ReflectiveOperationException {
+	checkResult ("public class Foo { public static double foo () { " +
+		     "double i = 3; i *= 5; return i; }}", Double.class, 15);
+	checkResult ("public class Foo { public static double foo () { " +
+		     "double i = 13; i /= 5; return i; }}", Double.class, 2);
+	checkResult ("public class Foo { public static double foo () { " +
+		     "double i = 13; i %= 5; return i; }}", Double.class, 3);
+	checkResult ("public class Foo { public static double foo () { " +
+		     "double i = 13; i += 5; return i; }}", Double.class, 18);
+	checkResult ("public class Foo { public static double foo () { " +
+		     "double i = 13; i -= 5; return i; }}", Double.class, 8);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRun (s);

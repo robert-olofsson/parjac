@@ -375,6 +375,26 @@ public class BytecodeGenerator implements TreeVisitor {
 	    case BIT_OR_EQUAL: return LOR;
 	    default:
 	    }
+	} else if (et == ExpressionType.FLOAT) {
+	    switch (t) {
+	    case PLUS_EQUAL: return FADD;
+	    case MINUS_EQUAL: return FSUB;
+	    case MULTIPLY_EQUAL: return FMUL;
+	    case DIVIDE_EQUAL: return FDIV;
+	    case REMAINDER_EQUAL: return FREM;
+	    default:
+		// nothing
+	    }
+	} else if (et == ExpressionType.DOUBLE) {
+	    switch (t) {
+	    case PLUS_EQUAL: return DADD;
+	    case MINUS_EQUAL: return DSUB;
+	    case MULTIPLY_EQUAL: return DMUL;
+	    case DIVIDE_EQUAL: return DDIV;
+	    case REMAINDER_EQUAL: return DREM;
+	    default:
+		// nothing
+	    }
 	}
 	return -1;
     }
@@ -696,85 +716,53 @@ public class BytecodeGenerator implements TreeVisitor {
 	ExpressionType et = t.getExpressionType ();
 	if (et == ExpressionType.INT) {
 	    switch (t.getOperator ()) {
-	    case PLUS:
-		return IADD;
-	    case MINUS:
-		return ISUB;
-	    case MULTIPLY:
-		return IMUL;
-	    case DIVIDE:
-		return IDIV;
-	    case REMAINDER:
-		return IREM;
-	    case LEFT_SHIFT:
-		return ISHL;
-	    case RIGHT_SHIFT:
-		return ISHR;
-	    case RIGHT_SHIFT_UNSIGNED:
-		return IUSHR;
-	    case AND:
-		return IAND;
-	    case OR:
-		return IOR;
-	    case XOR:
-		return IXOR;
+	    case PLUS: return IADD;
+	    case MINUS: return ISUB;
+	    case MULTIPLY: return IMUL;
+	    case DIVIDE: return IDIV;
+	    case REMAINDER: return IREM;
+	    case LEFT_SHIFT: return ISHL;
+	    case RIGHT_SHIFT: return ISHR;
+	    case RIGHT_SHIFT_UNSIGNED: return IUSHR;
+	    case AND: return IAND;
+	    case OR: return IOR;
+	    case XOR: return IXOR;
 	    default:
 		// nothing
 	    }
 	} else if (et == ExpressionType.LONG) {
 	    switch (t.getOperator ()) {
-	    case PLUS:
-		return LADD;
-	    case MINUS:
-		return LSUB;
-	    case MULTIPLY:
-		return LMUL;
-	    case DIVIDE:
-		return LDIV;
-	    case REMAINDER:
-		return LREM;
-	    case LEFT_SHIFT:
-		return LSHL;
-	    case RIGHT_SHIFT:
-		return LSHR;
-	    case RIGHT_SHIFT_UNSIGNED:
-		return LUSHR;
-	    case AND:
-		return LAND;
-	    case OR:
-		return LOR;
-	    case XOR:
-		return LXOR;
+	    case PLUS: return LADD;
+	    case MINUS: return LSUB;
+	    case MULTIPLY: return LMUL;
+	    case DIVIDE: return LDIV;
+	    case REMAINDER: return LREM;
+	    case LEFT_SHIFT: return LSHL;
+	    case RIGHT_SHIFT: return LSHR;
+	    case RIGHT_SHIFT_UNSIGNED: return LUSHR;
+	    case AND: return LAND;
+	    case OR: return LOR;
+	    case XOR: return LXOR;
 	    default:
 		// nothing
 	    }
 	} else if (et == ExpressionType.FLOAT) {
 	    switch (t.getOperator ()) {
-	    case PLUS:
-		return FADD;
-	    case MINUS:
-		return FSUB;
-	    case MULTIPLY:
-		return FMUL;
-	    case DIVIDE:
-		return FDIV;
-	    case REMAINDER:
-		return FREM;
+	    case PLUS: return FADD;
+	    case MINUS: return FSUB;
+	    case MULTIPLY: return FMUL;
+	    case DIVIDE: return FDIV;
+	    case REMAINDER: return FREM;
 	    default:
 		// nothing
 	    }
 	} else if (et == ExpressionType.DOUBLE) {
 	    switch (t.getOperator ()) {
-	    case PLUS:
-		return DADD;
-	    case MINUS:
-		return DSUB;
-	    case MULTIPLY:
-		return DMUL;
-	    case DIVIDE:
-		return DDIV;
-	    case REMAINDER:
-		return DREM;
+	    case PLUS: return DADD;
+	    case MINUS: return DSUB;
+	    case MULTIPLY: return DMUL;
+	    case DIVIDE: return DDIV;
+	    case REMAINDER: return DREM;
 	    default:
 		// nothing
 	    }
