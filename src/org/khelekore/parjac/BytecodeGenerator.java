@@ -89,7 +89,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (hasVarargs (c.getParameters ()))
 	    mods |= ACC_VARARGS;
 
-	MethodInfo mi = new MethodInfo (new Result.VoidResult (null),
+	MethodInfo mi = new MethodInfo (mods, new Result.VoidResult (null),
 					cw.visitMethod (mods, "<init>", c.getDescription (), null, null));
 	addMethod (mi);
 	return true;
@@ -133,7 +133,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	int mods = m.getFlags ();
 	if (hasVarargs (m.getParameters ()))
 	    mods |= ACC_VARARGS;
-        MethodInfo mi = new MethodInfo (m.getResult (),
+        MethodInfo mi = new MethodInfo (mods, m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
 							m.getDescription (), null, null));
 	addMethod (mi);
@@ -888,9 +888,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	public final Result result;
 	public final MethodVisitor mv;
 	public final Map<String, Integer> localVariableIds = new HashMap<> ();
-	private int nextId = 0;
+	private int nextId;
 
-	public MethodInfo (Result result, MethodVisitor mv) {
+	public MethodInfo (int flags, Result result, MethodVisitor mv) {
+	    nextId = FlagsHelper.isStatic (flags) ? 0 : 1;
 	    this.result = result;
 	    this.mv = mv;
 	}

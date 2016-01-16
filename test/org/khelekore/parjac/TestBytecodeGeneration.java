@@ -24,7 +24,7 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testReturn () throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun ("public class Foo { public static void foo () { return; }}");
+	Object ret = compileAndRunStatic ("public class Foo { public static void foo () { return; }}");
 	assert ret == null : "Got something back from void method: " + ret;
     }
 
@@ -34,7 +34,7 @@ public class TestBytecodeGeneration {
 			-1, -7, -127, -128, -129, -16536, -123456789};
 	for (int v : values) {
 	    String src = "public class Foo { public static int foo () { return " + v + "; }}";
-	    Object ret = compileAndRun (src);
+	    Object ret = compileAndRunStatic (src);
 	    assert ret.equals (v) : "Got wrong thing back: " + ret + ", expected: " + v;
 	}
     }
@@ -45,7 +45,7 @@ public class TestBytecodeGeneration {
 			   -1.0 -3.14, -99.99, -2134e67};
 	for (double v : values) {
 	    String src = "public class Foo { public static double foo () { return " + v + "; }}";
-	    Object ret = compileAndRun (src);
+	    Object ret = compileAndRunStatic (src);
 	    assert ret.equals (v) : "Got wrong thing back: " + ret + ", expected: " + v;
 	}
     }
@@ -56,7 +56,7 @@ public class TestBytecodeGeneration {
 			   -1.0f -3.14f, -99.99f, -2134e12f};
 	for (float v : values) {
 	    String src = "public class Foo { public static float foo () { return " + v + "f; }}";
-	    Object ret = compileAndRun (src);
+	    Object ret = compileAndRunStatic (src);
 	    assert ret.equals (v) : "Got wrong thing back: " + ret +
 		", ret.class: " + ret.getClass ().getName () +", expected: " + v;
 	}
@@ -67,7 +67,7 @@ public class TestBytecodeGeneration {
 	boolean[] values = {true, false};
 	for (boolean b : values) {
 	    String src = "public class Foo { public static boolean foo () { return " + b + "; }}";
-	    Object ret = compileAndRun (src);
+	    Object ret = compileAndRunStatic (src);
 	    assert ret.equals (b) : "Got wrong thing back: " + ret +
 		", ret.class: " + ret.getClass ().getName () +", expected: " + b;
 	}
@@ -75,11 +75,11 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testNullReturn () throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun ("public class Foo { public static String foo () { return null; }}");
+	Object ret = compileAndRunStatic ("public class Foo { public static String foo () { return null; }}");
 	assert ret == null : "Got something back from null method: " + ret;
-	ret = compileAndRun ("public class Foo { public static Foo foo () { return null; }}");
+	ret = compileAndRunStatic ("public class Foo { public static Foo foo () { return null; }}");
 	assert ret == null : "Got something back from null method: " + ret;
-	ret = compileAndRun ("import java.util.Map;\n" +
+	ret = compileAndRunStatic ("import java.util.Map;\n" +
 			     "public class Foo {\n" +
 			     "    public static Map.Entry foo () { return null; }\n"+
 			     "}");
@@ -91,7 +91,7 @@ public class TestBytecodeGeneration {
 	String[] values = {"", "adsf", "asdfasdfasdfasdfasdadf"};
 	for (String s : values) {
 	    String src = "public class Foo { public static String foo () { return \"" + s + "\"; }}";
-	    Object ret = compileAndRun (src);
+	    Object ret = compileAndRunStatic (src);
 	    assert ret.equals (s) : "Got wrong thing back: " + ret +
 		", ret.class: " + ret.getClass ().getName () +", expected: " + s;
 	}
@@ -99,12 +99,12 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testSimpleExternalMethodCall () throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun ("public class Foo { public static int foo () {" +
+	Object ret = compileAndRunStatic ("public class Foo { public static int foo () {" +
 				    " return Integer.parseInt (\"3\"); }}");
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
 	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
 
-	ret = compileAndRun ("public class Foo { public static int foo () {" +
+	ret = compileAndRunStatic ("public class Foo { public static int foo () {" +
 			     " return \"Hello World!\".length (); }}");
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
 	assert 12 == (Integer)ret : "Got wrong result, expected 12, got: " + ret;
@@ -112,7 +112,7 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testSimpleInternalMethodCall () throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun ("public class Foo { " +
+	Object ret = compileAndRunStatic ("public class Foo { " +
 				    "static int a () { return 3; }" +
 				    "public static int foo () { return a (); }}");
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
@@ -121,7 +121,7 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testInnerClassInternalMethodCall () throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun ("public class Foo { " +
+	Object ret = compileAndRunStatic ("public class Foo { " +
 				    "static class A { static int a () { return 3; }}" +
 				    "public static int foo () { return A.a (); }}");
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
@@ -349,17 +349,52 @@ public class TestBytecodeGeneration {
 		     "double i = 13; i -= 5; return i; }}", Double.class, 8);
     }
 
+    @Test
+    public void testInstanceMethod () throws IOException, ReflectiveOperationException {
+	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[]{Integer.TYPE}, new Object[]{5});
+	Object ret = compileAndRunInstanceMethod ("public class Foo { public Foo () {}" +
+						  "public int foo (int j) { int i = j + 3; return i; }}", mta);
+	checkResultObject (ret, Integer.class, 8);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
-	Object ret = compileAndRun (s);
+	Object ret = compileAndRunStatic (s);
+	checkResultObject (ret, retType, expected);
+    }
+
+    private void checkResultObject (Object ret, Class<?> retType, int expected) {
 	assert ret.getClass () == retType : "Got wrong type back: " + ret.getClass ().getName ();
 	assert ((Number)ret).intValue () == expected : "Got wrong result, expected " + expected + ", got: " + ret;
     }
 
-    private Object compileAndRun (String s) throws ReflectiveOperationException {
+    private Object compileAndRunStatic (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s, "Foo");
 	Method m = c.getMethod ("foo");
 	return m.invoke (null);
+    }
+
+    private Object compileAndRunInstanceMethod (String s, MethodTypeAndArgs mta)
+	throws ReflectiveOperationException {
+	Class<?> c = getClass (s, "Foo");
+	Object instance = c.newInstance ();
+	Method m = c.getMethod ("foo", mta.paramTypes);
+	return m.invoke (instance, mta.args);
+    }
+
+    public static class MethodTypeAndArgs {
+	public Class<?>[] paramTypes;
+	public Object[] args;
+
+	public MethodTypeAndArgs () {
+	    paramTypes = new Class<?>[0];
+	    args = new Object[0];
+	}
+
+	public MethodTypeAndArgs (Class<?>[] paramTypes, Object[] args) {
+	    this.paramTypes = paramTypes;
+	    this.args = args;
+	}
     }
 
     private Class<?> getClass (String s, String className) throws ReflectiveOperationException {
