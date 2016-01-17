@@ -81,11 +81,19 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	return id;
     }
 
+    public ArgumentList getArgumentList () {
+	return args;
+    }
+
     public boolean hasBody ()  {
 	return body != null;
     }
 
     @Override public ExpressionType getExpressionType () {
 	return new ExpressionType (id.getFullName ());
+    }
+
+    public String getDescription () {
+	return "()V"; // TODO: not correct
     }
 }

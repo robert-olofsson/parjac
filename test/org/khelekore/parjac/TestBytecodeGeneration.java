@@ -357,6 +357,15 @@ public class TestBytecodeGeneration {
 	checkResultObject (ret, Integer.class, 8);
     }
 
+    @Test
+    public void testConstructor () throws IOException, ReflectiveOperationException {
+	Object ret = compileAndRunStatic ("public class Foo { public Foo () {}" +
+					  "public static Foo foo () { return new Foo (); }}");
+	assert ret != null : "Got null back";
+	String clz = ret.getClass ().getName ();
+	assert clz.equals ("Foo") : "Got wrong class back: " + clz;
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);
@@ -370,7 +379,9 @@ public class TestBytecodeGeneration {
 
     private Object compileAndRunStatic (String s) throws ReflectiveOperationException {
 	Class<?> c = getClass (s, "Foo");
-	Method m = c.getMethod ("foo");
+	String methodName = "foo";
+	Method m = c.getMethod (methodName);
+	assert m != null : "Found no method named: " + methodName;
 	return m.invoke (null);
     }
 

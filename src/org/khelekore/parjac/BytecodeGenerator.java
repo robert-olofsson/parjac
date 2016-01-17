@@ -399,6 +399,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	return -1;
     }
 
+    @Override public void visit (ClassInstanceCreationExpression c) {
+	String sname = c.getId ().getSlashName ();
+	currentMethod.mv.visitTypeInsn (NEW, sname);
+	currentMethod.mv.visitInsn (DUP);
+	ArgumentList ls = c.getArgumentList ();
+	if (ls != null)
+	    c.getArgumentList ().visit (this);
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, sname, "<init>", c.getDescription (), false);
+    }
+
     @Override public boolean visit (MethodInvocation m) {
 	String owner;
 	TreeNode on = m.getOn ();
