@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 import org.khelekore.parjac.lexer.Token;
 
 public class Grammar {
+    // Output warnings
+    private final boolean debug;
+
     // All the generated rules
     private final List<Rule> rules = new ArrayList<> ();
     // To avoid dups
@@ -28,11 +31,12 @@ public class Grammar {
 
     private Set<Rule> clearableRules = new HashSet<> ();
 
-    public Grammar () {
-	// empty
+    public Grammar (boolean debug) {
+	this.debug = debug;
     }
 
-    public Grammar (Grammar toCopy) {
+    public Grammar (Grammar toCopy, boolean debug) {
+	this (debug);
 	this.rules.addAll (toCopy.rules);
 	ruleSet.addAll (toCopy.ruleSet);
 	ruleCollections.addAll (toCopy.ruleCollections);
@@ -50,10 +54,10 @@ public class Grammar {
 		    if (!validRules.contains (subrule))
 			throw new IllegalStateException ("*" + rule + "* missing subrule: " + subrule);
 	    });
-	for (Rule r : rules) {
-	    if (r.getParts ().isEmpty ()) {
-		System.err.println ("Warning: Found empty rule: " + r);
-	    }
+	if (debug) {
+	    rules.stream ()
+		.filter (r -> r.getParts ().isEmpty ())
+		.forEach (r -> System.err.println ("Warning: Found empty rule: " + r));
 	}
 	RuleCollection goal = nameToRules.get ("Goal");
 	if (goal == null)

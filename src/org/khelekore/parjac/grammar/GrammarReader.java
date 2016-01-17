@@ -16,8 +16,8 @@ public class GrammarReader {
     private final Grammar grammar;
     private String currentRule;
 
-    public GrammarReader () {
-	grammar = new Grammar ();
+    public GrammarReader (boolean debug) {
+	grammar = new Grammar (debug);
     }
 
     public Grammar getGrammar () {
@@ -89,7 +89,7 @@ public class GrammarReader {
 
     public static void main (String[] args) throws IOException {
 	for (String filename : args) {
-	    GrammarReader gr = new GrammarReader ();
+	    GrammarReader gr = new GrammarReader (true);
 	    gr.read (Paths.get (filename).toFile ().toURI ().toURL ());
 	    Grammar grammar = gr.getGrammar ();
 	    grammar.addRule ("Goal", "CompilationUnit");

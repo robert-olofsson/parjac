@@ -53,7 +53,7 @@ public class Main {
 	if (diagnostics.hasError ())
 	    return;
 
-	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar ();
+	Grammar g = JavaGrammarHelper.getValidatedJavaGrammar (settings.getDebug ());
 	Compiler c = new Compiler (diagnostics, g, settings);
 	c.compile ();
 	long endTime = System.nanoTime ();

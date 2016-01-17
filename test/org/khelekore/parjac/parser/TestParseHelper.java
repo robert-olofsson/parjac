@@ -20,7 +20,7 @@ public class TestParseHelper {
 
     static {
 	try {
-	    GrammarReader gr = new GrammarReader ();
+	    GrammarReader gr = new GrammarReader (false);
 	    gr.read (TestParseHelper.class.getResource ("/java_8.pj"));
 	    baseGrammar = gr.getGrammar ();
 	} catch (IOException e) {
@@ -29,7 +29,7 @@ public class TestParseHelper {
     }
 
     public static Grammar getJavaGrammarFromFile (String goalRule, boolean allowMany) {
-	Grammar g = new Grammar (baseGrammar);
+	Grammar g = new Grammar (baseGrammar, false);
 	if (allowMany) {
 	    g.addRule ("Goalp", g.zeroOrMore (goalRule));
 	    g.addRule ("Goal", "Goalp", Token.END_OF_INPUT);
