@@ -67,7 +67,8 @@ public class TreeWalker {
 	    endClass = new Ender (t);
 	}
 
-	@Override public void visit (ClassInstanceCreationExpression c) {
+	@Override public boolean visit (ClassInstanceCreationExpression c) {
+	    return true;
 	}
 
 	public void clear () {

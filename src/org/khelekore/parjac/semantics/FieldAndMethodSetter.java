@@ -80,7 +80,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	containingClasses.removeLast ();
     }
 
-    @Override public void visit (ClassInstanceCreationExpression c) {
+    @Override public boolean visit (ClassInstanceCreationExpression c) {
 	ExpressionType clzType;
 	if (c.hasBody ()) {
 	    clzType = new ExpressionType (cip.getFullName (c.getBody ()));
@@ -105,6 +105,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 							     "Failed to read class: " + e));
 	    }
 	}
+	return true;
     }
 
     @Override public boolean visit (MethodInvocation m) {

@@ -43,16 +43,17 @@ public class ClassInstanceCreationExpression extends PositionNode {
     }
 
     public void visit (TreeVisitor visitor) {
-	if (from != null) {
-	    from.visit (visitor);
-	}
-	if (args != null)
-	    args.visit (visitor);
-	visitor.visit (this);
-	if (body != null) {
-	    if (visitor.anonymousClass (from, id, body))
-		body.visit (visitor);
-	    visitor.endAnonymousClass (id, body);
+	if (visitor.visit (this)) {
+	    if (from != null) {
+		from.visit (visitor);
+	    }
+	    if (args != null)
+		args.visit (visitor);
+	    if (body != null) {
+		if (visitor.anonymousClass (from, id, body))
+		    body.visit (visitor);
+		visitor.endAnonymousClass (id, body);
+	    }
 	}
     }
 

@@ -229,11 +229,12 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	@Override public void visit (ClassInstanceCreationExpression c) {
+	@Override public boolean visit (ClassInstanceCreationExpression c) {
 	    TreeNode from = c.getFrom ();
 	    if (from == null) {
 		setType (c.getId (), this);
 	    } else {
+		from.visit (this);
 		c.setFrom (replaceAndSetType (from));
 		if (from.getExpressionType () != null) {
 		    Deque<BodyPart> save = containingTypes;
@@ -250,6 +251,7 @@ public class ClassSetter {
 								     "Unknown expression type for: %s", from));
 		}
 	    }
+	    return true;
 	}
 
 	@Override public boolean visit (MethodInvocation m) {

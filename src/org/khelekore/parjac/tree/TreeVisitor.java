@@ -129,7 +129,8 @@ public interface TreeVisitor {
 	return true;
     }
 
-    default void visit (ClassInstanceCreationExpression c) {
+    default boolean visit (ClassInstanceCreationExpression c) {
+	return true;
     }
 
     default boolean visit (MethodInvocation m) {
