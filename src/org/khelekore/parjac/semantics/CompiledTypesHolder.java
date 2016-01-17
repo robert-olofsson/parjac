@@ -51,7 +51,10 @@ public class CompiledTypesHolder {
     }
 
     public String getFilename (TreeNode tn) {
-	return getFullName (tn);
+	NodeInformation ni = node2fqn.get (tn);
+	if (ni == null)
+	    return null;
+	return ni.filename;
     }
 
     /** Get the class id, something like "some.package.Foo$Bar$1". */
@@ -172,8 +175,9 @@ public class CompiledTypesHolder {
 	    }
 	    classes.addLast (cid);
 	    String fullId = getFullId ();
+	    String filename = getFullFilename ();
 	    String name = getFQN (packageName, fullId);
-	    NodeInformation ni = new NodeInformation (tn, name);
+	    NodeInformation ni = new NodeInformation (tn, name, filename);
 	    synchronized (name2node) {
 		name2node.put (name, ni);
 		node2fqn.put (tn, ni);
@@ -188,6 +192,10 @@ public class CompiledTypesHolder {
 	    if (packageName == null)
 		return fullId;
 	    return packageName.getDotName () + "." + fullId;
+	}
+
+	private String getFullFilename () {
+	    return classes.stream ().map (cid -> cid.id).collect (Collectors.joining ("$"));
 	}
     }
 
@@ -222,10 +230,12 @@ public class CompiledTypesHolder {
     private static class NodeInformation {
 	private final TreeNode tn;
 	private final String fqn;
+	private final String filename;
 
-	public NodeInformation (TreeNode tn, String fqn) {
+	public NodeInformation (TreeNode tn, String fqn, String filename) {
 	    this.tn = tn;
 	    this.fqn = fqn;
+	    this.filename = filename;
 	}
     }
 }
