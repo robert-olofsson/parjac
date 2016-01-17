@@ -393,6 +393,17 @@ public class TestBytecodeGeneration {
 	assert ((Number)o).intValue () == 3 : "Wrong value: expected: 3, got: " + o;
     }
 
+    @Test
+    public void testConstructorCode () throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass ("public class C { public int a; public C () { a = 30; }}", "C");
+	assert c != null : "Failed to compile class";
+	Object instance = c.newInstance ();
+	Field f = c.getDeclaredField ("a");
+	assert f != null : "Failed to find field";
+	Object o = f.get (instance);
+	assert ((Number)o).intValue () == 30 : "Wrong value: expected: 30, got: " + o;
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

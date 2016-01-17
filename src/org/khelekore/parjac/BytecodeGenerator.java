@@ -122,7 +122,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	ClassWriter cw = currentClass.cw;
 	int mods = f.getFlags ();
 	if (FlagsHelper.isStatic (mods))
-	    currentMethod = getStaticBlock ();
+	    addMethod (getStaticBlock ());
 	// TODO: handle initializer blocks
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    String id = vd.getId ();
@@ -135,6 +135,8 @@ public class BytecodeGenerator implements TreeVisitor {
 		storeValue (mods, id, f.getExpressionType ().getDescriptor ());
 	    }
 	}
+	if (FlagsHelper.isStatic (mods))
+	    removeMethod ();
 	return false;
     }
 
@@ -319,14 +321,21 @@ public class BytecodeGenerator implements TreeVisitor {
 	TreeNode rhs = a.rhs ();
 	if (!isShiftAssignment (t))
 	    rhs = toType (a.rhs (), a);
+	// TODO: this is pretty ugly, clean it up
+	Identifier i = (Identifier)(((DottedName)a.lhs ()).getFieldAccess ());
+	Integer localVarId = currentMethod.localVariableIds.get (i.get ());
+	if (localVarId == null)
+	    currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
 	rhs.visit (this);
 	int op = getAssignmentActionOp (t, a);
 	if (op != -1)
 	    currentMethod.mv.visitInsn (op);
-	// TODO: this is pretty ugly, clean it up
-	Identifier i = (Identifier)(((DottedName)a.lhs ()).getFieldAccess ());
-	int id = currentMethod.localVariableIds.get (i.get ());
-	storeValue (id, a.lhs ());
+	if (localVarId != null) {
+	    storeValue (localVarId, a.lhs ());
+	} else {
+	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.className, i.get (),
+					     i.getExpressionType ().getDescriptor ());
+	}
 	return false;
     }
 
@@ -560,7 +569,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	TreeNode tn = f.getFrom ();
 	if (tn instanceof ClassType) {
 	    ClassType ct = (ClassType)tn;
-	    String classSignature = ct.getFullName ().replace ('.', '/');
+	    String classSignature = ct.getExpressionType ().getSlashName ();
 	    currentMethod.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
 					     f.getExpressionType ().getDescriptor ());
 	    return false;
