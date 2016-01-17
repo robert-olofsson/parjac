@@ -1,6 +1,7 @@
 package org.khelekore.parjac;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -370,6 +371,26 @@ public class TestBytecodeGeneration {
 	assert ret != null : "Got null back";
 	clz = ret.getClass ().getName ();
 	assert clz.equals ("Foo") : "Got wrong class back: " + clz;
+    }
+
+    @Test
+    public void testStaticFieldInitializer () throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass ("public class C { public static Object a = new C(); }", "C");
+	assert c != null : "Failed to compile class";
+	Field f = c.getDeclaredField ("a");
+	assert f != null : "Failed to find field";
+	Object o = f.get (null);
+	assert o != null : "Field should be non-null";
+    }
+
+    @Test
+    public void testStaticFieldPrimitiveInitializer () throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass ("public class C { public static int a = 3; }", "C");
+	assert c != null : "Failed to compile class";
+	Field f = c.getDeclaredField ("a");
+	assert f != null : "Failed to find field";
+	Object o = f.get (null);
+	assert ((Number)o).intValue () == 3 : "Wrong value: expected: 3, got: " + o;
     }
 
     private void checkResult (String s, Class<?> retType, int expected)

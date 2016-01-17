@@ -72,8 +72,9 @@ public class InterfaceMemberFlagSetter {
 	    types.pop ();
 	}
 
-	@Override public void visit (FieldDeclaration f) {
+	@Override public boolean visit (FieldDeclaration f) {
 	    reflag (f);
+	    return true;
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {

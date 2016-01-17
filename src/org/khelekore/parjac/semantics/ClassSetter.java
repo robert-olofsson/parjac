@@ -406,9 +406,10 @@ public class ClassSetter {
 		this.scope = scope;
 	    }
 
-	    @Override public void visit (FieldDeclaration f) {
+	    @Override public boolean visit (FieldDeclaration f) {
 		setType (f.getType (), ScopeSetter.this);
 		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
+		return false;
 	    }
 
 	    @Override public boolean visit (EnumConstant c) {

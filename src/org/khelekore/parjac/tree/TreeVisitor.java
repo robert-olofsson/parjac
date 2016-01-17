@@ -47,6 +47,10 @@ public interface TreeVisitor {
     default void endAnonymousClass (ClassType ct, ClassBody b) {
     }
 
+    default boolean visit (StaticInitializer s) {
+	return true;
+    }
+
     /**
      * @return true to visit subtree, false to stop tree traversal
      *         The endConstructor will be called no matter what.
@@ -64,7 +68,8 @@ public interface TreeVisitor {
     default void endExplicitConstructorInvocation (ExplicitConstructorInvocation eci) {
     }
 
-    default void visit (FieldDeclaration f) {
+    default boolean visit (FieldDeclaration f) {
+	return true;
     }
 
     default boolean visit (EnumConstant e) {

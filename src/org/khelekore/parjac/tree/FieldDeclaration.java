@@ -16,8 +16,8 @@ public class FieldDeclaration extends VariableDeclaration {
     }
 
     public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	getVariables ().visit (visitor);
+	if (visitor.visit (this))
+	    getVariables ().visit (visitor);
     }
 
     public Collection<? extends TreeNode> getChildNodes () {

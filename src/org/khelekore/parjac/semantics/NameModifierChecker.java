@@ -115,13 +115,14 @@ public class NameModifierChecker implements TreeVisitor {
 	return true;
     }
 
-    @Override public void visit (FieldDeclaration f) {
+    @Override public boolean visit (FieldDeclaration f) {
 	int flags = f.getFlags ();
 	checkAccess (f, flags);
 	if (isFinal (flags) && isVolatile (flags))
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
 							 "Field may not be both final and volatile"));
 	// TODO: need to check static for inner classes
+	return true;
     }
 
     @Override public boolean visit (MethodDeclaration m) {

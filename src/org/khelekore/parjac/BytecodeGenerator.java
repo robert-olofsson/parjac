@@ -17,6 +17,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -43,27 +44,27 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
-	pushClass (c);
+	pushClass (c, c.getId ());
 	return true;
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	pushClass (e);
+	pushClass (e, e.getId ());
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	pushClass (i);
+	pushClass (i, i.getId ());
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	pushClass (a);
+	pushClass (a, a.getId ());
 	return true;
     }
 
     @Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	pushClass (b);
+	pushClass (b, cip.getFilename (b));
 	return true;
     }
 
@@ -71,8 +72,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	endType ();
     }
 
-    private void pushClass (TreeNode tn) {
-	ClassWriterHolder cid = new ClassWriterHolder (tn);
+    private void pushClass (TreeNode tn, String name) {
+	ClassWriterHolder cid = new ClassWriterHolder (tn, name);
 	addClass (cid);
 	cid.start ();
     }
@@ -117,14 +118,32 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, "<init>", "()V", false);
     }
 
-    @Override public void visit (FieldDeclaration f) {
+    @Override public boolean visit (FieldDeclaration f) {
 	ClassWriter cw = currentClass.cw;
 	int mods = f.getFlags ();
+	if (FlagsHelper.isStatic (mods))
+	    currentMethod = getStaticBlock ();
+	// TODO: handle initializer blocks
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
+	    String id = vd.getId ();
 	    // int access, String name, String desc, String signature, Object value
-	    FieldVisitor fw = cw.visitField (mods, vd.getId (), getType (f.getType ()), null, null);
+	    FieldVisitor fw = cw.visitField (mods, id, getType (f.getType ()), null, null);
 	    fw.visitEnd ();
+	    TreeNode tn = vd.getInitializer ();
+	    if (tn != null) {
+		toType (tn, f).visit (this);
+		storeValue (mods, id, f.getExpressionType ().getDescriptor ());
+	    }
 	}
+	return false;
+    }
+
+    private void storeValue (int flags, String id, String type) {
+	int op = PUTFIELD;
+	if (FlagsHelper.isStatic (flags))
+	    op = PUTSTATIC;
+	String owner = currentClass.className;
+	currentMethod.mv.visitFieldInsn (op, owner, id, type);
     }
 
     @Override public boolean visit (MethodDeclaration m) {
@@ -231,10 +250,6 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (IntLiteral iv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
-
 	int i = iv.get ();
 	if (i >= -1 && i <= 5) {
 	    currentMethod.mv.visitInsn (ICONST_M1 + 1 + i);
@@ -248,9 +263,6 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (LongLiteral lv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
 	long l = lv.get ();
 	if (l == 0) {
 	    currentMethod.mv.visitInsn (LCONST_0);
@@ -262,10 +274,6 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (DoubleLiteral dv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
-
 	double d = dv.get ();
 	if (d == 0) {
 	    currentMethod.mv.visitInsn (DCONST_0);
@@ -277,10 +285,6 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (FloatLiteral fv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
-
 	float f = fv.get ();
 	if (f == 0) {
 	    currentMethod.mv.visitInsn (FCONST_0);
@@ -294,23 +298,14 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (StringLiteral sv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
 	currentMethod.mv.visitLdcInsn (sv.get ());
     }
 
     @Override public void visit (BooleanLiteral bv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
 	currentMethod.mv.visitInsn (bv.get () ? ICONST_1 : ICONST_0);
     }
 
     @Override public void visit (NullLiteral nv) {
-	// We do not handle init blocks yet.
-	if (methods.isEmpty ())
-	    return;
 	currentMethod.mv.visitInsn (ACONST_NULL);
     }
 
@@ -825,12 +820,27 @@ public class BytecodeGenerator implements TreeVisitor {
 	return ret;
     }
 
+    private MethodInfo getStaticBlock () {
+	MethodInfo sb = currentClass.staticBlock;
+	if (sb == null) {
+	    int mods = Opcodes.ACC_STATIC;
+	    ClassWriter cw = currentClass.cw;
+	    sb = currentClass.staticBlock =
+		new MethodInfo (mods, new Result.VoidResult (null),
+				cw.visitMethod (mods, "<clinit>", "()V", null, null));
+	}
+	return sb;
+    }
+
     private class ClassWriterHolder {
 	private final TreeNode tn;
+	private final String className;
 	private final ClassWriter cw;
+	private MethodInfo staticBlock;
 
-	public ClassWriterHolder (TreeNode tn) {
+	public ClassWriterHolder (TreeNode tn, String className) {
 	    this.tn = tn;
+	    this.className = className;
 	    cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 	}
 
@@ -870,12 +880,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 
 	public void write () {
+	    endStaticBlock ();
 	    Path path = getPath ();
 	    try {
 		classWriter.write (path, cw.toByteArray ());
 	    } catch (IOException e) {
 		System.err.println ("Failed to create class file: " + path);
 	    }
+	}
+
+	private void endStaticBlock () {
+	    MethodInfo mi = staticBlock;
+	    if (mi == null)
+		return;
+	    mi.mv.visitInsn (RETURN);
+	    mi.mv.visitMaxs (0, 0);
+	    mi.mv.visitEnd ();
 	}
 
 	private Path getPath () {
