@@ -423,24 +423,34 @@ public class ClassSetter {
 	}
 
 	private class MethodRegistrator extends SiblingVisitor {
-	    Map<String, List<MethodInformation>> methods = new HashMap<> ();
+	    private Map<String, List<MethodInformation>> methods = new HashMap<> ();
+
+	    @Override public boolean visit (ConstructorDeclaration c) {
+		addMethod (new MethodInformation (c.getFlags (),
+						  "<init>",
+						  c.getDescription (),
+						  null,   // TODO: fill in
+						  EMTPY)); // TODO: fill in
+		return false;
+	    }
+
 	    @Override public boolean visit (MethodDeclaration m) {
-		String name = m.getMethodName ();
+		addMethod (new MethodInformation (m.getFlags (),
+						  m.getMethodName (),
+						  m.getDescription (),
+						  null,   // TODO: fill in
+						  EMTPY)); // TODO: fill in
+		return false;
+	    }
+
+	    private void addMethod (MethodInformation mi) {
+		String name = mi.getName ();
 		List<MethodInformation> ls = methods.get (name);
 		if (ls == null) {
 		    ls = new ArrayList<> ();
 		    methods.put (name, ls);
 		}
-		ls.add (getMethodInformation (m));
-		return false;
-	    }
-
-	    private MethodInformation getMethodInformation (MethodDeclaration m) {
-		return new MethodInformation (m.getFlags (),
-					      m.getMethodName (),
-					      m.getDescription (),
-					      null,   // TODO: fill in
-					      EMTPY); // TODO: fill in
+		ls.add (mi);
 	    }
 	}
     }

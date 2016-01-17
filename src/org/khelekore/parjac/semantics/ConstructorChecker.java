@@ -54,12 +54,12 @@ public class ConstructorChecker {
 	}
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
-	    ccs.addLast (null);
+	    ccs.addLast (new NoAddCollector (i));
 	    return true;
 	}
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
-	    ccs.addLast (null);
+	    ccs.addLast (new NoAddCollector (a));
 	    return true;
 	}
 
@@ -72,7 +72,7 @@ public class ConstructorChecker {
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	    ccs.addLast (null);
+	    ccs.addLast (new NoAddCollector (b));
 	    return true;
 	}
 
@@ -87,12 +87,7 @@ public class ConstructorChecker {
     }
 
     private abstract class ConstructorCollector<T> {
-	protected final T type;
 	private final List<ConstructorDeclaration> cds = new ArrayList<> ();
-
-	public ConstructorCollector (T type) {
-	    this.type = type;
-	}
 
 	public void add (ConstructorDeclaration cd) {
 	    cds.add (cd);
@@ -113,8 +108,10 @@ public class ConstructorChecker {
     }
 
     private class ClassConstructorCollector extends ConstructorCollector<NormalClassDeclaration> {
+	private final NormalClassDeclaration type;
+
 	public ClassConstructorCollector (NormalClassDeclaration type) {
-	    super (type);
+	    this.type = type;
 	}
 
 	public String getId () {
@@ -135,12 +132,36 @@ public class ConstructorChecker {
     }
 
     private class EnumConstructorCollector extends ConstructorCollector<EnumDeclaration> {
+	private final EnumDeclaration type;
 	public EnumConstructorCollector (EnumDeclaration type) {
-	    super (type);
+	    this.type = type;
 	}
 
 	public String getId () {
 	    return type.getId ();
+	}
+
+	public void addDefaultConstructor () {
+	    // TODO: implement
+	}
+    }
+
+    private class NoAddCollector extends ConstructorCollector<Void> {
+	private final TreeNode type;
+
+	public NoAddCollector (TreeNode type) {
+	    this.type = type;
+	}
+
+	public void add (ConstructorDeclaration cd) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), type.getParsePosition (),
+							 "May not add constructor to: " +
+							 type.getClass ().getSimpleName ()));
+
+	}
+
+	public String getId () {
+	    return null;
 	}
 
 	public void addDefaultConstructor () {

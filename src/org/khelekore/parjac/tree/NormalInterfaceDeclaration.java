@@ -37,8 +37,9 @@ public class NormalInterfaceDeclaration extends FlaggedTypeBase {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + getAnnotations () + ", " + getFlags () + " " +
-	    id + ", " + types + ", " + extendsInterfaces + ", " + body + "}";
+	return getClass ().getSimpleName () + "{annotations: " + getAnnotations () +
+	    ", flags:" + getFlags () + ", id: " + id + ", types: " + types +
+	    ", extends: " + extendsInterfaces + ", body: " + body + "}";
     }
 
     public String getId () {

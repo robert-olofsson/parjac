@@ -237,5 +237,10 @@ public class CompiledTypesHolder {
 	    this.fqn = fqn;
 	    this.filename = filename;
 	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{fqn: " + fqn + ", filename: " + filename +
+		", tn: " + tn.getClass ().getSimpleName () + "}";
+	}
     }
 }

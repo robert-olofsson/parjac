@@ -364,6 +364,12 @@ public class TestBytecodeGeneration {
 	assert ret != null : "Got null back";
 	String clz = ret.getClass ().getName ();
 	assert clz.equals ("Foo") : "Got wrong class back: " + clz;
+
+	ret = compileAndRunStatic ("public class Foo { public Foo (int i) {}" +
+				   "public static Foo foo () { return new Foo (4711); }}");
+	assert ret != null : "Got null back";
+	clz = ret.getClass ().getName ();
+	assert clz.equals ("Foo") : "Got wrong class back: " + clz;
     }
 
     private void checkResult (String s, Class<?> retType, int expected)

@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.semantics.MethodInformation;
 
 public class ClassInstanceCreationExpression extends PositionNode {
     private TreeNode from;
@@ -16,6 +17,7 @@ public class ClassInstanceCreationExpression extends PositionNode {
     private final TreeNode typeArgumentsOrDiamond;
     private final ArgumentList args;
     private final ClassBody body;
+    private MethodInformation actualMethod;
 
     public ClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
@@ -54,6 +56,10 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	}
     }
 
+    @Override public void simpleVisit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
     public Collection<? extends TreeNode> getChildNodes () {
 	List<TreeNode> ls = new ArrayList<> ();
 	if (from != null)
@@ -89,11 +95,23 @@ public class ClassInstanceCreationExpression extends PositionNode {
 	return body != null;
     }
 
+    public ClassBody getBody () {
+	return body;
+    }
+
     @Override public ExpressionType getExpressionType () {
 	return new ExpressionType (id.getFullName ());
     }
 
+    public void setMethodInformation (MethodInformation actualMethod) {
+	this.actualMethod = actualMethod;
+    }
+
     public String getDescription () {
-	return "()V"; // TODO: not correct
+	return actualMethod.getDesc ();
+    }
+
+    public int getActualMethodFlags () {
+	return actualMethod.getAccess ();
     }
 }

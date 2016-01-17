@@ -141,15 +141,15 @@ public class Compiler {
 	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	if (diagnostics.hasError ())
 	    return;
+	// Check constructors and make sure there is a no-args constructor if needed
+	runTimed (() -> checkConstructors (trees), "Checking constructors");
+	if (diagnostics.hasError ())
+	    return;
 	runTimed (() -> setMethodInvocations (trees), "Setting fields and method types");
 	if (diagnostics.hasError ())
 	    return;
 	// Check types of fields and assignments
 	runTimed (() -> checkReturns (trees), "Checking returns");
-	if (diagnostics.hasError ())
-	    return;
-	// Check that there is at least one constructor
-	runTimed (() -> checkConstructors (trees), "Checking constructors");
 	if (diagnostics.hasError ())
 	    return;
 	// Check generics
