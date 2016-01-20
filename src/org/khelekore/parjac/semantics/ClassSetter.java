@@ -267,6 +267,17 @@ public class ClassSetter {
 	    return true;
 	}
 
+	@Override public boolean visit (FieldAccess f) {
+	    TreeNode from = f.getFrom ();
+	    if (from != null) {
+		if (from.getExpressionType () == null && from instanceof PrimaryNoNewArray.ThisPrimary) {
+		    PrimaryNoNewArray.ThisPrimary t = (PrimaryNoNewArray.ThisPrimary)from;
+		    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
+		}
+	    }
+	    return true;
+	}
+
 	@Override public boolean visit (LocalVariableDeclaration l) {
 	    setType (l.getType (), this);
 	    for (VariableDeclarator v : l.getVariables ().get ()) {

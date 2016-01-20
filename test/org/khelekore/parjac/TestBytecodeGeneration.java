@@ -1,6 +1,7 @@
 package org.khelekore.parjac;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -398,10 +399,29 @@ public class TestBytecodeGeneration {
 	Class<?> c = getClass ("public class C { public int a; public C () { a = 30; }}", "C");
 	assert c != null : "Failed to compile class";
 	Object instance = c.newInstance ();
-	Field f = c.getDeclaredField ("a");
-	assert f != null : "Failed to find field";
-	Object o = f.get (instance);
-	assert ((Number)o).intValue () == 30 : "Wrong value: expected: 30, got: " + o;
+	checkFieldValue (c, instance, "a", 30);
+    }
+
+    @Test
+    public void testThis () throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass ("public class A { public int i; public A (int i) { this.i = i; }}", "A");
+	assert c != null : "Failed to compile class";
+	Constructor<?> cc = c.getConstructor (Integer.TYPE);
+	Object instance = cc.newInstance (17);
+	checkFieldValue (c, instance, "i", 17);
+    }
+
+    @Test
+    public void testThisOther () throws IOException, ReflectiveOperationException {
+	Class<?> c = getClass ("public class A { public int i; " +
+			       "    public A (int a) { this.i = a; }" +
+			       "    public A (A other) { this.i = other.i; }}", "A");
+	assert c != null : "Failed to compile class";
+	Constructor<?> cc1 = c.getConstructor (Integer.TYPE);
+	Object instance1 = cc1.newInstance (19);
+	Constructor<?> cc2 = c.getConstructor (c);
+	Object instance2 = cc2.newInstance (instance1);
+	checkFieldValue (c, instance2, "i", 19);
     }
 
     private void checkResult (String s, Class<?> retType, int expected)
@@ -413,6 +433,13 @@ public class TestBytecodeGeneration {
     private void checkResultObject (Object ret, Class<?> retType, int expected) {
 	assert ret.getClass () == retType : "Got wrong type back: " + ret.getClass ().getName ();
 	assert ((Number)ret).intValue () == expected : "Got wrong result, expected " + expected + ", got: " + ret;
+    }
+
+    private void checkFieldValue (Class<?> c, Object instance, String field, int expected)
+	throws ReflectiveOperationException {
+	Field f = c.getDeclaredField (field);
+	Object o = f.get (instance);
+	assert ((Number)o).intValue () == expected : "Wrong value: expected: " + expected + ", got: " + o;
     }
 
     private Object compileAndRunStatic (String s) throws ReflectiveOperationException {

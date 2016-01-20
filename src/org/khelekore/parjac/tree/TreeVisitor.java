@@ -254,4 +254,7 @@ public interface TreeVisitor {
     default boolean visit (PostDecrementExpression p) {
 	return true;
     }
+
+    default void visit (PrimaryNoNewArray.ThisPrimary t) {
+    }
 }

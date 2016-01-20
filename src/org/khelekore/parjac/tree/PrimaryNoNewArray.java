@@ -9,12 +9,26 @@ import org.khelekore.parjac.lexer.Token;
 
 public class PrimaryNoNewArray {
     public static class ThisPrimary extends PositionNode {
+	private ExpressionType expType;
+
 	public ThisPrimary (ParsePosition pos) {
 	    super (pos);
 	}
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{}";
+	}
+
+	public void setExpressionType (ExpressionType expType) {
+	    this.expType = expType;
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return expType;
+	}
+
+	@Override public void visit (TreeVisitor visitor) {
+	    visitor.visit (this);
 	}
     }
 

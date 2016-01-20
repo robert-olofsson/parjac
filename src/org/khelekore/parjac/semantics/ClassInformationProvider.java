@@ -97,7 +97,10 @@ public class ClassInformationProvider {
 	    Map<String, FieldInformation<?>> m = classFields.get (fqn);
 	    if (m == null)
 		return null;
-	    return m.get (field).getExpressionType ();
+	    FieldInformation<?> fi = m.get (field);
+	    if (fi == null)
+		return null;
+	    return fi.getExpressionType ();
 	} else {
 	    return crh.getFieldType (fqn, field);
 	}

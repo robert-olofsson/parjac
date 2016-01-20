@@ -261,8 +261,16 @@ public class FieldAndMethodSetter implements TreeVisitor {
     }
 
     @Override public boolean visit (FieldAccess f) {
-	f.setReturnType (cip.getFieldType (f.getFrom ().getExpressionType ().getClassName (),
-					   f.getFieldId ()));
+	ExpressionType retType = cip.getFieldType (f.getFrom ().getExpressionType ().getClassName (),
+						   f.getFieldId ());
+	if (retType == null) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							 f.getParsePosition (),
+							 "Cannot find symbol: %s",
+							 f.getFieldId ()));
+	} else {
+	    f.setReturnType (retType);
+	}
 	return true;
     }
 }

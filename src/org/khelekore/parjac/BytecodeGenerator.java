@@ -93,6 +93,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	MethodInfo mi = new MethodInfo (mods, new Result.VoidResult (null),
 					cw.visitMethod (mods, "<init>", c.getDescription (), null, null));
 	addMethod (mi);
+	addParameters (c.getParameters ());
 	return true;
     }
 
@@ -158,16 +159,19 @@ public class BytecodeGenerator implements TreeVisitor {
 					cw.visitMethod (mods, m.getMethodName (),
 							m.getDescription (), null, null));
 	addMethod (mi);
-	FormalParameterList ls = m.getParameters ();
+	addParameters (m.getParameters ());
+	return true;
+    }
+
+    private void addParameters (FormalParameterList ls) {
 	if (ls != null) {
-	    NormalFormalParameterList fpl = m.getParameters ().getParameters ();
+	    NormalFormalParameterList fpl = ls.getParameters ();
 	    for (FormalParameter fp : fpl.getFormalParameters ())
 		currentMethod.localVariableIds.put (fp.getId (), currentMethod.getId (fp));
 	    LastFormalParameter lfp = fpl.getLastFormalParameter ();
 	    if (lfp != null)
 		currentMethod.localVariableIds.put (lfp.getId (), currentMethod.getId (lfp));
 	}
-	return true;
     }
 
     @Override public void endMethod (MethodDeclaration m) {
@@ -321,11 +325,25 @@ public class BytecodeGenerator implements TreeVisitor {
 	TreeNode rhs = a.rhs ();
 	if (!isShiftAssignment (t))
 	    rhs = toType (a.rhs (), a);
+	String id = null;
 	// TODO: this is pretty ugly, clean it up
-	Identifier i = (Identifier)(((DottedName)a.lhs ()).getFieldAccess ());
-	Integer localVarId = currentMethod.localVariableIds.get (i.get ());
-	if (localVarId == null)
-	    currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	TreeNode lhs = a.lhs ();
+	Integer localVarId = null;
+	if (lhs instanceof DottedName) {
+	    Identifier i = (Identifier)(((DottedName)lhs).getFieldAccess ());
+	    id = i.get ();
+	    localVarId = currentMethod.localVariableIds.get (id);
+	    if (localVarId == null)
+		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this" // TODO: not correct
+	} else if (lhs instanceof FieldAccess) {
+	    FieldAccess f = (FieldAccess)lhs;
+	    TreeNode from = f.getFrom ();
+	    if (from != null)
+		from.visit (this);
+	    id = f.getFieldId ();
+	} else {
+	    // TODO: handle ArrayAccess
+	}
 	rhs.visit (this);
 	int op = getAssignmentActionOp (t, a);
 	if (op != -1)
@@ -333,8 +351,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (localVarId != null) {
 	    storeValue (localVarId, a.lhs ());
 	} else {
-	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.className, i.get (),
-					     i.getExpressionType ().getDescriptor ());
+	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.className, id,
+					     a.getExpressionType ().getDescriptor ());
 	}
 	return false;
     }
@@ -567,15 +585,16 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public boolean visit (FieldAccess f) {
 	TreeNode tn = f.getFrom ();
+	String classSignature = tn.getExpressionType ().getSlashName ();
+	int op = GETFIELD;
 	if (tn instanceof ClassType) {
-	    ClassType ct = (ClassType)tn;
-	    String classSignature = ct.getExpressionType ().getSlashName ();
-	    currentMethod.mv.visitFieldInsn (GETSTATIC, classSignature, f.getFieldId (),
-					     f.getExpressionType ().getDescriptor ());
-	    return false;
+	    op = GETSTATIC;
 	} else {
-	    return true;
+	    tn.visit (this);
 	}
+	currentMethod.mv.visitFieldInsn (op, classSignature, f.getFieldId (),
+					 f.getExpressionType ().getDescriptor ());
+	return false;
     }
 
     @Override public boolean visit (CastExpression c) {
@@ -588,6 +607,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	    currentMethod.mv.visitTypeInsn (CHECKCAST, target.getSlashName ());
 	}
 	return false;
+    }
+
+    @Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
+	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
     }
 
     private void outputPrimitiveCasts (ExpressionType source, ExpressionType target) {

@@ -628,6 +628,20 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testThis () throws IOException {
+	parseAndSetClasses ("class A { public A (int i) { this.j = i; }}");
+	assert diagnostics.hasError () : "There is no j";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class A { public A (int i) { this.i = i; }}");
+	assert diagnostics.hasError () : "There is no this.i";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class A { int i; public A (int i) { this.i = i; }}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();
