@@ -764,6 +764,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	typeToappendMethod.put (ExpressionType.CHAR, "(C)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.DOUBLE, "(D)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.FLOAT, "(F)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.BYTE, "(I)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.SHORT, "(I)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.INT, "(I)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.LONG, "(J)Ljava/lang/StringBuilder;");
 
