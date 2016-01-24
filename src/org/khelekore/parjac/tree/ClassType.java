@@ -30,7 +30,9 @@ public class ClassType extends Multipart<SimpleClassType> {
     }
 
     @Override public ExpressionType getExpressionType () {
-	return new ExpressionType (fqn);
+	if (fqn != null)
+	    return new ExpressionType (fqn);
+	return null;
     }
 
     public static ClassType build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {

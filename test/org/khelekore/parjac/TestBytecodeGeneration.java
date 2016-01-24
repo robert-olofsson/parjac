@@ -424,6 +424,16 @@ public class TestBytecodeGeneration {
 	checkFieldValue (c, instance2, "i", 19);
     }
 
+    @Test
+    public void testStringConcat () throws IOException, ReflectiveOperationException {
+	Object o = compileAndRunStatic ("public class Foo {" +
+					"    public static String foo () {" +
+					"        Foo a = new Foo ();" +
+					"        return \"a: \" + a; }}");
+	assert o != null : "Got null back";
+	assert o instanceof String : "Got wrong type back: " + o.getClass ().getName ();
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

@@ -18,6 +18,10 @@ public class CharLiteral extends PositionNode implements LiteralValue, NumericVa
 	return getClass ().getSimpleName () + "{" + value + "}";
     }
 
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
     @Override public IntLiteral getNegated () {
 	return new IntLiteral (-value, getParsePosition ());
     }

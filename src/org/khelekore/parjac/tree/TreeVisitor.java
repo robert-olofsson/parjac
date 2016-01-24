@@ -127,6 +127,9 @@ public interface TreeVisitor {
     default void visit (BooleanLiteral b) {
     }
 
+    default void visit (CharLiteral c) {
+    }
+
     default void visit (NullLiteral s) {
     }
 

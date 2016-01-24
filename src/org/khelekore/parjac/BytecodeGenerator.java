@@ -31,6 +31,10 @@ public class BytecodeGenerator implements TreeVisitor {
     private final Deque<MethodInfo> methods = new ArrayDeque<> ();
     private MethodInfo currentMethod;
 
+    private static final String INIT = "<init>";
+    private static final String CLINIT = "<clinit>";
+    private static final String ISIG = "()V";
+
     public BytecodeGenerator (Path origin, ClassInformationProvider cip,
 			      BytecodeWriter classWriter) {
 	this.origin = origin;
@@ -91,7 +95,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 
 	MethodInfo mi = new MethodInfo (mods, new Result.VoidResult (null),
-					cw.visitMethod (mods, "<init>", c.getDescription (), null, null));
+					cw.visitMethod (mods, INIT, c.getDescription (), null, null));
 	addMethod (mi);
 	addParameters (c.getParameters ());
 	return true;
@@ -108,7 +112,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
-	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", INIT, ISIG, false);
 	}
 	return true;
     }
@@ -116,7 +120,7 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void visit (ExplicitConstructorInvocation eci) {
 	SuperAndFlags saf = currentClass.getSuperAndFlags ();
 	// TODO: the signature here is borked, need to get signature from super class
-	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, "<init>", "()V", false);
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, ISIG, false);
     }
 
     @Override public boolean visit (FieldDeclaration f) {
@@ -256,16 +260,7 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public void visit (IntLiteral iv) {
-	int i = iv.get ();
-	if (i >= -1 && i <= 5) {
-	    currentMethod.mv.visitInsn (ICONST_M1 + 1 + i);
-	} else if (i >= -128 && i <= 127) {
-	    currentMethod.mv.visitIntInsn (BIPUSH, i);
-	} else if (i >= -32768 && i <= 32767) {
-	    currentMethod.mv.visitIntInsn (SIPUSH, i);
-	} else {
-	    currentMethod.mv.visitLdcInsn (i);
-	}
+	visit (iv.get ());
     }
 
     @Override public void visit (LongLiteral lv) {
@@ -309,6 +304,22 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void visit (BooleanLiteral bv) {
 	currentMethod.mv.visitInsn (bv.get () ? ICONST_1 : ICONST_0);
+    }
+
+    @Override public void visit (CharLiteral cv) {
+	visit (cv.get ());
+    }
+
+    private void visit (int i) {
+	if (i >= -1 && i <= 5) {
+	    currentMethod.mv.visitInsn (ICONST_M1 + 1 + i);
+	} else if (i >= -128 && i <= 127) {
+	    currentMethod.mv.visitIntInsn (BIPUSH, i);
+	} else if (i >= -32768 && i <= 32767) {
+	    currentMethod.mv.visitIntInsn (SIPUSH, i);
+	} else {
+	    currentMethod.mv.visitLdcInsn (i);
+	}
     }
 
     @Override public void visit (NullLiteral nv) {
@@ -428,7 +439,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	ArgumentList ls = c.getArgumentList ();
 	if (ls != null)
 	    c.getArgumentList ().visit (this);
-	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, sname, "<init>", c.getDescription (), false);
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, sname, INIT, c.getDescription (), false);
 	return false;
     }
 
@@ -707,7 +718,11 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public boolean visit (TwoPartExpression t) {
 	TreeNode left = t.getLeft ();
 	TreeNode right = t.getRight ();
-	if (t.getOperator ().isAutoWidenOperator ()) {
+	ExpressionType et = t.getExpressionType ();
+	if (et == ExpressionType.STRING) {
+	    stringConcat (left, right);
+	    return false;
+	} else if (t.getOperator ().isAutoWidenOperator ()) {
 	    left = toType (left, t);
 	    right = toType (right, t);
 	}
@@ -717,6 +732,51 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (op != -1)
 	    currentMethod.mv.visitInsn (op);
 	return false;
+    }
+
+    // TODO: javac optimizes a + b + c to appends without intermedieate toString
+    private void stringConcat (TreeNode left, TreeNode right) {
+	currentMethod.mv.visitTypeInsn (NEW, STRINGBUILDER);
+	currentMethod.mv.visitInsn (DUP);
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, STRINGBUILDER, INIT, ISIG, false);
+	left.visit (this);
+	currentMethod.mv.visitMethodInsn (INVOKEVIRTUAL, STRINGBUILDER, APPEND, getAppendMethod (left), false);
+	right.visit (this);
+	currentMethod.mv.visitMethodInsn (INVOKEVIRTUAL, STRINGBUILDER, APPEND, getAppendMethod (right), false);
+	currentMethod.mv.visitMethodInsn (INVOKEVIRTUAL, STRINGBUILDER, TOSTRING, "()Ljava/lang/String;", false);
+    }
+
+    private String getAppendMethod (TreeNode tn) {
+	ExpressionType et = tn.getExpressionType ();
+	String ret = typeToappendMethod.get (et);
+	if (ret != null)
+	    return ret;
+	return "(Ljava/lang/Object;)Ljava/lang/StringBuilder;";
+    }
+
+    private static final String STRINGBUILDER = "java/lang/StringBuilder";
+    private static final String APPEND = "append";
+    private static final String TOSTRING = "toString";
+    private static final Map<ExpressionType, String> typeToappendMethod = new HashMap<> ();
+    static {
+	// boolean, char, double, float, int, long,
+	typeToappendMethod.put (ExpressionType.BOOLEAN, "(Z)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.CHAR, "(C)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.DOUBLE, "(D)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.FLOAT, "(F)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.INT, "(I)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.LONG, "(J)Ljava/lang/StringBuilder;");
+
+	// char[], CharSequence, Object, String, StringBuffer,
+	// TODO: javac only seems to use String and Object, not sure if we want the others
+	typeToappendMethod.put (ExpressionType.array (ExpressionType.CHAR, 1),
+				"([C;)Ljava/lang/StringBuilder;");
+ 	typeToappendMethod.put (new ExpressionType ("java.lang.CharSequence"),
+				"(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.STRING, "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+	typeToappendMethod.put (ExpressionType.OBJECT, "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
+ 	typeToappendMethod.put (new ExpressionType ("java.lang.StringBuffer"),
+				"(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;");
     }
 
     private TreeNode toType (TreeNode tn, TreeNode wantedType) {
@@ -859,7 +919,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    ClassWriter cw = currentClass.cw;
 	    sb = currentClass.staticBlock =
 		new MethodInfo (mods, new Result.VoidResult (null),
-				cw.visitMethod (mods, "<clinit>", "()V", null, null));
+				cw.visitMethod (mods, CLINIT, ISIG, null, null));
 	}
 	return sb;
     }
@@ -885,7 +945,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	    SuperAndFlags saf = getSuperAndFlags ();
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
-	    if (fqn == null) System.err.println ("tn: " + tn);
 	    cw.visit (V1_8, saf.flags, fqn, /*signature*/null, saf.supername, /*interfaces */null);
 	}
 

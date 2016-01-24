@@ -40,7 +40,14 @@ public class TwoPartExpression extends PositionNode {
     @Override public ExpressionType getExpressionType () {
 	if (op.get ().isLogicalOperator ())
 	    return ExpressionType.BOOLEAN;
+	Token t = op.get ();
+	if (t == Token.PLUS && (isString (exp1) || isString (exp2)))
+	    return ExpressionType.STRING;
 	return ExpressionType.bigger (exp1.getExpressionType (), exp2.getExpressionType ());
+    }
+
+    private static boolean isString (TreeNode tn) {
+	return tn.getExpressionType () == ExpressionType.STRING;
     }
 
     @Override public Collection<? extends TreeNode> getChildNodes () {
