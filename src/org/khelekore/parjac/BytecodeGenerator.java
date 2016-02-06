@@ -439,10 +439,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	TreeNode exp = t.getExpression ();
 	handleJump (exp, elseStart);
 	t.getThenPart ().visit (this);
+	ExpressionType target = t.getExpressionType ();
+	if (target.isPrimitiveType ())
+	    outputPrimitiveCasts (t.getThenPart ().getExpressionType (), target);
 	Label after = new Label ();
 	currentMethod.mv.visitJumpInsn (GOTO, after);
 	currentMethod.mv.visitLabel (elseStart);
 	t.getElsePart ().visit (this);
+	if (target.isPrimitiveType ())
+	    outputPrimitiveCasts (t.getElsePart ().getExpressionType (), target);
 	currentMethod.mv.visitLabel (after);
 	return false;
     }

@@ -84,11 +84,21 @@ public class FieldAndMethodSetter implements TreeVisitor {
     @Override public boolean visit (TernaryExpression t) {
 	TreeNode tp = t.getThenPart ();
 	TreeNode ep = t.getElsePart ();
-	t.setExpressionType (lub (tp.getExpressionType (), ep.getExpressionType ()));
+	t.setExpressionType (lub (t, tp.getExpressionType (), ep.getExpressionType ()));
 	return true;
     }
 
-    private ExpressionType lub (ExpressionType et1, ExpressionType et2) {
+    private ExpressionType lub (TreeNode tn, ExpressionType et1, ExpressionType et2) {
+	if (et1.isPrimitiveType ()) {
+	    if (!et2.isPrimitiveType ()) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     tn.getParsePosition (),
+							     "Unable to find common parent type of %s and %s",
+							     et1, et2));
+		return null;
+	    }
+	    return ExpressionType.bigger (et1, et2);
+	}
 	return et1;
     }
 

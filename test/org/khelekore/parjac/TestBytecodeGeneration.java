@@ -177,11 +177,12 @@ public class TestBytecodeGeneration {
     }
 
     private void checkIfReturn (Class<?> c, String methodName, Class<?> argumentType,
-				Object argument, int expectedResult) throws ReflectiveOperationException {
+				Object argument, Object expectedResult) throws ReflectiveOperationException {
 	Method m = c.getMethod (methodName, argumentType);
 	Object ret = m.invoke (null, argument);
-	assert ret instanceof Integer : "Got wrong type back: " + ret;
-	assert expectedResult == (Integer)ret : "Got wrong result, expected " + expectedResult + ", got: " + ret;
+	assert ret.getClass ().equals (expectedResult.getClass ()) : "Got wrong type back: " + ret;
+	assert expectedResult.equals (ret) :
+	"Got wrong result, expected " + expectedResult + ", got: " + ret;
     }
 
     @Test
@@ -440,6 +441,21 @@ public class TestBytecodeGeneration {
 	Class<?> c = getClass (s, "IF");
 	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 3);
 	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 4);
+
+	s = "public class IF { public static long i (boolean b) { byte s = 3; return b ? s : 12L; }}";
+	c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 3L);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 12L);
+
+	s = "public class IF { public static long i (boolean b) { byte s = 3; return b ? 12L : s; }}";
+	c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 12L);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 3L);
+
+	s = "public class IF { public static Object i (boolean b) { return b ? \"\" : Boolean.TRUE; }}";
+	c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, "");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, Boolean.TRUE);
     }
 
     private void checkResult (String s, Class<?> retType, int expected)
