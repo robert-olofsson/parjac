@@ -34,6 +34,7 @@ public class BytecodeGenerator implements TreeVisitor {
     private static final String INIT = "<init>";
     private static final String CLINIT = "<clinit>";
     private static final String ISIG = "()V";
+    private static final String UNNAMED_LABEL = "";
 
     public BytecodeGenerator (Path origin, ClassInformationProvider cip,
 			      BytecodeWriter classWriter) {
@@ -484,17 +485,7 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (WhileStatement w) {
-	Label start = new Label ();
-	Label end = new Label ();
-	currentMethod.mv.visitLabel (start);
-	TreeNode tn = w.getExpression ();
-	tn.visit (this);
-	handleJump (tn, end);
-	tn = w.getStatement ();
-	if (tn != null)
-	    tn.visit (this);
-	currentMethod.mv.visitJumpInsn (GOTO, start);
-	currentMethod.mv.visitLabel (end);
+	buildLoop (null, w.getExpression (), w.getStatement (), null);
 	return false;
     }
 
@@ -514,23 +505,36 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (BasicForStatement f) {
-	TreeNode tn;
-	if ((tn = f.getForInit()) != null)
-	    tn.visit (this);
-	Label start = new Label ();
-	currentMethod.mv.visitLabel (start);
-	Label end = new Label ();
-	if ((tn = f.getExpression ()) != null) {
-	    tn.visit (this);
-	    handleJump (tn, end);
-	}
-	if ((tn = f.getStatement ()) != null)
-	    tn.visit (this);
-	if ((tn = f.getForUpdate ()) != null)
-	    tn.visit (this);
-	currentMethod.mv.visitJumpInsn (GOTO, start);
-	currentMethod.mv.visitLabel (end);
+	buildLoop (f.getForInit (), f.getExpression (), f.getStatement (), f.getForUpdate ());
 	return false;
+    }
+
+    private void buildLoop (TreeNode initializer, TreeNode condition, TreeNode statement, TreeNode update) {
+	if ((initializer) != null)
+	    initializer.visit (this);
+	String id = currentMethod.currentNamedLabel;
+	currentMethod.currentNamedLabel = null;
+	if (id == null)
+	    id = UNNAMED_LABEL;
+	LabelUsage previousStartUnnamed = currentMethod.addStartLabel (id);
+	LabelUsage previousContinueUnnamed = currentMethod.addContinueLabel (id);
+	LabelUsage previousEndUnnamed = currentMethod.addEndLabel (id);
+	LabelUsage end = currentMethod.getEndLabel (id);
+	if (condition != null) {
+	    condition.visit (this);
+	    handleJump (condition, end.get ());
+	}
+	if (statement != null)
+	    statement.visit (this);
+	currentMethod.visitContinueLabel (id);
+	if (update != null)
+	    update.visit (this);
+	if (end.label != null)
+	    currentMethod.gotoStartLabel (id);
+	currentMethod.endEndLabel (id, previousEndUnnamed);
+	if (id == UNNAMED_LABEL)
+	    currentMethod.endContinueLabel (id, previousContinueUnnamed);
+	currentMethod.endStartLabel (id, previousStartUnnamed);
     }
 
     private void handleJump (TreeNode exp, Label target) {
@@ -564,6 +568,18 @@ public class BytecodeGenerator implements TreeVisitor {
 		throw new IllegalStateException ("unhandled jump type: " + t);
 	    }
 	}
+    }
+
+    @Override public void visit (BreakStatement b) {
+	currentMethod.gotoEndLabel (getLabelId (b.getId ()));
+    }
+
+    @Override public  void visit (ContinueStatement b) {
+	currentMethod.gotoContinueLabel (getLabelId (b.getId ()));
+    }
+
+    private String getLabelId (String id) {
+	return id == null ? UNNAMED_LABEL : id;
     }
 
     @Override public boolean visit (LocalVariableDeclaration l) {
@@ -606,6 +622,14 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitFieldInsn (op, classSignature, f.getFieldId (),
 					 f.getExpressionType ().getDescriptor ());
 	return false;
+    }
+
+    @Override public void visit (LabeledStatement l) {
+	currentMethod.currentNamedLabel = l.getId ();
+    }
+
+    @Override public void endLabel (LabeledStatement l) {
+	currentMethod.currentNamedLabel = null;
     }
 
     @Override public boolean visit (CastExpression c) {
@@ -1012,6 +1036,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	public final Result result;
 	public final MethodVisitor mv;
 	public final Map<String, Integer> localVariableIds = new HashMap<> ();
+	public final Map<String, LabelUsage> startLabels = new HashMap<> ();
+	public final Map<String, LabelUsage> continueLabels = new HashMap<> ();
+	public final Map<String, LabelUsage> endLabels = new HashMap<> ();
+	private String currentNamedLabel;
 	private int nextId;
 
 	public MethodInfo (int flags, Result result, MethodVisitor mv) {
@@ -1031,6 +1059,72 @@ public class BytecodeGenerator implements TreeVisitor {
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{result: " + result + ", mv: " + mv + "}";
+	}
+
+	public LabelUsage addStartLabel (String id) {
+	    LabelUsage start = new LabelUsage ();
+	    mv.visitLabel (start.get ());
+	    return startLabels.put (id, start);
+	}
+
+	public void endStartLabel (String id, LabelUsage previous) {
+	    if (previous != null)
+		startLabels.put (id, previous);
+	    else
+		startLabels.remove (id);
+	}
+
+	public void gotoStartLabel (String id) {
+	    mv.visitJumpInsn (GOTO, startLabels.get (id).label);
+	}
+
+	public LabelUsage addContinueLabel (String id) {
+	    return continueLabels.put (id, new LabelUsage ());
+	}
+
+	public void endContinueLabel (String id, LabelUsage previous) {
+	    if (previous != null)
+		continueLabels.put (id, previous);
+	    else
+		continueLabels.remove (id);
+	}
+
+	public void visitContinueLabel (String id) {
+	    mv.visitLabel (continueLabels.get (id).get ());
+	}
+
+	public void gotoContinueLabel (String id) {
+	    mv.visitJumpInsn (GOTO, continueLabels.get (id).get ());
+	}
+
+	public LabelUsage addEndLabel (String id) {
+	    return endLabels.put (id, new LabelUsage ());
+	}
+
+	public void endEndLabel (String id, LabelUsage previous) {
+	    LabelUsage l = endLabels.remove (id);
+	    if (l.label != null)
+		mv.visitLabel (l.label);
+	    if (previous != null)
+		endLabels.put (id, previous);
+	}
+
+	public LabelUsage getEndLabel (String id) {
+	    return endLabels.get (id);
+	}
+
+	public void gotoEndLabel (String id) {
+	    mv.visitJumpInsn (GOTO, endLabels.get (id).get ());
+	}
+    }
+
+    private static class LabelUsage {
+	public Label label;
+
+	public Label get () {
+	    if (label == null)
+		label = new Label ();
+	    return label;
 	}
     }
 }

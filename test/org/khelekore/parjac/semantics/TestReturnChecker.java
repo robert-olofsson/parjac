@@ -316,6 +316,14 @@ public class TestReturnChecker extends TestBase {
 			    "    return 4;\n" +
 			    "}}");
 	assert diagnostics.hasError () : "Expected wrong type";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () {\n" +
+			    "    int i = 0;\n" +
+			    "    while (true){if (i > 3) break; i++; }\n" +
+			    "    return 4;\n" +
+			    "}}");
+	assertNoErrors ();
     }
 
     @Test
@@ -329,71 +337,80 @@ public class TestReturnChecker extends TestBase {
 			    "int bar (int i) {\n" +
 			    "    do {return 3;} while (i > 3);\n" +
 			    "}}");
-	assert diagnostics.hasError () : "Expected missing return";
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar (int i) {\n" +
+			    "    do {return 3;} while (i > 3); return 7;\n" +
+			    "}}");
+	assert diagnostics.hasError () : "Expected unreachable code";
     }
 
     @Test
     public void testFor () throws IOException {
 	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    for (; true; ){return 3;}" +
-			    "}}");
+			    "int bar () {for (;;){return 3;}}}");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    for (int i = 0; i < 3; i++){return 3;}" +
-			    "}}");
+			    "int bar () {for (;true;){return 3;}}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (int i = 0;; i++){return 3;}}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (int i = 0;; i++){ if (i > 5) break;} return 89;}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (int i = 0; i < 3; i++){return 3;}}}");
 	assert diagnostics.hasError () : "Expected missing return";
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (int i = 0; i < 3; i++){return 3;} return 7;}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (;;) {for (int i = 0;; i++){ if (i > 5) break;}}}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () { for (;;) {for (int i = 0;; i++){ if (i > 5) break;}} return 77;}}");
+	assert diagnostics.hasError () : "Expected unreachable code";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo {\n" +
+			    "int bar () {int i = 0; for (;;) { break; i += 10;} return 3;}}");
+	assert diagnostics.hasError () : "Expected unreachable code";
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo {\n" +
 			    "int bar () {\n" +
-			    "    for (int i = 0; i < 3; i++){return 3;}" +
-			    "    return 3234;\n" +
+			    "outer: for (;;) {for (int i = 0;; i++){ if (i > 5) break outer; }} return 77;" +
 			    "}}");
 	assertNoErrors ();
     }
 
     @Test
-    public void testThrow () throws IOException {
+    public void testBreak () throws IOException {
 	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    throw new RuntimeException ();\n" +
-			    "    }}");
+			    "int bar () {foo: for (;;){break foo;} return 45;}}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo {\n" +
+			    "void bar () {for (;;){break foo;}}}");
+	assert diagnostics.hasError () : "Expected unknown label";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
+    @Test
+    public void testThrow () throws IOException {
+	parseAndSetClasses ("class Foo {int bar () {throw new RuntimeException ();}}");
 	assertNoErrors ();
     }
 
     @Test
     public void testTry () throws IOException {
-	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    try {\n" +
-			    "        return 3;" +
-			    "    } finally {}\n" +
-			    "    }}");
+	parseAndSetClasses ("class Foo {int bar () {try {return 3;} finally {}}}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    try {\n" +
-			    "    } finally {}\n" +
-			    "        return 3;" +
-			    "    }}");
+	parseAndSetClasses ("class Foo {int bar () {try {} finally {} return 3;}}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    try {\n" +
-			    "        return 72;\n" +
-			    "    } finally {\n" +
-			    "        return 3;" +
-			    "    }}}");
+	parseAndSetClasses ("class Foo {int bar () {try {return 72;} finally {return 3;}}}");
 	assertNoErrors ();
-	parseAndSetClasses ("class Foo {\n" +
-			    "int bar () {\n" +
-			    "    try {\n" +
-			    "        int a = 34;\n" +
-			    "    } finally {\n" +
-			    "    }\n" +
-			    "    return 47;\n" +
-			    "}}");
+	parseAndSetClasses ("class Foo {int bar () {try {int a = 34;} finally {} return 47;}}");
 	assertNoErrors ();
     }
 

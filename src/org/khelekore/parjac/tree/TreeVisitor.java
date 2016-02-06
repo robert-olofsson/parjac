@@ -160,6 +160,9 @@ public interface TreeVisitor {
     default void visit (LabeledStatement l) {
     }
 
+    default void endLabel (LabeledStatement l) {
+    }
+
     default void visit (ThrowStatement t) {
     }
 
@@ -215,6 +218,9 @@ public interface TreeVisitor {
     }
 
     default void visit (BreakStatement b) {
+    }
+
+    default void visit (ContinueStatement b) {
     }
 
     default boolean visit (LocalVariableDeclaration l) {

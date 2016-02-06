@@ -1,9 +1,13 @@
 package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
@@ -17,12 +21,14 @@ import org.khelekore.parjac.tree.BooleanLiteral;
 import org.khelekore.parjac.tree.BreakStatement;
 import org.khelekore.parjac.tree.CastExpression;
 import org.khelekore.parjac.tree.Catches;
+import org.khelekore.parjac.tree.ContinueStatement;
 import org.khelekore.parjac.tree.DoStatement;
 import org.khelekore.parjac.tree.EnhancedForStatement;
 import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.Finally;
 import org.khelekore.parjac.tree.IfThenStatement;
 import org.khelekore.parjac.tree.IntLiteral;
+import org.khelekore.parjac.tree.LabeledStatement;
 import org.khelekore.parjac.tree.LocalVariableDeclaration;
 import org.khelekore.parjac.tree.MethodBody;
 import org.khelekore.parjac.tree.MethodDeclaration;
@@ -54,6 +60,7 @@ public class ReturnChecker implements TreeVisitor {
     private final ClassInformationProvider cip;
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
+    private final Deque<MethodData> methods = new ArrayDeque<> ();
 
     public ReturnChecker (ClassInformationProvider cip, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
@@ -67,6 +74,7 @@ public class ReturnChecker implements TreeVisitor {
     }
 
     @Override public boolean visit (MethodDeclaration md) {
+	methods.push (new MethodData ());
 	MethodBody b = md.getBody ();
 	if (!b.isEmpty ()) {
 	    if (!checkMethodBlock (b.getBlock (), md.getResult ()))
@@ -77,49 +85,50 @@ public class ReturnChecker implements TreeVisitor {
 	return true;
     }
 
-    private boolean checkMethodBlock (Block b, Result res) {
-	boolean ends = checkStatements (b.getStatements (), res);
-	return ends || res instanceof Result.VoidResult;
+    @Override public void endMethod (MethodDeclaration m) {
+	methods.pop ();
     }
 
-    private boolean checkBlock (Block b, Result res) {
+    private boolean checkMethodBlock (Block b, Result res) {
+	Ender ends = checkStatements (b.getStatements (), res);
+	return ends.ended () || res instanceof Result.VoidResult;
+    }
+
+    private Ender checkBlock (Block b, Result res) {
 	return checkStatements (b.getStatements (), res);
     }
 
-    private boolean checkStatements (List<TreeNode> statements, Result res) {
-	boolean ends = false;
-	if (statements != null) {
-	    StatementChecker sc = new StatementChecker (res);
-	    for (int i = 0, s = statements.size (); i < s; i++) {
-		sc.clear ();
-		TreeNode tn = statements.get (i);
-		tn.visit (sc);
-		ends = sc.ends;
-		if (ends && i < s -1) {
-		    TreeNode next = statements.get (i + 1);
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 next.getParsePosition (),
-								 "Unreachable code"));
-		}
+    private Ender checkStatements (List<TreeNode> statements, Result res) {
+	if (statements == null)
+	    return new Ender ();
+	Ender ender = null;
+	StatementChecker sc = new StatementChecker (res);
+	for (int i = 0, s = statements.size (); i < s; i++) {
+	    TreeNode tn = statements.get (i);
+	    tn.visit (sc);
+	    ender = sc.ender;
+	    if (ender.ended () && i < s -1) {
+		TreeNode next = statements.get (i + 1);
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     next.getParsePosition (),
+							     "Unreachable code"));
 	    }
 	}
-	return ends;
+	if (ender == null)
+	    ender = new Ender ();
+	return ender;
     }
 
     private class StatementChecker extends SameTypeTreeVisitor {
 	private final Result res;
-	private boolean ends;
+	private Ender ender = new Ender ();
 
 	public StatementChecker (Result res) {
 	    this.res = res;
 	}
 
-	public void clear () {
-	    ends = false;
-	}
-
 	@Override public boolean visit (ReturnStatement r) {
-	    setEnds ();
+	    ender.hasReturns = true;
 	    checkType (r, res);
 	    return true;
 	}
@@ -137,39 +146,105 @@ public class ReturnChecker implements TreeVisitor {
 	    return true;
 	}
 
+	@Override public void visit (LabeledStatement l) {
+	    TreeNode s = l.getStatement ();
+	    if (!allowedLabelTarget (s))
+		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
+							       l.getParsePosition (),
+							       "Unusable label"));
+	    if (!methods.peek ().activeLabels.add (l.getId ()))
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     l.getParsePosition (),
+							     "Label %s already in use",
+							     l.getId ()));
+	}
+
+	@Override public void endLabel (LabeledStatement l) {
+	    String id = l.getId ();
+	    methods.peek ().activeLabels.remove (id);
+	    ender.hasBreak.remove (id);
+	    ender.mayBreak.remove (id);
+	}
+
+	private boolean allowedLabelTarget (TreeNode t) {
+	    return t instanceof BasicForStatement ||
+		t instanceof EnhancedForStatement ||
+		t instanceof WhileStatement ||
+		t instanceof DoStatement ||
+		t instanceof SwitchStatement; // only for break
+	}
+
 	@Override public void visit (ThrowStatement t) {
-	    setEnds ();
+	    ender.hasThrow = true;
+	    ender.mayThrow = true;
 	}
 
 	@Override public void visit (BreakStatement b) {
-	    setEnds ();
+	    String id = b.getId ();
+	    checkValidLabel (b, id);
+	    if (id == null)
+		id = "";
+	    ender.hasBreak.add (id);
+	    ender.mayBreak.add (id);
+	}
+
+	@Override public void visit (ContinueStatement b) {
+	    checkValidLabel (b, b.getId ());
+	}
+
+	private void checkValidLabel (TreeNode t, String id) {
+	    if (id != null && !methods.peek ().activeLabels.contains (id))
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     t.getParsePosition (),
+							     "No label: %s in scope",
+							     id));
 	}
 
 	@Override public boolean visit (IfThenStatement i) {
 	    checkBoolean (i.getExpression ());
-	    boolean statementEnds = checkStatement (i.getIfStatement ());
-	    boolean elseEnds = false;
+	    Ender statementEnds = checkStatement (i.getIfStatement ());
+	    Ender elseEnds = null;
 	    TreeNode elseStatement = i.getElseStatement ();
-	    if (elseStatement != null)
+	    if (elseStatement == null) {
+		if (isTrue (i.getExpression ()))
+		    ender = statementEnds;
+		else
+		    ender.mayRun ();
+	    } else {
 		elseEnds = checkStatement (elseStatement);
-	    ends = statementEnds && elseEnds;
+		statementEnds.and (elseEnds);
+		ender = statementEnds;
+	    }
 	    return false;
 	}
 
 	@Override public boolean visit (WhileStatement w) {
 	    checkBoolean (w.getExpression ());
-	    checkExpressionStatement (w.getExpression (), w.getStatement ());
+	    ender = checkExpressionStatement (w.getExpression (), w.getStatement ());
+	    ender.isInfiniteLoop &= ender.mayBreak.isEmpty ();
+	    ender.hasBreak.remove (""); // clear for outer levels
+	    ender.mayBreak.remove (""); // clear for outer levels
+	    if (!isTrue (w.getExpression ()))
+		ender.mayRun ();
 	    return false;
 	}
 
 	@Override public boolean visit (DoStatement d) {
 	    checkBoolean (d.getExpression ());
-	    checkExpressionStatement (d.getExpression (), d.getStatement ());
+	    ender = checkExpressionStatement (d.getExpression (), d.getStatement ());
 	    return false;
 	}
 
 	@Override public boolean visit (BasicForStatement f) {
-	    checkExpressionStatement (f.getExpression (), f.getStatement ());
+	    TreeNode exp = f.getExpression ();
+	    ender = checkExpressionStatement (exp, f.getStatement ());
+	    if (exp == null)
+		ender.isInfiniteLoop = true;
+	    else
+		ender.mayRun ();
+	    ender.isInfiniteLoop &= ender.mayBreak.isEmpty ();
+	    ender.hasBreak.remove (""); // clear for outer levels
+	    ender.mayBreak.remove (""); // clear for outer levels
 	    return false;
 	}
 
@@ -178,10 +253,11 @@ public class ReturnChecker implements TreeVisitor {
 	    return false;
 	}
 
-	private void checkExpressionStatement (TreeNode exp, TreeNode statement) {
-	    checkStatement (statement);
+	private Ender checkExpressionStatement (TreeNode exp, TreeNode statement) {
+	    Ender statementEnder = checkStatement (statement);
 	    if (isTrue (exp))
-		setEnds ();   // infinite loop!
+		statementEnder.isInfiniteLoop = true;
+	    return statementEnder;
 	}
 
 	private boolean isTrue (TreeNode t) {
@@ -195,7 +271,7 @@ public class ReturnChecker implements TreeVisitor {
 	    /* default can be anywhere
 	     * statements can return, throw or break to not fall through
 	     */
-	    boolean lastEnds = true;
+	    Ender lastEnds = ender;
 	    boolean hasDefault = false;
 	    List<SwitchBlockStatementGroup> ls = b.getGroups ();
 	    for (int i = 0, n = ls.size (); i < n; i++) {
@@ -209,23 +285,22 @@ public class ReturnChecker implements TreeVisitor {
 		    hasDefault = true;
 		}
 	    }
-	    if (lastEnds && hasDefault)
-		setEnds ();
+	    if (!hasDefault)
+		lastEnds.reset ();
+	    ender = lastEnds;
 	    return false;
 	}
 
-	private boolean checkStatement (TreeNode t) {
-	    if (t instanceof ReturnStatement) {
+	private Ender checkStatement (TreeNode t) {
+	    if (t instanceof ReturnStatement)
 		visit ((ReturnStatement)t);
-		return true;
-	    }
-	    if (t instanceof Block)
-		return checkBlock ((Block)t, res);
-	    if (t instanceof ThrowStatement)
-		return true;
-	    if (t instanceof BlockStatements)
-		return checkStatements (((BlockStatements)t).get (), res);
-	    return false;
+	    else if (t instanceof Block)
+		ender = checkBlock ((Block)t, res);
+	    else if (t instanceof BlockStatements)
+		ender = checkStatements (((BlockStatements)t).get (), res);
+	    else
+		t.visit (this);
+	    return ender;
 	}
 
 	private boolean hasDefault (List<SwitchLabel> labels) {
@@ -234,22 +309,27 @@ public class ReturnChecker implements TreeVisitor {
 
 	@Override public boolean visit (TryStatement t) {
 	    Block block = t.getBlock ();
-	    boolean blockEnds = checkBlock (block, res);
-	    boolean finallyEnds = false;
+	    Ender blockEnds = checkBlock (block, res);
+	    Ender finallyEnds = null;
 	    Catches c = t.getCatches ();
 	    if (c != null)
 		c.get ().forEach (cc -> checkBlock (cc.getBlock (), res));
 	    Finally f = t.getFinallyBlock ();
 	    if (f != null)
 		finallyEnds = checkBlock (f.getBlock (), res);
-	    if (finallyEnds) {
-		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
-							       f.getParsePosition (),
-							       "Return in finally"));
-		setEnds ();
-	    } else if (blockEnds) {
-		setEnds ();
+	    if (finallyEnds != null) {
+		if (finallyEnds.hasReturns) {
+		    diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
+								   f.getParsePosition (),
+								   "Return in finally"));
+		}
+		if (finallyEnds.hasThrow)
+		    diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
+								   f.getParsePosition (),
+								   "Throw in finally"));
+		blockEnds.merge (finallyEnds);
 	    }
+	    ender = blockEnds;
 	    return false;
 	}
 
@@ -368,10 +448,6 @@ public class ReturnChecker implements TreeVisitor {
 							 "Operator: %s require %s type, found: %s",
 							 operator, requiredType, et.toString ()));
 	}
-
-	private void setEnds () {
-	    ends = true;
-	}
     }
 
     private void checkType (ReturnStatement rs, Result res) {
@@ -451,5 +527,65 @@ public class ReturnChecker implements TreeVisitor {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to load super classes for %s", sub));
 	}
 	return false;
+    }
+
+    private static class Ender {
+	private boolean hasReturns; // guaranteed to return
+	private Set<String> hasBreak = new HashSet<> ();
+	private Set<String> mayBreak = new HashSet<> ();
+	private boolean hasThrow;
+	private boolean mayThrow;
+	private boolean isInfiniteLoop;
+
+	public boolean ended () {
+	    return hasReturns || hasThrow || !hasBreak.isEmpty () || (isInfiniteLoop && mayBreak.isEmpty ());
+	}
+
+	public Ender and (Ender other) {
+	    Ender res = new Ender ();
+	    res.hasReturns = hasReturns && other.hasReturns;
+	    res.hasBreak = new HashSet<> (hasBreak);
+	    res.hasBreak.retainAll (other.hasBreak);
+	    res.mayBreak = new HashSet<> (mayBreak);
+	    res.mayBreak.addAll (other.mayBreak);
+	    res.hasThrow = hasThrow && other.hasThrow;
+	    res.isInfiniteLoop = isInfiniteLoop && other.isInfiniteLoop;
+	    return res;
+	}
+
+	public void merge (Ender other) {
+	    isInfiniteLoop |= other.isInfiniteLoop;
+	    if (other.isInfiniteLoop) {
+		hasReturns |= other.hasReturns;
+		hasBreak.addAll (other.hasBreak);
+		hasThrow |= other.hasThrow;
+	    }
+	}
+
+	public void reset () {
+	    hasReturns = false;
+	    hasBreak.clear ();
+	    mayBreak.clear ();
+	    hasThrow = false;
+	    mayThrow = false;
+	    isInfiniteLoop = false;
+	}
+
+	public void mayRun () {
+	    hasReturns = false; // may or may not run
+	    hasBreak.clear ();
+	    hasThrow = false;
+	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{hasReturns: " + hasReturns +
+		", hasBreak: " + hasBreak + ", mayBreak: " + mayBreak +
+		", hasThrow: " + hasThrow + ", mayThrow: " + mayThrow +
+		", isInfiniteLoop: " + isInfiniteLoop + "}";
+	}
+    }
+
+    private static class MethodData {
+	private Set<String> activeLabels = new HashSet<> ();
     }
 }

@@ -25,9 +25,18 @@ public class LabeledStatement extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
 	statement.visit (visitor);
+	visitor.endLabel (this);
     }
 
     public Collection<? extends TreeNode> getChildNodes () {
 	return Collections.singleton (statement);
+    }
+
+    public String getId () {
+	return id;
+    }
+
+    public TreeNode getStatement () {
+	return statement;
     }
 }

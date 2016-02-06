@@ -16,4 +16,12 @@ public class ContinueStatement extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    public String getId () {
+	return id;
+    }
 }

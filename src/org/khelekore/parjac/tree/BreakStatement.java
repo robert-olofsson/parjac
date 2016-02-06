@@ -20,4 +20,8 @@ public class BreakStatement extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
     }
+
+    public String getId () {
+	return id;
+    }
 }
