@@ -137,6 +137,10 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default boolean visit (TernaryExpression t) {
+	return true;
+    }
+
     default boolean visit (ClassInstanceCreationExpression c) {
 	return true;
     }

@@ -145,7 +145,7 @@ public class Compiler {
 	runTimed (() -> checkConstructors (trees), "Checking constructors");
 	if (diagnostics.hasError ())
 	    return;
-	runTimed (() -> setMethodInvocations (trees), "Setting fields and method types");
+	runTimed (() -> setFieldsAndMethods (trees), "Setting fields and method types");
 	if (diagnostics.hasError ())
 	    return;
 	// Check types of fields and assignments
@@ -170,11 +170,11 @@ public class Compiler {
 	nmc.check ();
     }
 
-    private void setMethodInvocations (List<SyntaxTree> trees) {
-	trees.parallelStream ().forEach (t -> setMethodInvocations (t, diagnostics));
+    private void setFieldsAndMethods (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> setFieldsAndMethods (t, diagnostics));
     }
 
-    private void setMethodInvocations (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+    private void setFieldsAndMethods (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();
     }

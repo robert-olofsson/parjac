@@ -24,6 +24,7 @@ import org.khelekore.parjac.tree.MethodInvocation;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TernaryExpression;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 import org.khelekore.parjac.tree.TreeWalker;
@@ -78,6 +79,17 @@ public class FieldAndMethodSetter implements TreeVisitor {
 
     @Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	containingClasses.removeLast ();
+    }
+
+    @Override public boolean visit (TernaryExpression t) {
+	TreeNode tp = t.getThenPart ();
+	TreeNode ep = t.getElsePart ();
+	t.setExpressionType (lub (tp.getExpressionType (), ep.getExpressionType ()));
+	return true;
+    }
+
+    private ExpressionType lub (ExpressionType et1, ExpressionType et2) {
+	return et1;
     }
 
     @Override public boolean visit (ClassInstanceCreationExpression c) {

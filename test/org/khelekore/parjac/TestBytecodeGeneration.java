@@ -434,6 +434,14 @@ public class TestBytecodeGeneration {
 	assert o instanceof String : "Got wrong type back: " + o.getClass ().getName ();
     }
 
+    @Test
+    public void testTernery () throws IOException, ReflectiveOperationException {
+	String s = "public class IF { public static int i (boolean b) { return b ? 3 : 4; }}";
+	Class<?> c = getClass (s, "IF");
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.TRUE, 3);
+	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, 4);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

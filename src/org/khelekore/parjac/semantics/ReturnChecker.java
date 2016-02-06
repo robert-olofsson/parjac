@@ -44,6 +44,7 @@ import org.khelekore.parjac.tree.SwitchBlockStatementGroup;
 import org.khelekore.parjac.tree.SwitchLabel;
 import org.khelekore.parjac.tree.SwitchStatement;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.khelekore.parjac.tree.TernaryExpression;
 import org.khelekore.parjac.tree.ThrowStatement;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
@@ -143,6 +144,11 @@ public class ReturnChecker implements TreeVisitor {
 							     left.getExpressionType (),
 							     right.getExpressionType ()));
 	    }
+	    return false;
+	}
+
+	@Override public boolean visit (TernaryExpression t) {
+	    checkBoolean (t.getExpression ());
 	    return true;
 	}
 

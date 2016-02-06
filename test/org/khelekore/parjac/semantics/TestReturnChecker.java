@@ -659,6 +659,16 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testTernery () throws IOException {
+	parseAndSetClasses ("class A { int a (boolean b) { return b ? 1 : 2; }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class A { String a (boolean b) { return b ? \"\" : \"a\"; }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class A { long a (boolean b) { byte s = 3; return b ? s : 12L; }}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

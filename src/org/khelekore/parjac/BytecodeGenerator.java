@@ -433,6 +433,20 @@ public class BytecodeGenerator implements TreeVisitor {
 	return -1;
     }
 
+    @Override public boolean visit (TernaryExpression t) {
+	t.getExpression ().visit (this);
+	Label elseStart = new Label ();
+	TreeNode exp = t.getExpression ();
+	handleJump (exp, elseStart);
+	t.getThenPart ().visit (this);
+	Label after = new Label ();
+	currentMethod.mv.visitJumpInsn (GOTO, after);
+	currentMethod.mv.visitLabel (elseStart);
+	t.getElsePart ().visit (this);
+	currentMethod.mv.visitLabel (after);
+	return false;
+    }
+
     @Override public boolean visit (ClassInstanceCreationExpression c) {
 	String sname = c.getId ().getSlashName ();
 	currentMethod.mv.visitTypeInsn (NEW, sname);
