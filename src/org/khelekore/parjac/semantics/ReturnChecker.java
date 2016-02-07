@@ -23,9 +23,11 @@ import org.khelekore.parjac.tree.CastExpression;
 import org.khelekore.parjac.tree.Catches;
 import org.khelekore.parjac.tree.ContinueStatement;
 import org.khelekore.parjac.tree.DoStatement;
+import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.EnhancedForStatement;
 import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.Finally;
+import org.khelekore.parjac.tree.Identifier;
 import org.khelekore.parjac.tree.IfThenStatement;
 import org.khelekore.parjac.tree.IntLiteral;
 import org.khelekore.parjac.tree.LabeledStatement;
@@ -137,6 +139,7 @@ public class ReturnChecker implements TreeVisitor {
 	@Override public boolean visit (Assignment a) {
 	    TreeNode left = a.lhs ();
 	    TreeNode right = a.rhs ();
+	    right.visit (this);
 	    if (!match (left, right)) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     a.getParsePosition (),
@@ -144,12 +147,30 @@ public class ReturnChecker implements TreeVisitor {
 							     left.getExpressionType (),
 							     right.getExpressionType ()));
 	    }
+	    setInitialized (left);
 	    return false;
+	}
+
+	private void setInitialized (TreeNode tn) {
+	    if (tn instanceof DottedName) {
+		DottedName dn = (DottedName)tn;
+		TreeNode fa = dn.getFieldAccess ();
+		if (fa instanceof Identifier) {
+		    Identifier i = (Identifier)fa;
+		    methods.peek ().uninitializedLocals.remove (i.get ());
+		}
+	    }
 	}
 
 	@Override public boolean visit (TernaryExpression t) {
 	    checkBoolean (t.getExpression ());
-	    return true;
+	    Set<String> uninited = new HashSet<> (methods.peek ().uninitializedLocals);
+	    t.getThenPart ().visit (this);
+	    Set<String> uninited2 = new HashSet<> (methods.peek ().uninitializedLocals);
+	    methods.peek ().uninitializedLocals = uninited;
+	    t.getElsePart ().visit (this);
+	    methods.peek ().uninitializedLocals.addAll (uninited2);
+	    return false;
 	}
 
 	@Override public void visit (LabeledStatement l) {
@@ -208,6 +229,7 @@ public class ReturnChecker implements TreeVisitor {
 
 	@Override public boolean visit (IfThenStatement i) {
 	    checkBoolean (i.getExpression ());
+	    Set<String> uninited = new HashSet<> (methods.peek ().uninitializedLocals);
 	    Ender statementEnds = checkStatement (i.getIfStatement ());
 	    Ender elseEnds = null;
 	    TreeNode elseStatement = i.getElseStatement ();
@@ -216,10 +238,14 @@ public class ReturnChecker implements TreeVisitor {
 		    ender = statementEnds;
 		else
 		    ender.mayRun ();
+		methods.peek ().uninitializedLocals = uninited;
 	    } else {
+		Set<String> uninited2 = new HashSet<> (methods.peek ().uninitializedLocals);
+		methods.peek ().uninitializedLocals = uninited;
 		elseEnds = checkStatement (elseStatement);
 		statementEnds.and (elseEnds);
 		ender = statementEnds;
+		methods.peek ().uninitializedLocals.addAll (uninited2);
 	    }
 	    return false;
 	}
@@ -351,12 +377,16 @@ public class ReturnChecker implements TreeVisitor {
 	@Override public boolean visit (LocalVariableDeclaration l) {
 	    for (VariableDeclarator vd : l.getVariables ().get ()) {
 		TreeNode initializer = vd.getInitializer ();
-		if (initializer != null && !match (l.getType (), initializer)) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 initializer.getParsePosition (),
-								 "Wrong type, require: %s, found: %s",
-								 l.getExpressionType (),
-								 initializer.getExpressionType ()));
+		if (initializer != null) {
+		    if (!match (l.getType (), initializer)) {
+			diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+								     initializer.getParsePosition (),
+								     "Wrong type, require: %s, found: %s",
+								     l.getExpressionType (),
+								     initializer.getExpressionType ()));
+		    }
+		} else {
+		    methods.peek ().uninitializedLocals.add (vd.getId ());
 		}
 	    }
 	    return true;
@@ -479,7 +509,20 @@ public class ReturnChecker implements TreeVisitor {
 							     exp.getExpressionType (),
 							     type.getExpressionType ()));
 	    }
+	    checkInitialized (exp);
 	}
+    }
+
+    private void checkInitialized (TreeNode tn) {
+	tn.visit (new TreeVisitor () {
+	    @Override public void visit (Identifier i) {
+		if (methods.peek ().uninitializedLocals.contains (i.get ())) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+								 i.getParsePosition (),
+								 "Uninitialized variable"));
+		}
+	    }
+	});
     }
 
     private boolean match (TreeNode result, TreeNode exp) {
@@ -593,5 +636,6 @@ public class ReturnChecker implements TreeVisitor {
 
     private static class MethodData {
 	private Set<String> activeLabels = new HashSet<> ();
+	private Set<String> uninitializedLocals = new HashSet<> ();
     }
 }

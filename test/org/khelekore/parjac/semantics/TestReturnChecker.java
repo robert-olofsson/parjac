@@ -669,6 +669,36 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testUninitializedLocalVariable () throws IOException {
+	parseAndSetClasses ("class A { int a () { int a = 10; return a; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class A { int a () { int a; return a; }}");
+	assert diagnostics.hasError () : "Expected uninitialized variable";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class A { int a () { int a; a = 10; return a; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class A { int a () { int a, b, c; a = b = c = 10; return a * b * c; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class A { int a () { int a; if (1 > 2) a = 10; return a; }}");
+	assert diagnostics.hasError () : "Expected uninitialized variable";
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class A { int a () { int a; if (1 > 2) { a = 10; } else { a = 7; } return a; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class A { int a () { int a, b; a = 1 > 2 ? (b = 10) : (b = 3); return a * b; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class A { int a () { int a, b; a = 1 > 2 ? (b = 10) : 3 ; return a * b; }}");
+	assert diagnostics.hasError () : "Expected uninitialized variable";
+	diagnostics = new CompilerDiagnosticCollector ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();
