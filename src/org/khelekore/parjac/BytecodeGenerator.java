@@ -548,8 +548,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.visitContinueLabel (id);
 	if (update != null)
 	    update.visit (this);
-	if (end.label != null)
-	    currentMethod.gotoStartLabel (id);
+	currentMethod.gotoStartLabel (id);
 	currentMethod.endEndLabel (id, previousEndUnnamed);
 	if (id == UNNAMED_LABEL)
 	    currentMethod.endContinueLabel (id, previousContinueUnnamed);
