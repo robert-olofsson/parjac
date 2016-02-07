@@ -73,15 +73,6 @@ public class ClassSetter {
 	cu.getImports ().forEach (i -> i.visit (ih));
     }
 
-    /* TODO: make sure that we replace all of these DottedName:s with correct things
-     * PrimaryNoNewArray: (foo.bar.class, foo.Bar.this)
-     * * ClassInstanceCreationExpression:  (foo.bar.new Baz())
-     * * FieldAccess: (foo.bar.Baz.super.asdf)
-     * * ArrayAccess:
-     * * MethodInvocation:
-     * MethodReference:   foo.Bar.super::<Whatever>methodName, MethodReference.SuperMethodReference
-     * PostfixExpression:
-     */
     public void addScopes (Queue<ClassSetter> rest, int level) {
 	ScopeSetter ss = new ScopeSetter (level);
 	tree.getCompilationUnit ().visit (ss);
