@@ -308,7 +308,7 @@ public class ClassSetter {
 		if (i == 0) {
 		    FieldInformation<?> fi = scope.find (p, scope.isStatic ());
 		    if (fi != null) {
-			current = new Identifier (p, pos, fi.getExpressionType ());
+			current = getFieldOrLocalAccess (p, pos, fi);
 			continue;
 		    }
 		} else {
@@ -323,12 +323,31 @@ public class ClassSetter {
 		    current = ct;
 		    continue;
 		}
-		if (current != null)
+		if (current != null) {
 		    current = new FieldAccess (current, p, pos);
-		else
+		} else {
 		    current = new Identifier (p, pos);
+		}
 	    }
 	    return current;
+	}
+
+	private TreeNode getFieldOrLocalAccess (String p, ParsePosition pos, FieldInformation<?> fi) {
+	    if (!isField (fi))
+		return new Identifier (p, pos, fi.getExpressionType ());
+	    FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
+	    fa.setReturnType (fi.getExpressionType ());
+	    return fa;
+	}
+
+	private boolean isField (FieldInformation<?> fi) {
+	    return fi.getVariableDeclaration () instanceof FieldDeclaration;
+	}
+
+	private TreeNode getThis (ParsePosition pos) {
+	    PrimaryNoNewArray.ThisPrimary t = new PrimaryNoNewArray.ThisPrimary (pos);
+	    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
+	    return t;
 	}
 
 	@Override public boolean visit (BasicForStatement f) {

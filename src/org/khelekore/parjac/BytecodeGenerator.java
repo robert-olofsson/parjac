@@ -347,34 +347,46 @@ public class BytecodeGenerator implements TreeVisitor {
 	// We do not handle init blocks yet.
 	if (methods.isEmpty ())
 	    return false;
-	Token t = a.getOperator ().get ();
-	if (t != Token.EQUAL)
-	    a.lhs ().visit (this);
-	TreeNode rhs = a.rhs ();
-	if (!isShiftAssignment (t))
-	    rhs = toType (a.rhs (), a);
+
 	String id = null;
 	// TODO: this is pretty ugly, clean it up
 	TreeNode lhs = a.lhs ();
 	Integer localVarId = null;
-	if (lhs instanceof DottedName) {
-	    Identifier i = (Identifier)(((DottedName)lhs).getFieldAccess ());
-	    id = i.get ();
+	FieldAccess fa = null;
+	if (lhs instanceof DottedName)
+	    lhs = ((DottedName)lhs).getFieldAccess ();
+	if (lhs instanceof Identifier) {
+	    id = ((Identifier)lhs).get ();
 	    localVarId = currentMethod.localVariableIds.get (id);
-	    if (localVarId == null) {
-		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this" // TODO: not correct
-		currentMethod.addStack (1);
-	    }
 	} else if (lhs instanceof FieldAccess) {
-	    FieldAccess f = (FieldAccess)lhs;
-	    TreeNode from = f.getFrom ();
-	    if (from != null)
-		from.visit (this);
-	    id = f.getFieldId ();
+	    fa = (FieldAccess)lhs;
+	    id = fa.getFieldId ();
 	} else {
 	    // TODO: handle ArrayAccess
 	}
+	Token t = a.getOperator ().get ();
+	if (t == Token.EQUAL) {
+	    if (fa != null) {
+		TreeNode from = fa.getFrom ();
+		from.visit (this);
+	    }
+	} else {
+	    if (fa != null) {
+		TreeNode from = fa.getFrom ();
+		from.visit (this);
+		currentMethod.mv.visitInsn (DUP);
+		String classSignature = from.getExpressionType ().getSlashName ();
+		currentMethod.mv.visitFieldInsn (GETFIELD, classSignature, fa.getFieldId (),
+						 fa.getExpressionType ().getDescriptor ());
+	    } else {
+		lhs.visit (this);
+	    }
+	}
+	TreeNode rhs = a.rhs ();
+	if (!isShiftAssignment (t))
+	    rhs = toType (a.rhs (), a);
 	rhs.visit (this);
+
 	int op = getAssignmentActionOp (t, a);
 	if (op != -1) {
 	    currentMethod.mv.visitInsn (op);
@@ -778,21 +790,24 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void visit (Identifier i) {
 	Integer lid = currentMethod.localVariableIds.get (i.get ());
-	if (lid == null)
-	    lid = 0;
-	ExpressionType et = i.getExpressionType ();
-	int op = ILOAD;
-	if (!et.isPrimitiveType ()) {
-	    op = ALOAD;
-	}else if (et == ExpressionType.LONG) {
-	    op = LLOAD;
-	} else if (et == ExpressionType.FLOAT) {
-	    op = FLOAD;
-	} else  if (et == ExpressionType.DOUBLE) {
-	    op = DLOAD;
+	if (lid != null) {
+	    // Local variable
+	    ExpressionType et = i.getExpressionType ();
+	    int op = ILOAD;
+	    if (!et.isPrimitiveType ()) {
+		op = ALOAD;
+	    }else if (et == ExpressionType.LONG) {
+		op = LLOAD;
+	    } else if (et == ExpressionType.FLOAT) {
+		op = FLOAD;
+	    } else  if (et == ExpressionType.DOUBLE) {
+		op = DLOAD;
+	    }
+	    currentMethod.mv.visitVarInsn (op, lid);
+	    currentMethod.addStack (1);
+	} else {
+	    throw new RuntimeException ("Unknown local variable: " + i + ", " + i.getParsePosition ());
 	}
-	currentMethod.mv.visitVarInsn (op, lid);
-	currentMethod.addStack (1);
     }
 
     @Override public boolean visit (TwoPartExpression t) {
@@ -971,7 +986,12 @@ public class BytecodeGenerator implements TreeVisitor {
 	    tn = ((DottedName)tn).getFieldAccess ();
 	if (tn instanceof Identifier) {
 	    Identifier i = (Identifier)tn;
-	    return currentMethod.localVariableIds.get (i.get ());
+	    Integer localVarId = currentMethod.localVariableIds.get (i.get ());
+	    if (localVarId == null) {
+		throw new RuntimeException ("Unknown local variable: " + i + ", " + i.getParsePosition ());
+	    } else {
+		return localVarId.intValue ();
+	    }
 	}
 	return 1; // TODO: not correct, but works for now
     }

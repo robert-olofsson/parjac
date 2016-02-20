@@ -458,6 +458,14 @@ public class TestBytecodeGeneration {
 	checkIfReturn (c, "i", Boolean.TYPE, Boolean.FALSE, Boolean.TRUE);
     }
 
+    @Test
+    public void testReturnField () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { int a; public int foo () { a += 5; return a; }}";
+	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
+	Object o = compileAndRunInstanceMethod (s, mta);
+	checkResultObject (o, Integer.class, 5);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);
