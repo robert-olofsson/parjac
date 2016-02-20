@@ -11,6 +11,8 @@ public abstract class Result extends PositionNode {
 	super (pos);
     }
 
+    public static VoidResult VOID_RESULT = new VoidResult (null);
+
     public static final class VoidResult extends Result {
 	public VoidResult (ParsePosition pos) {
 	    super (pos);

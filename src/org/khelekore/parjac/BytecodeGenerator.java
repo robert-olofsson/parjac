@@ -95,7 +95,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (hasVarargs (c.getParameters ()))
 	    mods |= ACC_VARARGS;
 
-	MethodInfo mi = new MethodInfo (mods, new Result.VoidResult (null),
+	MethodInfo mi = new MethodInfo (mods, Result.VOID_RESULT,
 					cw.visitMethod (mods, INIT, c.getDescription (), null, null));
 	addMethod (mi);
 	addParameters (c.getParameters ());
@@ -105,15 +105,17 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public void endConstructor (ConstructorDeclaration c) {
 	MethodInfo mi = removeMethod ();
 	mi.mv.visitInsn (RETURN);
-	mi.mv.visitMaxs (0, 0);
+	mi.mv.visitMaxs (mi.maxStackDepth, mi.nextId);
         mi.mv.visitEnd ();
     }
 
     @Override public boolean visit (ConstructorBody cb) {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	currentMethod.addStack (1);
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
 	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", INIT, ISIG, false);
+	    currentMethod.removeStack (1);
 	}
 	return true;
     }
@@ -122,6 +124,11 @@ public class BytecodeGenerator implements TreeVisitor {
 	SuperAndFlags saf = currentClass.getSuperAndFlags ();
 	// TODO: the signature here is borked, need to get signature from super class
 	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, ISIG, false);
+    }
+
+    @Override public void endExplicitConstructorInvocation (ExplicitConstructorInvocation eci) {
+	// TODO: the signature here is borked, need to get signature from super class
+	currentMethod.removeStack (1);
     }
 
     @Override public boolean visit (FieldDeclaration f) {
@@ -152,6 +159,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    op = PUTSTATIC;
 	String owner = currentClass.className;
 	currentMethod.mv.visitFieldInsn (op, owner, id, type);
+	currentMethod.removeStack (op == PUTFIELD ? 2 : 1);
     }
 
     @Override public boolean visit (MethodDeclaration m) {
@@ -184,7 +192,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (m.getResult () instanceof Result.VoidResult && methodMissingReturn (m)) {
 	    mi.mv.visitInsn (RETURN);
 	}
-	mi.mv.visitMaxs (0, 0);
+	mi.mv.visitMaxs (mi.maxStackDepth, mi.nextId);
         mi.mv.visitEnd ();
     }
 
@@ -273,6 +281,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    currentMethod.mv.visitLdcInsn (l);
 	}
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (DoubleLiteral dv) {
@@ -284,6 +293,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    currentMethod.mv.visitLdcInsn (d);
 	}
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (FloatLiteral fv) {
@@ -297,18 +307,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    currentMethod.mv.visitLdcInsn (f);
 	}
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (StringLiteral sv) {
 	currentMethod.mv.visitLdcInsn (sv.get ());
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (BooleanLiteral bv) {
 	currentMethod.mv.visitInsn (bv.get () ? ICONST_1 : ICONST_0);
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (CharLiteral cv) {
 	visit (cv.get ());
+	currentMethod.addStack (1);
     }
 
     private void visit (int i) {
@@ -321,10 +335,12 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    currentMethod.mv.visitLdcInsn (i);
 	}
+	currentMethod.addStack (1);
     }
 
     @Override public void visit (NullLiteral nv) {
 	currentMethod.mv.visitInsn (ACONST_NULL);
+	currentMethod.addStack (1);
     }
 
     @Override public boolean visit (Assignment a) {
@@ -345,8 +361,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	    Identifier i = (Identifier)(((DottedName)lhs).getFieldAccess ());
 	    id = i.get ();
 	    localVarId = currentMethod.localVariableIds.get (id);
-	    if (localVarId == null)
+	    if (localVarId == null) {
 		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this" // TODO: not correct
+		currentMethod.addStack (1);
+	    }
 	} else if (lhs instanceof FieldAccess) {
 	    FieldAccess f = (FieldAccess)lhs;
 	    TreeNode from = f.getFrom ();
@@ -358,13 +376,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 	rhs.visit (this);
 	int op = getAssignmentActionOp (t, a);
-	if (op != -1)
+	if (op != -1) {
 	    currentMethod.mv.visitInsn (op);
+	    currentMethod.removeStack (1);
+	}
 	if (localVarId != null) {
 	    storeValue (localVarId, a.lhs ());
 	} else {
 	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.className, id,
 					     a.getExpressionType ().getDescriptor ());
+	    currentMethod.removeStack (2);
 	}
 	return false;
     }
@@ -456,10 +477,15 @@ public class BytecodeGenerator implements TreeVisitor {
 	String sname = c.getId ().getSlashName ();
 	currentMethod.mv.visitTypeInsn (NEW, sname);
 	currentMethod.mv.visitInsn (DUP);
+	currentMethod.addStack (2);
 	ArgumentList ls = c.getArgumentList ();
-	if (ls != null)
-	    c.getArgumentList ().visit (this);
+	int numberOfArgs = 0;
+	if (ls != null) {
+	    ls.visit (this);
+	    numberOfArgs = ls.size ();
+	}
 	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, sname, INIT, c.getDescription (), false);
+	currentMethod.removeStack (1 + numberOfArgs);
 	return false;
     }
 
@@ -477,16 +503,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	    owner = ownerName.replace ('.', '/');
 	}
 	ArgumentList al = m.getArgumentList ();
+	int numberOfArgs = 0;
 	if (al != null) {
 	    al.visit (this);
+	    numberOfArgs = al.size ();
 	}
 	int opCode = INVOKEVIRTUAL;
 	boolean isInterface = cip.isInterface (ownerName);
-	if (FlagsHelper.isStatic (m.getActualMethodFlags ()))
+	int baseRemove = 1;
+	if (FlagsHelper.isStatic (m.getActualMethodFlags ())) {
 	    opCode = INVOKESTATIC;
-	else if (isInterface)
+	    baseRemove = 0;
+	} else if (isInterface) {
 	    opCode = INVOKEINTERFACE;
+	}
 	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), isInterface);
+	currentMethod.removeStack (baseRemove + numberOfArgs);
 	return false;
     }
 
@@ -557,10 +589,12 @@ public class BytecodeGenerator implements TreeVisitor {
 
     private void handleJump (TreeNode exp, Label target) {
 	int operator = IFEQ;
+	currentMethod.removeStack (1);
 	if (exp instanceof UnaryExpression) {
 	    operator = IFNE;
 	} else if (exp instanceof TwoPartExpression) {
 	    operator = getTwoPartJump ((TwoPartExpression)exp);
+	    currentMethod.removeStack (1);
 	}
 	currentMethod.mv.visitJumpInsn (operator, target);
     }
@@ -626,6 +660,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    op = DSTORE;
 	}
 	currentMethod.mv.visitVarInsn (op, id);
+	currentMethod.removeStack (1);
     }
 
     @Override public boolean visit (FieldAccess f) {
@@ -634,6 +669,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	int op = GETFIELD;
 	if (tn instanceof ClassType) {
 	    op = GETSTATIC;
+	    currentMethod.addStack (1); // getfield replaces object with field
 	} else {
 	    tn.visit (this);
 	}
@@ -664,6 +700,7 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	currentMethod.addStack (1);
     }
 
     private void outputPrimitiveCasts (ExpressionType source, ExpressionType target) {
@@ -755,6 +792,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    op = DLOAD;
 	}
 	currentMethod.mv.visitVarInsn (op, lid);
+	currentMethod.addStack (1);
     }
 
     @Override public boolean visit (TwoPartExpression t) {
@@ -771,8 +809,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	left.visit (this);
 	right.visit (this);
 	int op = getArithmeticOperation (t);
-	if (op != -1)
+	if (op != -1) {
 	    currentMethod.mv.visitInsn (op);
+	    currentMethod.removeStack (1);
+	}
 	return false;
     }
 
@@ -786,6 +826,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	right.visit (this);
 	currentMethod.mv.visitMethodInsn (INVOKEVIRTUAL, STRINGBUILDER, APPEND, getAppendMethod (right), false);
 	currentMethod.mv.visitMethodInsn (INVOKEVIRTUAL, STRINGBUILDER, TOSTRING, "()Ljava/lang/String;", false);
+	currentMethod.addStack (2);
+	currentMethod.removeStack (2);
     }
 
     private String getAppendMethod (TreeNode tn) {
@@ -962,7 +1004,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    int mods = Opcodes.ACC_STATIC;
 	    ClassWriter cw = currentClass.cw;
 	    sb = currentClass.staticBlock =
-		new MethodInfo (mods, new Result.VoidResult (null),
+		new MethodInfo (mods, Result.VOID_RESULT,
 				cw.visitMethod (mods, CLINIT, ISIG, null, null));
 	}
 	return sb;
@@ -1029,7 +1071,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    if (mi == null)
 		return;
 	    mi.mv.visitInsn (RETURN);
-	    mi.mv.visitMaxs (0, 0);
+	    mi.mv.visitMaxs (mi.maxStackDepth, mi.nextId);
 	    mi.mv.visitEnd ();
 	}
 
@@ -1059,6 +1101,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	public final Map<String, LabelUsage> endLabels = new HashMap<> ();
 	private String currentNamedLabel;
 	private int nextId;
+	private int currentStackDepth;
+	private int maxStackDepth;
 
 	public MethodInfo (int flags, Result result, MethodVisitor mv) {
 	    nextId = FlagsHelper.isStatic (flags) ? 0 : 1;
@@ -1133,6 +1177,15 @@ public class BytecodeGenerator implements TreeVisitor {
 
 	public void gotoEndLabel (String id) {
 	    mv.visitJumpInsn (GOTO, endLabels.get (id).get ());
+	}
+
+	public void addStack (int size) {
+	    currentStackDepth += size;
+	    maxStackDepth = Math.max (maxStackDepth, currentStackDepth);
+	}
+
+	public void removeStack (int size) {
+	    currentStackDepth -= size;
 	}
     }
 
