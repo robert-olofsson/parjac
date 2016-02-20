@@ -124,7 +124,7 @@ public class ConstructorChecker {
 	    ConstructorArguments ca = new ConstructorArguments (al);
 	    ExplicitConstructorInvocation eci = new ExplicitConstructorInvocation (null, Token.SUPER, ca);
 	    ConstructorBody body = new ConstructorBody (eci, null);
-	    ConstructorDeclaration cd = new ConstructorDeclaration (d, null, body);
+	    ConstructorDeclaration cd = new ConstructorDeclaration (FlagsHelper.isPublic (type.getFlags ()), d, null, body);
 
 	    ClassBody cb = type.getBody ();
 	    cb.getDeclarations ().add (cd);

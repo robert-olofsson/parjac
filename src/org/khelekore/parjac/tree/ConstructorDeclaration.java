@@ -1,13 +1,16 @@
 package org.khelekore.parjac.tree;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
+import org.khelekore.parjac.lexer.Token;
 
 public class ConstructorDeclaration extends FlaggedTypeBase {
     private final ConstructorDeclarator declarator;
@@ -26,8 +29,11 @@ public class ConstructorDeclaration extends FlaggedTypeBase {
 	body = (ConstructorBody)parts.pop ();
     }
 
-    public ConstructorDeclaration (ConstructorDeclarator declarator, Throws throwsClause, ConstructorBody body) {
-	super (Collections.emptyList (), null, null, null);
+    private static final List<TreeNode> PUBLIC_LIST = Arrays.asList (new ModifierTokenType (Token.PUBLIC, null));
+
+    public ConstructorDeclaration (boolean publicFlag, ConstructorDeclarator declarator,
+				   Throws throwsClause, ConstructorBody body) {
+	super (publicFlag ? PUBLIC_LIST : Collections.emptyList (), null, null, null);
 	this.declarator = declarator;
 	this.throwsClause = throwsClause;
 	this.body = body;
