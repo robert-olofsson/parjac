@@ -37,6 +37,7 @@ public class EarleyParser {
 
     // The state table
     private final List<EarleyState> states = new ArrayList<> ();
+    private int attemptedRecoveries;
 
     // The tree builder
     private final JavaTreeBuilder treeBuilder;
@@ -79,10 +80,12 @@ public class EarleyParser {
 	    handleToken (currentPosition, nextToken, currentTokenValue);
 	    currentPosition++;
 	    if (states.size () <= currentPosition) {
-		ParseErrorSolution pe = findBestSolution ();
-		addParserError ("No possible next state, expected " + pe.getWantedToken() +
-				" in order to complete " + pe.getRule ().getName () + "\n" +
-				lexer.getCurrentLine ());
+		addPossibleNextTokens (currentPosition - 1, nextToken, currentTokenValue);
+		currentPosition++; // we add a fake one and handle current token
+		attemptedRecoveries++;
+	    }
+	    if (states.size () <= currentPosition) {
+		addParserError ("No possible next state");
 		return null;
 	    }
 	}
@@ -97,11 +100,14 @@ public class EarleyParser {
 	} else {
 	    if (finished.size () > 1)
 		addParserError ("Ended up in many states: " + finishingStates);
-	    if (!isEndState (finished.get (0)))
+	    else if (!isEndState (finished.get (0)))
 		addParserError ("Ended up in wrong state: " + finishingStates);
 	}
 	if (diagnostics.hasError ())
 	    return null;
+
+	if (attemptedRecoveries > 0)
+	    addParserError ("Attempted " + attemptedRecoveries + " parse recovieries");
 
 	if (treeBuilder == null)
 	    return null;
@@ -242,48 +248,23 @@ public class EarleyParser {
 	return ret;
     }
 
-    private ParseErrorSolution findBestSolution () {
-	Token bestToken = Token.END_OF_INPUT;
-	Rule rule = null;
-	int minLength = Integer.MAX_VALUE;
-
+    private void addPossibleNextTokens (int currentPosition, Token nextToken, TreeNode currentTokenValue) {
 	EarleyState es = states.get (states.size () - 1);
+	EarleyState current = states.get (currentPosition);
+	EarleyState next = null;
 	for (Token t : es.getPossibleNextToken ()) {
-	    for (State s : es.getStates ()) {
-		if (!s.dotIsLast ()) {
-		    SimplePart sp = s.getPartAfterDot ();
-		    if (sp.isTokenPart () && sp.getId () == t) {
-			int lengthToComplete = getLengthToComplete (s);
-			if (lengthToComplete < minLength) {
-			    bestToken = t;
-			    rule = s.getRule ();
-			    minLength = lengthToComplete;
-			}
-		    }
+	    EarleyState sms = scan (current, currentPosition, t, new ErrorTreeNode (lexer.getParsePosition ()));
+	    if (sms != null) {
+		if (next == null) {
+		    next = sms;
+		    states.add (next);
+		} else {
+		    next.addStates (sms.getStates ());
 		}
 	    }
 	}
-	ListRuleHolder lrh = es.getListRuleHolder ();
-	if (lrh != null) {
-	    for (Token t : lrh.getStartingTokens ()) {
-		for (Iterator<Rule> i = lrh.getRulesWithTokenNext (t); i.hasNext (); ) {
-		    Rule r = i.next ();
-		    int lengthToComplete = r.size ();
-		    if (lengthToComplete < minLength) {
-			bestToken = t;
-			rule = r;
-			minLength = lengthToComplete;
-		    }
-		}
-	    }
-	}
-	return new ParseErrorSolution (bestToken, rule);
-    }
-
-    private int getLengthToComplete (State s) {
-	// TODO: probably want something better here
-	// TODO: probably want to count minimum tokens for the rule
-	return s.getRule ().size () - s.getDotPos ();
+	currentPosition++;
+	handleToken (currentPosition, nextToken, currentTokenValue);
     }
 
     private boolean isEndState (State s) {
@@ -294,7 +275,9 @@ public class EarleyParser {
 	Deque<State> toVisit = new ArrayDeque<> ();
 	toVisit.push (s);
 	Deque<TreeNode> parts = new ArrayDeque<> ();
-	buildTreeNode (toVisit, parts);
+	Deque<SourceDiagnostics> errors = new ArrayDeque<> (); // since errors come in wrong order
+	buildTreeNode (toVisit, parts, errors);
+	errors.forEach (d -> diagnostics.report (d));
 	if (parts.size () == 0)
 	    return null;
 	if (parts.size () != 1)
@@ -305,7 +288,7 @@ public class EarleyParser {
 	return new SyntaxTree (path, topNode);
     }
 
-    private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts) {
+    private void buildTreeNode (Deque<State> toVisit, Deque<TreeNode> parts, Deque<SourceDiagnostics> errors) {
 	int tokenPos = states.size () - 2; // skip <end_of_input>
 	while (!toVisit.isEmpty ()) {
 	    State s = toVisit.pop ();
@@ -319,6 +302,11 @@ public class EarleyParser {
 		toVisit.push (previous);
 		if (previous.getPartAfterDot () instanceof TokenPart) {
 		    TreeNode tn = es.getTokenValue ();
+		    if (tn instanceof ErrorTreeNode) {
+			errors.push (SourceDiagnostics.error (path, tn.getParsePosition (),
+							      "Missing: %s", previous.getPartAfterDot ()));
+			tn = null;
+		    }
 		    if (tn != null)
 			parts.push (tn);
 		    tokenPos--;

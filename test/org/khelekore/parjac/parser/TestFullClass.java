@@ -1,6 +1,7 @@
 package org.khelekore.parjac.parser;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
@@ -146,6 +147,17 @@ public class TestFullClass {
 	testSuccessfulParse ("class A { static { i = 1; } }");
 	testSuccessfulParse ("class A { static { i = 1; } }");
 	testSuccessfulParse ("class A { static { i = 1; } static { j = 1; } }");
+    }
+
+    @Test
+    public void testMultipleErrors () {
+	String s = "class A { void a () { int i int j int k }}";
+	TestParseHelper.earleyParseBuildTree (g, s, null, diagnostics);
+	assert diagnostics.hasError () : "expected errors";
+	AtomicInteger c = new AtomicInteger (0);
+	diagnostics.getDiagnostics ().
+	    forEach (d -> c.incrementAndGet ());
+	assert c.get () == 4 : "Expected 4 errors, but got: " + c;
     }
 
     private void testSuccessfulParse (String s) {
