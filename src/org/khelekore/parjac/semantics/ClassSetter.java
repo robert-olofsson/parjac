@@ -397,10 +397,10 @@ public class ClassSetter {
 		    List<FormalParameter> ls = pl.getFormalParameters ();
 		    if (ls != null)
 			ls.forEach (fp -> currentScope.tryToAdd (fp, tree, diagnostics));
-		}
-		LastFormalParameter lfp = pl.getLastFormalParameter ();
-		if (lfp != null) {
-		    currentScope.tryToAdd (lfp, tree, diagnostics);
+		    LastFormalParameter lfp = pl.getLastFormalParameter ();
+		    if (lfp != null) {
+			currentScope.tryToAdd (lfp, tree, diagnostics);
+		    }
 		}
 	    }
 	}
@@ -530,14 +530,16 @@ public class ClassSetter {
 	    return;
 
 	NormalFormalParameterList fps = ls.getParameters ();
-	List<FormalParameter> args = fps.getFormalParameters ();
-	if (args != null) {
-	    for (FormalParameter fp : args)
-		setType (fp.getType (), eh);
-	}
-	LastFormalParameter lfp = fps.getLastFormalParameter ();
-	if (lfp != null) {
-	    setType (lfp.getType (), eh);
+	if (fps != null) {
+	    List<FormalParameter> args = fps.getFormalParameters ();
+	    if (args != null) {
+		for (FormalParameter fp : args)
+		    setType (fp.getType (), eh);
+	    }
+	    LastFormalParameter lfp = fps.getLastFormalParameter ();
+	    if (lfp != null) {
+		setType (lfp.getType (), eh);
+	    }
 	}
     }
 

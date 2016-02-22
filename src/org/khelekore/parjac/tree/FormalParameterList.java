@@ -12,7 +12,10 @@ public class FormalParameterList extends PositionNode {
 
     public FormalParameterList (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
-	rp = r.size () > 1 ? (ReceiverParameter)parts.pop () : null;
+	if (r.getRulePart (0).getId ().equals ("ReceiverParameter"))
+	    rp = (ReceiverParameter)parts.pop ();
+	else
+	    rp = null;
 	fps = rp == null || r.size () > 2 ? (NormalFormalParameterList)parts.pop () : null;
     }
 
@@ -26,13 +29,15 @@ public class FormalParameterList extends PositionNode {
 
     public void appendDescription (StringBuilder sb) {
 	NormalFormalParameterList nfpl = getParameters ();
-	List<FormalParameter> ls = nfpl.getFormalParameters ();
-	if (ls != null) {
-	    for (FormalParameter fp : ls)
-		sb.append (fp.getExpressionType ().getDescriptor ());
+	if (nfpl != null) {
+	    List<FormalParameter> ls = nfpl.getFormalParameters ();
+	    if (ls != null) {
+		for (FormalParameter fp : ls)
+		    sb.append (fp.getExpressionType ().getDescriptor ());
+	    }
+	    LastFormalParameter lfp = nfpl.getLastFormalParameter ();
+	    if (lfp != null)
+		sb.append (lfp.getExpressionType ().getDescriptor ());
 	}
-	LastFormalParameter lfp = nfpl.getLastFormalParameter ();
-	if (lfp != null)
-	    sb.append (lfp.getExpressionType ().getDescriptor ());
     }
 }
