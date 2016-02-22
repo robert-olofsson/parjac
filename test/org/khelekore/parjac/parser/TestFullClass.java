@@ -154,10 +154,17 @@ public class TestFullClass {
 	String s = "class A { void a () { int i int j int k }}";
 	TestParseHelper.earleyParseBuildTree (g, s, null, diagnostics);
 	assert diagnostics.hasError () : "expected errors";
-	AtomicInteger c = new AtomicInteger (0);
-	diagnostics.getDiagnostics ().
-	    forEach (d -> c.incrementAndGet ());
-	assert c.get () == 4 : "Expected 4 errors, but got: " + c;
+	int numErrors = getErrorCount ();
+	assert numErrors == 4 : "Expected 4 errors, but got: " + numErrors;
+    }
+
+    @Test
+    public void testMissingManyTokens () {
+	String s = "package";
+	TestParseHelper.earleyParseBuildTree (g, s, null, diagnostics);
+	assert diagnostics.hasError () : "expected errors";
+	int numErrors = getErrorCount ();
+	assert numErrors == 3 : "Expected 3 errors, but got: " + numErrors;
     }
 
     private void testSuccessfulParse (String s) {
@@ -169,5 +176,12 @@ public class TestFullClass {
 	assert !diagnostics.hasError () : "Got parser errors: " + TestParseHelper.getParseOutput (diagnostics);
 	if (tn != null)
 	    assert tn.equals (t.getRoot ()) : "Got unexpected tree: " + t.getRoot () + ", expected: " + tn;
+    }
+
+    private int getErrorCount () {
+	AtomicInteger c = new AtomicInteger (0);
+	diagnostics.getDiagnostics ().
+	    forEach (d -> c.incrementAndGet ());
+	return c.get ();
     }
 }

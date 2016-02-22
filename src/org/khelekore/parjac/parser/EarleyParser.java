@@ -19,7 +19,17 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.grammar.TokenPart;
 import org.khelekore.parjac.lexer.Lexer;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.tree.BooleanLiteral;
+import org.khelekore.parjac.tree.CharLiteral;
+import org.khelekore.parjac.tree.DoubleLiteral;
+import org.khelekore.parjac.tree.FloatLiteral;
+import org.khelekore.parjac.tree.Identifier;
+import org.khelekore.parjac.tree.IntLiteral;
+import org.khelekore.parjac.tree.LongLiteral;
+import org.khelekore.parjac.tree.NullLiteral;
+import org.khelekore.parjac.tree.StringLiteral;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 
@@ -77,17 +87,22 @@ public class EarleyParser {
 	    nextToken = lexer.nextNonWhitespaceToken ();
 	    if (treeBuilder != null)
 		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
-	    handleToken (currentPosition, nextToken, currentTokenValue);
-	    currentPosition++;
-	    if (states.size () <= currentPosition) {
-		addPossibleNextTokens (currentPosition - 1, nextToken, currentTokenValue);
-		currentPosition++; // we add a fake one and handle current token
-		attemptedRecoveries++;
-	    }
-	    if (states.size () <= currentPosition) {
-		addParserError ("No possible next state");
-		return null;
-	    }
+	    boolean recovery = false;
+	    do {
+		handleToken (currentPosition, nextToken, currentTokenValue);
+		currentPosition++;
+		if (states.size () <= currentPosition) {
+		    addPossibleNextTokens (currentPosition - 1);
+		    attemptedRecoveries++;
+		    recovery = true;
+		} else {
+		    recovery = false;
+		}
+		if (states.size () <= currentPosition) {
+		    addParserError ("No possible next state");
+		    return null;
+		}
+	    } while (recovery);
 	}
 
 	EarleyState finishingStates = states.get (currentPosition);
@@ -248,7 +263,7 @@ public class EarleyParser {
 	return ret;
     }
 
-    private void addPossibleNextTokens (int currentPosition, Token nextToken, TreeNode currentTokenValue) {
+    private void addPossibleNextTokens (int currentPosition) {
 	EarleyState es = states.get (states.size () - 1);
 	EarleyState current = states.get (currentPosition);
 	EarleyState next = null;
@@ -263,8 +278,6 @@ public class EarleyParser {
 		}
 	    }
 	}
-	currentPosition++;
-	handleToken (currentPosition, nextToken, currentTokenValue);
     }
 
     private boolean isEndState (State s) {
@@ -305,7 +318,7 @@ public class EarleyParser {
 		    if (tn instanceof ErrorTreeNode) {
 			errors.push (SourceDiagnostics.error (path, tn.getParsePosition (),
 							      "Missing: %s", previous.getPartAfterDot ()));
-			tn = null;
+			tn = getErrorNode (tn.getParsePosition (), (Token)previous.getPartAfterDot ().getId ());
 		    }
 		    if (tn != null)
 			parts.push (tn);
@@ -316,6 +329,33 @@ public class EarleyParser {
 		    for (State c : completed)
 			toVisit.push (c);
 	    }
+	}
+    }
+
+    private TreeNode getErrorNode (ParsePosition pos, Token token) {
+	switch (token) {
+	case INT_LITERAL:
+	    return new IntLiteral (1, pos);
+	case LONG_LITERAL:
+	    return new LongLiteral (1, pos);
+	case FLOAT_LITERAL:
+	    return new FloatLiteral (1.0f, pos);
+	case DOUBLE_LITERAL:
+	    return new DoubleLiteral (1.0, pos);
+	case CHARACTER_LITERAL:
+	    return new CharLiteral ('c', pos);
+	case STRING_LITERAL:
+	    return new StringLiteral ("<string>", pos);
+	case TRUE:
+	    return new BooleanLiteral (true, pos);
+	case FALSE:
+	    return new BooleanLiteral (false, pos);
+	case IDENTIFIER:
+	    return new Identifier ("<identifier>", pos);
+	case NULL:
+	    return new NullLiteral (pos);
+	default:
+	    return null;
 	}
     }
 
