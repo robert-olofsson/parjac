@@ -3,6 +3,7 @@ package org.khelekore.parjac.semantics;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
+import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.ConstructorDeclaration;
 import org.khelekore.parjac.tree.EnumDeclaration;
@@ -17,6 +18,9 @@ import org.khelekore.parjac.tree.TreeVisitor;
 
 import static org.khelekore.parjac.semantics.FlagsHelper.*;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 /** Check filename and modifier flags.
  */
 public class NameModifierChecker implements TreeVisitor {
@@ -24,6 +28,7 @@ public class NameModifierChecker implements TreeVisitor {
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
     private int level = 0;
+    private final Deque<Integer> classFlags = new ArrayDeque<> ();
 
     public NameModifierChecker (ClassInformationProvider cip, SyntaxTree tree,
 				CompilerDiagnosticCollector diagnostics) {
@@ -38,7 +43,7 @@ public class NameModifierChecker implements TreeVisitor {
 
     @Override public boolean visit (NormalClassDeclaration c) {
 	checkNameAndFlags (c.getId (), c, c.getFlags ());
-	level++;
+	pushFlags (c.getFlags ());
 	ClassType ct = c.getSuperClass ();
 	if (ct != null) {
 	    String fqn = ct.getFullName ();
@@ -57,24 +62,38 @@ public class NameModifierChecker implements TreeVisitor {
 
     @Override public boolean visit (EnumDeclaration e) {
 	checkNameAndFlags (e.getId (), e, e.getFlags ());
-	level++;
+	pushFlags (e.getFlags ());
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
 	checkNameAndFlags (i.getId (), i, i.getFlags ());
-	level++;
+	pushFlags (i.getFlags ());
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
 	checkNameAndFlags (a.getId (), a, a.getFlags ());
-	level++;
+	pushFlags (a.getFlags ());
 	return true;
     }
 
     @Override public void endType () {
-	level--;
+	classFlags.pop ();
+    }
+
+    @Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
+	pushFlags (0);
+	return true;
+    }
+
+    @Override public void endAnonymousClass (ClassType ct, ClassBody b) {
+	classFlags.pop ();
+    }
+
+    private void pushFlags (int flags) {
+	level++;
+	classFlags.push (flags);
     }
 
     private void checkNameAndFlags (String id, TreeNode tn, int accessFlags) {
@@ -121,7 +140,9 @@ public class NameModifierChecker implements TreeVisitor {
 	if (isFinal (flags) && isVolatile (flags))
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
 							 "Field may not be both final and volatile"));
-	// TODO: need to check static for inner classes
+	if (isStatic (flags) && insideInnerClass ())
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
+							 "Static not allowed here"));
 	return true;
     }
 
@@ -155,6 +176,11 @@ public class NameModifierChecker implements TreeVisitor {
 							 "Empty method body is only allowed for native " +
 							 "and abstract methods"));
 	}
+
+	if (isStatic (flags) && insideInnerClass ())
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+							 "Static not allowed here"));
+
 	return true;
     }
 
@@ -169,5 +195,12 @@ public class NameModifierChecker implements TreeVisitor {
 	if (count > 1)
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
 							 "Type has too many access flags"));
+    }
+
+    private boolean insideInnerClass () {
+	if (classFlags.size () < 2)
+	    return false;
+	int flags = classFlags.peek ();
+	return !FlagsHelper.isStatic (flags);
     }
 }
