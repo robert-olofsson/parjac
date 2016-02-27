@@ -142,7 +142,7 @@ public class NameModifierChecker implements TreeVisitor {
 							 "Field may not be both final and volatile"));
 	if (isStatic (flags) && insideInnerClass ())
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), f.getParsePosition (),
-							 "Static not allowed here"));
+							 "Static not allowed on inner class members"));
 	return true;
     }
 
@@ -179,7 +179,7 @@ public class NameModifierChecker implements TreeVisitor {
 
 	if (isStatic (flags) && insideInnerClass ())
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
-							 "Static not allowed here"));
+							 "Static not allowed on inner class members"));
 
 	return true;
     }
