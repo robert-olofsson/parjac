@@ -6,7 +6,9 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.ClassInformationProvider;
@@ -1055,29 +1057,41 @@ public class BytecodeGenerator implements TreeVisitor {
 	    SuperAndFlags saf = getSuperAndFlags ();
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
-	    cw.visit (V1_8, saf.flags, fqn, /*signature*/null, saf.supername, /*interfaces */null);
+	    cw.visit (V1_8, saf.flags, fqn, /*signature*/null, saf.supername, saf.implementedInterfaces);
 	}
 
 	public SuperAndFlags getSuperAndFlags () {
 	    String supername = "java/lang/Object";
 	    int flags = 0;
+	    List<String> superInterfaces = null;
 	    if (tn instanceof NormalClassDeclaration) {
 		NormalClassDeclaration ncd = (NormalClassDeclaration)tn;
 		ClassType ct = ncd.getSuperClass ();
 		if (ct != null) {
-		    supername = ct.getFullName ().replace ('.', '/');
+		    supername = ct.getSlashName ();
 		}
 		flags = ncd.getFlags ();
+		superInterfaces = getSuperInterfaces (ncd.getSuperInterfaces ());
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
 		supername = "java.lang.Enum<" + ed.getId () + ">";
 		flags = (ed.getFlags () | ACC_FINAL);
+		superInterfaces = getSuperInterfaces (ed.getSuperInterfaces ());
 	    } else if (tn instanceof NormalInterfaceDeclaration) {
 		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
 		flags = i.getFlags () | ACC_INTERFACE;
+		ExtendsInterfaces ei = i.getExtendsInterfaces ();
+		if (ei != null)
+		    superInterfaces = getSuperInterfaces (ei.get ());
 	    }
 	    // TODO: handle interface flags
-	    return new SuperAndFlags (supername, flags);
+	    return new SuperAndFlags (supername, flags, superInterfaces);
+	}
+
+	private List<String>  getSuperInterfaces (InterfaceTypeList superInterfaces) {
+	    if (superInterfaces == null)
+		return null;
+	    return superInterfaces.get ().stream ().map (ct -> ct.getSlashName ()).collect (Collectors.toList ());
 	}
 
 	public void write () {
@@ -1110,9 +1124,15 @@ public class BytecodeGenerator implements TreeVisitor {
     private static class SuperAndFlags {
 	public final String supername;
 	public final int flags;
-	public SuperAndFlags (String supername, int flags) {
+	public final String[] implementedInterfaces;
+
+	public SuperAndFlags (String supername, int flags, List<String> implementedInterfaces) {
 	    this.supername = supername;
 	    this.flags = flags;
+	    if (implementedInterfaces == null)
+		this.implementedInterfaces = null;
+	    else
+		this.implementedInterfaces = implementedInterfaces.toArray (new String[implementedInterfaces.size ()]);
 	}
     }
 
