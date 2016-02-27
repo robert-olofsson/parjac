@@ -699,6 +699,18 @@ public class TestReturnChecker extends TestBase {
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
+    @Test
+    public void testMethodOnGenericType () throws IOException {
+	parseAndSetClasses ("class Foo<T> { T t; String foo () { return t.toString (); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMethodOnGenericExtendedType () throws IOException {
+	parseAndSetClasses ("class Foo<T extends Runnable> { T t; void foo () { t.run (); }}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

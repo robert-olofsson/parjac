@@ -27,4 +27,11 @@ public class TypeBound extends PositionNode {
     public List<AdditionalBound> getAdditionalBounds () {
 	return additionalBounds;
     }
+
+    public int size () {
+	int ret = 1;
+	if (additionalBounds != null)
+	    ret += additionalBounds.size ();
+	return ret;
+    }
 }

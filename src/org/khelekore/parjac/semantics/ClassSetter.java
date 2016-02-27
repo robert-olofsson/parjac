@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -27,8 +26,7 @@ public class ClassSetter {
     private final DottedName packageName;
     private final ImportHandler ih = new ImportHandler ();
     private Deque<BodyPart> containingTypes = new ArrayDeque<> ();
-    // Type parameters, should probably be moved into scope instead
-    private final Deque<Set<String>> types = new ArrayDeque<> ();
+    private final Deque<Map<String, TypeParameter>> types = new ArrayDeque<> ();
     private final Map<TreeNode, Scope> scopes = new HashMap<> ();
 
     private final static String[] EMTPY = new String[0];
@@ -194,6 +192,7 @@ public class ClassSetter {
 
 	@Override public void endConstructor (ConstructorDeclaration c) {
 	    currentScope = currentScope.endScope ();
+	    types.pop ();
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
@@ -209,6 +208,7 @@ public class ClassSetter {
 
 	@Override public void endMethod (MethodDeclaration m) {
 	    currentScope = currentScope.endScope ();
+	    types.pop ();
 	}
 
 	@Override public boolean visit (Block b) {
@@ -500,10 +500,15 @@ public class ClassSetter {
 
     private void registerTypeParameters (TypeParameters tps, ErrorHandler eh) {
 	if (tps != null) {
-	    types.push (tps.get ().stream ().map (t -> t.getId ()).collect (Collectors.toSet ()));
-	    tps.get ().forEach (b -> checkClasses (b, eh));
+	    Map<String, TypeParameter> tt = new HashMap<> ();
+	    for (TypeParameter tp : tps.get ()) {
+		cip.registerTypeParameter (containingTypes.peek ().fqn, tp);
+		tt.put (tp.getId (), tp);
+		checkClasses (tp, eh);
+	    }
+	    types.push (tt);
 	} else {
-	    types.push (Collections.emptySet ());
+	    types.push (Collections.emptyMap ());
 	}
     }
 
@@ -638,9 +643,9 @@ public class ClassSetter {
     }
 
     private String resolve (String id, ParsePosition pos, ErrorHandler eh) {
-	if (isTypeParameter (id)) {
-	    // TODO: how to handle this?
-	    return "generic type: " + id;
+	TypeParameter tp = getTypeParameter (id);
+	if (tp != null) {
+	    return cip.getGenericName (tp);
 	}
 
 	if (hasVisibleType (id))
@@ -671,6 +676,8 @@ public class ClassSetter {
     }
 
     private String checkSuperClasses (String fullCtn, String id, ErrorHandler eh) {
+	if (fullCtn == null)
+	    return null;
 	List<String> superclasses = getSuperClasses (fullCtn, eh);
 	for (String superclass : superclasses) {
 	    String icn = superclass + "$" + id;
@@ -718,11 +725,13 @@ public class ClassSetter {
 	return null;
     }
 
-    private boolean isTypeParameter (String id) {
-	for (Set<String> names : types)
-	    if (names.contains (id))
-		return true;
-	return false;
+    private TypeParameter getTypeParameter (String id) {
+	for (Map<String, TypeParameter> names : types) {
+	    TypeParameter tp = names.get (id);
+	    if (tp != null)
+		return tp;
+	}
+	return null;
     }
 
     private String tryPackagename (String id, ParsePosition pos) {
