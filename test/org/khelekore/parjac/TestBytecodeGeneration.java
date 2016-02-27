@@ -115,10 +115,18 @@ public class TestBytecodeGeneration {
     @Test
     public void testSimpleInternalMethodCall () throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic ("public class Foo { " +
-				    "static int a () { return 3; }" +
-				    "public static int foo () { return a (); }}");
+					  "static int a () { return 3; }" +
+					  "public static int foo () { return a (); }}");
 	assert ret instanceof Integer : "Got wrong type back: " + ret;
 	assert 3 == (Integer)ret : "Got wrong result, expected 3, got: " + ret;
+    }
+
+    @Test
+    public void testInternalInstanceMethod () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public int foo () { bar(); return 3; } private void bar() {}}";
+	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
+	Object o = compileAndRunInstanceMethod (s, mta);
+	checkResultObject (o, Integer.class, 3);
     }
 
     @Test

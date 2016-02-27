@@ -511,12 +511,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	String owner;
 	TreeNode on = m.getOn ();
 	String ownerName = null;
+	int flags = m.getActualMethodFlags ();
+	boolean isStatic = FlagsHelper.isStatic (flags);
 	if (on != null) {
 	    on.visit (this);
 	    ExpressionType expType = on.getExpressionType ();
 	    owner = expType.getSlashName ();
 	    ownerName = expType.getClassName ();
 	} else {
+	    if (!isStatic)
+		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
 	    ownerName = cip.getFullName (classes.peekLast ().tn);
 	    owner = ownerName.replace ('.', '/');
 	}
@@ -529,7 +533,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	int opCode = INVOKEVIRTUAL;
 	boolean isInterface = cip.isInterface (ownerName);
 	int baseRemove = 1;
-	if (FlagsHelper.isStatic (m.getActualMethodFlags ())) {
+	if (isStatic) {
 	    opCode = INVOKESTATIC;
 	    baseRemove = 0;
 	} else if (isInterface) {
