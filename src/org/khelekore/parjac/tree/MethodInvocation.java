@@ -115,4 +115,12 @@ public class MethodInvocation extends PositionNode {
     public int getActualMethodFlags () {
 	return actualMethod.getAccess ();
     }
+
+    public String getOwner () {
+	return actualMethod.getClassname ();
+    }
+
+    public Type[] getActualArgumentTypes () {
+	return actualMethod.getArguments ();
+    }
 }

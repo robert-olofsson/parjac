@@ -27,4 +27,8 @@ public class Throws extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exceptions + "}";
     }
+
+    public List<ClassType> getTypes () {
+	return exceptions;
+    }
 }

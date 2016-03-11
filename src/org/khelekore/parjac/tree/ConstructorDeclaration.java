@@ -66,6 +66,10 @@ public class ConstructorDeclaration extends FlaggedTypeBase {
 	return declarator.getParameters ();
     }
 
+    public Throws getThrows () {
+	return throwsClause;
+    }
+
     public String getDescription () {
 	StringBuilder sb = new StringBuilder ();
 	sb.append ("(");

@@ -260,7 +260,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
     }
 
     private static final List<MethodInformation> DEFAULT_CONSTRUCTOR_ONLY =
-	Collections.singletonList (new MethodInformation (Opcodes.ACC_PUBLIC, "<init>", "()V", null, null));
+	Collections.singletonList (new MethodInformation (null, Opcodes.ACC_PUBLIC, "<init>", "()V", null, null));
 
     private class ConstructorMethodFinder extends MethodFinder {
 	public ConstructorMethodFinder () {

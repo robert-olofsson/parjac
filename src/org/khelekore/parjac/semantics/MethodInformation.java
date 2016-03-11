@@ -4,6 +4,7 @@ import java.util.Arrays;
 import org.objectweb.asm.Type;
 
 public class MethodInformation {
+    private final String classname;
     private final int access;
     private final String name;
     private final String desc;
@@ -11,9 +12,10 @@ public class MethodInformation {
     private final String signature;
     private final String[] exceptions;
 
-    public MethodInformation (int access, String name,
+    public MethodInformation (String classname, int access, String name,
 			      String desc, String signature,
 			      String[] exceptions) {
+	this.classname = classname;
 	this.access = access;
 	this.name = name;
 	this.desc = desc;
@@ -26,6 +28,10 @@ public class MethodInformation {
 	return getClass ().getSimpleName () + "{" + access + " " + name + " " +
 	    Arrays.toString (arguments) + " " + signature + " " +
 	    Arrays.toString (exceptions) + "}";
+    }
+
+    public String getClassname () {
+	return classname;
     }
 
     public int getAccess () {

@@ -170,7 +170,11 @@ public interface TreeVisitor {
     default void visit (ThrowStatement t) {
     }
 
-    default void visit (SynchronizedStatement s) {
+    default boolean visit (SynchronizedStatement s) {
+	return true;
+    }
+
+    default void endSynchronized (SynchronizedStatement s) {
     }
 
     default boolean visit (IfThenStatement i) {

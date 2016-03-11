@@ -89,7 +89,7 @@ public class ClassResourceHolder {
     public LookupResult hasVisibleType (String fqn) {
 	Result r = foundClasses.get (fqn);
 	if (r != null)
-	    if (loadNoCheckedException (r))
+	    if (loadNoCheckedException (fqn, r))
 		return new LookupResult (true, r.accessFlags);
 	return LookupResult.NOT_FOUND;
     }
@@ -98,7 +98,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    return Optional.empty ();
-	loadNoCheckedException (r);
+	loadNoCheckedException (fqn, r);
 	return Optional.of (r.superTypes);
     }
 
@@ -106,7 +106,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
-	loadNoCheckedException (r);
+	loadNoCheckedException (fqn, r);
 	return r.accessFlags;
     }
 
@@ -114,7 +114,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
-	loadNoCheckedException (r);
+	loadNoCheckedException (fqn, r);
 	return r.methods;
     }
 
@@ -122,7 +122,7 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
-	loadNoCheckedException (r);
+	loadNoCheckedException (fqn, r);
 	return r.fieldTypes.get (field);
     }
 
@@ -130,13 +130,13 @@ public class ClassResourceHolder {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
-	loadNoCheckedException (r);
+	loadNoCheckedException (fqn, r);
 	return FlagsHelper.isInterface (r.accessFlags);
     }
 
-    private boolean loadNoCheckedException (Result r) {
+    private boolean loadNoCheckedException (String fqn, Result r) {
 	try {
-	    r.ensureNodeIsLoaded ();
+	    r.ensureNodeIsLoaded (fqn);
 	    return true;
 	} catch (IOException e) {
 	    e.printStackTrace();
@@ -147,15 +147,17 @@ public class ClassResourceHolder {
     }
 
     private static abstract class Result {
+	private String fqn;
 	private String superClass;
 	private List<String> superTypes;
 	private int accessFlags;
 	private Map<String, ExpressionType> fieldTypes = new HashMap<> ();
 	private Map<String, List<MethodInformation>> methods = new HashMap<> ();
 
-	public synchronized void ensureNodeIsLoaded () throws IOException {
+	public synchronized void ensureNodeIsLoaded (String fqn) throws IOException {
 	    if (superClass != null)
 		return;
+	    this.fqn = fqn;
 	    readNode ();
 	}
 
@@ -268,7 +270,7 @@ public class ClassResourceHolder {
 						    String desc, String signature,
 						    String[] exceptions) {
 	    // desc is type, signature is only there if field is generic type
-	    MethodInformation mi = new MethodInformation (access, name, desc, signature, exceptions);
+	    MethodInformation mi = new MethodInformation (r.fqn, access, name, desc, signature, exceptions);
 	    List<MethodInformation> ls = r.methods.get (name);
 	    if (ls == null) {
 		ls = new ArrayList<> ();

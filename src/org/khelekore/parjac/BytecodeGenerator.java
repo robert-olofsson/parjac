@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -98,7 +100,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
 
 	MethodInfo mi = new MethodInfo (mods, Result.VOID_RESULT,
-					cw.visitMethod (mods, INIT, c.getDescription (), null, null));
+					cw.visitMethod (mods, INIT, c.getDescription (), null, getExceptions (c.getThrows ())));
 	addMethod (mi);
 	addParameters (c.getParameters ());
 	return true;
@@ -172,10 +174,22 @@ public class BytecodeGenerator implements TreeVisitor {
 	    mods |= ACC_VARARGS;
         MethodInfo mi = new MethodInfo (mods, m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
-							m.getDescription (), null, null));
+							m.getDescription (), null,
+							getExceptions (m.getThrows ())));
 	addMethod (mi);
 	addParameters (m.getParameters ());
 	return true;
+    }
+
+    private String[] getExceptions (Throws t) {
+	if (t == null)
+	    return null;
+	List<ClassType> ls = t.getTypes ();
+	String[] res = new String[ls.size ()];
+	for (int i = 0, s = ls.size (); i < s; i++) {
+	    res[i] = ls.get (i).getSlashName ();
+	}
+	return res;
     }
 
     private void addParameters (FormalParameterList ls) {
@@ -256,21 +270,34 @@ public class BytecodeGenerator implements TreeVisitor {
 		    et == ExpressionType.SHORT ||
 		    et == ExpressionType.CHAR ||
 		    et == ExpressionType.INT) {
-		    currentMethod.mv.visitInsn (IRETURN);
+		    doReturn (IRETURN);
 		} else if (et == ExpressionType.LONG) {
-		    currentMethod.mv.visitInsn (LRETURN);
+		    doReturn (LRETURN);
 		} else if (et == ExpressionType.DOUBLE) {
-		    currentMethod.mv.visitInsn (DRETURN);
+		    doReturn (DRETURN);
 		} else if (et == ExpressionType.FLOAT) {
-		    currentMethod.mv.visitInsn (FRETURN);
+		    doReturn (FRETURN);
 		} else {
 		    throw new IllegalArgumentException ("Unhandled type: " + et);
 		}
 	    } else {
-		currentMethod.mv.visitInsn (ARETURN);
+		doReturn (ARETURN);
 	    }
 	} else {
-	    currentMethod.mv.visitInsn (RETURN);
+	    doReturn (RETURN);
+	}
+    }
+
+    private void doReturn (int op) {
+	exitCurrentSyncBlock ();
+	currentMethod.mv.visitInsn (op);
+    }
+
+    private void exitCurrentSyncBlock () {
+	List<Integer> syncIds = currentMethod.syncIds;
+	for (int i = syncIds.size () - 1; i >= 0; i--) {
+	    currentMethod.mv.visitVarInsn (ALOAD, syncIds.get (i));
+	    currentMethod.mv.visitInsn (MONITOREXIT);
 	}
     }
 
@@ -521,14 +548,21 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    if (!isStatic)
 		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
-	    ownerName = cip.getFullName (classes.peekLast ().tn);
+	    ownerName = m.getOwner ();
 	    owner = ownerName.replace ('.', '/');
 	}
 	ArgumentList al = m.getArgumentList ();
 	int numberOfArgs = 0;
 	if (al != null) {
-	    al.visit (this);
+	    List<TreeNode> ls = al.get ();
 	    numberOfArgs = al.size ();
+	    Type[] expectedTypes = m.getActualArgumentTypes ();
+	    for (int i = 0; i < numberOfArgs; i++) {
+		TreeNode arg = ls.get (i);
+		ExpressionType expectedType = ExpressionType.get (expectedTypes[i]);
+		TreeNode correctedType = toLiteralType (arg, arg.getExpressionType (), expectedType);
+		correctedType.visit (this);
+	    }
 	}
 	int opCode = INVOKEVIRTUAL;
 	boolean isInterface = cip.isInterface (ownerName);
@@ -706,6 +740,19 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void endLabel (LabeledStatement l) {
 	currentMethod.currentNamedLabel = null;
+    }
+
+    @Override public boolean visit (SynchronizedStatement s) {
+	s.getExpression ().visit (this);
+	currentMethod.mv.visitInsn (DUP);
+	int id = currentMethod.getAnonymous ();
+	currentMethod.mv.visitVarInsn (ASTORE, id);
+	currentMethod.mv.visitInsn (MONITORENTER);
+	s.getBlock ().visit (this);
+	currentMethod.mv.visitVarInsn (ALOAD, id);
+	currentMethod.mv.visitInsn (MONITOREXIT);
+	currentMethod.removeAnonymous ();
+	return false;
     }
 
     @Override public boolean visit (CastExpression c) {
@@ -895,20 +942,24 @@ public class BytecodeGenerator implements TreeVisitor {
 	ExpressionType current = tn.getExpressionType ();
 	if (!et.equals (current)) {
 	    if (tn instanceof LiteralValue) {
-		if (current == ExpressionType.INT) {
-		    if (et == ExpressionType.LONG)
-			return new LongLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
-		    else if (et == ExpressionType.FLOAT)
-			return new FloatLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
-		    else if (et == ExpressionType.DOUBLE)
-			return new DoubleLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
-		} else if (current == ExpressionType.FLOAT) {
-		    if (et == ExpressionType.DOUBLE)
-			return new DoubleLiteral (((FloatLiteral)tn).get (), tn.getParsePosition ());
-		}
-	    } else {
-		return new CastExpression (wantedType, tn, tn.getParsePosition ());
+		return toLiteralType (tn, current, et);
 	    }
+	    return new CastExpression (wantedType, tn, tn.getParsePosition ());
+	}
+	return tn;
+    }
+
+    private TreeNode toLiteralType (TreeNode tn, ExpressionType current, ExpressionType et) {
+	if (current == ExpressionType.INT) {
+	    if (et == ExpressionType.LONG)
+		return new LongLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+	    else if (et == ExpressionType.FLOAT)
+		return new FloatLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+	    else if (et == ExpressionType.DOUBLE)
+		return new DoubleLiteral (((IntLiteral)tn).get (), tn.getParsePosition ());
+	} else if (current == ExpressionType.FLOAT) {
+	    if (et == ExpressionType.DOUBLE)
+		return new DoubleLiteral (((FloatLiteral)tn).get (), tn.getParsePosition ());
 	}
 	return tn;
     }
@@ -1147,6 +1198,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	public final Map<String, LabelUsage> startLabels = new HashMap<> ();
 	public final Map<String, LabelUsage> continueLabels = new HashMap<> ();
 	public final Map<String, LabelUsage> endLabels = new HashMap<> ();
+	public final List<Integer> syncIds = new ArrayList<> ();
 	private String currentNamedLabel;
 	private int nextId;
 	private int currentStackDepth;
@@ -1165,6 +1217,16 @@ public class BytecodeGenerator implements TreeVisitor {
 		nextId++;
 	    nextId++;
 	    return ret;
+	}
+
+	public int getAnonymous () {
+	    int ret = nextId++;
+	    syncIds.add (ret);
+	    return ret;
+	}
+
+	public void removeAnonymous () {
+	    syncIds.remove (syncIds.size () - 1);
 	}
 
 	@Override public String toString () {

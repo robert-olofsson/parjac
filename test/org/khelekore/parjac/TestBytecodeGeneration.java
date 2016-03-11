@@ -474,6 +474,22 @@ public class TestBytecodeGeneration {
 	checkResultObject (o, Integer.class, 5);
     }
 
+    @Test
+    public void testSynchronizedBlock () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public int foo () throws Exception { synchronized (this) { wait (1); } return 3; }}";
+	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
+	Object o = compileAndRunInstanceMethod (s, mta);
+	checkResultObject (o, Integer.class, 3);
+    }
+
+    @Test
+    public void testSynchronizedMethod () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public synchronized int foo () throws Exception { wait (1); return 3; }}";
+	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
+	Object o = compileAndRunInstanceMethod (s, mta);
+	checkResultObject (o, Integer.class, 3);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

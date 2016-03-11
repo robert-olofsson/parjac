@@ -23,8 +23,18 @@ public class SynchronizedStatement extends PositionNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	block.visit (visitor);
+	if (visitor.visit (this)) {
+	    block.visit (visitor);
+	}
+	visitor.endSynchronized (this);
+    }
+
+    public TreeNode getExpression () {
+	return expression;
+    }
+
+    public TreeNode getBlock () {
+	return block;
     }
 
     public Collection<? extends TreeNode> getChildNodes () {

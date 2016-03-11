@@ -185,6 +185,7 @@ public class ClassSetter {
 	@Override public boolean visit (ConstructorDeclaration c) {
 	    registerTypeParameters (c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
+	    setThrowsTypes (c.getThrows ());
 	    addScopeAndParameters (c, c.getParameters ());
 	    // TODO: store method information
 	    return true;
@@ -201,9 +202,15 @@ public class ClassSetter {
 	    if (r instanceof Result.TypeResult)
 		setType (r.getReturnType (), this);
 	    setTypes (m.getParameters (), this);
-
+	    setThrowsTypes (m.getThrows ());
 	    addScopeAndParameters (m, m.getParameters ());
 	    return true;
+	}
+
+	private void setThrowsTypes (Throws t) {
+	    if (t != null)
+		for (ClassType ct : t.getTypes ())
+		    setType (ct, this);
 	}
 
 	@Override public void endMethod (MethodDeclaration m) {
@@ -441,16 +448,22 @@ public class ClassSetter {
 	}
 
 	private void registerMethods (BodyPart bp) {
-	    MethodRegistrator mr = new MethodRegistrator ();
+	    MethodRegistrator mr = new MethodRegistrator (bp.fqn);
 	    bp.body.visit (mr);
 	    cip.registerMethods (bp.fqn, mr.methods);
 	}
 
 	private class MethodRegistrator extends SiblingVisitor {
-	    private Map<String, List<MethodInformation>> methods = new HashMap<> ();
+	    private final String fqn;
+	    private final Map<String, List<MethodInformation>> methods = new HashMap<> ();
+
+	    public MethodRegistrator (String fqn) {
+		this.fqn = fqn;
+	    }
 
 	    @Override public boolean visit (ConstructorDeclaration c) {
-		addMethod (new MethodInformation (c.getFlags (),
+		addMethod (new MethodInformation (fqn,
+						  c.getFlags (),
 						  "<init>",
 						  c.getDescription (),
 						  null,   // TODO: fill in
@@ -459,7 +472,8 @@ public class ClassSetter {
 	    }
 
 	    @Override public boolean visit (MethodDeclaration m) {
-		addMethod (new MethodInformation (m.getFlags (),
+		addMethod (new MethodInformation (fqn,
+						  m.getFlags (),
 						  m.getMethodName (),
 						  m.getDescription (),
 						  null,   // TODO: fill in
