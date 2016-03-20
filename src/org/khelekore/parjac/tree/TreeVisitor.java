@@ -215,7 +215,7 @@ public interface TreeVisitor {
 	return true;
     }
 
-    default boolean visit (TryStatement s) {
+    default boolean visit (TryStatement t) {
 	return true;
     }
 
@@ -223,6 +223,10 @@ public interface TreeVisitor {
     }
 
     default void visit (CatchClause c) {
+    }
+
+    default boolean visit (CatchType c) {
+	return true;
     }
 
     default void visit (BreakStatement b) {

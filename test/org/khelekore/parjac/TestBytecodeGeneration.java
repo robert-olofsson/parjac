@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.khelekore.parjac.grammar.Grammar;
@@ -488,6 +489,21 @@ public class TestBytecodeGeneration {
 	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
 	Object o = compileAndRunInstanceMethod (s, mta);
 	checkResultObject (o, Integer.class, 3);
+    }
+
+    @Test
+    public void testExceptionThrown () throws IOException, ReflectiveOperationException {
+	String s = "import java.util.concurrent.Callable;" +
+	    "public class Foo { public static int f (Callable c) {" +
+	    "    int res = 3; try { c.call (); } catch (Exception e) { res = 4; } return res; }}";
+	Class<?> c = getClass (s, "Foo");
+	Callable<Void> c1 = () -> {return null;};
+	Method m = c.getMethod ("f", Callable.class);
+	Object o = m.invoke (null, c1);
+	checkResultObject (o, Integer.class, 3);
+	Callable<Void> c2 = () -> {throw new Exception ("bummer");};
+	o = m.invoke (null, c2);
+	checkResultObject (o, Integer.class, 4);
     }
 
     private void checkResult (String s, Class<?> retType, int expected)

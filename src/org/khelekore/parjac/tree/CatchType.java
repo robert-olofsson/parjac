@@ -28,4 +28,12 @@ public class CatchType extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + types + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    public List<ClassType> getTypes () {
+	return types;
+    }
 }

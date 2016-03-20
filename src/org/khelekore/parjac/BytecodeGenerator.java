@@ -678,6 +678,39 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
+    @Override public boolean visit (TryStatement t) {
+	Label start = new Label ();
+	currentMethod.mv.visitLabel (start);
+	ResourceList rl = t.getResources ();
+	if (rl != null)
+	    rl.visit (this);
+	t.getBlock ().visit (this);
+	Label end = new Label ();
+	currentMethod.mv.visitLabel (end);
+	Finally f = t.getFinallyBlock ();
+	Label endLabel = new Label ();
+	currentMethod.mv.visitJumpInsn (GOTO, endLabel);
+	Catches c = t.getCatches ();
+	if (c != null) {
+	    for (CatchClause cc : c.get ()) {
+		for (ClassType ct : cc.getTypes ()) {
+		    Label handler = new Label ();
+		    currentMethod.mv.visitTryCatchBlock (start, end, handler, ct.getSlashName ());
+		    currentMethod.mv.visitLabel (handler);
+		    cc.visit (this);
+		}
+	    }
+	}
+	if (f != null) {
+	    currentMethod.mv.visitLabel (endLabel);
+	    currentMethod.mv.visitTryCatchBlock (start, end, endLabel, null);
+	    f.visit (this);
+	} else {
+	    currentMethod.mv.visitLabel (endLabel);
+	}
+	return false;
+    }
+
     @Override public void visit (BreakStatement b) {
 	currentMethod.gotoEndLabel (getLabelId (b.getId ()));
     }

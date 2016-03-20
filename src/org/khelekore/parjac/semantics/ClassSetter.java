@@ -380,6 +380,11 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public boolean visit (CatchType c) {
+	    c.getTypes ().forEach (ct -> setType (ct, this));
+	    return true;
+	}
+
 	private TreeNode replaceAndSetType (TreeNode tn) {
 	    if (tn.getExpressionType () == null && tn instanceof Identifier) {
 		Identifier i = (Identifier)tn;

@@ -151,7 +151,7 @@ public class JavaTreeBuilder {
 	register (g, "TryStatement", constructored (TryStatement::new));
 	register (g, "Catches", constructored (Catches::new));
 	register (g, "CatchClause", constructored (CatchClause::new));
-	register (g, "CatchFormalParameter", constructored (CatchFormalParameter::new));
+	register (g, "CatchFormalParameter", diagnosed (CatchFormalParameter::new));
 	register (g, "CatchType", constructored (CatchType::new));
 	register (g, "ExtraCatchType", constructored (ExtraCatchType::new));
 	register (g, "Finally", constructored (Finally::new));
