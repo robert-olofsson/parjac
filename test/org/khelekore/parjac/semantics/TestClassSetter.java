@@ -600,6 +600,36 @@ public class TestClassSetter extends TestBase {
 	checkTypeParameters (m.getTypeParameters (), 1, "java.io.InputStream", "java.io.Serializable");
     }
 
+    @Test
+    public void testMissingField () throws IOException {
+	parseAndSetClasses ("class A { void a () { return b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; return a + b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; int c = b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class A { void a () { int a = 0; int c = a + b; }}");
+	assert diagnostics.hasError () : "Should not be able to find b";
+    }
+
+    @Test
+    public void testMethodWithNewInstanceParameters () throws IOException {
+	parseAndSetClasses ("class A { void a (A a) {} void b () { a (new A ()); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testVarArgConstructor () throws IOException {
+	parseAndSetClasses ("class A { public A(int... is) {}}");
+	assertNoErrors ();
+    }
+
     private void checkTypeParameters (TypeParameters tps, int numParams,
 				      String bound1, String additionalBound) {
 	List<TypeParameter> ls = tps.get ();
@@ -644,35 +674,5 @@ public class TestClassSetter extends TestBase {
     private void assertClassType (ClassType ct, String expectedType) {
 	assert ct.getFullName ().equals (expectedType) : "Got wrong type: " +
 	    ct.getFullName () + ", expected: " + expectedType;
-    }
-
-    @Test
-    public void testMissingField () throws IOException {
-	parseAndSetClasses ("class A { void a () { return b; }}");
-	assert diagnostics.hasError () : "Should not be able to find b";
-
-	diagnostics = new CompilerDiagnosticCollector ();
-	parseAndSetClasses ("class A { void a () { int a = 0; return a + b; }}");
-	assert diagnostics.hasError () : "Should not be able to find b";
-
-	diagnostics = new CompilerDiagnosticCollector ();
-	parseAndSetClasses ("class A { void a () { int a = 0; int c = b; }}");
-	assert diagnostics.hasError () : "Should not be able to find b";
-
-	diagnostics = new CompilerDiagnosticCollector ();
-	parseAndSetClasses ("class A { void a () { int a = 0; int c = a + b; }}");
-	assert diagnostics.hasError () : "Should not be able to find b";
-    }
-
-    @Test
-    public void testMethodWithNewInstanceParameters () throws IOException {
-	parseAndSetClasses ("class A { void a (A a) {} void b () { a (new A ()); }}");
-	assertNoErrors ();
-    }
-
-    @Test
-    public void testVarArgConstructor () throws IOException {
-	parseAndSetClasses ("class A { public A(int... is) {}}");
-	assertNoErrors ();
     }
 }
