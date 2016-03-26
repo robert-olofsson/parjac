@@ -669,4 +669,10 @@ public class TestClassSetter extends TestBase {
 	parseAndSetClasses ("class A { void a (A a) {} void b () { a (new A ()); }}");
 	assertNoErrors ();
     }
+
+    @Test
+    public void testVarArgConstructor () throws IOException {
+	parseAndSetClasses ("class A { public A(int... is) {}}");
+	assertNoErrors ();
+    }
 }

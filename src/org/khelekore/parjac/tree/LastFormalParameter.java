@@ -41,4 +41,8 @@ public class LastFormalParameter extends FlaggedTypeBase {
     public String getId () {
 	return vdi.getId ();
     }
+
+    @Override public ExpressionType getExpressionType () {
+	return ExpressionType.array (type.getExpressionType (), 1);
+    }
 }
