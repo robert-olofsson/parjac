@@ -663,4 +663,10 @@ public class TestClassSetter extends TestBase {
 	parseAndSetClasses ("class A { void a () { int a = 0; int c = a + b; }}");
 	assert diagnostics.hasError () : "Should not be able to find b";
     }
+
+    @Test
+    public void testMethodWithNewInstanceParameters () throws IOException {
+	parseAndSetClasses ("class A { void a (A a) {} void b () { a (new A ()); }}");
+	assertNoErrors ();
+    }
 }

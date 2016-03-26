@@ -259,8 +259,9 @@ public class ClassSetter {
 	    ArgumentList al = m.getArgumentList ();
 	    if (al != null) {
 		List<TreeNode> ls = al.get ();
-		for (int i = 0, s = ls.size (); i < s; i++)
+		for (int i = 0, s = ls.size (); i < s; i++) {
 		    ls.set (i, replaceAndSetType (ls.get (i)));
+		}
 	    }
 	    return true;
 	}
@@ -386,7 +387,7 @@ public class ClassSetter {
 	}
 
 	private TreeNode replaceAndSetType (TreeNode tn) {
-	    if (tn.getExpressionType () == null && tn instanceof Identifier) {
+	    if (tn instanceof Identifier && tn.getExpressionType () == null) {
 		Identifier i = (Identifier)tn;
 		FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
 		if (fi != null) {
