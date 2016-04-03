@@ -695,6 +695,14 @@ public class TestClassSetter extends TestBase {
     }
     */
 
+    @Test
+    public void testInnerClassFieldsConstructorUsage () throws IOException {
+    	parseAndSetClasses ("class A { public class B { Object t; public B () { t = new Object ();}}}");
+	assertNoErrors ();
+    	parseAndSetClasses ("class A { public static class B { Object t; public B () { t = new Object ();}}}");
+	assertNoErrors ();
+    }
+
     private void checkTypeParameters (TypeParameters tps, int numParams,
 				      String bound1, String additionalBound) {
 	List<TypeParameter> ls = tps.get ();

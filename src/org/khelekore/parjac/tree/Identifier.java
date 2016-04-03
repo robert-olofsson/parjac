@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+
 import org.khelekore.parjac.lexer.ParsePosition;
 
 public class Identifier extends PositionNode {
@@ -37,6 +39,12 @@ public class Identifier extends PositionNode {
 	if (actual != null)
 	    return actual.getExpressionType ();
 	return expressionType;
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
+	if (actual == null)
+	    return super.getChildNodes ();
+	return actual.getChildNodes ();
     }
 
     public void setActual (TreeNode actual) {

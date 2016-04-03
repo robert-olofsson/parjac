@@ -96,10 +96,10 @@ public class Scope {
     public FieldInformation<?> find (String id, boolean isStatic) {
 	Scope s = this;
 	while (s != null) {
-	    isStatic |= s.isStatic;
 	    FieldInformation<?> fi = s.variables.get (id);
-	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic()))
+	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic ()))
 		return fi;
+	    isStatic |= s.isStatic;
 	    s = s.parent;
 	}
 	return null;
