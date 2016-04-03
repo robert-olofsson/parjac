@@ -8,7 +8,6 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.EnumConstant;
-import org.khelekore.parjac.tree.FlaggedType;
 import org.khelekore.parjac.tree.FormalParameter;
 import org.khelekore.parjac.tree.LastFormalParameter;
 import org.khelekore.parjac.tree.SyntaxTree;
@@ -55,28 +54,28 @@ public class Scope {
     public void tryToAdd (VariableDeclaration fd, VariableDeclarator vd,
 			  SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (new FieldInformation<VariableDeclaration> (vd.getId (), fd, classLevel),
-		  fd, tree, diagnostics);
+		  FlagsHelper.isStatic (fd.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (FormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (new FieldInformation<FormalParameter> (fp.getId (), fp, classLevel),
-		  fp, tree, diagnostics);
+		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (LastFormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (new FieldInformation<LastFormalParameter> (fp.getId (), fp, classLevel),
-		  fp, tree, diagnostics);
+		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (EnumConstant c, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (new FieldInformation<EnumConstant> (c.getId (), c, classLevel),
-		  c, tree, diagnostics);
+		  FlagsHelper.isStatic (c.getFlags ()), tree, diagnostics);
     }
 
-    private void tryToAdd (FieldInformation<?> fi, FlaggedType ft,
+    private void tryToAdd (FieldInformation<?> fi, boolean isStatic,
 			   SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	String name = fi.getName ();
-	FieldInformation<?> f = find (name, FlagsHelper.isStatic (ft.getFlags ()));
+	FieldInformation<?> f = find (name, isStatic);
 	if (f != null) {
 	    ParsePosition fpp = f.getParsePosition ();
 	    if (f.getClassLevel () == classLevel) {

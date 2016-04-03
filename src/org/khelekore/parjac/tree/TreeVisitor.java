@@ -153,6 +153,9 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default void endLambda (LambdaExpression l) {
+    }
+
     default boolean visit (ArrayAccess a) {
 	return true;
     }

@@ -5,6 +5,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 public class Identifier extends PositionNode {
     private final String value;
     private final ExpressionType expressionType;
+    private TreeNode actual;
 
     public Identifier (String value, ParsePosition pos) {
 	this (value, pos, null);
@@ -17,11 +18,15 @@ public class Identifier extends PositionNode {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + value + ", expType: " + expressionType + "}";
+	return getClass ().getSimpleName () + "{" + value + ", expType: " + expressionType +
+	    (actual != null ? ", actual: " + actual : "") + "}";
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
+	if (actual != null)
+	    actual.visit (visitor);
+	else
+	    visitor.visit (this);
     }
 
     public String get () {
@@ -29,6 +34,12 @@ public class Identifier extends PositionNode {
     }
 
     @Override public ExpressionType getExpressionType () {
+	if (actual != null)
+	    return actual.getExpressionType ();
 	return expressionType;
+    }
+
+    public void setActual (TreeNode actual) {
+	this.actual = actual;
     }
 }

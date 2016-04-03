@@ -630,6 +630,71 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testStaticImportStar () throws IOException {
+	parseAndSetClasses ("import static java.lang.Math.*; class A { double p2 = PI; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testStaticImportField () throws IOException {
+	parseAndSetClasses ("import static java.lang.Math.PI; class A { double p2 = PI; }");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testInvalidStaticImport () throws IOException {
+	parseAndSetClasses ("import static java.lang.Math.PO; class A {  }");
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
+    @Test
+    public void testLambdaScopeWithoutIdentifier () throws IOException {
+	parseAndSetClasses ("class A { Runnable r = () -> {}; }");
+	assertNoErrors ();
+    }
+
+    /*
+    @Test
+    public void testLambdaScopeIdentifier () throws IOException {
+	parseAndSetClasses ("class A { Comparable<?> c = o -> o.hashCode (); }");
+	assertNoErrors ();
+    }
+    */
+
+    /*
+    @Test
+    public void testLambdaScopeInferred () throws IOException {
+	parseAndSetClasses ("class A { Comparable<?> c = (o) -> o.hashCode (); }");
+	assertNoErrors ();
+    }
+    */
+
+    @Test
+    public void testLambdaScopeFormal () throws IOException {
+	parseAndSetClasses ("class A { Comparable<?> c = (Object o) -> o.hashCode (); }");
+	assertNoErrors ();
+    }
+
+    /*
+    @Test
+    public void testDirectInheritedField () throws IOException {
+	parseAndSetClasses ("public class A { protected A a; }",
+			    "class B extends A { void b () { a = new B (); }}");
+	assertNoErrors ();
+    }
+    */
+
+    /*
+    @Test
+    public void testIndirectInheritedField () throws IOException {
+    	parseAndSetClasses ("public class A { protected A a; }",
+			    "class B extends A {}",
+			    "class C extends B { void c () { a = new C (); }}");
+	assertNoErrors ();
+    }
+    */
+
     private void checkTypeParameters (TypeParameters tps, int numParams,
 				      String bound1, String additionalBound) {
 	List<TypeParameter> ls = tps.get ();

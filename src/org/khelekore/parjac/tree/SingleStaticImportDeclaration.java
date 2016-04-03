@@ -32,6 +32,6 @@ public class SingleStaticImportDeclaration extends ImportDeclarationBase {
     }
 
     public String getFullName () {
-	return getName ().getDotName () + "." + id;
+	return getName ().getDotName () + "$" + id;
     }
 }

@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +18,10 @@ import java.util.jar.JarFile;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
+import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.ExpressionType;
+import org.khelekore.parjac.tree.FlaggedType;
+import org.khelekore.parjac.tree.TreeNode;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -118,7 +122,31 @@ public class ClassResourceHolder {
 	return r.methods;
     }
 
+    public FieldInformation<?> getFieldInformation (String fqn, String field) {
+	AsmField af = getAsmField (fqn, field);
+	if (af == null)
+	    return null;
+	return new FieldInformation<AsmField> (field, af, 1);
+    }
+
+    public Collection<FieldInformation<?>> getAllFields (String fqn) {
+	Result r = foundClasses.get (fqn);
+	if (r == null)
+	    throw new IllegalArgumentException ("No such class: " + fqn);
+	loadNoCheckedException (fqn, r);
+	List<FieldInformation<?>> ret = new ArrayList<> (r.fieldTypes.size ());
+	r.fieldTypes.forEach ((name, af) -> ret.add (new FieldInformation<AsmField> (name, af, 1)));
+	return ret;
+    }
+
     public ExpressionType getFieldType (String fqn, String field) {
+	AsmField af = getAsmField (fqn, field);
+	if (af == null)
+	    return null;
+	return af.type;
+    }
+
+    private AsmField getAsmField (String fqn, String field) {
 	Result r = foundClasses.get (fqn);
 	if (r == null)
 	    throw new IllegalArgumentException ("No such class: " + fqn);
@@ -151,7 +179,7 @@ public class ClassResourceHolder {
 	private String superClass;
 	private List<String> superTypes;
 	private int accessFlags;
-	private Map<String, ExpressionType> fieldTypes = new HashMap<> ();
+	private Map<String, AsmField> fieldTypes = new HashMap<> ();
 	private Map<String, List<MethodInformation>> methods = new HashMap<> ();
 
 	public synchronized void ensureNodeIsLoaded (String fqn) throws IOException {
@@ -262,7 +290,7 @@ public class ClassResourceHolder {
 						  String signature, Object value) {
 	    // desc is type, signature is only there if field is generic type
 	    Type type = Type.getType (desc);
-	    r.fieldTypes.put (name, ExpressionType.get (type));
+	    r.fieldTypes.put (name, new AsmField (access, ExpressionType.get (type), signature, value));
 	    return null;
 	}
 
@@ -278,6 +306,41 @@ public class ClassResourceHolder {
 	    }
 	    ls.add (mi);
 	    return null;
+	}
+    }
+
+    private static class AsmField implements FlaggedType {
+	private final int access;
+	private final ExpressionType type;
+	private final String signature;
+	private final Object value;
+
+	public AsmField (int access, ExpressionType type, String signature, Object value) {
+	    this.access = access;
+	    this.type = type;
+	    this.signature = signature;
+	    this.value = value;
+	}
+
+	@Override public int getFlags () {
+	    return access;
+	}
+
+	@Override public List<TreeNode> getAnnotations () {
+	    return Collections.emptyList ();
+	}
+
+	@Override public ParsePosition getParsePosition() {
+	    return null;
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return type;
+	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{" + access + ", " + type + ", " +
+		signature + ", " + value + "}";
 	}
     }
 }

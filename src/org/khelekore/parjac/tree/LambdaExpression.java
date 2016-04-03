@@ -12,7 +12,7 @@ public class LambdaExpression extends PositionNode {
 
     public LambdaExpression (Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
-	parameters = parts.pop ();
+	parameters = ((LambdaParameters)parts.pop ()).getParameters ();
 	parts.pop (); // '->'
 	body = parts.pop ();
     }
@@ -24,9 +24,14 @@ public class LambdaExpression extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this))
 	    body.visit (visitor);
+	visitor.endLambda (this);
     }
 
     public Collection<? extends TreeNode> getChildNodes () {
 	return Collections.singleton (body);
+    }
+
+    public TreeNode getParameters () {
+	return parameters;
     }
 }

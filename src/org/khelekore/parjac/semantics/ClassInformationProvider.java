@@ -113,9 +113,8 @@ public class ClassInformationProvider {
 	    if (m == null)
 		return null;
 	    return m.get (field);
-	} else {
-	    throw new IllegalStateException ("not implemented yet");
 	}
+	return crh.getFieldInformation (fqn, field);
     }
 
     public ExpressionType getFieldType (String fqn, String field) {
@@ -127,9 +126,8 @@ public class ClassInformationProvider {
 	    if (fi == null)
 		return null;
 	    return fi.getExpressionType ();
-	} else {
-	    return crh.getFieldType (fqn, field);
 	}
+	return crh.getFieldType (fqn, field);
     }
 
     public Map<String, List<MethodInformation>> getMethods (String fqn) {
@@ -141,9 +139,8 @@ public class ClassInformationProvider {
 	    if (tp != null) {
 		// No direct methods
 		return Collections.emptyMap ();
-	    } else {
-		return crh.getMethods (fqn);
 	    }
+	    return crh.getMethods (fqn);
 	}
     }
 

@@ -10,7 +10,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.semantics.MethodInformation;
 
 public class ClassInstanceCreationExpression extends PositionNode {
-    private TreeNode from;
+    private final TreeNode from;
     private final TypeArguments typeArguments;
     private final List<TreeNode> annotations;
     private final ClassType id;
@@ -21,8 +21,7 @@ public class ClassInstanceCreationExpression extends PositionNode {
 
     public ClassInstanceCreationExpression (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
-	if (r.size () > 1)
-	    from = parts.pop ();
+	from = r.size () > 1 ? parts.pop () : null;
 	UntypedClassInstanceCreationExpression u = (UntypedClassInstanceCreationExpression)parts.pop ();
 	typeArguments = u.getTypeArguments ();
 	annotations = u.getAnnotations ();
@@ -74,10 +73,6 @@ public class ClassInstanceCreationExpression extends PositionNode {
 
     public TreeNode getFrom () {
 	return from;
-    }
-
-    public void setFrom (TreeNode from) {
-	this.from = from;
     }
 
     public TypeArguments getTypeArguments () {

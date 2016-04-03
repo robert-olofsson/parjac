@@ -56,7 +56,7 @@ public class ClassSetter {
 	}
 	if (diagnostics.hasError ())
 	    return;
-	classSetters.parallelStream ().forEach (cs -> cs.checkUnusedInport ());
+	classSetters.parallelStream ().forEach (cs -> cs.checkUnusedImport ());
     }
 
     public ClassSetter (ClassInformationProvider cip, SyntaxTree tree,
@@ -78,12 +78,23 @@ public class ClassSetter {
 	    rest.add (this);
     }
 
-    public void checkUnusedInport () {
+    public void checkUnusedImport () {
 	List<ImportDeclaration> imports = tree.getCompilationUnit ().getImports ();
 	imports.stream ().filter (i -> !i.hasBeenUsed ()).forEach (i -> checkUnusedImport (i));
     }
 
     private void checkUnusedImport (ImportDeclaration i) {
+	if (i instanceof SingleStaticImportDeclaration) {
+	    SingleStaticImportDeclaration si = (SingleStaticImportDeclaration)i;
+	    String full = si.getFullName ();
+	    String fqn = si.getName ().getDotName ();
+	    String field = si.getInnerId ();
+	    if (!hasVisibleType (full) && cip.getFieldInformation (fqn, field) == null) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+							     "Type %s has no symbol: %s", fqn, field));
+		return;
+	    }
+	}
 	diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (),
 						       i.getParsePosition (),
 						       "Unused import"));
@@ -233,7 +244,7 @@ public class ClassSetter {
 		setType (c.getId (), this);
 	    } else {
 		from.visit (this);
-		c.setFrom (replaceAndSetType (from));
+		replaceAndSetType (from);
 		if (from.getExpressionType () != null) {
 		    Deque<BodyPart> save = containingTypes;
 		    containingTypes = new ArrayDeque<> ();
@@ -255,15 +266,36 @@ public class ClassSetter {
 	@Override public boolean visit (MethodInvocation m) {
 	    TreeNode on = m.getOn ();
 	    if (on != null)
-		m.setOn (replaceAndSetType (on));
+		replaceAndSetType (on);
 	    ArgumentList al = m.getArgumentList ();
 	    if (al != null) {
 		List<TreeNode> ls = al.get ();
 		for (int i = 0, s = ls.size (); i < s; i++) {
-		    ls.set (i, replaceAndSetType (ls.get (i)));
+		    replaceAndSetType (ls.get (i));
 		}
 	    }
 	    return true;
+	}
+
+	@Override public boolean visit (LambdaExpression l) {
+	    TreeNode params = l.getParameters ();
+	    if (params != null) {
+		addScope (l, Scope.Type.LOCAL);
+		if (params instanceof Identifier) {
+		    // qwerty
+		} else if (params instanceof InferredFormalParameterList) {
+		    // qwerty
+		} else if (params instanceof FormalParameterList) {
+		    addParameterList ((FormalParameterList)params);
+		}
+	    }
+	    return true;
+	}
+
+	@Override public void endLambda (LambdaExpression l) {
+	    TreeNode params = l.getParameters ();
+	    if (params != null)
+		currentScope = currentScope.endScope ();
 	}
 
 	@Override public boolean visit (FieldAccess f) {
@@ -294,11 +326,43 @@ public class ClassSetter {
 	}
 
 	@Override public void visit (Identifier i) {
-	    FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
+	    String id = i.get ();
+	    FieldInformation<?> fi = currentScope.find (id, currentScope.isStatic ());
 	    if (fi == null) {
-		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
-							     "Cannot find symbol: %s", i.get ()));
+		StaticFieldAccess sfa = findStaticImportedField (id);
+		if (sfa != null) {
+		    ClassType from = new ClassType (null, i.getParsePosition ());
+		    from.setFullName (sfa.fqn);
+		    FieldAccess fa = new FieldAccess (from, id, i.getParsePosition ());
+		    fa.setReturnType (sfa.field.getExpressionType ());
+		    i.setActual (fa);
+		} else {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+								 "Cannot find symbol: %s", i.get ()));
+		}
 	    }
+	}
+
+	private StaticFieldAccess findStaticImportedField (String name) {
+	    ImportHandler.StaticImportType sit = ih.ssid.get (name);
+	    String fqn = null;
+	    if (sit != null) {
+		fqn = sit.containingClass;
+		FieldInformation<?> fi = cip.getFieldInformation (fqn, name);
+		if (fi != null) {
+		    sit.ssid.markUsed ();
+		    return new StaticFieldAccess (fqn, fi);
+		}
+	    }
+	    for (StaticImportOnDemandDeclaration siod : ih.siod) {
+		fqn = siod.getName ().getDotName ();
+		FieldInformation<?> fi = cip.getFieldInformation (fqn, name);
+		if (fi != null) {
+		    siod.markUsed ();
+		    return new StaticFieldAccess (fqn, fi);
+		}
+	    }
+	    return null;
 	}
 
 	@Override public void visit (DottedName d) {
@@ -386,15 +450,14 @@ public class ClassSetter {
 	    return true;
 	}
 
-	private TreeNode replaceAndSetType (TreeNode tn) {
+	private void replaceAndSetType (TreeNode tn) {
 	    if (tn instanceof Identifier && tn.getExpressionType () == null) {
 		Identifier i = (Identifier)tn;
 		FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
 		if (fi != null) {
-		    tn = new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ());
+		    i.setActual (new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ()));
 		}
 	    }
-	    return tn;
 	}
 
 	private void addScopeAndFields (String fqn, FlaggedType ft, TreeNode part) {
@@ -404,6 +467,10 @@ public class ClassSetter {
 
 	private void addScopeAndParameters (FlaggedType ft, FormalParameterList fpl) {
 	    addScope (ft, Scope.Type.LOCAL);
+	    addParameterList (fpl);
+	}
+
+	private void addParameterList (FormalParameterList fpl) {
 	    if (fpl != null) {
 		NormalFormalParameterList pl = fpl.getParameters ();
 		if (pl != null) {
@@ -424,7 +491,8 @@ public class ClassSetter {
 	}
 
 	private void addScope (TreeNode tn, Scope.Type type) {
-	    currentScope = new Scope (currentScope, type, currentScope.isStatic ());
+	    boolean isStatic = currentScope != null && currentScope.isStatic ();
+	    currentScope = new Scope (currentScope, type, isStatic);
 	    scopes.put (tn, currentScope);
 	}
 
@@ -779,7 +847,11 @@ public class ClassSetter {
     }
 
     private String trySingleStaticImport (String id) {
-	return ih.ssid.get (id);
+	ImportHandler.StaticImportType sit = ih.ssid.get (id);
+	if (sit == null)
+	    return null;
+	sit.ssid.markUsed ();
+	return sit.fullName;
     }
 
     private String tryStaticImportOnDemand (String id) {
@@ -796,7 +868,7 @@ public class ClassSetter {
     private class ImportHandler implements ImportVisitor {
 	private final Map<String, ImportHolder> stid = new HashMap<> ();
 	private final List<ImportHolder> tiod = new ArrayList<> ();
-	private final Map<String, String> ssid = new HashMap<> ();
+	private final Map<String, StaticImportType> ssid = new HashMap<> ();
 	private final List<StaticImportOnDemandDeclaration> siod = new ArrayList<> ();
 
 	public void visit (SingleTypeImportDeclaration i) {
@@ -819,7 +891,15 @@ public class ClassSetter {
 	}
 
 	public void visit (SingleStaticImportDeclaration i) {
-	    ssid.put (i.getInnerId (), getClassName (i.getName ()).name + "$" + i.getInnerId ());
+	    String fqn = i.getName ().getDotName ();
+	    if (!hasVisibleType (fqn)) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), i.getParsePosition (),
+							     "Type not found: %s", fqn));
+		i.markUsed (); // Unused, but already flagged as bad, don't want multiple lines
+		return;
+	    }
+
+	    ssid.put (i.getInnerId (), new StaticImportType (i));
 	}
 
 	public void visit (StaticImportOnDemandDeclaration i) {
@@ -841,6 +921,18 @@ public class ClassSetter {
 
 	private void addDefaultPackages () {
 	    tiod.add (new ImportHolder (null, new ClassAndSeparator ("java.lang", '.')));
+	}
+
+	private class StaticImportType {
+	    private final SingleStaticImportDeclaration ssid;
+	    private final String containingClass;
+	    private final String fullName;
+
+	    public StaticImportType (SingleStaticImportDeclaration ssid) {
+		this.ssid = ssid;
+		containingClass = getClassName (ssid.getName ()).name;
+		fullName = containingClass + "$" + ssid.getInnerId ();
+	    }
 	}
     }
 
@@ -922,6 +1014,16 @@ public class ClassSetter {
 	public ClassAndSeparator (String name, char sep) {
 	    this.name = name;
 	    this.sep = sep;
+	}
+    }
+
+    private static class StaticFieldAccess {
+	private final String fqn;
+	private final FieldInformation<?> field;
+
+	public StaticFieldAccess (String fqn, FieldInformation<?> field) {
+	    this.fqn = fqn;
+	    this.field = field;
 	}
     }
 

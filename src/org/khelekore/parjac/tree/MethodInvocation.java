@@ -12,7 +12,7 @@ import org.khelekore.parjac.semantics.MethodInformation;
 import org.objectweb.asm.Type;
 
 public class MethodInvocation extends PositionNode {
-    private TreeNode on;
+    private final TreeNode on;
     private final TypeArguments types;
     private final boolean isSuper;
     private final UntypedMethodInvocation mi;
@@ -77,10 +77,6 @@ public class MethodInvocation extends PositionNode {
 
     public TreeNode getOn () {
 	return on;
-    }
-
-    public void setOn (TreeNode on) {
-	this.on = on;
     }
 
     public TypeArguments getTypeArguments () {

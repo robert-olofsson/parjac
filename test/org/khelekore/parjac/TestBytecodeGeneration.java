@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.TestParseHelper;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -504,6 +505,17 @@ public class TestBytecodeGeneration {
 	Callable<Void> c2 = () -> {throw new Exception ("bummer");};
 	o = m.invoke (null, c2);
 	checkResultObject (o, Integer.class, 4);
+    }
+
+    @Test
+    public void testStaticImportField () throws IOException, ReflectiveOperationException {
+	String s = "import static java.lang.Math.*;\n" +
+	    "public class Foo { public static double foo () { return PI; }}";
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	assert o instanceof Double : "Got wrong type back: " + o.getClass ();
+	double d = (Double)o;
+	Assert.assertEquals (d, Math.PI, 0.001, "Got wrong value: " + d);
     }
 
     private void checkResult (String s, Class<?> retType, int expected)

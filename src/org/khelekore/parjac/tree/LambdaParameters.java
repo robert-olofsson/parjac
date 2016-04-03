@@ -10,6 +10,7 @@ public class LambdaParameters extends PositionNode {
 
     public LambdaParameters (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
+	// o -> ..., () -> ..., (<inferred|formal>) -> ...
 	if (r.size () == 1)
 	    parameters = parts.pop ();
 	else if (r.size () == 2)
@@ -20,5 +21,9 @@ public class LambdaParameters extends PositionNode {
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + parameters + "}";
+    }
+
+    public TreeNode getParameters () {
+	return parameters;
     }
 }
