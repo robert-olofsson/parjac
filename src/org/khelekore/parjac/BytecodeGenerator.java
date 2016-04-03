@@ -53,27 +53,27 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (NormalClassDeclaration c) {
-	pushClass (c, c.getId ());
+	pushClass (c);
 	return true;
     }
 
     @Override public boolean visit (EnumDeclaration e) {
-	pushClass (e, e.getId ());
+	pushClass (e);
 	return true;
     }
 
     @Override public boolean visit (NormalInterfaceDeclaration i) {
-	pushClass (i, i.getId ());
+	pushClass (i);
 	return true;
     }
 
     @Override public boolean visit (AnnotationTypeDeclaration a) {
-	pushClass (a, a.getId ());
+	pushClass (a);
 	return true;
     }
 
     @Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
-	pushClass (b, cip.getFilename (b));
+	pushClass (b);
 	return true;
     }
 
@@ -81,8 +81,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	endType ();
     }
 
-    private void pushClass (TreeNode tn, String name) {
-	ClassWriterHolder cid = new ClassWriterHolder (tn, name);
+    private void pushClass (TreeNode tn) {
+	ClassWriterHolder cid = new ClassWriterHolder (tn);
 	addClass (cid);
 	cid.start ();
     }
@@ -161,7 +161,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	int op = PUTFIELD;
 	if (FlagsHelper.isStatic (flags))
 	    op = PUTSTATIC;
-	String owner = currentClass.className;
+	String owner = currentClass.fqn;
 	currentMethod.mv.visitFieldInsn (op, owner, id, type);
 	currentMethod.removeStack (op == PUTFIELD ? 2 : 1);
     }
@@ -428,7 +428,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (localVarId != null) {
 	    storeValue (localVarId, a.lhs ());
 	} else {
-	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.className, id,
+	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.fqn, id,
 					     a.getExpressionType ().getDescriptor ());
 	    currentMethod.removeStack (2);
 	}
@@ -1126,13 +1126,13 @@ public class BytecodeGenerator implements TreeVisitor {
 
     private class ClassWriterHolder {
 	private final TreeNode tn;
-	private final String className;
+	private final String fqn;
 	private final ClassWriter cw;
 	private MethodInfo staticBlock;
 
-	public ClassWriterHolder (TreeNode tn, String className) {
+	public ClassWriterHolder (TreeNode tn) {
 	    this.tn = tn;
-	    this.className = className;
+	    fqn = cip.getFullName (tn);
 	    cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
 	}
 
@@ -1141,7 +1141,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 
 	public void start () {
-	    String fqn = cip.getFullName (tn);
 	    SuperAndFlags saf = getSuperAndFlags ();
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
