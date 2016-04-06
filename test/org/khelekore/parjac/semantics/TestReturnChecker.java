@@ -711,6 +711,24 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testAccessToOuterField () throws IOException {
+	parseAndSetClasses ("class Foo {Object t; public class B {  public B () { t = new Object ();}}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testAccessToOuterStaticField () throws IOException {
+	parseAndSetClasses ("class Foo {static Object t; public class B {  public B () { t = new Object ();}}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testStaticAccessToOuterStaticField () throws IOException {
+	parseAndSetClasses ("class Foo {static Object t; public static class B {  public B () { t = new Object ();}}}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

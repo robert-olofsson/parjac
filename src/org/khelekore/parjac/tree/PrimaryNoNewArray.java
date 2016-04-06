@@ -1,5 +1,7 @@
 package org.khelekore.parjac.tree;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -33,15 +35,32 @@ public class PrimaryNoNewArray {
     }
 
     public static class DottedThis extends PositionNode {
-	private final DottedName name;
+	private final TreeNode name;
 
-	public DottedThis (DottedName name, ParsePosition pos) {
+	public DottedThis (TreeNode name, ParsePosition pos) {
 	    super (pos);
 	    this.name = name;
 	}
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{" + name + ".this}";
+	}
+
+	@Override public void visit (TreeVisitor visitor) {
+	    visitor.visit (this);
+	    name.visit (visitor);
+	}
+
+	@Override public void simpleVisit (TreeVisitor visitor) {
+	    visitor.visit (this);
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return name.getExpressionType ();
+	}
+
+	@Override public Collection<? extends TreeNode> getChildNodes () {
+	    return Collections.emptyList ();
 	}
     }
 
@@ -78,7 +97,7 @@ public class PrimaryNoNewArray {
 	if (r.getRulePart (0).getId () == Token.LEFT_PARENTHESIS)
 	    return parts.pop ();
 	if (r.getRulePart (2).getId () == Token.THIS)
-	    return new DottedThis ((DottedName)parts.pop (), pos);
+	    return new DottedThis (parts.pop (), pos);
 	if (r.getRulePart (0).getId () == Token.VOID)
 	    return new VoidClass (pos);
 	return new ClassPrimary (parts.pop (), r.size () > 3 ? ((ZOMEntry)parts.pop ()).get () : null, pos);

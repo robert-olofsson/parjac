@@ -142,8 +142,14 @@ public class TestNames extends TestBase {
     }
 
     @Test
-    public void testSameNameInInnerClass () throws IOException {
+    public void testSameNameInOuterAndInnerClass () throws IOException {
 	parseAndSetClasses ("class F { int i; class G { int i; }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testSameNameInDifferentInnerClass () throws IOException {
+	parseAndSetClasses ("class F { class G { int i; } class H { int i; }}");
 	assertNoErrors ();
     }
 

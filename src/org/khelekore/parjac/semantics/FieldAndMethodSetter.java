@@ -288,8 +288,8 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	if (retType == null) {
 	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							 f.getParsePosition (),
-							 "Cannot find symbol: %s",
-							 f.getFieldId ()));
+							 "Cannot find symbol: %s: %s",
+							 f.getFieldId (), f));
 	} else {
 	    f.setReturnType (retType);
 	}

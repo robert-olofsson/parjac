@@ -281,4 +281,7 @@ public interface TreeVisitor {
 
     default void visit (PrimaryNoNewArray.ThisPrimary t) {
     }
+
+    default void visit (PrimaryNoNewArray.DottedThis t) {
+    }
 }

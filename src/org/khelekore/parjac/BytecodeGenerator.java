@@ -397,11 +397,19 @@ public class BytecodeGenerator implements TreeVisitor {
 	} else {
 	    // TODO: handle ArrayAccess
 	}
+	int instruction = PUTFIELD;
+	String owner = currentClass.fqn;
+
 	Token t = a.getOperator ().get ();
 	if (t == Token.EQUAL) {
 	    if (fa != null) {
 		TreeNode from = fa.getFrom ();
-		from.visit (this);
+		if (from instanceof ClassType) {
+		    instruction = PUTSTATIC;
+		    owner = ((ClassType)from).getSlashName ();
+		} else {
+		    from.visit (this);
+		}
 	    }
 	} else {
 	    if (fa != null) {
@@ -428,7 +436,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (localVarId != null) {
 	    storeValue (localVarId, a.lhs ());
 	} else {
-	    currentMethod.mv.visitFieldInsn (PUTFIELD, currentClass.fqn, id,
+	    currentMethod.mv.visitFieldInsn (instruction, owner, id,
 					     a.getExpressionType ().getDescriptor ());
 	    currentMethod.removeStack (2);
 	}
@@ -802,6 +810,22 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	currentMethod.addStack (1);
+    }
+
+    @Override public void visit (PrimaryNoNewArray.DottedThis t) {
+	// qwerty
+	boolean insideConstructor = true;
+	if (insideConstructor) {
+	    int outerClassId = 1; // TODO: not always correct
+	    currentMethod.mv.visitVarInsn (ALOAD, outerClassId); // pushes "this$X"
+	} else {
+	    currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
+	    String owner = "A$B";
+	    String name = "this$0";
+	    String desc = t.getExpressionType ().getDescriptor ();
+	    currentMethod.mv.visitFieldInsn (GETFIELD, owner, name, desc);
+	}
 	currentMethod.addStack (1);
     }
 

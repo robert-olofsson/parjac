@@ -27,7 +27,6 @@ public class ClassSetter {
     private final ImportHandler ih = new ImportHandler ();
     private Deque<BodyPart> containingTypes = new ArrayDeque<> ();
     private final Deque<Map<String, TypeParameter>> types = new ArrayDeque<> ();
-    private final Map<TreeNode, Scope> scopes = new HashMap<> ();
 
     private final static String[] EMTPY = new String[0];
 
@@ -327,12 +326,11 @@ public class ClassSetter {
 
 	@Override public void visit (Identifier i) {
 	    String id = i.get ();
-	    FieldInformation<?> fi = currentScope.find (id, currentScope.isStatic ());
-	    if (fi == null) {
+	    Scope.FindResult fr = currentScope.find (id, currentScope.isStatic ());
+	    if (fr == null) {
 		StaticFieldAccess sfa = findStaticImportedField (id);
 		if (sfa != null) {
-		    ClassType from = new ClassType (null, i.getParsePosition ());
-		    from.setFullName (sfa.fqn);
+		    ClassType from = getClassType (sfa.fqn, i.getParsePosition ());
 		    FieldAccess fa = new FieldAccess (from, id, i.getParsePosition ());
 		    fa.setReturnType (sfa.field.getExpressionType ());
 		    i.setActual (fa);
@@ -378,9 +376,9 @@ public class ClassSetter {
 	    for (int i = 0, s = parts.size (); i < s; i++) {
 		String p = parts.get (i);
 		if (i == 0) {
-		    FieldInformation<?> fi = scope.find (p, scope.isStatic ());
-		    if (fi != null) {
-			current = getFieldOrLocalAccess (p, pos, fi);
+		    Scope.FindResult fr = scope.find (p, scope.isStatic ());
+		    if (fr != null) {
+			current = getFieldOrLocalAccess (p, pos, fr);
 			continue;
 		    }
 		} else {
@@ -404,10 +402,22 @@ public class ClassSetter {
 	    return current;
 	}
 
-	private TreeNode getFieldOrLocalAccess (String p, ParsePosition pos, FieldInformation<?> fi) {
+	private TreeNode getFieldOrLocalAccess (String p, ParsePosition pos, Scope.FindResult fr) {
+	    FieldInformation<?> fi = fr.fi;
 	    if (!isField (fi))
 		return new Identifier (p, pos, fi.getExpressionType ());
-	    FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
+	    if (fr.containingClass == cip.getType (containingTypes.peek ().fqn)) {
+		FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
+		fa.setReturnType (fi.getExpressionType ());
+		return fa;
+	    }
+	    FieldDeclaration fd = (FieldDeclaration)fi.getVariableDeclaration ();
+	    if (FlagsHelper.isStatic (fd.getFlags ())) {
+		FieldAccess fa = new FieldAccess (getStatic (fi.getOwner (), pos), p, pos);
+		fa.setReturnType (fi.getExpressionType ());
+		return fa;
+	    }
+	    FieldAccess fa = new FieldAccess (getDottedThis (fi.getOwner (), pos), p, pos);
 	    fa.setReturnType (fi.getExpressionType ());
 	    return fa;
 	}
@@ -420,6 +430,17 @@ public class ClassSetter {
 	    PrimaryNoNewArray.ThisPrimary t = new PrimaryNoNewArray.ThisPrimary (pos);
 	    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
 	    return t;
+	}
+
+	private TreeNode getStatic (TreeNode owner, ParsePosition pos) {
+	    String fqn = cip.getFullName (owner);
+	    return getClassType (fqn, pos);
+	}
+
+	private TreeNode getDottedThis (TreeNode owner, ParsePosition pos) {
+	    String fqn = cip.getFullName (owner);
+	    ClassType ct = getClassType (fqn, pos);
+	    return new PrimaryNoNewArray.DottedThis (ct, pos);
 	}
 
 	@Override public boolean visit (BasicForStatement f) {
@@ -453,9 +474,9 @@ public class ClassSetter {
 	private void replaceAndSetType (TreeNode tn) {
 	    if (tn instanceof Identifier && tn.getExpressionType () == null) {
 		Identifier i = (Identifier)tn;
-		FieldInformation<?> fi = currentScope.find (i.get (), currentScope.isStatic ());
-		if (fi != null) {
-		    i.setActual (new Identifier (i.get (), i.getParsePosition (), fi.getExpressionType ()));
+		Scope.FindResult fr = currentScope.find (i.get (), currentScope.isStatic ());
+		if (fr != null) {
+		    i.setActual (new Identifier (i.get (), i.getParsePosition (), fr.fi.getExpressionType ()));
 		}
 	    }
 	}
@@ -486,14 +507,12 @@ public class ClassSetter {
 	}
 
 	private void addScope (FlaggedType ft, Scope.Type type) {
-	    currentScope = new Scope (currentScope, type, FlagsHelper.isStatic (ft.getFlags ()));
-	    scopes.put (ft, currentScope);
+	    currentScope = new Scope (ft, currentScope, type, FlagsHelper.isStatic (ft.getFlags ()));
 	}
 
 	private void addScope (TreeNode tn, Scope.Type type) {
 	    boolean isStatic = currentScope != null && currentScope.isStatic ();
-	    currentScope = new Scope (currentScope, type, isStatic);
-	    scopes.put (tn, currentScope);
+	    currentScope = new Scope (tn, currentScope, type, isStatic);
 	}
 
 	private void addFields (String fqn, TreeNode tn, Scope scope) {
@@ -986,6 +1005,12 @@ public class ClassSetter {
 	    return false;
 	}
 	return false;
+    }
+
+    private ClassType getClassType (String fqn, ParsePosition pos) {
+	ClassType ct = new ClassType (null, pos);
+	ct.setFullName (fqn);
+	return ct;
     }
 
     private boolean sameTopLevelClass (String fqn, String topLevelClass) {

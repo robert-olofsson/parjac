@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -126,17 +125,8 @@ public class ClassResourceHolder {
 	AsmField af = getAsmField (fqn, field);
 	if (af == null)
 	    return null;
-	return new FieldInformation<AsmField> (field, af, 1);
-    }
-
-    public Collection<FieldInformation<?>> getAllFields (String fqn) {
-	Result r = foundClasses.get (fqn);
-	if (r == null)
-	    throw new IllegalArgumentException ("No such class: " + fqn);
-	loadNoCheckedException (fqn, r);
-	List<FieldInformation<?>> ret = new ArrayList<> (r.fieldTypes.size ());
-	r.fieldTypes.forEach ((name, af) -> ret.add (new FieldInformation<AsmField> (name, af, 1)));
-	return ret;
+	// qwerty, probably need: new ClassType ().setFullName (fqn)?
+	return new FieldInformation<AsmField> (field, af, null);
     }
 
     public ExpressionType getFieldType (String fqn, String field) {
