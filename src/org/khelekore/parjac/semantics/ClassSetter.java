@@ -18,6 +18,7 @@ import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.*;
+import org.khelekore.parjac.tree.PrimaryNoNewArray.ThisPrimary;
 
 public class ClassSetter {
     private final ClassInformationProvider cip;
@@ -299,17 +300,6 @@ public class ClassSetter {
 		currentScope = currentScope.endScope ();
 	}
 
-	@Override public boolean visit (FieldAccess f) {
-	    TreeNode from = f.getFrom ();
-	    if (from != null) {
-		if (from.getExpressionType () == null && from instanceof PrimaryNoNewArray.ThisPrimary) {
-		    PrimaryNoNewArray.ThisPrimary t = (PrimaryNoNewArray.ThisPrimary)from;
-		    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
-		}
-	    }
-	    return true;
-	}
-
 	@Override public boolean visit (LocalVariableDeclaration l) {
 	    setType (l.getType (), this);
 	    for (VariableDeclarator v : l.getVariables ().get ()) {
@@ -585,6 +575,10 @@ public class ClassSetter {
 		}
 		ls.add (mi);
 	    }
+	}
+
+	@Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
+	    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
 	}
     }
 
