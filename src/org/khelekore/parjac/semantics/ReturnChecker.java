@@ -543,13 +543,13 @@ public class ReturnChecker implements TreeVisitor {
 		IntLiteral il = (IntLiteral)exp;
 		int v = il.get ();
 		if (resultType == ExpressionType.BYTE) {
-		    if (v < Byte.MAX_VALUE && v > Byte.MIN_VALUE)
+		    if (v <= Byte.MAX_VALUE && v > Byte.MIN_VALUE)
 			return true;
 		} else if (resultType == ExpressionType.SHORT) {
-		    if (v < Short.MAX_VALUE && v > Short.MIN_VALUE)
+		    if (v <= Short.MAX_VALUE && v > Short.MIN_VALUE)
 			return true;
 		} else if (resultType == ExpressionType.CHAR) {
-		    if (v < Character.MAX_VALUE && v > Character.MIN_VALUE)
+		    if (v <= Character.MAX_VALUE && v >= Character.MIN_VALUE)
 			return true;
 		}
 	    }

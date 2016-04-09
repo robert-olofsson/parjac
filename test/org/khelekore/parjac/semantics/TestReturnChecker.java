@@ -90,7 +90,11 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { long bar () { short i = 3; return i; }}");
 	assertNoErrors ();
+	parseAndSetClasses ("class Foo { int bar () { char i = 0; return i; }}");
+	assertNoErrors ();
 	parseAndSetClasses ("class Foo { int bar () { char i = 3; return i; }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { int bar () { char i = 65535; return i; }}");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { long bar () { char i = 3; return i; }}");
 	assertNoErrors ();
@@ -98,6 +102,9 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { double bar () { float i = 3; return i; }}");
 	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { int bar () { char i = 65536; return i; }}");
+	assert diagnostics.hasError () : "Expected to find errors";
     }
 
     @Test
