@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.SourceDiagnostics;
@@ -117,7 +118,8 @@ public class FieldAndMethodSetter implements TreeVisitor {
 		if (mi == null) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 								 c.getParsePosition (),
-								 "No matching constructor found"));
+								 "No matching constructor found for (%s)",
+								 argList (al)));
 		} else {
 		    c.setMethodInformation (mi);
 		}
@@ -141,7 +143,8 @@ public class FieldAndMethodSetter implements TreeVisitor {
 		if (mi == null) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 								 m.getParsePosition (),
-								 "No matching method found"));
+								 "No matching method found for: %s (%s)",
+								 name, argList (al)));
 		} else {
 		    m.setMethodInformation (mi);
 		}
@@ -152,6 +155,12 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    }
 	}
 	return false;
+    }
+
+    private final String argList (ArgumentList al) {
+	if (al == null)
+	    return "";
+	return al.get ().stream ().map (tn -> tn.getExpressionType ().toString ()).collect (Collectors.joining (", "));
     }
 
     private ExpressionType getOnType (TreeNode on) {
