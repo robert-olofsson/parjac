@@ -39,6 +39,10 @@ public class AnnotationTypeDeclaration extends FlaggedTypeBase {
 	visitor.endType ();
     }
 
+    @Override public void simpleVisit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
     public Collection<? extends TreeNode> getChildNodes () {
 	return Collections.singleton (body);
     }

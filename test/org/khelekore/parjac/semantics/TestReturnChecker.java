@@ -736,6 +736,12 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testConstructorWithoutArgs () throws IOException {
+	parseAndSetClasses ("import java.util.HashMap; import java.util.Map; class Foo {Map<String, Foo> nameToToken = new HashMap<> ();}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

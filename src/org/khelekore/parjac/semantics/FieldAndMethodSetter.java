@@ -216,8 +216,11 @@ public class FieldAndMethodSetter implements TreeVisitor {
 
     private boolean match (ArgumentList al, MethodInformation mi) {
 	Type[] arguments = mi.getArguments ();
-	if ((al == null || al.size () == 0) && arguments.length == 0)
-	    return true;
+	if (al == null) {
+	    if (arguments.length == 0)
+		return true;
+	    return false;
+	}
 	if (al.size () != arguments.length)
 	    return false;
 	int i = 0;
