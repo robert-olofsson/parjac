@@ -746,7 +746,7 @@ public class CharBufferLexer implements Lexer {
     }
 
     @Override public String getCurrentLine () {
-	int p = (int)currentLineStart;
+	int p = currentLineStart;
 	CharBuffer cb = buf.duplicate ();
 	cb.position (p);
 	int max = buf.limit ();
