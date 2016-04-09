@@ -74,7 +74,7 @@ public class Scope {
 	String name = fi.getName ();
 	FindResult fr = find (name, isStatic);
 	if (fr != null) {
-	    ParsePosition fpp = fi.getParsePosition ();
+	    ParsePosition fpp = fr.fi.getParsePosition ();
 	    if (!fr.passedClassScope || fr.fi.getOwner () == owner) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), fi.getParsePosition (),
 							     "Field %s already defined at %d:%d", name,
