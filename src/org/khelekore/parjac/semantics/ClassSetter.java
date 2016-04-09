@@ -42,6 +42,8 @@ public class ClassSetter {
 				      CompilerDiagnosticCollector diagnostics) {
 	List<ClassSetter> classSetters =
 	    trees.stream ().map (t -> new ClassSetter (cip, t, diagnostics)).collect (Collectors.toList ());
+	if (diagnostics.hasError ())
+	    return;
 
 	// Fill in correct classes
 	// Depending on order we may not have correct parents on first try.
