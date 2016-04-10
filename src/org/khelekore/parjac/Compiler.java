@@ -20,7 +20,7 @@ import org.khelekore.parjac.semantics.ClassInformationProvider;
 import org.khelekore.parjac.semantics.ClassResourceHolder;
 import org.khelekore.parjac.semantics.ClassSetter;
 import org.khelekore.parjac.semantics.CompiledTypesHolder;
-import org.khelekore.parjac.semantics.ConstructorChecker;
+import org.khelekore.parjac.semantics.AddImplicitMethods;
 import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
 import org.khelekore.parjac.semantics.FieldAndMethodSetter;
 import org.khelekore.parjac.semantics.NameModifierChecker;
@@ -138,11 +138,11 @@ public class Compiler {
 	if (diagnostics.hasError ())
 	    return;
 	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
-	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
+	// Check constructors and make sure there is a no-args constructor if needed
+	runTimed (() -> addImplicitMethods (trees), "Checking constructors");
 	if (diagnostics.hasError ())
 	    return;
-	// Check constructors and make sure there is a no-args constructor if needed
-	runTimed (() -> checkConstructors (trees), "Checking constructors");
+	runTimed (() -> checkNamesAndModifiers (trees), "Checking names and modifiers");
 	if (diagnostics.hasError ())
 	    return;
 	runTimed (() -> setFieldsAndMethods (trees), "Setting fields and method types");
@@ -158,6 +158,15 @@ public class Compiler {
     private void flagInterfaceMembersAsPublic (SyntaxTree tree) {
 	InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (tree);
 	imfs.reflag ();
+    }
+
+    private void addImplicitMethods (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> addImplicitMethods (t, diagnostics));
+    }
+
+    private void addImplicitMethods (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
+	AddImplicitMethods cc = new AddImplicitMethods (tree, diagnostics);
+	cc.run ();
     }
 
     private void checkNamesAndModifiers (List<SyntaxTree> trees) {
@@ -186,15 +195,6 @@ public class Compiler {
     private void checkReturns (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	ReturnChecker ra = new ReturnChecker (cip, tree, diagnostics);
 	ra.run ();
-    }
-
-    private void checkConstructors (List<SyntaxTree> trees) {
-	trees.parallelStream ().forEach (t -> checkConstructors (t, diagnostics));
-    }
-
-    private void checkConstructors (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	ConstructorChecker cc = new ConstructorChecker (tree, diagnostics);
-	cc.run ();
     }
 
     private void optimize (List<SyntaxTree> trees) {

@@ -25,11 +25,11 @@ import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
 import org.khelekore.parjac.tree.TreeVisitor;
 
-public class ConstructorChecker {
+public class AddImplicitMethods {
     private final SyntaxTree tree;
     private final CompilerDiagnosticCollector diagnostics;
 
-    public ConstructorChecker (SyntaxTree tree,
+    public AddImplicitMethods (SyntaxTree tree,
 			       CompilerDiagnosticCollector diagnostics) {
 	this.tree = tree;
 	this.diagnostics = diagnostics;
