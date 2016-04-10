@@ -196,8 +196,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (ls != null) {
 	    NormalFormalParameterList fpl = ls.getParameters ();
 	    if (fpl != null) {
-		for (FormalParameter fp : fpl.getFormalParameters ())
-		    currentMethod.localVariableIds.put (fp.getId (), currentMethod.getId (fp));
+		List<FormalParameter> fps = fpl.getFormalParameters ();
+		if (fps != null)
+		    for (FormalParameter fp : fps)
+			currentMethod.localVariableIds.put (fp.getId (), currentMethod.getId (fp));
 		LastFormalParameter lfp = fpl.getLastFormalParameter ();
 		if (lfp != null)
 		    currentMethod.localVariableIds.put (lfp.getId (), currentMethod.getId (lfp));
