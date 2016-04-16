@@ -224,18 +224,42 @@ public class FieldAndMethodSetter implements TreeVisitor {
     }
 
     private boolean match (ArgumentList al, MethodInformation mi) {
-	Type[] arguments = mi.getArguments ();
-	if (al == null) {
-	    if (arguments.length == 0)
-		return true;
-	    return false;
+	if (mi.isVarArgs ()) {
+	    if (match (al, mi, mi.getNumberOfArguments () - 1))
+		return matchVarArg (al, mi);
+	} else {
+	    int numArgs = mi.getNumberOfArguments ();
+	    int argListSize = al == null ? 0 : al.size ();
+	    return numArgs == argListSize && match (al, mi, numArgs);
 	}
-	if (al.size () != arguments.length)
+	return false;
+    }
+
+    private boolean match (ArgumentList al, MethodInformation mi, int numArguments) {
+	if (al == null)
+	    return numArguments == 0;
+	Type[] arguments = mi.getArguments ();
+	if (al.size () < arguments.length)
 	    return false;
-	int i = 0;
-	for (TreeNode tn : al.get ()) {
+	for (int i = 0; i < numArguments; i++) {
+	    TreeNode tn = al.get ().get (i);
 	    ExpressionType et = tn.getExpressionType ();
 	    if (!et.match (arguments[i++]))
+		return false;
+	}
+	return true;
+    }
+
+    private boolean matchVarArg (ArgumentList al, MethodInformation mi) {
+	if (al == null) // no need to check that we have matched previous parts
+	    return true;
+	Type[] arguments = mi.getArguments ();
+	int varArgStart = arguments.length - 1;
+	Type t = mi.getArguments ()[varArgStart].getElementType ();
+	for (int i = varArgStart; i < al.size (); i++) {
+	    TreeNode tn = al.get ().get (i);
+	    ExpressionType et = tn.getExpressionType ();
+	    if (!et.match (t))
 		return false;
 	}
 	return true;

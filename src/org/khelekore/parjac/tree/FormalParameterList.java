@@ -27,6 +27,10 @@ public class FormalParameterList extends PositionNode {
 	return fps;
     }
 
+    public boolean isVarArgs () {
+	return fps != null && fps.isVarArgs ();
+    }
+
     public void appendDescription (StringBuilder sb) {
 	NormalFormalParameterList nfpl = getParameters ();
 	if (nfpl != null) {

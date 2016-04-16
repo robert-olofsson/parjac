@@ -39,4 +39,8 @@ public class NormalFormalParameterList extends PositionNode {
     public LastFormalParameter getLastFormalParameter () {
 	return lfp;
     }
+
+    public boolean isVarArgs () {
+	return lfp != null;
+    }
 }

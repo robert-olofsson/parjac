@@ -18,6 +18,8 @@ public class MethodDeclaration extends FlaggedTypeBase {
 	super (r.size () > 2, parts, pos, path, diagnostics);
 	header = (MethodHeader)parts.pop ();
 	body = (MethodBody)parts.pop ();
+	if (isVarArgs ())
+	    setVarArgs ();
     }
 
     @Override public String toString () {
@@ -61,6 +63,11 @@ public class MethodDeclaration extends FlaggedTypeBase {
 
     @Override public ExpressionType getExpressionType () {
 	return getResult ().getExpressionType ();
+    }
+
+    private boolean isVarArgs () {
+	FormalParameterList fpl = getParameters ();
+	return fpl != null && fpl.isVarArgs ();
     }
 
     public String getDescription () {

@@ -41,6 +41,10 @@ public abstract class FlaggedTypeBase extends PositionNode implements FlaggedTyp
 	flags |= Opcodes.ACC_PUBLIC;
     }
 
+    public void setVarArgs () {
+	flags |= Opcodes.ACC_VARARGS;
+    }
+
     @Override public List<TreeNode> getAnnotations () {
 	return annotations;
     }

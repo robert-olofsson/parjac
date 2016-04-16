@@ -742,6 +742,30 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testVarargCallNoActualArguments () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Object...os) {} void g () {f();}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testVarargCallOneActualArgument () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Object...os) {} void g () {f(\"Hello World!\");}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testVarargCallTwoActualArguments () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Object...os) {} void g () {f(\"Hello\", \" World!\");}}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testVarargRTClass () throws IOException {
+	parseAndSetClasses ("import java.util.EnumSet; enum Foo { A; EnumSet<Foo> foos = EnumSet.of (A, A, A, A, A, A); }");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

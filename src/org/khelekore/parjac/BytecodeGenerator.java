@@ -96,8 +96,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	ClassWriter cw = currentClass.cw;
 
 	int mods = c.getFlags ();
-	if (hasVarargs (c.getParameters ()))
-	    mods |= ACC_VARARGS;
 
 	MethodInfo mi = new MethodInfo (mods, Result.VOID_RESULT,
 					cw.visitMethod (mods, INIT, c.getDescription (), null, getExceptions (c.getThrows ())));
@@ -170,8 +168,6 @@ public class BytecodeGenerator implements TreeVisitor {
 	ClassWriter cw = currentClass.cw;
         // creates a MethodWriter for the method
 	int mods = m.getFlags ();
-	if (hasVarargs (m.getParameters ()))
-	    mods |= ACC_VARARGS;
         MethodInfo mi = new MethodInfo (mods, m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
 							m.getDescription (), null,
@@ -219,17 +215,6 @@ public class BytecodeGenerator implements TreeVisitor {
     private boolean methodMissingReturn (MethodDeclaration md) {
 	MethodBody b = md.getBody ();
 	return !b.isEmpty () && b.getBlock ().lastIsNotThrowOrReturn ();
-    }
-
-    private boolean hasVarargs (FormalParameterList ls) {
-	if (ls != null) {
-	    NormalFormalParameterList fps = ls.getParameters ();
-	    if (fps != null) {
-		LastFormalParameter lfp = fps.getLastFormalParameter ();
-		return lfp != null;
-	    }
-	}
-	return false;
     }
 
     private String getType (TreeNode tn) {

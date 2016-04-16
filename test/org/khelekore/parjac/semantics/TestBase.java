@@ -13,6 +13,7 @@ import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.parser.TestParseHelper;
 import org.khelekore.parjac.tree.SyntaxTree;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
@@ -54,7 +55,7 @@ public class TestBase {
 	List<SyntaxTree> trees = new ArrayList<> ();
 	for (Source s : sourceCodes) {
 	    SyntaxTree st = TestParseHelper.earleyParseBuildTree (g, s.sourceCode, s.sourcePath, diagnostics);
-	    assert st != null : "Failed to parse:"  + s.sourceCode + ": " + getDiagnostics ();
+	    Assert.assertNotNull (st, "Failed to parse:"  + s.sourceCode + ": " + getDiagnostics ());
 	    cip.addTypes (st, diagnostics);
 	    InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (st);
 	    imfs.reflag ();
@@ -69,11 +70,11 @@ public class TestBase {
     }
 
     protected void assertNoErrors () {
-	assert !diagnostics.hasError () : "Got errors: " + getDiagnostics ();
+	Assert.assertFalse (diagnostics.hasError (),  "Got errors: " + getDiagnostics ());
     }
 
     protected void assertNoWarnings () {
-	assert !diagnostics.hasWarning () : "Got warnings: " + getDiagnostics ();
+	Assert.assertFalse (diagnostics.hasWarning (), "Got warnings: " + getDiagnostics ());
     }
 
     protected String getDiagnostics () {

@@ -27,6 +27,8 @@ public class ConstructorDeclaration extends FlaggedTypeBase {
 	    throwsClause = null;
 	}
 	body = (ConstructorBody)parts.pop ();
+	if (isVarArgs ())
+	    setVarArgs ();
     }
 
     private static final List<TreeNode> PUBLIC_LIST = Arrays.asList (new ModifierTokenType (Token.PUBLIC, null));
@@ -68,6 +70,11 @@ public class ConstructorDeclaration extends FlaggedTypeBase {
 
     public Throws getThrows () {
 	return throwsClause;
+    }
+
+    private boolean isVarArgs () {
+	FormalParameterList fpl = getParameters ();
+	return fpl != null && fpl.isVarArgs ();
     }
 
     public String getDescription () {

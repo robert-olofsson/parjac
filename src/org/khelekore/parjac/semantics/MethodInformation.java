@@ -1,6 +1,7 @@
 package org.khelekore.parjac.semantics;
 
 import java.util.Arrays;
+
 import org.objectweb.asm.Type;
 
 public class MethodInformation {
@@ -50,11 +51,19 @@ public class MethodInformation {
 	return arguments;
     }
 
+    public int getNumberOfArguments () {
+	return arguments.length;
+    }
+
     public String getSignature () {
 	return signature;
     }
 
     public String[] getExceptions () {
 	return exceptions;
+    }
+
+    public boolean isVarArgs () {
+	return FlagsHelper.isVarArgs (access);
     }
 }

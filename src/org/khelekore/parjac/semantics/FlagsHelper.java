@@ -46,4 +46,8 @@ public class FlagsHelper {
     public static boolean isInterface (int f) {
 	return (f & ACC_INTERFACE) == ACC_INTERFACE;
     }
+
+    public static boolean isVarArgs (int f) {
+	return (f & ACC_VARARGS) == ACC_VARARGS;
+    }
 }
