@@ -28,6 +28,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+/** Provides information about classes from the classpath.
+ */
 public class ClassResourceHolder {
     private final List<Path> classPathEntries;
     private final CompilerDiagnosticCollector diagnostics;
@@ -165,6 +167,7 @@ public class ClassResourceHolder {
     }
 
     private static abstract class Result {
+	private boolean loaded = false;
 	private String fqn;
 	private String superClass;
 	private List<String> superTypes;
@@ -173,8 +176,9 @@ public class ClassResourceHolder {
 	private Map<String, List<MethodInformation>> methods = new HashMap<> ();
 
 	public synchronized void ensureNodeIsLoaded (String fqn) throws IOException {
-	    if (superClass != null)
+	    if (loaded)
 		return;
+	    loaded = true;
 	    this.fqn = fqn;
 	    readNode ();
 	}

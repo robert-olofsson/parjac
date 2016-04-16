@@ -766,6 +766,21 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testMultipleMethodOptions () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Object o, Integer i) {} void f (Integer i, Object o) {}" +
+			    " void h () { Integer i = Integer.valueOf (1); f (i, i); }}");
+	assert diagnostics.hasError () : "Expected to find errors";
+    }
+
+    @Test
+    public void testOverridenMethod () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Integer i) {}} " +
+			    "class Bar extends Foo { void f (Integer i) {} " +
+			    " void h () { Integer i = Integer.valueOf (1); f (i); }}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

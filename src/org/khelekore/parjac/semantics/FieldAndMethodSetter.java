@@ -2,6 +2,7 @@ package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -114,14 +115,17 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    String fqn = clzType.getClassName ();
 	    ArgumentList al = c.getArgumentList ();
 	    try {
-		MethodInformation mi = findMatchingConstructor (fqn, al);
-		if (mi == null) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 c.getParsePosition (),
-								 "No matching constructor found for (%s)",
-								 argList (al)));
+		List<MethodInformation> mis = findMatchingConstructor (fqn, al);
+		if (mis == null) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
+								 "No matching constructor found for %s(%s)",
+								 fqn, argList (al)));
+		} else if (mis.size () > 1) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
+								 "Multiple matching constructor found for %s(%s)",
+								 fqn, argList (al)));
 		} else {
-		    c.setMethodInformation (mi);
+		    c.setMethodInformation (mis.get (0));
 		}
 	    } catch (IOException e) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
@@ -139,14 +143,17 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    String name = m.getId ();
 	    ArgumentList al = m.getArgumentList ();
 	    try {
-		MethodInformation mi = findMatchingMethod (fqn, name, al);
-		if (mi == null) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-								 m.getParsePosition (),
-								 "No matching method found for: %s (%s)",
+		List<MethodInformation> mis = findMatchingMethod (fqn, name, al);
+		if (mis == null) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+								 "No matching method found for: %s(%s)",
+								 name, argList (al)));
+		} else if (mis.size () > 1) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
+								 "Multiple matching methods found for: %s(%s)",
 								 name, argList (al)));
 		} else {
-		    m.setMethodInformation (mi);
+		    m.setMethodInformation (mis.get (0));
 		}
 	    } catch (IOException e) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
@@ -192,18 +199,22 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	return true;
     }
 
-    private MethodInformation findMatchingConstructor (String fqn, ArgumentList al) throws IOException {
+    private List<MethodInformation> findMatchingConstructor (String fqn, ArgumentList al)
+	throws IOException {
 	return findMatching (fqn, al, new ConstructorMethodFinder ());
     }
 
-    private MethodInformation findMatchingMethod (String fqn, String name, ArgumentList al) throws IOException {
+    private List<MethodInformation> findMatchingMethod (String fqn, String name, ArgumentList al) throws IOException {
 	return findMatching (fqn, al, new MethodMethodFinder (name));
     }
 
-    private MethodInformation findMatching (String fqn, ArgumentList al, MethodFinder mf) throws IOException {
+    private List<MethodInformation> findMatching (String fqn, ArgumentList al, MethodFinder mf) throws IOException {
+	List<MethodInformation> ret = null;
+
 	Deque<String> typesToCheck = new ArrayDeque<> ();
 	typesToCheck.addLast (fqn);
 	Set<String> visitedTypes = new HashSet<> ();
+	Set<String> matchedDesc = Collections.emptySet ();
 	while (!typesToCheck.isEmpty ()) {
 	    String clz = typesToCheck.removeFirst ();
 	    if (visitedTypes.contains (clz))
@@ -211,16 +222,23 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    visitedTypes.add (clz);
 	    List<MethodInformation> ls = mf.getAlternatives (clz);
 	    if (ls != null) {
-		for (MethodInformation mi : ls)
-		    if (match (al, mi))
-			return mi;
+		for (MethodInformation mi : ls) {
+		    if (!matchedDesc.contains (mi.getDesc ()) && match (al, mi)) {
+			if (ret == null) {
+			    ret = new ArrayList<> ();
+			    matchedDesc = new HashSet<> ();
+			}
+			ret.add (mi);
+			matchedDesc.add (mi.getDesc ());
+		    }
+		}
 	    }
 	    // not found in current class, try super class
 	    Optional<List<String>> o = cip.getSuperTypes (clz);
 	    if (o.isPresent () && mf.mayUseSuperclassMethods ())
 		typesToCheck.addAll (o.get ());
 	}
-	return null;
+	return ret;
     }
 
     private boolean match (ArgumentList al, MethodInformation mi) {
