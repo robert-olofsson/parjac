@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
@@ -13,6 +14,12 @@ public class FieldDeclaration extends VariableDeclaration {
     public FieldDeclaration (Rule r, Deque<TreeNode> parts, ParsePosition pos,
 			     Path path, CompilerDiagnosticCollector diagnostics) {
 	super (r, 3, parts, pos, path, diagnostics);
+    }
+
+    public FieldDeclaration (List<TreeNode> modifiers, TreeNode type,
+			     VariableDeclaratorList variables, ParsePosition pos,
+			     Path path, CompilerDiagnosticCollector diagnostics) {
+	super (modifiers, type, variables, pos, path, diagnostics);
     }
 
     public void visit (TreeVisitor visitor) {

@@ -11,7 +11,7 @@ import org.khelekore.parjac.lexer.Token;
 import org.khelekore.parjac.semantics.MethodInformation;
 import org.objectweb.asm.Type;
 
-public class MethodInvocation extends PositionNode {
+public class MethodInvocation extends PositionNode implements MethodInformationHolder {
     private final TreeNode on;
     private final TypeArguments types;
     private final boolean isSuper;
@@ -39,9 +39,9 @@ public class MethodInvocation extends PositionNode {
 	mi = (UntypedMethodInvocation)parts.pop ();
     }
 
-    public MethodInvocation (UntypedMethodInvocation mi, ParsePosition ppos) {
+    public MethodInvocation (TreeNode on, UntypedMethodInvocation mi, ParsePosition ppos) {
 	super (ppos);
-	on = null;
+	this.on = on;
 	types = null;
 	isSuper = false;
 	this.mi = mi;
@@ -49,7 +49,7 @@ public class MethodInvocation extends PositionNode {
 
     public static TreeNode build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
-	    return new MethodInvocation ((UntypedMethodInvocation)parts.pop (), pos);
+	    return new MethodInvocation (null, (UntypedMethodInvocation)parts.pop (), pos);
 	return new MethodInvocation (r, parts, pos);
     }
 

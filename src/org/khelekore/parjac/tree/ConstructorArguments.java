@@ -34,4 +34,8 @@ public class ConstructorArguments extends PositionNode {
 	    return Collections.singleton (args);
 	return Collections.emptyList ();
     }
+
+    public ArgumentList getArgumentList () {
+	return args;
+    }
 }

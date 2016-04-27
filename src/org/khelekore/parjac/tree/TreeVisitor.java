@@ -63,7 +63,8 @@ public interface TreeVisitor {
     default boolean visit (ConstructorBody cb) {
 	return true;
     }
-    default void visit (ExplicitConstructorInvocation eci) {
+    default boolean visit (ExplicitConstructorInvocation eci) {
+	return true;
     }
     default void endExplicitConstructorInvocation (ExplicitConstructorInvocation eci) {
     }
@@ -283,5 +284,12 @@ public interface TreeVisitor {
     }
 
     default void visit (PrimaryNoNewArray.DottedThis t) {
+    }
+
+    default void visit (PrimaryNoNewArray.VoidClass t) {
+    }
+
+    default boolean visit (PrimaryNoNewArray.ClassPrimary t) {
+	return true;
     }
 }

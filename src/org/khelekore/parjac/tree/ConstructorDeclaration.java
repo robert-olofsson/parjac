@@ -31,11 +31,12 @@ public class ConstructorDeclaration extends FlaggedTypeBase {
 	    setVarArgs ();
     }
 
-    private static final List<TreeNode> PUBLIC_LIST = Arrays.asList (new ModifierTokenType (Token.PUBLIC, null));
+    public static final List<TreeNode> PUBLIC_LIST = Arrays.asList (new ModifierTokenType (Token.PUBLIC, null));
+    public static final List<TreeNode> PRIVATE_LIST = Arrays.asList (new ModifierTokenType (Token.PRIVATE, null));
 
-    public ConstructorDeclaration (boolean publicFlag, ConstructorDeclarator declarator,
+    public ConstructorDeclaration (List<TreeNode> modifiers, ConstructorDeclarator declarator,
 				   Throws throwsClause, ConstructorBody body) {
-	super (publicFlag ? PUBLIC_LIST : Collections.emptyList (), null, null, null);
+	super (modifiers, null, null, null);
 	this.declarator = declarator;
 	this.throwsClause = throwsClause;
 	this.body = body;

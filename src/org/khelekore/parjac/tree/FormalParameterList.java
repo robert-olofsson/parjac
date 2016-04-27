@@ -19,6 +19,12 @@ public class FormalParameterList extends PositionNode {
 	fps = rp == null || r.size () > 2 ? (NormalFormalParameterList)parts.pop () : null;
     }
 
+    public FormalParameterList (NormalFormalParameterList fps) {
+	super (null);
+	this.rp = null;
+	this.fps = fps;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + rp + " " + fps + "}";
     }

@@ -22,7 +22,7 @@ public abstract class FlaggedTypeBase extends PositionNode implements FlaggedTyp
     }
 
     public FlaggedTypeBase (List<TreeNode> modifiers, ParsePosition pos,
-			Path path, CompilerDiagnosticCollector diagnostics) {
+			    Path path, CompilerDiagnosticCollector diagnostics) {
 	super (pos);
 	annotations = ModifierHelper.getAnnotations (modifiers);
 	int mflags = ModifierHelper.getModifiers (modifiers, path, diagnostics);

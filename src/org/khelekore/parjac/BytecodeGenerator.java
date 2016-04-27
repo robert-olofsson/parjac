@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ public class BytecodeGenerator implements TreeVisitor {
     private static final String INIT = "<init>";
     private static final String CLINIT = "<clinit>";
     private static final String ISIG = "()V";
+    private static final String ENUM_ISIG = "(Ljava/lang/String;I)V";
     private static final String UNNAMED_LABEL = "";
 
     public BytecodeGenerator (Path origin, ClassInformationProvider cip,
@@ -113,19 +115,36 @@ public class BytecodeGenerator implements TreeVisitor {
 
     @Override public boolean visit (ConstructorBody cb) {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
-	currentMethod.addStack (1);
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
+	    currentMethod.addStack (1);
 	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", INIT, ISIG, false);
 	    currentMethod.removeStack (1);
 	}
 	return true;
     }
 
-    @Override public void visit (ExplicitConstructorInvocation eci) {
+    @Override public boolean visit (ExplicitConstructorInvocation eci) {
+	currentMethod.addStack (1);
 	SuperAndFlags saf = currentClass.getSuperAndFlags ();
-	// TODO: the signature here is borked, need to get signature from super class
-	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, ISIG, false);
+	int extraStack = 0;
+	if (currentClass.tn instanceof EnumDeclaration) {
+	    currentMethod.mv.visitVarInsn (ALOAD, 1); // name
+	    currentMethod.mv.visitVarInsn (ILOAD, 2); // id
+	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, ENUM_ISIG, false);
+	} else {
+	    ConstructorArguments args = eci.getArguments ();
+	    if (args != null) {
+		List<TreeNode> ls = args.getArgumentList ().get ();
+		extraStack = ls.size ();
+		Type[] expectedTypes = eci.getActualArgumentTypes ();
+		boolean varargs = FlagsHelper.isVarArgs (eci.getActualMethodFlags ());
+		visitArguments (ls, expectedTypes, varargs);
+	    }
+	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, eci.getDescription (), false);
+	}
+	currentMethod.removeStack (1 + extraStack);
+	return false;
     }
 
     @Override public void endExplicitConstructorInvocation (ExplicitConstructorInvocation eci) {
@@ -152,6 +171,17 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
 	if (FlagsHelper.isStatic (mods))
 	    removeMethod ();
+	return false;
+    }
+
+    @Override public boolean visit (EnumConstant e) {
+	ClassWriter cw = currentClass.cw;
+	int mods = e.getFlags ();
+	String id = e.getId ();
+	String desc = e.getExpressionType ().getDescriptor ();
+	FieldVisitor fw = cw.visitField (mods, id, desc, null, null);
+	fw.visitEnd ();
+	// TODO: handle initialization
 	return false;
     }
 
@@ -227,7 +257,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (tn instanceof PrimitiveTokenType || tn instanceof ClassType) {
 	    sb.append (tn.getExpressionType ().getDescriptor ());
 	} else {
-	    UnannArrayType at = (UnannArrayType)tn;
+	    ArrayType at = (ArrayType)tn;
 	    for (int i = 0, s = at.getDims ().get ().size (); i < s; i++)
 		sb.append ("[");
 	    appendType (at.getType (), sb);
@@ -538,8 +568,13 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (on != null) {
 	    on.visit (this);
 	    ExpressionType expType = on.getExpressionType ();
-	    owner = expType.getSlashName ();
-	    ownerName = expType.getClassName ();
+	    if (expType.isArray ()) {
+		owner = expType.getDescriptor ();
+		ownerName = expType.getSlashName ();
+	    } else {
+		owner = expType.getSlashName ();
+		ownerName = expType.getClassName ();
+	    }
 	} else {
 	    if (!isStatic)
 		currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
@@ -547,18 +582,11 @@ public class BytecodeGenerator implements TreeVisitor {
 	    owner = ownerName.replace ('.', '/');
 	}
 	ArgumentList al = m.getArgumentList ();
-	int numberOfArgs = 0;
-	if (al != null) {
-	    List<TreeNode> ls = al.get ();
-	    numberOfArgs = al.size ();
-	    Type[] expectedTypes = m.getActualArgumentTypes ();
-	    for (int i = 0; i < numberOfArgs; i++) {
-		TreeNode arg = ls.get (i);
-		ExpressionType expectedType = ExpressionType.get (expectedTypes[i]);
-		TreeNode correctedType = toLiteralType (arg, arg.getExpressionType (), expectedType);
-		correctedType.visit (this);
-	    }
-	}
+	boolean varargs = FlagsHelper.isVarArgs (m.getActualMethodFlags ());
+	Type[] expectedTypes = m.getActualArgumentTypes ();
+	int numberOfArgs = expectedTypes.length;
+	List<TreeNode> ls = al != null ? al.get () : Collections.emptyList ();
+	visitArguments (ls, expectedTypes, varargs);
 	int opCode = INVOKEVIRTUAL;
 	boolean isInterface = cip.isInterface (ownerName);
 	int baseRemove = 1;
@@ -571,6 +599,31 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), isInterface);
 	currentMethod.removeStack (baseRemove + numberOfArgs);
 	return false;
+    }
+
+    private void visitArguments (List<TreeNode> ls, Type[] expectedTypes, boolean vararg) {
+	int numberOfArgs = expectedTypes.length;
+	int numNormalArgs = vararg ? numberOfArgs - 1 : numberOfArgs;
+	int numVarargs = ls.size () - numNormalArgs;
+	for (int i = 0; i < numNormalArgs; i++) {
+	    TreeNode arg = ls.get (i);
+	    ExpressionType expectedType = ExpressionType.get (expectedTypes[i]);
+	    TreeNode correctedType = toLiteralType (arg, arg.getExpressionType (), expectedType);
+	    correctedType.visit (this);
+	}
+	if (vararg) {
+	    ExpressionType expectedType = ExpressionType.get (expectedTypes[numNormalArgs]);
+	    visit (numVarargs);
+	    currentMethod.mv.visitTypeInsn (ANEWARRAY, expectedType.getSlashName ());
+	    for (int i = 0; i < numVarargs; i++) {
+		TreeNode arg = ls.get (numNormalArgs + i);
+		currentMethod.mv.visitInsn (DUP);
+		visit (i);
+		TreeNode correctedType = toLiteralType (arg, arg.getExpressionType (), expectedType);
+		correctedType.visit (this);
+		currentMethod.mv.visitInsn (AASTORE);
+	    }
+	}
     }
 
     @Override public boolean visit (IfThenStatement i) {
@@ -790,7 +843,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	    ExpressionType source = c.getExpression ().getExpressionType ();
 	    outputPrimitiveCasts (source, target);
 	} else {
-	    currentMethod.mv.visitTypeInsn (CHECKCAST, target.getSlashName ());
+	    String desc = target.isArray () ? target.getDescriptor () : target.getSlashName ();
+	    currentMethod.mv.visitTypeInsn (CHECKCAST, desc);
 	}
 	return false;
     }
@@ -814,6 +868,11 @@ public class BytecodeGenerator implements TreeVisitor {
 	    currentMethod.mv.visitFieldInsn (GETFIELD, owner, name, desc);
 	}
 	currentMethod.addStack (1);
+    }
+
+    @Override public boolean visit (PrimaryNoNewArray.ClassPrimary c) {
+	currentMethod.mv.visitLdcInsn (Type.getType (c.getType ().getExpressionType ().getDescriptor ()));
+	return false;
     }
 
     private void outputPrimitiveCasts (ExpressionType source, ExpressionType target) {

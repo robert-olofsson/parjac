@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.List;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.grammar.Rule;
@@ -20,6 +21,12 @@ public class MethodDeclaration extends FlaggedTypeBase {
 	body = (MethodBody)parts.pop ();
 	if (isVarArgs ())
 	    setVarArgs ();
+    }
+
+    public MethodDeclaration (List<TreeNode> modifiers, MethodHeader header, MethodBody body) {
+	super (modifiers, null, null, null);
+	this.header = header;
+	this.body = body;
     }
 
     @Override public String toString () {

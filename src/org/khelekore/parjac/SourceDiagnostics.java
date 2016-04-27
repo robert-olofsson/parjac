@@ -52,11 +52,11 @@ public class SourceDiagnostics implements Diagnostic<Path> {
     }
 
     public long getLineNumber () {
-	return parsePosition.getLineNumber ();
+	return parsePosition != null ? parsePosition.getLineNumber () : -1;
     }
 
     public long getColumnNumber () {
-	return parsePosition.getTokenColumn ();
+	return parsePosition != null ? parsePosition.getTokenColumn () : -1;
     }
 
     public String getCode () {

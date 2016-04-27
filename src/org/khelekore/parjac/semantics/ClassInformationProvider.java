@@ -62,7 +62,9 @@ public class ClassInformationProvider {
 	return cth.getFilename (tn);
     }
 
-    public Optional<List<String>> getSuperTypes (String fqn) throws IOException {
+    public Optional<List<String>> getSuperTypes (String fqn, boolean isArray) throws IOException {
+	if (isArray)
+	    return Optional.of (Collections.singletonList ("java.lang.Object"));
 	Optional<List<String>> supers = cth.getSuperTypes (fqn);
 	if (supers.isPresent ())
 	    return supers;
@@ -86,6 +88,20 @@ public class ClassInformationProvider {
 	return ret;
     }
 
+    public boolean isSubType (ExpressionType sub, ExpressionType sup) throws IOException {
+	Optional<List<String>> supers = getSuperTypes (sub.getClassName(), sub.isArray ());
+	if (supers.isPresent ()) {
+	    List<String> l = supers.get ();
+	    for (String s : l) {
+		if (s.equals (sup.getClassName ()))
+		    return true;
+		if (isSubType (new ExpressionType (s), sup))
+		    return true;
+	    }
+	}
+	return false;
+    }
+
     public int getFlags (String fqn) {
 	// TODO: need to make sure I can merge cth and crh and get some interface type back
 	// TODO: with appropriate methods on it.
@@ -101,6 +117,11 @@ public class ClassInformationProvider {
 
     public void registerFields (String fqn, Map<String, FieldInformation<?>> fields) {
 	classFields.put (fqn, fields);
+    }
+
+    public void addField (String fqn, String id, FieldInformation<?> field) {
+	Map<String, FieldInformation<?>> m = classFields.get (fqn);
+	m.put (id, field);
     }
 
     public void registerMethods (String fqn, Map<String, List<MethodInformation>> methods) {

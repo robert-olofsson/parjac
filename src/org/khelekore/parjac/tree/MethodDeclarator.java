@@ -24,6 +24,13 @@ public class MethodDeclarator extends PositionNode {
 	dims = r.size () > len ? (Dims)parts.pop () : null;
     }
 
+    public MethodDeclarator (String id, FormalParameterList parameterList, Dims dims) {
+	super (null);
+	this.id = id;
+	this.parameterList = parameterList;
+	this.dims = dims;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "(" + parameterList + ")" + dims + "}";
     }

@@ -18,6 +18,12 @@ public class FormalParameter extends FlaggedTypeBase {
 	vdi = (VariableDeclaratorId)parts.pop ();
     }
 
+    public FormalParameter (TreeNode type, VariableDeclaratorId vdi) {
+	super (null, null, null, null);
+	this.type = type;
+	this.vdi = vdi;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + getAnnotations () + " " + getFlags () +
 	    " " + type + " " + vdi + "}";

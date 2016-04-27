@@ -17,6 +17,12 @@ public class UntypedMethodInvocation extends PositionNode {
 	args = r.size () > 3 ? (ArgumentList)parts.pop () : null;
     }
 
+    public UntypedMethodInvocation (String id, ArgumentList args) {
+	super (null);
+	this.id = id;
+	this.args = args;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + id + "(" + args + ")}";
     }

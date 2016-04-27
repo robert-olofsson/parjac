@@ -73,7 +73,7 @@ public class JavaTreeBuilder {
 	register (g, "Result", constructored (Result::build));
 	register (g, "MethodDeclarator", constructored (MethodDeclarator::new));
 	register (g, "FormalParameterList", constructored (FormalParameterList::new));
-	register (g, "NormalFormalParameterList", constructored (NormalFormalParameterList::new));
+	register (g, "NormalFormalParameterList", constructored ((r, d, p) -> new NormalFormalParameterList (r, d, p)));
 	register (g, "FormalParameter", diagnosed (FormalParameter::new));
 	register (g, "LastFormalParameter", diagnosed (LastFormalParameter::build));
 	register (g, "ReceiverParameter", constructored (ReceiverParameter::new));
@@ -171,7 +171,7 @@ public class JavaTreeBuilder {
 	register (g, "FieldAccess", constructored (FieldAccess::new));
 	register (g, "ArrayAccess", constructored (ArrayAccess::new));
 	register (g, "MethodInvocation", constructored (MethodInvocation::build));
-	register (g, "UntypedMethodInvocation", constructored (UntypedMethodInvocation::new));
+	register (g, "UntypedMethodInvocation", constructored ((r, d, p) -> new UntypedMethodInvocation (r, d, p)));
 	register (g, "ArgumentList", constructored (ArgumentList::new));
 	register (g, "MethodReference", constructored (MethodReference::build));
 	register (g, "ArrayCreationExpression", constructored (ArrayCreationExpression::new));

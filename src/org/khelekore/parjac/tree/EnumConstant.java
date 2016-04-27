@@ -52,7 +52,7 @@ public class EnumConstant extends PositionNode implements FlaggedType {
     }
 
     @Override public int getFlags () {
-	return Opcodes.ACC_PUBLIC;
+	return Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
     }
 
     @Override public List<TreeNode> getAnnotations () {

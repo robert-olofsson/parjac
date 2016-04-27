@@ -9,7 +9,7 @@ import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.semantics.MethodInformation;
 
-public class ClassInstanceCreationExpression extends PositionNode {
+public class ClassInstanceCreationExpression extends PositionNode implements MethodInformationHolder {
     private final TreeNode from;
     private final TypeArguments typeArguments;
     private final List<TreeNode> annotations;

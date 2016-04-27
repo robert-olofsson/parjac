@@ -794,7 +794,7 @@ public class ClassSetter {
 
     private List<String> getSuperClasses (String type, ErrorHandler eh) {
 	try {
-	    Optional<List<String>> supers = cip.getSuperTypes (type);
+	    Optional<List<String>> supers = cip.getSuperTypes (type, false);
 	    return supers.isPresent () ? supers.get () : Collections.emptyList ();
 	} catch (IOException e) {
 	    eh.setIncomplete ();
@@ -985,7 +985,7 @@ public class ClassSetter {
 
     private boolean insideSuperClass (String fqn, String currentClass) {
 	try {
-	    Optional<List<String>> supers = cip.getSuperTypes (currentClass);
+	    Optional<List<String>> supers = cip.getSuperTypes (currentClass, false);
 	    if (supers.isPresent ()) {
 		for (String s :  supers.get ()) {
 		    if (fqn.length () > s.length () && fqn.startsWith (s) &&

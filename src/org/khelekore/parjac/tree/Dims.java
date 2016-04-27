@@ -10,6 +10,10 @@ public class Dims extends Multipart<OneDim> {
 	super (od, pos);
     }
 
+    public Dims (OneDim od) {
+	super (od, null);
+    }
+
     public static Dims build (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	if (r.size () == 1)
 	    return new Dims ((OneDim)parts.pop (), pos);

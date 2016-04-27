@@ -14,6 +14,12 @@ public class ArrayType extends PositionNode {
 	dims = (Dims)parts.pop ();
     }
 
+    public ArrayType (TreeNode type, Dims dims) {
+	super (null);
+	this.type = type;
+	this.dims = dims;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + type + " " + dims + "}";
     }

@@ -15,6 +15,12 @@ public class VariableDeclaratorId extends PositionNode {
 	dims = r.size () > 1 ? (Dims)parts.pop () : null;
     }
 
+    public VariableDeclaratorId (String id) {
+	super (null);
+	this.id = id;
+	dims = null;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{id: " + id + ", dims: " + dims + "}";
     }

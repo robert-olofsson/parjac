@@ -18,6 +18,13 @@ public class MethodHeader extends PositionNode {
 	untypedHeader = (UntypedMethodHeader)parts.pop ();
     }
 
+    public MethodHeader (TypeParameters typeParameters, List<TreeNode> annotations, UntypedMethodHeader untypedHeader) {
+	super (null);
+	this.typeParameters = typeParameters;
+	this.annotations = annotations;
+	this.untypedHeader = untypedHeader;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + typeParameters + " " +
 	    annotations + " " + untypedHeader + "}";

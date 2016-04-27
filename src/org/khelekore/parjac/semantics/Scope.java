@@ -115,7 +115,7 @@ public class Scope {
     }
 
     public Map<String, FieldInformation<?>> getVariables () {
-	return Collections.unmodifiableMap (variables);
+	return variables;
     }
 
     public static class FindResult {

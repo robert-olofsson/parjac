@@ -17,6 +17,13 @@ public class UntypedMethodHeader extends PositionNode {
 	thrown = r.size () > 2 ? (Throws)parts.pop () : null;
     }
 
+    public UntypedMethodHeader (Result result, MethodDeclarator declarator, Throws thrown) {
+	super (null);
+	this.result = result;
+	this.declarator = declarator;
+	this.thrown = thrown;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + result + " " + declarator + " " + thrown + "}";
     }

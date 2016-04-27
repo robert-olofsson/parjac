@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
@@ -562,16 +561,7 @@ public class ReturnChecker implements TreeVisitor {
 
     private boolean isSubType (ExpressionType sub, ExpressionType sup) {
 	try {
-	    Optional<List<String>> supers = cip.getSuperTypes (sub.getClassName());
-	    if (supers.isPresent ()) {
-		List<String> l = supers.get ();
-		for (String s : l) {
-		    if (s.equals (sup.getClassName ()))
-			return true;
-		    if (isSubType (new ExpressionType (s), sup))
-			return true;
-		}
-	    }
+	    return cip.isSubType (sub, sup);
 	} catch (IOException e) {
 	    diagnostics.report (new NoSourceDiagnostics ("Failed to load super classes for %s", sub));
 	}

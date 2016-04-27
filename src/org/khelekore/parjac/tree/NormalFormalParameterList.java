@@ -28,6 +28,12 @@ public class NormalFormalParameterList extends PositionNode {
 	this.fps = fps;
     }
 
+    public NormalFormalParameterList (List<FormalParameter> fps, LastFormalParameter lfp) {
+	super (null);
+	this.fps = fps;
+	this.lfp = lfp;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + fps + " " + lfp + "}";
     }
@@ -38,6 +44,15 @@ public class NormalFormalParameterList extends PositionNode {
 
     public LastFormalParameter getLastFormalParameter () {
 	return lfp;
+    }
+
+    public int getNumberOfParameters () {
+	int ret = 0;
+	if (fps != null)
+	    ret += fps.size ();
+	if (lfp != null)
+	    ret++;
+	return ret;
     }
 
     public boolean isVarArgs () {

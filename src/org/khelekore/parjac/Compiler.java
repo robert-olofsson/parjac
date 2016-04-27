@@ -165,7 +165,7 @@ public class Compiler {
     }
 
     private void addImplicitMethods (SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	AddImplicitMethods cc = new AddImplicitMethods (tree, diagnostics);
+	AddImplicitMethods cc = new AddImplicitMethods (cip, tree, diagnostics);
 	cc.run ();
     }
 

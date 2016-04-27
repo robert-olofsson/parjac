@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.tree.AnnotationTypeDeclaration;
 import org.khelekore.parjac.tree.ArgumentList;
@@ -20,8 +21,10 @@ import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassInstanceCreationExpression;
 import org.khelekore.parjac.tree.ClassType;
 import org.khelekore.parjac.tree.EnumDeclaration;
+import org.khelekore.parjac.tree.ExplicitConstructorInvocation;
 import org.khelekore.parjac.tree.ExpressionType;
 import org.khelekore.parjac.tree.FieldAccess;
+import org.khelekore.parjac.tree.MethodInformationHolder;
 import org.khelekore.parjac.tree.MethodInvocation;
 import org.khelekore.parjac.tree.NormalClassDeclaration;
 import org.khelekore.parjac.tree.NormalInterfaceDeclaration;
@@ -83,6 +86,26 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	containingClasses.removeLast ();
     }
 
+    @Override public boolean visit (ExplicitConstructorInvocation eci) {
+	String fqn = cip.getFullName (containingClasses.getLast ());
+	try {
+	    Optional<List<String>> supers = cip.getSuperTypes (fqn, false);
+	    if (supers.isPresent ())
+		fqn = supers.get ().get (0);
+	    else
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     eci.getParsePosition (),
+							     "No superclass for: %s", fqn));
+	} catch (IOException e) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							 eci.getParsePosition (),
+							 "Failed to read class: " + e));
+	}
+	ArgumentList al = eci.getArguments ().getArgumentList ();
+	findConstructor (fqn, al, eci);
+	return false;
+    }
+
     @Override public boolean visit (TernaryExpression t) {
 	TreeNode tp = t.getThenPart ();
 	TreeNode ep = t.getElsePart ();
@@ -114,46 +137,51 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	if (hasMethods (clzType, c)) {
 	    String fqn = clzType.getClassName ();
 	    ArgumentList al = c.getArgumentList ();
-	    try {
-		List<MethodInformation> mis = findMatchingConstructor (fqn, al);
-		if (mis == null) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
-								 "No matching constructor found for %s(%s)",
-								 fqn, argList (al)));
-		} else if (mis.size () > 1) {
-		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
-								 "Multiple matching constructor found for %s(%s)",
-								 fqn, argList (al)));
-		} else {
-		    c.setMethodInformation (mis.get (0));
-		}
-	    } catch (IOException e) {
-		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
-							     c.getParsePosition (),
-							     "Failed to read class: " + e));
-	    }
+	    findConstructor (fqn, al, c);
 	}
 	return true;
+    }
+
+    private void findConstructor (String fqn, ArgumentList al, MethodInformationHolder c) {
+	try {
+	    FindResult fr = findMatchingConstructor (fqn, al);
+	    if (fr == null) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
+							     "No matching constructor found for %s(%s)",
+							     fqn, argList (al)));
+	    } else if (fr.hasMoreThanOneMatch ()) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), c.getParsePosition (),
+							     "Multiple matching constructor found for %s(%s)",
+							     fqn, argList (al)));
+	    } else {
+		c.setMethodInformation (fr.get ());
+	    }
+	} catch (IOException e) {
+	    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							 c.getParsePosition (),
+							 "Failed to read class: " + e));
+	}
     }
 
     @Override public boolean visit (MethodInvocation m) {
 	ExpressionType clzType = getOnType (m.getOn ());
 	if (hasMethods (clzType, m)) {
 	    String fqn = clzType.getClassName ();
+	    boolean isArray = clzType.isArray ();
 	    String name = m.getId ();
 	    ArgumentList al = m.getArgumentList ();
 	    try {
-		List<MethodInformation> mis = findMatchingMethod (fqn, name, al);
-		if (mis == null) {
+		FindResult fr = findMatchingMethod (fqn, isArray, name, al);
+		if (fr == null) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
 								 "No matching method found for: %s(%s)",
 								 name, argList (al)));
-		} else if (mis.size () > 1) {
+		} else if (fr.hasMoreThanOneMatch ()) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
 								 "Multiple matching methods found for: %s(%s)",
 								 name, argList (al)));
 		} else {
-		    m.setMethodInformation (mis.get (0));
+		    m.setMethodInformation (fr.get ());
 		}
 	    } catch (IOException e) {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
@@ -199,18 +227,19 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	return true;
     }
 
-    private List<MethodInformation> findMatchingConstructor (String fqn, ArgumentList al)
+    private FindResult findMatchingConstructor (String fqn, ArgumentList al)
 	throws IOException {
-	return findMatching (fqn, al, new ConstructorMethodFinder ());
+	return findMatching (fqn, false, al, new ConstructorMethodFinder ());
     }
 
-    private List<MethodInformation> findMatchingMethod (String fqn, String name, ArgumentList al) throws IOException {
-	return findMatching (fqn, al, new MethodMethodFinder (name));
+    private FindResult findMatchingMethod (String fqn, boolean isArray,
+					   String name, ArgumentList al) throws IOException {
+	return findMatching (fqn, isArray, al, new MethodMethodFinder (name));
     }
 
-    private List<MethodInformation> findMatching (String fqn, ArgumentList al, MethodFinder mf) throws IOException {
-	List<MethodInformation> ret = null;
-
+    private FindResult findMatching (String fqn, boolean isArray,
+				     ArgumentList al, MethodFinder mf) throws IOException {
+	FindResult fr = null;
 	Deque<String> typesToCheck = new ArrayDeque<> ();
 	typesToCheck.addLast (fqn);
 	Set<String> visitedTypes = new HashSet<> ();
@@ -220,57 +249,149 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    if (visitedTypes.contains (clz))
 		continue;
 	    visitedTypes.add (clz);
-	    List<MethodInformation> ls = mf.getAlternatives (clz);
+	    List<MethodInformation> ls = mf.getAlternatives (clz, isArray);
 	    if (ls != null) {
 		for (MethodInformation mi : ls) {
-		    if (!matchedDesc.contains (mi.getDesc ()) && match (al, mi)) {
-			if (ret == null) {
-			    ret = new ArrayList<> ();
-			    matchedDesc = new HashSet<> ();
+		    if (!matchedDesc.contains (mi.getDesc ())) {
+			MatchType t = match (al, mi);
+			if (t.isValid ()) {
+			    if (fr == null) {
+				fr = new FindResult ();
+				matchedDesc = new HashSet<> ();
+			    }
+			    fr.add (t, mi);
+			    matchedDesc.add (mi.getDesc ());
 			}
-			ret.add (mi);
-			matchedDesc.add (mi.getDesc ());
 		    }
 		}
 	    }
 	    // not found in current class, try super class
-	    Optional<List<String>> o = cip.getSuperTypes (clz);
+	    Optional<List<String>> o = cip.getSuperTypes (clz, isArray);
 	    if (o.isPresent () && mf.mayUseSuperclassMethods ())
 		typesToCheck.addAll (o.get ());
+	    isArray = false;
 	}
-	return ret;
+	return fr;
     }
 
-    private boolean match (ArgumentList al, MethodInformation mi) {
+    private class FindResult {
+	private List<MethodInformation> matched;
+	private List<MethodInformation> autoboxMatched;
+	private List<MethodInformation> varargMatched;
+
+	public void add (MatchType t, MethodInformation mi) {
+	    if (t == MatchType.MATCH) {
+		if (matched == null)
+		    matched = new ArrayList<> ();
+		add (mi, matched);
+	    } else if (t == MatchType.AUTOBOX_MATCH) {
+		if (autoboxMatched == null)
+		    autoboxMatched = new ArrayList<> ();
+		add (mi, autoboxMatched);
+	    } else if (t == MatchType.VARARG_MATCH) {
+		if (varargMatched == null)
+		    varargMatched = new ArrayList<> ();
+		add (mi, varargMatched);
+	    }
+	}
+
+	private void add (MethodInformation mi, List<MethodInformation> mis) {
+	    for (int i = mis.size () - 1; i >= 0; i--) {
+		if (isSpecialization (mi, mis.get (i)))
+		    mis.remove (i);
+		else if (isSpecialization (mis.get (i), mi))
+		    return;
+	    }
+	    mis.add (mi);
+	}
+
+	private boolean isSpecialization (MethodInformation mi, MethodInformation o) {
+	    Type[] ts1 = mi.getArguments ();
+	    Type[] ts2 = o.getArguments ();
+	    try {
+		for (int i = 0; i < ts1.length; i++) {
+		    ExpressionType t1 = ExpressionType.get (ts1[i]);
+		    ExpressionType t2 = ExpressionType.get (ts2[i]);
+		    boolean specialization = false;
+		    if (t1.isPrimitiveType ())
+			specialization = ExpressionType.mayBeAutoCasted (t1, t2);
+		    else
+			specialization = cip.isSubType (t1, t2);
+		    if (!specialization)
+			return false;
+		}
+	    } catch (IOException e) {
+		diagnostics.report (new NoSourceDiagnostics ("Failed to load classes for %s and %s: %s", mi, o, e));
+	    }
+	    return true;
+	}
+
+	public boolean hasMoreThanOneMatch () {
+	    if (matched != null)
+		return matched.size () > 1;
+	    if (autoboxMatched != null)
+		return autoboxMatched.size () > 1;
+	    if (varargMatched != null)
+		return varargMatched.size () > 1;
+	    throw new IllegalStateException ("No matched results");
+	}
+
+	public MethodInformation get () {
+	    if (matched != null)
+		return matched.get (0);
+	    if (autoboxMatched != null)
+		return autoboxMatched.get (0);
+	    if (varargMatched != null)
+		return varargMatched.get (0);
+	    throw new IllegalStateException ("No matched results");
+	}
+    }
+
+    private enum MatchType {
+	MATCH (true), AUTOBOX_MATCH (true), VARARG_MATCH (true), NO_MATCH (false);
+
+	private final boolean valid;
+
+	private MatchType (boolean valid) {
+	    this.valid = valid;
+	}
+
+	public boolean isValid () {
+	    return valid;
+	}
+    }
+
+    private MatchType match (ArgumentList al, MethodInformation mi) {
 	if (mi.isVarArgs ()) {
-	    if (match (al, mi, mi.getNumberOfArguments () - 1))
+	    if (match (al, mi, mi.getNumberOfArguments () - 1).isValid ())
 		return matchVarArg (al, mi);
 	} else {
 	    int numArgs = mi.getNumberOfArguments ();
 	    int argListSize = al == null ? 0 : al.size ();
-	    return numArgs == argListSize && match (al, mi, numArgs);
+	    if (numArgs == argListSize)
+		return match (al, mi, numArgs);
 	}
-	return false;
+	return MatchType.NO_MATCH;
     }
 
-    private boolean match (ArgumentList al, MethodInformation mi, int numArguments) {
+    private MatchType match (ArgumentList al, MethodInformation mi, int numArguments) {
 	if (al == null)
-	    return numArguments == 0;
+	    return numArguments == 0 ? MatchType.MATCH : MatchType.NO_MATCH;
 	Type[] arguments = mi.getArguments ();
 	if (al.size () < arguments.length)
-	    return false;
+	    return MatchType.NO_MATCH;
 	for (int i = 0; i < numArguments; i++) {
 	    TreeNode tn = al.get ().get (i);
 	    ExpressionType et = tn.getExpressionType ();
 	    if (!et.match (arguments[i++]))
-		return false;
+		return MatchType.NO_MATCH;
 	}
-	return true;
+	return MatchType.MATCH;
     }
 
-    private boolean matchVarArg (ArgumentList al, MethodInformation mi) {
+    private MatchType matchVarArg (ArgumentList al, MethodInformation mi) {
 	if (al == null) // no need to check that we have matched previous parts
-	    return true;
+	    return MatchType.VARARG_MATCH;
 	Type[] arguments = mi.getArguments ();
 	int varArgStart = arguments.length - 1;
 	Type t = mi.getArguments ()[varArgStart].getElementType ();
@@ -278,9 +399,9 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    TreeNode tn = al.get ().get (i);
 	    ExpressionType et = tn.getExpressionType ();
 	    if (!et.match (t))
-		return false;
+		return MatchType.NO_MATCH;
 	}
-	return true;
+	return MatchType.VARARG_MATCH;
     }
 
     private abstract class MethodFinder {
@@ -290,7 +411,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    this.methodName = methodName;
 	}
 
-	public abstract List<MethodInformation> getAlternatives (String clz);
+	public abstract List<MethodInformation> getAlternatives (String clz, boolean isArray);
 
 	public abstract boolean mayUseSuperclassMethods ();
     }
@@ -301,7 +422,15 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    super (methodName);
 	}
 
-	public List<MethodInformation> getAlternatives (String clz) {
+	public List<MethodInformation> getAlternatives (String clz, boolean isArray) {
+	    if (isArray) {
+		if (methodName.equals ("clone")) {
+		    MethodInformation mi = new MethodInformation (clz, Opcodes.ACC_PUBLIC, "clone",
+								  "()Ljava/lang/Object;", null, null);
+		    return Collections.singletonList (mi);
+		}
+		return null;
+	    }
 	    Map<String, List<MethodInformation>> methods = cip.getMethods (clz);
 	    if (methods != null)
 		return methods.get (methodName);
@@ -321,7 +450,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    super ("<init>");
 	}
 
-	public List<MethodInformation> getAlternatives (String clz) {
+	public List<MethodInformation> getAlternatives (String clz, boolean isArray) {
 	    Map<String, List<MethodInformation>> methods = cip.getMethods (clz);
 	    List<MethodInformation> ls = null;
 	    if (methods != null)

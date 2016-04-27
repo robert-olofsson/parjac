@@ -139,7 +139,10 @@ public class ExpressionType {
     }
 
     @Override public String toString () {
-	return isPrimitive ? PRIMITIVE_NAMES.get (this) : className;
+	String ret = isPrimitive ? PRIMITIVE_NAMES.get (this) : className;
+	if (isArray ())
+	    ret += repeat ("[]", dims);
+	return ret;
     }
 
     public boolean isPrimitiveType () {

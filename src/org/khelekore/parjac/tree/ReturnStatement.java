@@ -21,6 +21,11 @@ public class ReturnStatement extends PositionNode {
 	exp = null;
     }
 
+    public ReturnStatement (TreeNode exp) {
+	super (null);
+	this.exp = exp;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + exp + "}";
     }

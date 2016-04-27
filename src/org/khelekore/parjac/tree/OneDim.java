@@ -14,6 +14,11 @@ public class OneDim extends PositionNode {
 	annotations = r.size () > 2 ? ((ZOMEntry)parts.pop ()).get () : null;
     }
 
+    public OneDim () {
+	super (null);
+	annotations = null;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + annotations + "}";
     }

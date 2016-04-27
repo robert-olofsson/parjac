@@ -72,6 +72,22 @@ public class PrimaryNoNewArray {
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{}";
 	}
+
+	@Override public void visit (TreeVisitor visitor) {
+	    visitor.visit (this);
+	}
+
+	@Override public void simpleVisit (TreeVisitor visitor) {
+	    visitor.visit (this);
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return new ExpressionType ("java.lang.Class");
+	}
+
+	@Override public Collection<? extends TreeNode> getChildNodes () {
+	    return Collections.emptyList ();
+	}
     }
 
     public static class ClassPrimary extends PositionNode {
@@ -86,6 +102,27 @@ public class PrimaryNoNewArray {
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{" + type + "  " + brackets + ".class}";
+	}
+
+	@Override public void visit (TreeVisitor visitor) {
+	    if (visitor.visit (this))
+		type.visit (visitor);
+	}
+
+	@Override public void simpleVisit (TreeVisitor visitor) {
+	    visitor.visit (this);
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return new ExpressionType ("java.lang.Class");
+	}
+
+	@Override public Collection<? extends TreeNode> getChildNodes () {
+	    return Collections.singleton (type);
+	}
+
+	public TreeNode getType () {
+	    return type;
 	}
     }
 

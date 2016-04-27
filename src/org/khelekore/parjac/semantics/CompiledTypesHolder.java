@@ -80,9 +80,7 @@ public class CompiledTypesHolder {
 	    } else {
 		ret.add ("java.lang.Object");
 	    }
-	    InterfaceTypeList ifs = ncd.getSuperInterfaces ();
-	    if (ifs != null)
-		ifs.get ().forEach (ic -> ret.add (ic.getFullName ()));
+	    addInterfaces (ret, ncd.getSuperInterfaces ());
 	    return Optional.of (ret);
 	} else if (tn instanceof NormalInterfaceDeclaration) {
 	    NormalInterfaceDeclaration nid = (NormalInterfaceDeclaration)tn;
@@ -99,8 +97,19 @@ public class CompiledTypesHolder {
 		List<String> ret = Arrays.asList (ct.getFullName ());
 		return Optional.of (ret);
 	    }
+	} else if (tn instanceof EnumDeclaration) {
+	    EnumDeclaration ed = (EnumDeclaration)tn;
+	    List<String> ret = new ArrayList<> ();
+	    ret.add ("java.lang.Enum");
+	    addInterfaces (ret, ed.getSuperInterfaces ());
+	    return Optional.of (ret);
 	}
 	return Optional.empty ();
+    }
+
+    private void addInterfaces (List<String> ret, InterfaceTypeList ifs) {
+	if (ifs != null)
+	    ifs.get ().forEach (ic -> ret.add (ic.getFullName ()));
     }
 
     private class ClassMapper implements TreeVisitor {

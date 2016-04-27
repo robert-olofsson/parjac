@@ -15,6 +15,11 @@ public class Block extends PositionNode {
 	statements = r.size () > 2 ? ((BlockStatements)parts.pop ()).get () : null;
     }
 
+    public Block (List<TreeNode> statements) {
+	super (null);
+	this.statements = statements;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + statements + "}";
     }

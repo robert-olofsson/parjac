@@ -781,6 +781,45 @@ public class TestReturnChecker extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testMultipleOptionsWithExactMatch () throws IOException {
+	parseAndSetClasses ("class Foo { void f (char c) {} void f (int i) {} void g () { char c = 0; f(c); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMultipleOptionsWithBetterMatch () throws IOException {
+	parseAndSetClasses ("class Foo { void f (int i) {} void f (long l) {} void g () { char c = 0; f(c); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMultipleMatchAutobox () throws IOException {
+	parseAndSetClasses ("class Foo { void f (int i) {} void f (Integer i) {} void g () { int i = 0; f (i); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMultipleMatchNormalWinsOverVarargs () throws IOException {
+	parseAndSetClasses ("class Foo { void f (Object o) {} void f (Object... os) {} void g () { Object o = null; f (o); }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { void f (Object o, Object p) {} void f (Object... os) {} void g () { Object o = null; f (o, o); }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { void f (Object o) {} void f (Object... os) {} void g () { f (); }}");
+	assertNoErrors ();
+    }
+
+    @Test
+    public void testMultipleMatchVarargsSpecialization () throws IOException {
+	// Should match String...
+	parseAndSetClasses ("class Foo { void f (Object...os) {} void f (String...ss) {} void g () { String s = \"asdf\"; f (s, s, s); }}");
+	assertNoErrors ();
+	// Should match Object...
+	parseAndSetClasses ("class Foo { void f (Object...os) {} void f (String...ss) {} " +
+			    " void g () { String s = \"asdf\"; Integer i = Integer.valueOf (1); f (s, s, i); }}");
+	assertNoErrors ();
+    }
+
     protected void handleSyntaxTree (SyntaxTree tree) {
 	FieldAndMethodSetter mis = new FieldAndMethodSetter (cip, tree, diagnostics);
 	mis.run ();

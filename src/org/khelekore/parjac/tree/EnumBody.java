@@ -24,6 +24,8 @@ public class EnumBody extends PositionNode {
 		enumBodyDeclarations = (EnumBodyDeclarations)parts.pop ();
 	}
 	this.constants = constants;
+	if (enumBodyDeclarations == null)
+	    enumBodyDeclarations = new EnumBodyDeclarations (ppos);
 	this.enumBodyDeclarations = enumBodyDeclarations;
     }
 
