@@ -94,6 +94,18 @@ public class BytecodeGenerator implements TreeVisitor {
 	cid.write ();
     }
 
+    @Override public boolean visit (StaticInitializer s) {
+	MethodInfo mi = getStaticBlock ();
+	addMethod (mi);
+	return true;
+    }
+
+    @Override public void endStaticInitializer (StaticInitializer s) {
+	MethodInfo mi = removeMethod ();
+	mi.mv.visitMaxs (mi.maxStackDepth, mi.nextId);
+        mi.mv.visitEnd ();
+    }
+
     @Override public boolean visit (ConstructorDeclaration c) {
 	ClassWriter cw = currentClass.cw;
 

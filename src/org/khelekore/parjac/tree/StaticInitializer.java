@@ -23,6 +23,7 @@ public class StaticInitializer extends PositionNode {
     @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this))
 	    block.visit (visitor);
+	visitor.endStaticInitializer (this);
     }
 
     /** Visit this node */

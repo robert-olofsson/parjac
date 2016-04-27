@@ -51,6 +51,9 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default void endStaticInitializer (StaticInitializer s) {
+    }
+
     /**
      * @return true to visit subtree, false to stop tree traversal
      *         The endConstructor will be called no matter what.
