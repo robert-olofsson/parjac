@@ -235,7 +235,8 @@ public class AddImplicitMethods {
 							null, tree.getOrigin (), diagnostics);
 	    EnumBody cb = type.getBody ();
 	    cb.getDeclarations ().add (fd);
-	    cip.addField (type.getId (), vdi.getId (), new FieldInformation<FieldDeclaration> ("$VALUES", fd, type));
+	    String fqn = cip.getFullName (type);
+	    cip.addField (fqn, vdi.getId (), new FieldInformation<FieldDeclaration> ("$VALUES", fd, type));
 	}
 
 	private void addValues () {
@@ -243,7 +244,7 @@ public class AddImplicitMethods {
 	    TreeNode arrayType = getEnumArray ();
 	    MethodHeader mh = getMethodHeader (arrayType, "values", null);
 	    ClassType ct = new ClassType (null, null);
-	    ct.setFullName (type.getId ());
+	    ct.setFullName (cip.getFullName (type));
 	    FieldAccess fa = new FieldAccess (ct, "$VALUES", null);
 	    UntypedMethodInvocation umi = new UntypedMethodInvocation ("clone", null);
 	    MethodInvocation mi = new MethodInvocation (fa, umi, null);
@@ -295,6 +296,11 @@ public class AddImplicitMethods {
 	    MethodDeclaration md = getMethodDeclaration (mh, body);
 	    EnumBody cb = type.getBody ();
 	    cb.getDeclarations ().add (md);
+
+	    String fqn = cip.getFullName (type);
+	    // TODO need to extract this to a method
+	    cip.addMethod (fqn, md.getMethodName (),
+			   new MethodInformation (fqn, md.getFlags (), md.getMethodName (), md.getDescription (), null, new String[0]));
 	}
 
 	private TreeNode getEnumArray () {

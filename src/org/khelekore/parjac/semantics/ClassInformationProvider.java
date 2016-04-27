@@ -128,6 +128,16 @@ public class ClassInformationProvider {
 	classMethods.put (fqn, methods);
     }
 
+    public void addMethod (String fqn, String id, MethodInformation mi) {
+	Map<String, List<MethodInformation>> methods = classMethods.get (fqn);
+	List<MethodInformation> ls = methods.get (id);
+	if (ls == null) {
+	    ls = new ArrayList<> ();
+	    methods.put (id, ls);
+	}
+	ls.add (mi);
+    }
+
     public FieldInformation<?> getFieldInformation (String fqn, String field) {
 	if ((getType (fqn)) != null) {
 	    Map<String, FieldInformation<?>> m = classFields.get (fqn);
