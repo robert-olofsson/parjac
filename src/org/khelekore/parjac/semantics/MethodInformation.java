@@ -26,7 +26,8 @@ public class MethodInformation {
     }
 
     @Override public String toString () {
-	return getClass ().getSimpleName () + "{" + access + " " + name + " " +
+	return getClass ().getSimpleName () + "{" + access + " " +
+	    classname + "::" + name + " " +
 	    Arrays.toString (arguments) + " " + signature + " " +
 	    Arrays.toString (exceptions) + "}";
     }
