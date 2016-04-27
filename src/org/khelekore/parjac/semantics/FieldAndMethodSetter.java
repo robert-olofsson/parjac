@@ -3,6 +3,7 @@ package org.khelekore.parjac.semantics;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -177,9 +178,12 @@ public class FieldAndMethodSetter implements TreeVisitor {
 								 "No matching method found for: %s(%s)",
 								 name, argList (al)));
 		} else if (fr.hasMoreThanOneMatch ()) {
+		    String options = fr.getAlternatives ().stream ()
+			.map (mi -> mi.getClassname () + "::" + mi.getName () + "(" + args (mi.getArguments ()) + ")")
+			.collect (Collectors.joining ("\n\t", "\n\t", "\n"));
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), m.getParsePosition (),
-								 "Multiple matching methods found for: %s(%s)",
-								 name, argList (al)));
+								 "Multiple matching methods found for: %s(%s)%s",
+								 name, argList (al), options));
 		} else {
 		    m.setMethodInformation (fr.get ());
 		}
@@ -192,7 +196,11 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	return false;
     }
 
-    private final String argList (ArgumentList al) {
+    private String args (Type[] types) {
+	return Arrays.stream (types).map (t -> t.toString ()).collect (Collectors.joining (", "));
+    }
+
+    private String argList (ArgumentList al) {
 	if (al == null)
 	    return "";
 	return al.get ().stream ().map (tn -> tn.getExpressionType ().toString ()).collect (Collectors.joining (", "));
@@ -243,7 +251,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	Deque<String> typesToCheck = new ArrayDeque<> ();
 	typesToCheck.addLast (fqn);
 	Set<String> visitedTypes = new HashSet<> ();
-	Set<String> matchedDesc = Collections.emptySet ();
+	Set<List<Type>> matchedDesc = Collections.emptySet ();
 	while (!typesToCheck.isEmpty ()) {
 	    String clz = typesToCheck.removeFirst ();
 	    if (visitedTypes.contains (clz))
@@ -252,7 +260,10 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    List<MethodInformation> ls = mf.getAlternatives (clz, isArray);
 	    if (ls != null) {
 		for (MethodInformation mi : ls) {
-		    if (!matchedDesc.contains (mi.getDesc ())) {
+		    if (FlagsHelper.isSynthetic (mi.getAccess ()))
+			continue;
+		    List<Type> argumentList = Arrays.asList (mi.getArguments ());
+		    if (!matchedDesc.contains (argumentList)) {
 			MatchType t = match (al, mi);
 			if (t.isValid ()) {
 			    if (fr == null) {
@@ -260,7 +271,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 				matchedDesc = new HashSet<> ();
 			    }
 			    fr.add (t, mi);
-			    matchedDesc.add (mi.getDesc ());
+			    matchedDesc.add (argumentList);
 			}
 		    }
 		}
@@ -345,6 +356,16 @@ public class FieldAndMethodSetter implements TreeVisitor {
 		return varargMatched.get (0);
 	    throw new IllegalStateException ("No matched results");
 	}
+
+	public List<MethodInformation> getAlternatives () {
+	    if (matched != null)
+		return matched;
+	    if (autoboxMatched != null)
+		return autoboxMatched;
+	    if (varargMatched != null)
+		return varargMatched;
+	    throw new IllegalStateException ("No matched results");
+	}
     }
 
     private enum MatchType {
@@ -409,6 +430,10 @@ public class FieldAndMethodSetter implements TreeVisitor {
 
 	public MethodFinder (String methodName) {
 	    this.methodName = methodName;
+	}
+
+	@Override public String toString () {
+	    return getClass ().getSimpleName () + "{" + methodName + "}";
 	}
 
 	public abstract List<MethodInformation> getAlternatives (String clz, boolean isArray);

@@ -50,4 +50,8 @@ public class FlagsHelper {
     public static boolean isVarArgs (int f) {
 	return (f & ACC_VARARGS) == ACC_VARARGS;
     }
+
+    public static boolean isSynthetic (int f) {
+	return (f & ACC_SYNTHETIC) == ACC_SYNTHETIC;
+    }
 }
