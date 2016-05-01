@@ -19,17 +19,19 @@ public class Scope {
     private final Scope parent;
     private final Type type;
     private final boolean isStatic;
+    private final boolean ignoreFieldShadowing;
     private final TreeNode owner;
     private final TreeNode currentClass;
     private Map<String, FieldInformation<?>> variables = Collections.emptyMap ();
 
     public enum Type { CLASS, LOCAL };
 
-    public Scope (TreeNode owner, Scope parent, Type type, boolean isStatic) {
+    public Scope (TreeNode owner, Scope parent, Type type, boolean isStatic, boolean ignoreFieldShadowing) {
 	this.owner = owner;
 	this.parent = parent;
 	this.type = type;
 	this.isStatic = isStatic;
+	this.ignoreFieldShadowing = ignoreFieldShadowing;
 	if (type == Type.CLASS)
 	    currentClass = owner;
 	else
@@ -81,9 +83,11 @@ public class Scope {
 							     fpp.getLineNumber (), fpp.getTokenColumn ()));
 		return;
 	    } else {
-		diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), fi.getParsePosition (),
-							       "Field %s shadows variable at %d:%d", name,
-							       fpp.getLineNumber (), fpp.getTokenColumn ()));
+		if (!ignoreFieldShadowing) {
+		    diagnostics.report (SourceDiagnostics.warning (tree.getOrigin (), fi.getParsePosition (),
+								   "Field %s shadows variable at %d:%d", name,
+								   fpp.getLineNumber (), fpp.getTokenColumn ()));
+		}
 	    }
 	}
 	add (fi);

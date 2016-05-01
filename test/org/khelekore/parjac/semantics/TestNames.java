@@ -180,4 +180,11 @@ public class TestNames extends TestBase {
 	parseAndSetClasses ("enum E { A, B, C; int B; }");
 	assert diagnostics.hasError () : "Expected duplicate variables";
     }
+
+    @Test
+    public void testConstructorNoShadow () throws IOException {
+	parseAndSetClasses ("public class C { int c; public C (int c) {}}");
+	assertNoErrors ();
+	assertNoWarnings ();
+    }
 }

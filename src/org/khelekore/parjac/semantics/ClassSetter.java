@@ -473,12 +473,12 @@ public class ClassSetter {
 	}
 
 	private void addScopeAndFields (String fqn, FlaggedType ft, TreeNode part) {
-	    addScope (ft, Scope.Type.CLASS);
+	    addScope (ft, Scope.Type.CLASS, false);
 	    addFields (fqn, part, currentScope);
 	}
 
 	private void addScopeAndParameters (FlaggedType ft, FormalParameterList fpl) {
-	    addScope (ft, Scope.Type.LOCAL);
+	    addScope (ft, Scope.Type.LOCAL, true);
 	    addParameterList (fpl);
 	}
 
@@ -497,13 +497,13 @@ public class ClassSetter {
 	    }
 	}
 
-	private void addScope (FlaggedType ft, Scope.Type type) {
-	    currentScope = new Scope (ft, currentScope, type, FlagsHelper.isStatic (ft.getFlags ()));
+	private void addScope (FlaggedType ft, Scope.Type type, boolean ignoreFieldShadowing) {
+	    currentScope = new Scope (ft, currentScope, type, FlagsHelper.isStatic (ft.getFlags ()), ignoreFieldShadowing);
 	}
 
 	private void addScope (TreeNode tn, Scope.Type type) {
 	    boolean isStatic = currentScope != null && currentScope.isStatic ();
-	    currentScope = new Scope (tn, currentScope, type, isStatic);
+	    currentScope = new Scope (tn, currentScope, type, isStatic, false);
 	}
 
 	private void addFields (String fqn, TreeNode tn, Scope scope) {
