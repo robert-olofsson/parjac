@@ -241,9 +241,9 @@ public class ReturnChecker implements TreeVisitor {
 	    } else {
 		Set<String> uninited2 = new HashSet<> (methods.peek ().uninitializedLocals);
 		methods.peek ().uninitializedLocals = uninited;
+		ender = new Ender ();
 		elseEnds = checkStatement (elseStatement);
-		statementEnds.and (elseEnds);
-		ender = statementEnds;
+		ender = statementEnds.and (elseEnds);
 		methods.peek ().uninitializedLocals.addAll (uninited2);
 	    }
 	    return false;

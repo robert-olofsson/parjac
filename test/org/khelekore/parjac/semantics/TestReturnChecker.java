@@ -200,6 +200,28 @@ public class TestReturnChecker extends TestBase {
 			    "    b *= 3;\n" +
 			    "}}");
 	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo {\n" +
+			    "void bar (int a) {\n" +
+			    "    int b = 1;\n" +
+			    "    if (a > 3) {\n" +
+			    "         return;\n" +
+			    "    }\n" +
+			    "    b *= 3;\n" +
+			    "}}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo {\n" +
+			    "void bar (int a) {\n" +
+			    "    int b = 0;\n" +
+			    "    if (a > 3) {\n" +
+			    "         return;\n" +
+			    "    } else {\n" +
+			    "         b = 7;\n" +
+			    "    }\n" +
+			    "    b *= 3;\n" +
+			    "}}");
+	assertNoErrors ();
     }
 
     @Test
