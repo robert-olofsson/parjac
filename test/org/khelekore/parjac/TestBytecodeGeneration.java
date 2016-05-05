@@ -518,6 +518,29 @@ public class TestBytecodeGeneration {
 	Assert.assertEquals (d, Math.PI, 0.001, "Got wrong value: " + d);
     }
 
+    @Test
+    public void testArrayCreation () throws IOException, ReflectiveOperationException {
+	testArrayCreation ("int", 10, int[].class);
+	testArrayCreation ("String", 10, String[].class);
+    }
+
+    @Test
+    public void test2DArrayCreation () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public static String[][] foo () { String[][] ret = new String[10][]; return ret; }}";
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	assert o.getClass () == String[][].class : "Got wrong type back: " + o.getClass ();
+    }
+
+    private void testArrayCreation (String type, int size, Class<?> expected)
+	throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public static " + type + "[] foo () { " +
+	    type + "[] ret = new " + type + "[10]; return ret; }}";
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	assert o.getClass () == expected : "Got wrong type back: " + o.getClass ();
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

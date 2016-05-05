@@ -19,4 +19,13 @@ public class DimExpr extends PositionNode {
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + annotations + " [ " + exp + " ] " + "}";
     }
+
+    @Override public void visit (TreeVisitor visitor) {
+	visitor.visit (this);
+	exp.visit (visitor);
+    }
+
+    public TreeNode getExpression () {
+	return exp;
+    }
 }

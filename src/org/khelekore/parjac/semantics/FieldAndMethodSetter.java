@@ -131,7 +131,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
     @Override public boolean visit (ClassInstanceCreationExpression c) {
 	ExpressionType clzType;
 	if (c.hasBody ()) {
-	    clzType = new ExpressionType (cip.getFullName (c.getBody ()));
+	    clzType = ExpressionType.getObjectType (cip.getFullName (c.getBody ()));
 	} else {
 	    clzType = c.getId ().getExpressionType ();
 	}
@@ -211,7 +211,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	    return on.getExpressionType ();
 	} else {
 	    String fqn = cip.getFullName (containingClasses.getLast ());
-	    return new ExpressionType (fqn);
+	    return ExpressionType.getObjectType (fqn);
 	}
     }
 
@@ -324,10 +324,15 @@ public class FieldAndMethodSetter implements TreeVisitor {
 		    ExpressionType t1 = ExpressionType.get (ts1[i]);
 		    ExpressionType t2 = ExpressionType.get (ts2[i]);
 		    boolean specialization = false;
-		    if (t1.isPrimitiveType ())
+		    if (t1.isPrimitiveType ()) {
 			specialization = ExpressionType.mayBeAutoCasted (t1, t2);
-		    else
+		    } else if (t1.isArray ()) {
+			specialization = t2.isArray () &&
+			    t1.getArrayDimensions () == t2.getArrayDimensions () &&
+			    cip.isSubType (t1.getArrayBaseType (), t2.getArrayBaseType ());
+		    } else {
 			specialization = cip.isSubType (t1, t2);
+		    }
 		    if (!specialization)
 			return false;
 		}
@@ -382,7 +387,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	}
     }
 
-    private MatchType match (ArgumentList al, MethodInformation mi) {
+    private MatchType match (ArgumentList al, MethodInformation mi) throws IOException {
 	if (mi.isVarArgs ()) {
 	    if (match (al, mi, mi.getNumberOfArguments () - 1).isValid ())
 		return matchVarArg (al, mi);
@@ -395,7 +400,7 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	return MatchType.NO_MATCH;
     }
 
-    private MatchType match (ArgumentList al, MethodInformation mi, int numArguments) {
+    private MatchType match (ArgumentList al, MethodInformation mi, int numArguments) throws IOException {
 	if (al == null)
 	    return numArguments == 0 ? MatchType.MATCH : MatchType.NO_MATCH;
 	Type[] arguments = mi.getArguments ();
@@ -404,13 +409,13 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	for (int i = 0; i < numArguments; i++) {
 	    TreeNode tn = al.get ().get (i);
 	    ExpressionType et = tn.getExpressionType ();
-	    if (!et.match (arguments[i++]))
+	    if (!matchIncludingSuperTypes (et, arguments[i++]))
 		return MatchType.NO_MATCH;
 	}
 	return MatchType.MATCH;
     }
 
-    private MatchType matchVarArg (ArgumentList al, MethodInformation mi) {
+    private MatchType matchVarArg (ArgumentList al, MethodInformation mi) throws IOException {
 	if (al == null) // no need to check that we have matched previous parts
 	    return MatchType.VARARG_MATCH;
 	Type[] arguments = mi.getArguments ();
@@ -419,10 +424,25 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	for (int i = varArgStart; i < al.size (); i++) {
 	    TreeNode tn = al.get ().get (i);
 	    ExpressionType et = tn.getExpressionType ();
-	    if (!et.match (t))
+	    if (!matchIncludingSuperTypes (et, t))
 		return MatchType.NO_MATCH;
 	}
 	return MatchType.VARARG_MATCH;
+    }
+
+    private boolean matchIncludingSuperTypes (ExpressionType et, Type t) throws IOException {
+	if (et.match (t))
+	    return true;
+
+	if (et.isClassType ()) {
+	    Optional<List<String>> supers = cip.getSuperTypes (et.getClassName (), false);
+	    if (supers.isPresent ()) {
+		for (String st : supers.get ())
+		    if (matchIncludingSuperTypes (ExpressionType.getObjectType (st), t))
+			return true;
+	    }
+	}
+	return false;
     }
 
     private abstract class MethodFinder {

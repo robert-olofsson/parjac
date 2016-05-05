@@ -153,6 +153,13 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default boolean visit (ArrayCreationExpression ace) {
+	return true;
+    }
+
+    default void visit (DimExpr de) {
+    }
+
     default boolean visit (LambdaExpression l) {
 	return true;
     }

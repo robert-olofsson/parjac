@@ -278,6 +278,11 @@ public class ClassSetter {
 	    return true;
 	}
 
+	@Override public boolean visit (ArrayCreationExpression ace) {
+	    setType (ace.getType (), this);
+	    return true;
+	}
+
 	@Override public boolean visit (LambdaExpression l) {
 	    TreeNode params = l.getParameters ();
 	    if (params != null) {
@@ -419,7 +424,7 @@ public class ClassSetter {
 
 	private TreeNode getThis (ParsePosition pos) {
 	    PrimaryNoNewArray.ThisPrimary t = new PrimaryNoNewArray.ThisPrimary (pos);
-	    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
+	    t.setExpressionType (ExpressionType.getObjectType (containingTypes.peek ().fqn));
 	    return t;
 	}
 
@@ -577,7 +582,7 @@ public class ClassSetter {
 	}
 
 	@Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
-	    t.setExpressionType (new ExpressionType (containingTypes.peek ().fqn));
+	    t.setExpressionType (ExpressionType.getObjectType (containingTypes.peek ().fqn));
 	}
     }
 

@@ -92,6 +92,6 @@ public class EnumConstant extends PositionNode implements FlaggedType {
     }
 
     @Override public ExpressionType getExpressionType () {
-	return new ExpressionType (type);
+	return ExpressionType.getObjectType (type);
     }
 }

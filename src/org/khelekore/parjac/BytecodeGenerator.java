@@ -638,6 +638,21 @@ public class BytecodeGenerator implements TreeVisitor {
 	}
     }
 
+    @Override public boolean visit (ArrayCreationExpression ace) {
+	DimExprs dimExprs = ace.getDimExprs ();
+	if (dimExprs != null)
+	    dimExprs.visit (this);
+	ExpressionType et = ace.getExpressionType ().arrayAccess ();
+	if (et.isPrimitiveType ()) {
+	    currentMethod.mv.visitIntInsn (NEWARRAY, Opcodes.T_INT);
+	} else if (et.isArray ()) {
+	    currentMethod.mv.visitTypeInsn (ANEWARRAY, et.getDescriptor ());
+	} else {
+	    currentMethod.mv.visitTypeInsn (ANEWARRAY, et.getSlashName ());
+	}
+	return false;
+    }
+
     @Override public boolean visit (IfThenStatement i) {
 	i.getExpression ().visit (this);
 	Label elseStart = new Label ();
@@ -888,7 +903,7 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     private void outputPrimitiveCasts (ExpressionType source, ExpressionType target) {
-	if (source == target)
+	if (source == target || source.equals (target))
 	    return;
 	if (target == ExpressionType.INT && isIntType (source))
 	    return;
@@ -1044,11 +1059,11 @@ public class BytecodeGenerator implements TreeVisitor {
 	// TODO: javac only seems to use String and Object, not sure if we want the others
 	typeToappendMethod.put (ExpressionType.array (ExpressionType.CHAR, 1),
 				"([C;)Ljava/lang/StringBuilder;");
- 	typeToappendMethod.put (new ExpressionType ("java.lang.CharSequence"),
+ 	typeToappendMethod.put (ExpressionType.getObjectType ("java.lang.CharSequence"),
 				"(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.STRING, "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
 	typeToappendMethod.put (ExpressionType.OBJECT, "(Ljava/lang/Object;)Ljava/lang/StringBuilder;");
- 	typeToappendMethod.put (new ExpressionType ("java.lang.StringBuffer"),
+ 	typeToappendMethod.put (ExpressionType.getObjectType ("java.lang.StringBuffer"),
 				"(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;");
     }
 

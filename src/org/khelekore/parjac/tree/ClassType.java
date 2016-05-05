@@ -31,7 +31,7 @@ public class ClassType extends Multipart<SimpleClassType> {
 
     @Override public ExpressionType getExpressionType () {
 	if (fqn != null)
-	    return new ExpressionType (fqn);
+	    return ExpressionType.getObjectType (fqn);
 	return null;
     }
 

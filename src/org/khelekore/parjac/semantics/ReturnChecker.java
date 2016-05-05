@@ -21,6 +21,7 @@ import org.khelekore.parjac.tree.BreakStatement;
 import org.khelekore.parjac.tree.CastExpression;
 import org.khelekore.parjac.tree.Catches;
 import org.khelekore.parjac.tree.ContinueStatement;
+import org.khelekore.parjac.tree.DimExpr;
 import org.khelekore.parjac.tree.DoStatement;
 import org.khelekore.parjac.tree.DottedName;
 import org.khelekore.parjac.tree.EnhancedForStatement;
@@ -170,6 +171,10 @@ public class ReturnChecker implements TreeVisitor {
 	    t.getElsePart ().visit (this);
 	    methods.peek ().uninitializedLocals.addAll (uninited2);
 	    return false;
+	}
+
+	@Override public void visit (DimExpr de) {
+	    checkInt (de.getExpression ());
 	}
 
 	@Override public void visit (LabeledStatement l) {
@@ -369,6 +374,15 @@ public class ReturnChecker implements TreeVisitor {
 		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
 							     tn.getParsePosition (),
 							     "Not a boolean expression: %s, node: %s",
+							     tn.getExpressionType (), tn));
+	    }
+	}
+
+	private void checkInt (TreeNode tn) {
+	    if (tn.getExpressionType () != ExpressionType.INT) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (),
+							     tn.getParsePosition (),
+							     "Not a int expression: %s, node: %s",
 							     tn.getExpressionType (), tn));
 	    }
 	}

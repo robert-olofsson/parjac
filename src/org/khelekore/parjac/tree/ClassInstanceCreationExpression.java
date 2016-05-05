@@ -96,7 +96,7 @@ public class ClassInstanceCreationExpression extends PositionNode implements Met
     }
 
     @Override public ExpressionType getExpressionType () {
-	return new ExpressionType (id.getFullName ());
+	return ExpressionType.getObjectType (id.getFullName ());
     }
 
     public void setMethodInformation (MethodInformation actualMethod) {

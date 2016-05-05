@@ -34,6 +34,11 @@ public class ArrayAccess extends PositionNode {
 	    exp.visit (visitor);
     }
 
+    @Override public ExpressionType getExpressionType () {
+	ExpressionType et = from.getExpressionType ();
+	return et.arrayAccess ();
+    }
+
     public Collection<? extends TreeNode> getChildNodes () {
 	return Collections.singleton (exp);
     }

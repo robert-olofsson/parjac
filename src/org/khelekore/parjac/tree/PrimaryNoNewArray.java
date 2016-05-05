@@ -82,7 +82,7 @@ public class PrimaryNoNewArray {
 	}
 
 	@Override public ExpressionType getExpressionType () {
-	    return new ExpressionType ("java.lang.Class");
+	    return ExpressionType.CLASS;
 	}
 
 	@Override public Collection<? extends TreeNode> getChildNodes () {
@@ -114,7 +114,7 @@ public class PrimaryNoNewArray {
 	}
 
 	@Override public ExpressionType getExpressionType () {
-	    return new ExpressionType ("java.lang.Class");
+	    return ExpressionType.CLASS;
 	}
 
 	@Override public Collection<? extends TreeNode> getChildNodes () {

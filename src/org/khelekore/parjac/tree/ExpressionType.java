@@ -5,37 +5,32 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.objectweb.asm.Type;
 
-public class ExpressionType {
-    private final String className;
-    private final String slashName;
-    private final boolean isPrimitive;
-    private final int dims;
-    private final int type;
+public abstract class ExpressionType {
 
-    public static final ExpressionType BYTE = new ExpressionType ("B", true, Type.BYTE, 0);
-    public static final ExpressionType SHORT = new ExpressionType ("S", true, Type.SHORT, 0);
-    public static final ExpressionType CHAR = new ExpressionType ("C", true, Type.CHAR, 0);
-    public static final ExpressionType INT = new ExpressionType ("I", true, Type.INT, 0);
-    public static final ExpressionType LONG = new ExpressionType ("J", true, Type.LONG, 0);
-    public static final ExpressionType FLOAT = new ExpressionType ("F", true, Type.FLOAT, 0);
-    public static final ExpressionType DOUBLE = new ExpressionType ("D", true, Type.DOUBLE, 0);
-    public static final ExpressionType BOOLEAN = new ExpressionType ("Z", true, Type.BOOLEAN, 0);
+    public static final PrimitiveExpressionType BYTE = new PrimitiveExpressionType ("B", Type.BYTE);
+    public static final PrimitiveExpressionType SHORT = new PrimitiveExpressionType ("S", Type.SHORT);
+    public static final PrimitiveExpressionType CHAR = new PrimitiveExpressionType ("C", Type.CHAR);
+    public static final PrimitiveExpressionType INT = new PrimitiveExpressionType ("I", Type.INT);
+    public static final PrimitiveExpressionType LONG = new PrimitiveExpressionType ("J", Type.LONG);
+    public static final PrimitiveExpressionType FLOAT = new PrimitiveExpressionType ("F", Type.FLOAT);
+    public static final PrimitiveExpressionType DOUBLE = new PrimitiveExpressionType ("D", Type.DOUBLE);
+    public static final PrimitiveExpressionType BOOLEAN = new PrimitiveExpressionType ("Z", Type.BOOLEAN);
 
-    public static final ExpressionType VOID = new ExpressionType ("V", true, Type.VOID, 0);
-    public static final ExpressionType NULL = new ExpressionType ("null", false, -1, 0);
+    public static final PrimitiveExpressionType VOID = new PrimitiveExpressionType ("V", Type.VOID);
+    public static final ExpressionType NULL = new NullExpressionType ();
 
-    public static final ExpressionType STRING = new ExpressionType ("java.lang.String", false, Type.OBJECT, 0);
-    public static final ExpressionType OBJECT = new ExpressionType ("java.lang.Object", false, Type.OBJECT, 0);
+    public static final ExpressionType STRING = new ObjectExpressionType ("java.lang.String");
+    public static final ExpressionType OBJECT = new ObjectExpressionType ("java.lang.Object");
+    public static final ExpressionType CLASS = new ObjectExpressionType ("java.lang.Class");
 
-    private static final ExpressionType[] primitives =
+    private static final PrimitiveExpressionType[] primitives =
     { BYTE, SHORT, CHAR, INT, LONG, FLOAT, DOUBLE, BOOLEAN, VOID };
 
-    private final static Map<ExpressionType, List<ExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
+    private final static Map<PrimitiveExpressionType, List<PrimitiveExpressionType>> ALLOWED_UPCASTS = new HashMap<> ();
     private final static Set<ExpressionType> INTEGRAL_TYPES = new HashSet<> ();
     private final static Set<ExpressionType> NUMERIC_TYPES = new HashSet<> ();
     private final static Map<ExpressionType, String> PRIMITIVE_NAMES = new HashMap<> ();
@@ -68,36 +63,206 @@ public class ExpressionType {
     }
 
     public static boolean mayBeAutoCasted (ExpressionType from, ExpressionType to) {
-	List<ExpressionType> l = ALLOWED_UPCASTS.get (from);
+	List<PrimitiveExpressionType> l = ALLOWED_UPCASTS.get (from);
 	return l != null && l.contains (to);
     }
 
-    /**
-     * @param className fully qualified class name "foo.bar.Baz"
-     */
-    private ExpressionType (String className, boolean isPrimitive, int type, int dims) {
-	if (className == null)
-	    throw new NullPointerException ("className may not be null");
-	this.isPrimitive = isPrimitive;
-	this.type = type;
-	this.dims = dims;
-	String cn = className;
-	String sn = className;
-	if (!isPrimitive)
-	    sn = className.replace ('.', '/');
-	this.className = cn;
-	this.slashName = sn;
+    private static class PrimitiveExpressionType extends ExpressionType {
+	private final String primitiveType;
+	private final int type;
+
+	public PrimitiveExpressionType (String primitiveType, int type) {
+	    this.primitiveType = primitiveType;
+	    this.type = type;
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    PrimitiveExpressionType e = (PrimitiveExpressionType)o;
+	    return type == e.type;
+	}
+
+	@Override public int hashCode () {
+	    return type;
+	}
+
+	@Override public String toString () {
+	    return PRIMITIVE_NAMES.get (this);
+	}
+
+	@Override public boolean isPrimitiveType () {
+	    return true;
+	}
+
+	@Override public boolean isClassType () {
+	    return false;
+	}
+
+	@Override public String getSlashName () {
+	    return primitiveType;
+	}
+
+	@Override public String getDescriptor () {
+	    return primitiveType;
+	}
+
+	@Override public boolean match (Type t) {
+	    return type == t.getSort () || mayBeAutoCasted (this, t);
+	}
     }
 
-    /**
-     * @param className fully qualified class name "foo.bar.Baz"
-     */
-    public ExpressionType (String className) {
-	this (className, false, Type.OBJECT, 0);
+    private static class ObjectExpressionType extends ExpressionType {
+	private final String className;
+	private final String slashName;
+
+	public ObjectExpressionType (String className) {
+	    if (className == null)
+		throw new NullPointerException ("className may not be null");
+	    this.className = className;
+	    this.slashName = className.replace ('.', '/');
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    ObjectExpressionType e = (ObjectExpressionType)o;
+	    return className.equals (e.className);
+	}
+
+	@Override public int hashCode () {
+	    return className.hashCode ();
+	}
+
+	@Override public String toString () {
+	    return  className;
+	}
+
+	@Override public String getClassName () {
+	    return className;
+	}
+
+	@Override public String getSlashName () {
+	    return slashName;
+	}
+
+	@Override public String getDescriptor () {
+	    return "L" + slashName + ";";
+	}
+
+	@Override public boolean match (Type t) {
+	    return t.getSort () == Type.OBJECT && t.getInternalName ().equals (slashName);
+	}
+    }
+
+    private static class NullExpressionType extends ExpressionType {
+	@Override public String toString () {
+	    return "null";
+	}
+
+	@Override public boolean isClassType () {
+	    throw new IllegalStateException ("Not applicable");
+	}
+
+	@Override public String getSlashName () {
+	    throw new IllegalStateException ("Not applicable");
+	}
+
+	@Override public String getDescriptor () {
+	    throw new IllegalStateException ("Not applicable");
+	}
+
+	@Override public boolean match (Type t) {
+	    throw new IllegalStateException ("Not applicable");
+	}
+    }
+
+    private static class ArrayExpressionType extends ExpressionType {
+	private final ExpressionType base;
+	private final int dims;
+
+	public ArrayExpressionType (ExpressionType base, int dims) {
+	    if (base == null)
+		throw new NullPointerException ("Array base type may not be null");
+	    this.base = base;
+	    this.dims = dims;
+	}
+
+	@Override public ExpressionType arrayAccess () {
+	    int newDims = dims - 1;
+	    if (newDims == 0)
+		return base;
+	    return new ArrayExpressionType (base, newDims);
+	}
+
+	@Override public boolean equals (Object o) {
+	    if (o == this)
+		return true;
+	    if (o == null)
+		return false;
+	    if (o.getClass () != getClass ())
+		return false;
+	    ArrayExpressionType e = (ArrayExpressionType)o;
+	    return dims == e.dims && base.equals (e.base);
+	}
+
+	@Override public int hashCode () {
+	    return base.hashCode () * 31 + dims;
+	}
+
+	@Override public String toString () {
+	    return base.toString () + repeat ("[]", dims);
+	}
+
+	@Override public boolean isArray () {
+	    return true;
+	}
+
+	@Override public int getArrayDimensions () {
+	    return dims;
+	}
+
+	@Override public ExpressionType getArrayBaseType () {
+	    return base;
+	}
+
+	@Override public String getClassName () {
+	    return base.getClassName () + repeat ("[]", dims);
+	}
+
+	@Override public String getSlashName () {
+	    return base.getSlashName ();
+	}
+
+	@Override public String getDescriptor () {
+	    return repeat ("[", dims) + base.getDescriptor ();
+	}
+
+	@Override public boolean match (Type t) {
+	    return t.getSort () == Type.ARRAY &&
+		t.getInternalName ().equals (getSlashName ()) &&
+		t.getDimensions () == dims;
+	}
+    }
+
+    public static ExpressionType getObjectType (String className) {
+	return new ObjectExpressionType (className);
     }
 
     public static ExpressionType array (ExpressionType base, int dims) {
-	return new ExpressionType (base.className, false, Type.ARRAY, dims);
+	return new ArrayExpressionType (base, dims);
+    }
+
+    public ExpressionType arrayAccess () {
+	throw new IllegalStateException ("Not an array type: "  + this);
     }
 
     public static ExpressionType get (Type t) {
@@ -106,11 +271,11 @@ public class ExpressionType {
 	    return array (base, t.getDimensions ());
 	}
 	if (t.getSort () == Type.OBJECT)
-	    return new ExpressionType (t.getInternalName ().replace ('/', '.'));
-	for (ExpressionType et : primitives)
+	    return new ObjectExpressionType (t.getInternalName ().replace ('/', '.'));
+	for (PrimitiveExpressionType et : primitives)
 	    if (et.type == t.getSort ())
 		return et;
-	throw new IllegalArgumentException ("Unknown type: " + t);
+	throw new IllegalArgumentException ("Unknown type: " + t + ", t.sort: " + t.getSort ());
     }
 
     public static ExpressionType bigger (ExpressionType e1, ExpressionType e2) {
@@ -121,86 +286,45 @@ public class ExpressionType {
 	return e1;
     }
 
-    @Override public boolean equals (Object o) {
-	if (o == this)
-	    return true;
-	if (o == null)
-	    return false;
-	if (o.getClass () != getClass ())
-	    return false;
-	ExpressionType e = (ExpressionType)o;
-	return e.isPrimitive == isPrimitive &&
-	    e.dims == dims &&
-	    e.className.equals (className);
-    }
-
-    @Override public int hashCode () {
-	return Objects.hash (className, isPrimitive);
-    }
-
-    @Override public String toString () {
-	String ret = isPrimitive ? PRIMITIVE_NAMES.get (this) : className;
-	if (isArray ())
-	    ret += repeat ("[]", dims);
-	return ret;
-    }
-
+    /** Check if this ExpressionType is a primitive type */
     public boolean isPrimitiveType () {
-	return isPrimitive;
-    }
-
-    public boolean isArray () {
-	return dims > 0;
-    }
-
-    public int getDimensions () {
-	return dims;
-    }
-
-    public boolean isClassType () {
-	return !isPrimitive;
-    }
-
-    public String getClassName () {
-	if (isClassType ())
-	    return className;
-	throw new IllegalStateException ("Not a class type");
-    }
-
-    public String getSlashName () {
-	return slashName;
-    }
-
-    public String getDescriptor () {
-	String res = slashName;
-	if (!isPrimitive)
-	    res = "L" + slashName + ";";
-	if (isArray ())
-	    res = repeat ("[", dims) + res;
-	return res;
-    }
-
-    public String getPrimitiveName () {
-	if (isPrimitiveType ())
-	    return className;
-	throw new IllegalStateException ("Not a primitive type");
-    }
-
-    public boolean match (Type t) {
-	if (type == Type.OBJECT && t.getSort () == Type.OBJECT &&
-	    t.getInternalName ().equals (slashName)) {
-	    return true;
-	} else if (type == t.getSort () || (isPrimitive && mayBeAutoCasted (this, t))) {
-	    return true;
-	}
 	return false;
     }
 
-    private static boolean mayBeAutoCasted (ExpressionType from, Type t) {
-	List<ExpressionType> l = ALLOWED_UPCASTS.get (from);
+    public boolean isClassType () {
+	return true;
+    }
+
+    public boolean isArray () {
+	return false;
+    }
+
+    public int getArrayDimensions () {
+	return 0;
+    }
+
+    public ExpressionType getArrayBaseType () {
+	throw new IllegalStateException ("Not an array type");
+    }
+
+    /** Get the name of the class this type represents. */
+    public String getClassName () {
+	throw new IllegalStateException ("Not a class type: " + this + ", " + this.getClass ().getName ());
+    }
+
+    /** Get the '/'-separated name of a type */
+    public abstract String getSlashName ();
+
+    public abstract String getDescriptor ();
+
+    /** Check if this type match the given Type */
+    public abstract boolean match (Type t);
+
+    public static boolean mayBeAutoCasted (ExpressionType from, Type t) {
+	List<PrimitiveExpressionType> l = ALLOWED_UPCASTS.get (from);
 	if (l == null)
 	    return false;
-	for (ExpressionType et : l)
+	for (PrimitiveExpressionType et : l)
 	    if (et.type == t.getSort ())
 		return true;
 	return false;

@@ -89,13 +89,16 @@ public class ClassInformationProvider {
     }
 
     public boolean isSubType (ExpressionType sub, ExpressionType sup) throws IOException {
+	if (sub.isArray () || sup.isArray ()) {
+	    return false;
+	}
 	Optional<List<String>> supers = getSuperTypes (sub.getClassName(), sub.isArray ());
 	if (supers.isPresent ()) {
 	    List<String> l = supers.get ();
 	    for (String s : l) {
 		if (s.equals (sup.getClassName ()))
 		    return true;
-		if (isSubType (new ExpressionType (s), sup))
+		if (isSubType (ExpressionType.getObjectType (s), sup))
 		    return true;
 	    }
 	}
