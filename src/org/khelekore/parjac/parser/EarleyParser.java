@@ -98,7 +98,7 @@ public class EarleyParser {
 		} else {
 		    recovery = false;
 		}
-		if (states.size () <= currentPosition) {
+		if (states.size () <= currentPosition || attemptedRecoveries > 10) {
 		    addParserError ("No possible next state");
 		    return null;
 		}
