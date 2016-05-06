@@ -644,7 +644,26 @@ public class BytecodeGenerator implements TreeVisitor {
 	    dimExprs.visit (this);
 	ExpressionType et = ace.getExpressionType ().arrayAccess ();
 	if (et.isPrimitiveType ()) {
-	    currentMethod.mv.visitIntInsn (NEWARRAY, Opcodes.T_INT);
+	    int opcode;
+	    if (et == ExpressionType.BYTE)
+		opcode = Opcodes.T_BYTE;
+	    else if (et == ExpressionType.SHORT)
+		opcode = Opcodes.T_SHORT;
+	    else if (et == ExpressionType.CHAR)
+		opcode = Opcodes.T_CHAR;
+	    else if (et == ExpressionType.INT)
+		opcode = Opcodes.T_INT;
+	    else if (et == ExpressionType.LONG)
+		opcode = Opcodes.T_LONG;
+	    else if (et == ExpressionType.FLOAT)
+		opcode = Opcodes.T_FLOAT;
+	    else if (et == ExpressionType.DOUBLE)
+		opcode = Opcodes.T_DOUBLE;
+	    else if (et == ExpressionType.BOOLEAN)
+		opcode = Opcodes.T_BOOLEAN;
+	    else
+		throw new IllegalStateException ("Unknown primitive type: " + et);
+	    currentMethod.mv.visitIntInsn (NEWARRAY, opcode);
 	} else if (et.isArray ()) {
 	    currentMethod.mv.visitTypeInsn (ANEWARRAY, et.getDescriptor ());
 	} else {

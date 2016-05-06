@@ -520,7 +520,14 @@ public class TestBytecodeGeneration {
 
     @Test
     public void testArrayCreation () throws IOException, ReflectiveOperationException {
+	testArrayCreation ("byte", 10, byte[].class);
+	testArrayCreation ("short", 10, short[].class);
+	testArrayCreation ("char", 10, char[].class);
 	testArrayCreation ("int", 10, int[].class);
+	testArrayCreation ("long", 10, long[].class);
+	testArrayCreation ("float", 10, float[].class);
+	testArrayCreation ("double", 10, double[].class);
+	testArrayCreation ("boolean", 10, boolean[].class);
 	testArrayCreation ("String", 10, String[].class);
     }
 
@@ -538,7 +545,7 @@ public class TestBytecodeGeneration {
 	    type + "[] ret = new " + type + "[10]; return ret; }}";
 	Object o = compileAndRunStatic (s);
 	assert o != null : "Got null back";
-	assert o.getClass () == expected : "Got wrong type back: " + o.getClass ();
+	assert o.getClass () == expected : "Got wrong type back: " + o.getClass () + ", expected: " + expected;
     }
 
     private void checkResult (String s, Class<?> retType, int expected)
