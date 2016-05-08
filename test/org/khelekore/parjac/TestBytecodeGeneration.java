@@ -475,6 +475,18 @@ public class TestBytecodeGeneration {
     }
 
     @Test
+    public void testReturnNestedField () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { Foo f; int a; public int foo () { f = new Foo (); f.a = 5; return f.a; }}";
+	checkFieldReturn (s);
+    }
+
+    @Test
+    public void testReturnMethodField () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { Foo f; int a; public int foo () { f = new Foo (); f.a = 5; return f ().a; } Foo f () { return f; }}";
+	checkFieldReturn (s);
+    }
+
+    @Test
     public void testReturnStaticField () throws IOException, ReflectiveOperationException {
 	String s = "public class Foo { static int a; public int foo () { a += 5; return a; }}";
 	checkFieldReturn (s);
