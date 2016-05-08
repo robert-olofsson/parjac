@@ -414,7 +414,12 @@ public class BytecodeGenerator implements TreeVisitor {
 	// TODO: this is pretty ugly, clean it up
 	TreeNode lhs = a.lhs ();
 	Integer localVarId = null;
+	ArrayAccess aa = null;
 	FieldAccess fa = null;
+	if (lhs instanceof ArrayAccess) {
+	    aa = (ArrayAccess)lhs;
+	    lhs = aa.getFrom ();
+	}
 	if (lhs instanceof DottedName)
 	    lhs = ((DottedName)lhs).getFieldAccess ();
 	if (lhs instanceof Identifier) {
@@ -424,8 +429,16 @@ public class BytecodeGenerator implements TreeVisitor {
 	    fa = (FieldAccess)lhs;
 	    id = fa.getFieldId ();
 	} else {
-	    // TODO: handle ArrayAccess
+	    lhs.visit (this);
+	    System.exit (-1); // Keep for now
 	}
+
+	if (aa != null) {
+	    // TODO: need to do as in else below
+	    lhs.visit (this);
+	    aa.getArrayIndexExpression ().visit (this);
+	}
+
 	int instruction = PUTFIELD;
 	String owner = currentClass.fqn;
 
@@ -442,11 +455,17 @@ public class BytecodeGenerator implements TreeVisitor {
 	    }
 	} else {
 	    if (fa != null) {
+		int getInstruction = GETFIELD;
 		TreeNode from = fa.getFrom ();
-		from.visit (this);
-		currentMethod.mv.visitInsn (DUP);
+		if (from instanceof ClassType) {
+		    instruction = PUTSTATIC;
+		    getInstruction = GETSTATIC;
+		} else {
+		    from.visit (this);
+		    currentMethod.mv.visitInsn (DUP);
+		}
 		String classSignature = from.getExpressionType ().getSlashName ();
-		currentMethod.mv.visitFieldInsn (GETFIELD, classSignature, fa.getFieldId (),
+		currentMethod.mv.visitFieldInsn (getInstruction, classSignature, fa.getFieldId (),
 						 fa.getExpressionType ().getDescriptor ());
 	    } else {
 		lhs.visit (this);
@@ -457,17 +476,26 @@ public class BytecodeGenerator implements TreeVisitor {
 	    rhs = toType (a.rhs (), a);
 	rhs.visit (this);
 
-	int op = getAssignmentActionOp (t, a);
-	if (op != -1) {
-	    currentMethod.mv.visitInsn (op);
-	    currentMethod.removeStack (1);
-	}
-	if (localVarId != null) {
-	    storeValue (localVarId, a.lhs ());
+	int op;
+	if (aa != null) {
+	    op = getArrayStoreOp (t, a);
+	    if (op != -1) {
+		currentMethod.mv.visitInsn (op);
+		currentMethod.removeStack (1);
+	    }
 	} else {
-	    currentMethod.mv.visitFieldInsn (instruction, owner, id,
-					     a.getExpressionType ().getDescriptor ());
-	    currentMethod.removeStack (2);
+	    op = getAssignmentActionOp (t, a);
+	    if (op != -1) {
+		currentMethod.mv.visitInsn (op);
+		currentMethod.removeStack (1);
+	    }
+	    if (localVarId != null) {
+		storeValue (localVarId, a.lhs ());
+	    } else {
+		currentMethod.mv.visitFieldInsn (instruction, owner, id,
+						 a.getExpressionType ().getDescriptor ());
+		currentMethod.removeStack (2);
+	    }
 	}
 	return false;
     }
@@ -476,6 +504,25 @@ public class BytecodeGenerator implements TreeVisitor {
 	return t == Token.LEFT_SHIFT_EQUAL ||
 	    t == Token.RIGHT_SHIFT_EQUAL ||
 	    t == Token.RIGHT_SHIFT_UNSIGNED_EQUAL;
+    }
+
+    private int getArrayStoreOp (Token t, Assignment a) {
+	ExpressionType et = a.getExpressionType ();
+	if (et == ExpressionType.BYTE)
+	    return BASTORE;
+	else if (et == ExpressionType.SHORT)
+	    return SASTORE;
+	else if (et == ExpressionType.CHAR)
+	    return CASTORE;
+	else if (et == ExpressionType.INT)
+	    return IASTORE;
+	else if (et == ExpressionType.LONG)
+	    return LASTORE;
+	else if (et == ExpressionType.FLOAT)
+	    return FASTORE;
+	else if (et == ExpressionType.DOUBLE)
+	    return DASTORE;
+	return -1;
     }
 
     private int getAssignmentActionOp (Token t, Assignment a) {

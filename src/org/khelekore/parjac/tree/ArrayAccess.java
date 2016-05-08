@@ -28,6 +28,10 @@ public class ArrayAccess extends PositionNode {
 	this.from = from;
     }
 
+    public TreeNode getArrayIndexExpression () {
+	return exp;
+    }
+
     @Override public void visit (TreeVisitor visitor) {
 	from.visit (visitor);
 	if (visitor.visit (this))

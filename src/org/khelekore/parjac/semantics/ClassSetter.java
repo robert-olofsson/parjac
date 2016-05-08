@@ -402,14 +402,15 @@ public class ClassSetter {
 	    FieldInformation<?> fi = fr.fi;
 	    if (!isField (fi))
 		return new Identifier (p, pos, fi.getExpressionType ());
-	    if (fr.containingClass == cip.getType (containingTypes.peek ().fqn)) {
-		FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
-		fa.setReturnType (fi.getExpressionType ());
-		return fa;
-	    }
 	    FieldDeclaration fd = (FieldDeclaration)fi.getVariableDeclaration ();
 	    if (FlagsHelper.isStatic (fd.getFlags ())) {
 		FieldAccess fa = new FieldAccess (getStatic (fi.getOwner (), pos), p, pos);
+		fa.setReturnType (fi.getExpressionType ());
+		return fa;
+	    }
+
+	    if (fr.containingClass == cip.getType (containingTypes.peek ().fqn)) {
+		FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
 		fa.setReturnType (fi.getExpressionType ());
 		return fa;
 	    }

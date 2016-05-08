@@ -471,6 +471,16 @@ public class TestBytecodeGeneration {
     @Test
     public void testReturnField () throws IOException, ReflectiveOperationException {
 	String s = "public class Foo { int a; public int foo () { a += 5; return a; }}";
+	checkFieldReturn (s);
+    }
+
+    @Test
+    public void testReturnStaticField () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { static int a; public int foo () { a += 5; return a; }}";
+	checkFieldReturn (s);
+    }
+
+    private void checkFieldReturn (String s) throws IOException, ReflectiveOperationException {
 	MethodTypeAndArgs mta = new MethodTypeAndArgs (new Class<?>[0], new Object[0]);
 	Object o = compileAndRunInstanceMethod (s, mta);
 	checkResultObject (o, Integer.class, 5);
@@ -537,6 +547,25 @@ public class TestBytecodeGeneration {
 	Object o = compileAndRunStatic (s);
 	assert o != null : "Got null back";
 	assert o.getClass () == String[][].class : "Got wrong type back: " + o.getClass ();
+    }
+
+    @Test
+    public void testArraySetLocal () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public static int[] foo () { int[] ret = new int[10]; ret[3] = 99; return ret; }}";
+	checkArraySet (s);
+    }
+
+    @Test
+    public void testArraySetStatic () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { static int[] s; public static int[] foo () { s = new int[10]; s[3] = 99; return s; }}";
+	checkArraySet (s);
+    }
+
+    private void checkArraySet (String s) throws IOException, ReflectiveOperationException {
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	int[] ia = (int[])o;
+	Assert.assertEquals (ia[3], 99, "Got wrong value");
     }
 
     private void testArrayCreation (String type, int size, Class<?> expected)
