@@ -580,6 +580,15 @@ public class TestBytecodeGeneration {
 	Assert.assertEquals (ia[3], 99, "Got wrong value");
     }
 
+    @Test
+    public void testArraySetString () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public static String[] foo () { String[] s = new String[10]; s[3] = \"a\"; return s; }}";
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	String[] ia = (String[])o;
+	Assert.assertEquals (ia[3], "a", "Got wrong value");
+    }
+
     private void testArrayCreation (String type, int size, Class<?> expected)
 	throws IOException, ReflectiveOperationException {
 	String s = "public class Foo { public static " + type + "[] foo () { " +

@@ -522,7 +522,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    return FASTORE;
 	else if (et == ExpressionType.DOUBLE)
 	    return DASTORE;
-	return -1;
+	return AASTORE;
     }
 
     private int getAssignmentActionOp (Token t, Assignment a) {
