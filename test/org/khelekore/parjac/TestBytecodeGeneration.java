@@ -554,11 +554,25 @@ public class TestBytecodeGeneration {
     }
 
     @Test
-    public void test2DArrayCreation () throws IOException, ReflectiveOperationException {
+    public void testArrayArrayCreation () throws IOException, ReflectiveOperationException {
 	String s = "public class Foo { public static String[][] foo () { String[][] ret = new String[10][]; return ret; }}";
 	Object o = compileAndRunStatic (s);
 	assert o != null : "Got null back";
 	assert o.getClass () == String[][].class : "Got wrong type back: " + o.getClass ();
+	String[][] ss = (String[][])o;
+	String[] sa = ss[3];
+	Assert.assertNull (sa);
+    }
+
+    @Test
+    public void testMultiArrayCreation () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public static int[][] foo () { int[][] ret = new int[10][20]; return ret; }}";
+	Object o = compileAndRunStatic (s);
+	assert o != null : "Got null back";
+	assert o.getClass () == int[][].class : "Got wrong type back: " + o.getClass ();
+	int[][] ss = (int[][])o;
+	int[] sa = ss[3];
+	Assert.assertNotNull (sa);
     }
 
     @Test
