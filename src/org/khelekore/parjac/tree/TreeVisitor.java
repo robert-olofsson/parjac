@@ -76,6 +76,11 @@ public interface TreeVisitor {
 	return true;
     }
 
+    default void visit (EnumConstantList l) {
+    }
+    default void endEnumConstantList (EnumConstantList l) {
+    }
+
     default boolean visit (EnumConstant e) {
 	return true;
     }

@@ -42,6 +42,9 @@ public class BytecodeGenerator implements TreeVisitor {
     private static final String ENUM_ISIG = "(Ljava/lang/String;I)V";
     private static final String UNNAMED_LABEL = "";
 
+    private static final TreeNode NAME_NODE = new StringLiteral (null, null);
+    private static final TreeNode ID_NODE = new IntLiteral (0, null);
+
     public BytecodeGenerator (Path origin, ClassInformationProvider cip,
 			      BytecodeWriter classWriter) {
 	this.origin = origin;
@@ -111,9 +114,19 @@ public class BytecodeGenerator implements TreeVisitor {
 
 	int mods = c.getFlags ();
 
+	String desc = c.getDescription ();
+	String signature = null;
+	if (currentClass.tn instanceof EnumDeclaration) {
+	    signature = desc;
+	    desc = getEnumConstructorDescription (desc);
+	}
 	MethodInfo mi = new MethodInfo (mods, Result.VOID_RESULT,
-					cw.visitMethod (mods, INIT, c.getDescription (), null, getExceptions (c.getThrows ())));
+					cw.visitMethod (mods, INIT, desc, signature, getExceptions (c.getThrows ())));
 	addMethod (mi);
+	if (currentClass.tn instanceof EnumDeclaration) {
+	    currentMethod.localVariableIds.put ("$name", currentMethod.getId (NAME_NODE));
+	    currentMethod.localVariableIds.put ("$id", currentMethod.getId (ID_NODE));
+	}
 	addParameters (c.getParameters ());
 	return true;
     }
@@ -129,9 +142,19 @@ public class BytecodeGenerator implements TreeVisitor {
 	currentMethod.mv.visitVarInsn (ALOAD, 0); // pushes "this"
 	ExplicitConstructorInvocation eci = cb.getConstructorInvocation ();
 	if (eci == null) {
-	    currentMethod.addStack (1);
-	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, "java/lang/Object", INIT, ISIG, false);
-	    currentMethod.removeStack (1);
+	    int stack = 1;
+	    String superClass = "java/lang/Object";
+	    String initSignature = ISIG;
+	    if (currentClass.tn instanceof EnumDeclaration) {
+		stack = 3;
+		currentMethod.mv.visitVarInsn (ALOAD, 1); // name
+		currentMethod.mv.visitVarInsn (ILOAD, 2); // id
+		superClass = "java/lang/Enum";
+		initSignature = ENUM_ISIG;
+	    }
+	    currentMethod.addStack (stack);
+	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, superClass, INIT, initSignature, false);
+	    currentMethod.removeStack (stack);
 	}
 	return true;
     }
@@ -144,6 +167,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    currentMethod.mv.visitVarInsn (ALOAD, 1); // name
 	    currentMethod.mv.visitVarInsn (ILOAD, 2); // id
 	    currentMethod.mv.visitMethodInsn (INVOKESPECIAL, saf.supername, INIT, ENUM_ISIG, false);
+	    extraStack = 2;
 	} else {
 	    ConstructorArguments args = eci.getArguments ();
 	    if (args != null) {
@@ -189,6 +213,30 @@ public class BytecodeGenerator implements TreeVisitor {
 	return false;
     }
 
+    @Override public void visit (EnumConstantList l) {
+	addMethod (getStaticBlock ());
+    }
+
+    @Override public void endEnumConstantList (EnumConstantList l) {
+	List<EnumConstant> ls = l.get ();
+	int size = ls.size ();
+	addMethod (getStaticBlock ());
+	visit (size);
+	currentMethod.mv.visitTypeInsn (ANEWARRAY, currentClass.fqn);
+	for (int i = 0; i < size; i++) {
+	    EnumConstant e = ls.get (i);
+	    ExpressionType et = e.getExpressionType ();
+	    String owner = et.getSlashName ();
+	    String desc = et.getDescriptor ();
+	    currentMethod.mv.visitInsn (DUP);
+	    visit (i);
+	    currentMethod.mv.visitFieldInsn (GETSTATIC, owner, e.getId (), desc);
+	    currentMethod.mv.visitInsn (AASTORE);
+	}
+	currentMethod.mv.visitFieldInsn (PUTSTATIC, currentClass.fqn, "$VALUES", "[L" + currentClass.fqn + ";");
+	removeMethod ();
+    }
+
     @Override public boolean visit (EnumConstant e) {
 	ClassWriter cw = currentClass.cw;
 	int mods = e.getFlags ();
@@ -196,8 +244,27 @@ public class BytecodeGenerator implements TreeVisitor {
 	String desc = e.getExpressionType ().getDescriptor ();
 	FieldVisitor fw = cw.visitField (mods, id, desc, null, null);
 	fw.visitEnd ();
-	// TODO: handle initialization
+	String sname = e.getExpressionType ().getSlashName ();
+	currentMethod.mv.visitTypeInsn (NEW, sname);
+	currentMethod.mv.visitInsn (DUP);
+	currentMethod.mv.visitLdcInsn (e.getId ());
+	visit (currentClass.enumConstantCount++);
+	ArgumentList al = e.getArgumentList ();
+	int numArgs = 0;
+	if (al != null) {
+	    numArgs = al.size ();
+	    al.visit (this);
+	}
+	currentMethod.addStack (4 + numArgs);
+	String owner = e.getExpressionType ().getSlashName ();
+	String constructorDesc = getEnumConstructorDescription (e.getDescription ());
+	currentMethod.mv.visitMethodInsn (INVOKESPECIAL, owner, INIT, constructorDesc, false);
+	currentMethod.mv.visitFieldInsn (PUTSTATIC, owner, e.getId (), e.getExpressionType ().getDescriptor ());
 	return false;
+    }
+
+    private String getEnumConstructorDescription (String desc) {
+	return "(Ljava/lang/String;I" + desc.substring (1);
     }
 
     private void storeValue (int flags, String id, String type) {
@@ -1300,6 +1367,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	private final String fqn;
 	private final ClassWriter cw;
 	private MethodInfo staticBlock;
+	private int enumConstantCount = 0;
 
 	public ClassWriterHolder (TreeNode tn) {
 	    this.tn = tn;
@@ -1315,11 +1383,12 @@ public class BytecodeGenerator implements TreeVisitor {
 	    SuperAndFlags saf = getSuperAndFlags ();
 	    if (origin != null)
 		cw.visitSource (origin.getFileName ().toString (), null);
-	    cw.visit (V1_8, saf.flags, fqn, /*signature*/null, saf.supername, saf.implementedInterfaces);
+	    cw.visit (V1_8, saf.flags, fqn, saf.signature, saf.supername, saf.implementedInterfaces);
 	}
 
 	public SuperAndFlags getSuperAndFlags () {
 	    String supername = "java/lang/Object";
+	    String signature = null;
 	    int flags = 0;
 	    List<String> superInterfaces = null;
 	    if (tn instanceof NormalClassDeclaration) {
@@ -1332,8 +1401,9 @@ public class BytecodeGenerator implements TreeVisitor {
 		superInterfaces = getSuperInterfaces (ncd.getSuperInterfaces ());
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
-		supername = "java.lang.Enum<" + ed.getId () + ">";
-		flags = (ed.getFlags () | ACC_FINAL);
+		supername = "java/lang/Enum";
+		signature = "Ljava/lang/Enum<L" + ed.getId () + ";>;";
+		flags = (ed.getFlags () | ACC_FINAL | ACC_ENUM);
 		superInterfaces = getSuperInterfaces (ed.getSuperInterfaces ());
 	    } else if (tn instanceof NormalInterfaceDeclaration) {
 		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
@@ -1343,7 +1413,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		    superInterfaces = getSuperInterfaces (ei.get ());
 	    }
 	    // TODO: handle interface flags
-	    return new SuperAndFlags (supername, flags, superInterfaces);
+	    return new SuperAndFlags (supername, signature, flags, superInterfaces);
 	}
 
 	private List<String>  getSuperInterfaces (InterfaceTypeList superInterfaces) {
@@ -1381,11 +1451,13 @@ public class BytecodeGenerator implements TreeVisitor {
 
     private static class SuperAndFlags {
 	public final String supername;
+	public final String signature;
 	public final int flags;
 	public final String[] implementedInterfaces;
 
-	public SuperAndFlags (String supername, int flags, List<String> implementedInterfaces) {
+	public SuperAndFlags (String supername, String signature, int flags, List<String> implementedInterfaces) {
 	    this.supername = supername;
+	    this.signature = signature;
 	    this.flags = flags;
 	    if (implementedInterfaces == null)
 		this.implementedInterfaces = null;

@@ -9,14 +9,16 @@ import java.util.List;
 import org.khelekore.parjac.grammar.Rule;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.lexer.Token;
+import org.khelekore.parjac.semantics.MethodInformation;
 import org.objectweb.asm.Opcodes;
 
-public class EnumConstant extends PositionNode implements FlaggedType {
+public class EnumConstant extends PositionNode implements FlaggedType, MethodInformationHolder {
     private String type; // fqn of enum declaration
     private final List<TreeNode> annotations;
     private final String id;
     private final ArgumentList arguments;
     private final ClassBody body;
+    private MethodInformation actualMethod; // the constructor we are using for this constant
 
     public EnumConstant (Rule r, Deque<TreeNode> parts, ParsePosition ppos) {
 	super (ppos);
@@ -71,16 +73,24 @@ public class EnumConstant extends PositionNode implements FlaggedType {
 	return id;
     }
 
-    public void visit (TreeVisitor visitor) {
-	if (arguments != null)
-	    arguments.visit (visitor);
+    public ArgumentList getArgumentList () {
+	return arguments;
+    }
+
+    @Override public void visit (TreeVisitor visitor) {
 	if (visitor.visit (this)) {
+	    if (arguments != null)
+		arguments.visit (visitor);
 	    if (body != null)
 		body.visit (visitor);
 	}
     }
 
-    public Collection<? extends TreeNode> getChildNodes () {
+    @Override public void simpleVisit (TreeVisitor visitor) {
+	visitor.visit (this);
+    }
+
+    @Override public Collection<? extends TreeNode> getChildNodes () {
 	if (arguments == null && body == null)
 	    return Collections.emptyList ();
 	List<TreeNode> ls = new ArrayList<> ();
@@ -93,5 +103,17 @@ public class EnumConstant extends PositionNode implements FlaggedType {
 
     @Override public ExpressionType getExpressionType () {
 	return ExpressionType.getObjectType (type);
+    }
+
+    @Override public void setMethodInformation (MethodInformation actualMethod) {
+	this.actualMethod = actualMethod;
+    }
+
+    public String getDescription () {
+	return actualMethod.getDesc ();
+    }
+
+    public int getActualMethodFlags () {
+	return actualMethod.getAccess ();
     }
 }

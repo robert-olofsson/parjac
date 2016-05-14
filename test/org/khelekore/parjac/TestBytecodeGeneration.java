@@ -612,6 +612,33 @@ public class TestBytecodeGeneration {
 	assert o.getClass () == expected : "Got wrong type back: " + o.getClass () + ", expected: " + expected;
     }
 
+    @Test
+    public void testEnum () throws IOException, ReflectiveOperationException {
+	String s = "public enum Foo { A }";
+	Class<?> c = getClass (s, "Foo");
+	checkEnum (c, 1, "A");
+	s = "public enum E { A(1), B(187); private E (int i){}}";
+	c = getClass (s, "E");
+	checkEnum (c, 2, "A");
+    }
+
+    private void checkEnum (Class<?> c, int enumConstants, String enumConstant) throws ReflectiveOperationException {
+	Assert.assertTrue (c.isEnum ());
+	Object[] constants = c.getEnumConstants ();
+	Assert.assertEquals (constants.length, enumConstants, "Wrong number of enum constants");
+	Assert.assertNotNull (c.getDeclaredMethod ("values"));
+	Assert.assertNotNull (c.getDeclaredMethod ("valueOf", String.class));
+	Assert.assertTrue (findEnumConstant (constants, enumConstant), "Failed to find enum constant");
+    }
+
+    private boolean findEnumConstant (Object[] constants, String enumConstant) {
+	for (Object o : constants) {
+	    if (o.toString ().equals (enumConstant))
+		return true;
+	}
+	return false;
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);

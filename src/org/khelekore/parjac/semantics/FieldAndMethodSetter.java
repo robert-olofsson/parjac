@@ -21,6 +21,7 @@ import org.khelekore.parjac.tree.ArgumentList;
 import org.khelekore.parjac.tree.ClassBody;
 import org.khelekore.parjac.tree.ClassInstanceCreationExpression;
 import org.khelekore.parjac.tree.ClassType;
+import org.khelekore.parjac.tree.EnumConstant;
 import org.khelekore.parjac.tree.EnumDeclaration;
 import org.khelekore.parjac.tree.ExplicitConstructorInvocation;
 import org.khelekore.parjac.tree.ExpressionType;
@@ -104,6 +105,13 @@ public class FieldAndMethodSetter implements TreeVisitor {
 	}
 	ArgumentList al = eci.getArguments ().getArgumentList ();
 	findConstructor (fqn, al, eci);
+	return false;
+    }
+
+    @Override public boolean visit (EnumConstant e) {
+	String fqn = cip.getFullName (containingClasses.getLast ());
+	ArgumentList al = e.getArgumentList ();
+	findConstructor (fqn, al, e);
 	return false;
     }
 
