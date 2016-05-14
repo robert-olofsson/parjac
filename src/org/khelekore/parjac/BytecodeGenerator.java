@@ -167,8 +167,11 @@ public class BytecodeGenerator implements TreeVisitor {
     @Override public boolean visit (FieldDeclaration f) {
 	ClassWriter cw = currentClass.cw;
 	int mods = f.getFlags ();
-	if (FlagsHelper.isStatic (mods))
+	boolean addedMethod = false;
+	if (FlagsHelper.isStatic (mods) && f.hasInitializer ()) {
+	    addedMethod = true;
 	    addMethod (getStaticBlock ());
+	}
 	// TODO: handle initializer blocks
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    String id = vd.getId ();
@@ -181,7 +184,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		storeValue (mods, id, f.getExpressionType ().getDescriptor ());
 	    }
 	}
-	if (FlagsHelper.isStatic (mods))
+	if (addedMethod)
 	    removeMethod ();
 	return false;
     }

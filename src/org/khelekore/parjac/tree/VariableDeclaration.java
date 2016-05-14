@@ -42,6 +42,10 @@ public abstract class VariableDeclaration extends FlaggedTypeBase {
 	return variables;
     }
 
+    public boolean hasInitializer () {
+	return variables.get ().stream ().anyMatch (vd -> vd.getInitializer () != null);
+    }
+
     @Override public ExpressionType getExpressionType () {
 	return type.getExpressionType ();
     }
