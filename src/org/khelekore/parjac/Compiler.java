@@ -23,6 +23,7 @@ import org.khelekore.parjac.semantics.CompiledTypesHolder;
 import org.khelekore.parjac.semantics.AddImplicitMethods;
 import org.khelekore.parjac.semantics.InterfaceMemberFlagSetter;
 import org.khelekore.parjac.semantics.FieldAndMethodSetter;
+import org.khelekore.parjac.semantics.FieldRegistrator;
 import org.khelekore.parjac.semantics.NameModifierChecker;
 import org.khelekore.parjac.semantics.ReturnChecker;
 import org.khelekore.parjac.tree.CompilationUnit;
@@ -127,6 +128,8 @@ public class Compiler {
 	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
 	if (diagnostics.hasError ())
 	    return;
+	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
+	trees.parallelStream().forEach (t -> registerFields (t));
 	/*
 	 * 1: Set classes for fields, method parameters and method returns, setup scopes
 	 *    Scope hangs on class, method, for-clause and try (with resource) clause
@@ -137,7 +140,6 @@ public class Compiler {
 	    trees.forEach (t -> System.err.println ("class set tree: " + t));
 	if (diagnostics.hasError ())
 	    return;
-	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
 	// Check constructors and make sure there is a no-args constructor if needed
 	runTimed (() -> addImplicitMethods (trees), "Checking constructors");
 	if (diagnostics.hasError ())
@@ -158,6 +160,11 @@ public class Compiler {
     private void flagInterfaceMembersAsPublic (SyntaxTree tree) {
 	InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (tree);
 	imfs.reflag ();
+    }
+
+    private void registerFields (SyntaxTree tree) {
+	FieldRegistrator fr = new FieldRegistrator (cip, tree, diagnostics);
+	fr.findFields ();
     }
 
     private void addImplicitMethods (List<SyntaxTree> trees) {

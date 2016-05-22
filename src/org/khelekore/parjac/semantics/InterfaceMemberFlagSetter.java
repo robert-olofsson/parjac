@@ -29,6 +29,7 @@ public class InterfaceMemberFlagSetter {
     }
 
     private class MemberVisitor implements TreeVisitor {
+	// When top of stack is true we are inside an interface
 	private Deque<Boolean> types = new ArrayDeque<> ();
 
 	public MemberVisitor () {

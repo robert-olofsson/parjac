@@ -676,16 +676,13 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
-    /*
     @Test
     public void testDirectInheritedField () throws IOException {
 	parseAndSetClasses ("public class A { protected A a; }",
 			    "class B extends A { void b () { a = new B (); }}");
 	assertNoErrors ();
     }
-    */
 
-    /*
     @Test
     public void testIndirectInheritedField () throws IOException {
     	parseAndSetClasses ("public class A { protected A a; }",
@@ -693,7 +690,6 @@ public class TestClassSetter extends TestBase {
 			    "class C extends B { void c () { a = new C (); }}");
 	assertNoErrors ();
     }
-    */
 
     @Test
     public void testInnerClassFieldsConstructorUsage () throws IOException {

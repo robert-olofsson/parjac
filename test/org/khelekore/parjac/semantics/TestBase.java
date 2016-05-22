@@ -59,6 +59,8 @@ public class TestBase {
 	    cip.addTypes (st, diagnostics);
 	    InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (st);
 	    imfs.reflag ();
+	    FieldRegistrator fr = new FieldRegistrator (cip, st, diagnostics);
+	    fr.findFields ();
 	    trees.add (st);
 	}
 	ClassSetter.fillInClasses (cip, trees, diagnostics);

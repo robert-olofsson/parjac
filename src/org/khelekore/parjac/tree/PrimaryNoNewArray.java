@@ -34,6 +34,22 @@ public class PrimaryNoNewArray {
 	}
     }
 
+    /** This class is not part of the grammar, but having it makes it
+     *  easier to handle super class fields.
+     */
+    public static class SuperThisPrimary extends ThisPrimary {
+	private ExpressionType superClassType;
+
+	public SuperThisPrimary (ParsePosition pos, String superClassName) {
+	    super (pos);
+	    superClassType = ExpressionType.getObjectType (superClassName);
+	}
+
+	@Override public ExpressionType getExpressionType () {
+	    return superClassType;
+	}
+    }
+
     public static class DottedThis extends PositionNode {
 	private final TreeNode name;
 

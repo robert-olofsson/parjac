@@ -1,10 +1,16 @@
 package org.khelekore.parjac.semantics;
 
+import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.EnumConstant;
@@ -74,7 +80,7 @@ public class Scope {
     private void tryToAdd (FieldInformation<?> fi, boolean isStatic,
 			   SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	String name = fi.getName ();
-	FindResult fr = find (name, isStatic);
+	FindResult fr = find (null, name, isStatic, null);
 	if (fr != null) {
 	    ParsePosition fpp = fr.fi.getParsePosition ();
 	    if (!fr.passedClassScope || fr.fi.getOwner () == owner) {
@@ -94,18 +100,45 @@ public class Scope {
     }
 
     /** Try to find a variable named id in this and all parent Scopes. */
-    public FindResult find (String id, boolean isStatic) {
+    public FindResult find (ClassInformationProvider cip, String id,
+			    boolean isStatic, CompilerDiagnosticCollector diagnostics) {
 	boolean passedClassScope = false;
 	Scope s = this;
 	while (s != null) {
 	    passedClassScope |= s.type == Type.CLASS;
 	    FieldInformation<?> fi = s.variables.get (id);
+	    if (fi == null && cip != null && s.type == Type.CLASS) {
+		try {
+		    fi = checkSuperClasses (cip, s.owner, id);
+		} catch (IOException e) {
+		    diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + s.owner, e));
+		}
+	    }
 	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic ()))
 		return new FindResult (fi, s.currentClass, passedClassScope);
 	    isStatic |= s.isStatic;
 	    s = s.parent;
 	}
 	return null;
+    }
+
+    private FieldInformation<?> checkSuperClasses (ClassInformationProvider cip, TreeNode owner, String id) throws IOException {
+	Deque<String> superClasses = new ArrayDeque<> ();
+	addSupers (cip, superClasses, cip.getFullName (owner));
+	while (!superClasses.isEmpty ()) {
+	    String sclz = superClasses.removeFirst ();
+	    FieldInformation<?> fi = cip.getFieldInformation (sclz, id);
+	    if (fi != null)
+		return fi;
+	    addSupers (cip, superClasses, sclz);
+	}
+	return null;
+    }
+
+    private void addSupers (ClassInformationProvider cip, Deque<String> superClasses, String clz) throws IOException {
+	Optional<List<String>> supers = cip.getSuperTypes (clz, false);
+	if (supers.isPresent ())
+	    superClasses.addAll (supers.get ());
     }
 
     private void add (FieldInformation<?> fi) {
@@ -125,12 +158,12 @@ public class Scope {
     public static class FindResult {
 	public final FieldInformation<?> fi;
 	public final TreeNode containingClass;
-	public final boolean passedClassScope;
+	private final boolean passedClassScope;
 
 	public FindResult (FieldInformation<?> fi, TreeNode containingClass, boolean passedClassScope) {
 	    this.fi = fi;
-	    this.passedClassScope = passedClassScope;
 	    this.containingClass = containingClass;
+	    this.passedClassScope = passedClassScope;
 	}
 
 	@Override public String toString () {

@@ -322,7 +322,7 @@ public class ClassSetter {
 
 	@Override public void visit (Identifier i) {
 	    String id = i.get ();
-	    Scope.FindResult fr = currentScope.find (id, currentScope.isStatic ());
+	    Scope.FindResult fr = currentScope.find (cip, id, currentScope.isStatic (), diagnostics);
 	    if (fr == null) {
 		StaticFieldAccess sfa = findStaticImportedField (id);
 		if (sfa != null) {
@@ -372,7 +372,7 @@ public class ClassSetter {
 	    for (int i = 0, s = parts.size (); i < s; i++) {
 		String p = parts.get (i);
 		if (i == 0) {
-		    Scope.FindResult fr = scope.find (p, scope.isStatic ());
+		    Scope.FindResult fr = scope.find (cip, p, scope.isStatic (), diagnostics);
 		    if (fr != null) {
 			current = getFieldOrLocalAccess (p, pos, fr);
 			continue;
@@ -410,7 +410,8 @@ public class ClassSetter {
 	    }
 
 	    if (fr.containingClass == cip.getType (containingTypes.peek ().fqn)) {
-		FieldAccess fa = new FieldAccess (getThis (pos), p, pos);
+		TreeNode from = fi.getOwner () == fr.containingClass ? getThis (pos) : getSuperThis (pos, cip.getFullName (fi.getOwner ()));
+		FieldAccess fa = new FieldAccess (from, p, pos);
 		fa.setReturnType (fi.getExpressionType ());
 		return fa;
 	    }
@@ -427,6 +428,10 @@ public class ClassSetter {
 	    PrimaryNoNewArray.ThisPrimary t = new PrimaryNoNewArray.ThisPrimary (pos);
 	    t.setExpressionType (ExpressionType.getObjectType (containingTypes.peek ().fqn));
 	    return t;
+	}
+
+	private TreeNode getSuperThis (ParsePosition pos, String fqn) {
+	    return new PrimaryNoNewArray.SuperThisPrimary (pos, fqn);
 	}
 
 	private TreeNode getStatic (TreeNode owner, ParsePosition pos) {
@@ -471,7 +476,7 @@ public class ClassSetter {
 	private void replaceAndSetType (TreeNode tn) {
 	    if (tn instanceof Identifier && tn.getExpressionType () == null) {
 		Identifier i = (Identifier)tn;
-		Scope.FindResult fr = currentScope.find (i.get (), currentScope.isStatic ());
+		Scope.FindResult fr = currentScope.find (cip, i.get (), currentScope.isStatic (), diagnostics);
 		if (fr != null) {
 		    i.setActual (new Identifier (i.get (), i.getParsePosition (), fr.fi.getExpressionType ()));
 		}
@@ -514,7 +519,6 @@ public class ClassSetter {
 
 	private void addFields (String fqn, TreeNode tn, Scope scope) {
 	    tn.visit (new FieldRegistrator (scope));
-	    cip.registerFields (fqn, scope.getVariables ());
 	}
 
 	private class FieldRegistrator extends SiblingVisitor {
