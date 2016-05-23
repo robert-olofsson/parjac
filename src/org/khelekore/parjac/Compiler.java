@@ -125,11 +125,11 @@ public class Compiler {
     }
 
     private void checkSemantics (List<SyntaxTree> trees) {
-	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
+	runTimed (() -> addTypes (trees), "Adding types");
 	if (diagnostics.hasError ())
 	    return;
-	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
-	trees.parallelStream().forEach (t -> registerFields (t));
+	runTimed (() -> flagInterfaceMembersAsPublic (trees), "Interface members public");
+	runTimed (() -> registerFields (trees), "Registering fields");
 	/*
 	 * 1: Set classes for fields, method parameters and method returns, setup scopes
 	 *    Scope hangs on class, method, for-clause and try (with resource) clause
@@ -157,9 +157,21 @@ public class Compiler {
 	// Check generics
     }
 
+    private void addTypes (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> cip.addTypes (t, diagnostics));
+    }
+
+    private void flagInterfaceMembersAsPublic (List<SyntaxTree> trees) {
+	trees.parallelStream ().forEach (t -> flagInterfaceMembersAsPublic (t));
+    }
+
     private void flagInterfaceMembersAsPublic (SyntaxTree tree) {
 	InterfaceMemberFlagSetter imfs = new InterfaceMemberFlagSetter (tree);
 	imfs.reflag ();
+    }
+
+    private void registerFields (List<SyntaxTree> trees) {
+	trees.parallelStream().forEach (t -> registerFields (t));
     }
 
     private void registerFields (SyntaxTree tree) {
