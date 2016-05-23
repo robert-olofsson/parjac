@@ -57,7 +57,7 @@ public class Main {
 	Compiler c = new Compiler (diagnostics, g, settings);
 	c.compile ();
 	long endTime = System.nanoTime ();
-	System.out.printf ("time taken: %.3f\n", ((endTime - startTime) / 1e9));
+	System.out.printf ("Time taken: %.3f seconds\n", ((endTime - startTime) / 1e9));
     }
 
     private CompilationArguments parseArgs (String[] args) {
