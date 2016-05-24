@@ -164,6 +164,12 @@ public class TestClassSetter extends TestBase {
     }
 
     @Test
+    public void testGenericTypeInConstructor () throws IOException {
+	parseAndSetClasses ("class Foo<T> { private T t; public Foo (T t) {this.t = t;}}");
+	assertNoErrors ();
+    }
+
+    @Test
     public void testImportedInner () throws IOException {
 	parseAndSetClasses ("package foo;\n" +
 			    "import java.util.Map.Entry;\n" +

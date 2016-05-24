@@ -42,8 +42,10 @@ public class FormalParameterList extends PositionNode {
 	if (nfpl != null) {
 	    List<FormalParameter> ls = nfpl.getFormalParameters ();
 	    if (ls != null) {
-		for (FormalParameter fp : ls)
-		    sb.append (fp.getExpressionType ().getDescriptor ());
+		for (FormalParameter fp : ls) {
+		    ExpressionType et = fp.getExpressionType ();
+		    sb.append (et.getDescriptor ());
+		}
 	    }
 	    LastFormalParameter lfp = nfpl.getLastFormalParameter ();
 	    if (lfp != null)

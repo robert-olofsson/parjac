@@ -26,7 +26,8 @@ public class ClassSetter {
     private final DottedName packageName;
     private final ImportHandler ih = new ImportHandler ();
     private Deque<BodyPart> containingTypes = new ArrayDeque<> ();
-    private final Deque<Map<String, TypeParameter>> types = new ArrayDeque<> ();
+    private final Map<TreeNode, TypeHolder> types = new HashMap<> ();
+    private TypeHolder currentTypes = null;
 
     private final static String[] EMTPY = new String[0];
 
@@ -44,6 +45,8 @@ public class ClassSetter {
 	    trees.stream ().map (t -> new ClassSetter (cip, t, diagnostics)).collect (Collectors.toList ());
 	if (diagnostics.hasError ())
 	    return;
+
+	classSetters.parallelStream ().forEach (cs -> cs.registerSuperTypes ());
 
 	// Fill in correct classes
 	// Depending on order we may not have correct parents on first try.
@@ -70,6 +73,60 @@ public class ClassSetter {
 	packageName = cu.getPackage ();
 	ih.addDefaultPackages ();
 	cu.getImports ().forEach (i -> i.visit (ih));
+    }
+
+    public void registerSuperTypes () {
+	SuperTypeRegistrator str = new SuperTypeRegistrator ();
+	tree.getCompilationUnit ().visit (str);
+    }
+
+    private class SuperTypeRegistrator implements TreeVisitor, ErrorHandler {
+	@Override public boolean visit (NormalClassDeclaration c) {
+	    pushType (c, c.getBody (), c.getTypeParameters ());
+	    ClassType superclass = c.getSuperClass ();
+	    if (superclass != null)
+		setType (superclass, this);
+	    visitSuperInterfaces (c.getSuperInterfaces (), this);
+	    return true;
+	}
+
+	@Override public boolean visit (EnumDeclaration e) {
+	    pushType (e, e.getBody (), null);
+	    visitSuperInterfaces (e.getSuperInterfaces (), this);
+	    return true;
+	}
+
+	@Override public boolean visit (NormalInterfaceDeclaration i) {
+	    pushType (i, i.getBody (), i.getTypeParameters ());
+	    ExtendsInterfaces ei = i.getExtendsInterfaces ();
+	    if (ei != null)
+		visitSuperInterfaces (ei.get (), this);
+	    return true;
+	}
+
+	@Override public boolean visit (AnnotationTypeDeclaration a) {
+	    pushType (a, a.getBody (), null);
+	    return true;
+	}
+
+	private void pushType (TreeNode type, TreeNode body, TypeParameters tps) {
+	    String fqn = cip.getFullName (type);
+	    containingTypes.push (new BodyPart (fqn, body));
+	    registerTypeParameters (type, tps, this);
+	}
+
+	@Override public void endType () {
+	    containingTypes.pop ();
+	    currentTypes = currentTypes.parent;
+	}
+
+	@Override public boolean mayReport () {
+	    return true;
+	}
+
+	@Override public void setIncomplete () {
+	    // ignore
+	}
     }
 
     public void addScopes (Queue<ClassSetter> rest, int level) {
@@ -110,11 +167,11 @@ public class ClassSetter {
 	    this.level = level;
 	}
 
-	public boolean mayReport () {
+	@Override public boolean mayReport () {
 	    return level > 0;
 	}
 
-	public void setIncomplete () {
+	@Override public void setIncomplete () {
 	    completed = false;
 	}
 
@@ -123,49 +180,43 @@ public class ClassSetter {
 	}
 
 	@Override public boolean visit (NormalClassDeclaration c) {
-	    ClassType superclass = c.getSuperClass ();
-	    if (superclass != null)
-		setType (superclass, this);
-	    visitSuperInterfaces (c.getSuperInterfaces (), this);
 	    String fqn = cip.getFullName (c);
-	    containingTypes.push (new BodyPart (fqn, c.getBody ()));
-	    registerTypeParameters (c.getTypeParameters (), this);
+	    pushType (c, fqn, c.getBody ());
 	    addScopeAndFields (fqn, c, c.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (EnumDeclaration e) {
 	    String fqn = cip.getFullName (e);
-	    containingTypes.push (new BodyPart (fqn, e.getBody ()));
-	    visitSuperInterfaces (e.getSuperInterfaces (), this);
-	    registerTypeParameters (null, this);
+	    pushType (e, fqn, e.getBody ());
 	    addScopeAndFields (fqn, e, e.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (NormalInterfaceDeclaration i) {
 	    String fqn = cip.getFullName (i);
-	    containingTypes.push (new BodyPart (fqn, i.getBody ()));
-	    ExtendsInterfaces ei = i.getExtendsInterfaces ();
-	    if (ei != null)
-		visitSuperInterfaces (ei.get (), this);
-	    registerTypeParameters (i.getTypeParameters (), this);
+	    pushType (i, fqn, i.getBody ());
 	    addScopeAndFields (fqn, i, i.getBody ());
 	    return true;
 	}
 
 	@Override public boolean visit (AnnotationTypeDeclaration a) {
 	    String fqn = cip.getFullName (a);
-	    containingTypes.push (new BodyPart (fqn, a.getBody ()));
-	    registerTypeParameters (null, this);
+	    pushType (a, fqn, a.getBody ());
 	    addScopeAndFields (fqn, a, a.getBody ());
 	    return true;
 	}
 
+	private void pushType (TreeNode type, String fqn, TreeNode body) {
+	    containingTypes.push (new BodyPart (fqn, body));
+	    currentTypes = types.get (type);
+	}
+
 	@Override public void endType () {
-	    registerMethods (containingTypes.pop ());
-	    types.pop ();
+	    if (completed)
+		registerMethods (containingTypes.pop ());
 	    currentScope = currentScope.endScope ();
+	    currentTypes = currentTypes.parent;
 	}
 
 	@Override public boolean anonymousClass (TreeNode from, ClassType ct, ClassBody b) {
@@ -174,7 +225,6 @@ public class ClassSetter {
 		containingTypes.push (new BodyPart (ct.getFullName (), null));
 		String fqn = cip.getFullName (b);
 		containingTypes.push (new BodyPart (fqn, b));
-		registerTypeParameters (null, this);
 		return true;
 	    }
 	    // No need to continue here
@@ -184,7 +234,6 @@ public class ClassSetter {
 
 	@Override public void endAnonymousClass (ClassType ct, ClassBody b) {
 	    if (ct.getFullName () != null) {
-		types.pop ();
 		registerMethods (containingTypes.pop ());
 		containingTypes.pop ();
 	    }
@@ -194,7 +243,7 @@ public class ClassSetter {
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
 
 	@Override public boolean visit (ConstructorDeclaration c) {
-	    registerTypeParameters (c.getTypeParameters (), this);
+	    registerTypeParameters (c, c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
 	    setThrowsTypes (c.getThrows ());
 	    addScopeAndParameters (c, c.getParameters ());
@@ -204,7 +253,7 @@ public class ClassSetter {
 
 	@Override public void endConstructor (ConstructorDeclaration c) {
 	    currentScope = currentScope.endScope ();
-	    types.pop ();
+	    currentTypes = currentTypes.parent;
 	}
 
 	@Override public boolean visit (FieldDeclaration f) {
@@ -218,7 +267,7 @@ public class ClassSetter {
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
-	    registerTypeParameters (m.getTypeParameters (), this);
+	    registerTypeParameters (m, m.getTypeParameters (), this);
 	    Result r = m.getResult ();
 	    if (r instanceof Result.TypeResult)
 		setType (r.getReturnType (), this);
@@ -236,7 +285,7 @@ public class ClassSetter {
 
 	@Override public void endMethod (MethodDeclaration m) {
 	    currentScope = currentScope.endScope ();
-	    types.pop ();
+	    currentTypes = currentTypes.parent;
 	}
 
 	@Override public boolean visit (Block b) {
@@ -594,18 +643,20 @@ public class ClassSetter {
 	    setTypes (superInterfaces, eh);
     }
 
-    private void registerTypeParameters (TypeParameters tps, ErrorHandler eh) {
+    private void registerTypeParameters (TreeNode tn, TypeParameters tps, ErrorHandler eh) {
+	Map<String, TypeParameter> tt;
 	if (tps != null) {
-	    Map<String, TypeParameter> tt = new HashMap<> ();
+	    tt = new HashMap<> ();
 	    for (TypeParameter tp : tps.get ()) {
 		cip.registerTypeParameter (containingTypes.peek ().fqn, tp);
 		tt.put (tp.getId (), tp);
 		checkClasses (tp, eh);
 	    }
-	    types.push (tt);
 	} else {
-	    types.push (Collections.emptyMap ());
+	    tt = Collections.emptyMap ();
 	}
+	currentTypes = new TypeHolder (currentTypes, tt);
+	types.put (tn, currentTypes);
     }
 
     private void checkClasses (TypeParameter tp, ErrorHandler eh) {
@@ -665,9 +716,11 @@ public class ClassSetter {
 	    }
 	    if (fqn == null) {
 		eh.setIncomplete ();
-		if (eh.mayReport ())
+		if (eh.mayReport ()) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), ct.getParsePosition (),
 								 "Failed to find class: %s", id1));
+		}
+		return;
 	    }
 	    ct.setFullName (fqn);
 	    for (SimpleClassType sct : ct.get ()) {
@@ -822,10 +875,12 @@ public class ClassSetter {
     }
 
     private TypeParameter getTypeParameter (String id) {
-	for (Map<String, TypeParameter> names : types) {
-	    TypeParameter tp = names.get (id);
+	TypeHolder th = currentTypes;
+	while (th != null) {
+	    TypeParameter tp = th.types.get (id);
 	    if (tp != null)
 		return tp;
+	    th = th.parent;
 	}
 	return null;
     }
@@ -1038,6 +1093,16 @@ public class ClassSetter {
 	public StaticFieldAccess (String fqn, FieldInformation<?> field) {
 	    this.fqn = fqn;
 	    this.field = field;
+	}
+    }
+
+    private static class TypeHolder {
+	private final TypeHolder parent;
+	private final Map<String, TypeParameter> types;
+
+	public TypeHolder (TypeHolder parent, Map<String, TypeParameter> types) {
+	    this.parent = parent;
+	    this.types = types;
 	}
     }
 
