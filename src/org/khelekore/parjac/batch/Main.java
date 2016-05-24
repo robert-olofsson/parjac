@@ -14,6 +14,7 @@ import org.khelekore.parjac.BytecodeWriter;
 import org.khelekore.parjac.CompilationArguments;
 import org.khelekore.parjac.Compiler;
 import org.khelekore.parjac.CompilerDiagnosticCollector;
+import org.khelekore.parjac.DiagnosticsSorter;
 import org.khelekore.parjac.FileBytecodeWriter;
 import org.khelekore.parjac.FileSourceProvider;
 import org.khelekore.parjac.JavaGrammarHelper;
@@ -36,7 +37,7 @@ public class Main {
 	Main main = new Main (collector);
 	main.compile (args);
 	Locale locale = Locale.getDefault ();
-	collector.getDiagnostics ().
+	collector.getDiagnostics ().sorted (new DiagnosticsSorter ()).
 	    forEach (d -> System.err.println (d.getMessage (locale)));
     }
 
