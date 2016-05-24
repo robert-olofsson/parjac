@@ -175,7 +175,6 @@ public class ClassSetter {
 		String fqn = cip.getFullName (b);
 		containingTypes.push (new BodyPart (fqn, b));
 		registerTypeParameters (null, this);
-		addFields (fqn, b, currentScope);
 		return true;
 	    }
 	    // No need to continue here
@@ -206,6 +205,16 @@ public class ClassSetter {
 	@Override public void endConstructor (ConstructorDeclaration c) {
 	    currentScope = currentScope.endScope ();
 	    types.pop ();
+	}
+
+	@Override public boolean visit (FieldDeclaration f) {
+	    setType (f.getType (), ScopeSetter.this);
+	    return true;
+	}
+
+	@Override public boolean visit (EnumConstant c) {
+	    c.setType (containingTypes.peek ().fqn);
+	    return true;
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
@@ -310,7 +319,7 @@ public class ClassSetter {
 		TreeNode tn = v.getInitializer ();
 		if (tn != null)
 		    tn.visit (this);
-		currentScope.tryToAdd (l, v, tree, diagnostics);
+		currentScope.tryToAdd (cip, l, v, tree, diagnostics);
 	    }
 	    return false;
 	}
@@ -322,7 +331,7 @@ public class ClassSetter {
 
 	@Override public void visit (Identifier i) {
 	    String id = i.get ();
-	    Scope.FindResult fr = currentScope.find (cip, id, currentScope.isStatic (), diagnostics);
+	    Scope.FindResult fr = currentScope.find (cip, id, currentScope.isStatic (), true, diagnostics);
 	    if (fr == null) {
 		StaticFieldAccess sfa = findStaticImportedField (id);
 		if (sfa != null) {
@@ -372,7 +381,7 @@ public class ClassSetter {
 	    for (int i = 0, s = parts.size (); i < s; i++) {
 		String p = parts.get (i);
 		if (i == 0) {
-		    Scope.FindResult fr = scope.find (cip, p, scope.isStatic (), diagnostics);
+		    Scope.FindResult fr = scope.find (cip, p, scope.isStatic (), true, diagnostics);
 		    if (fr != null) {
 			current = getFieldOrLocalAccess (p, pos, fr);
 			continue;
@@ -476,7 +485,7 @@ public class ClassSetter {
 	private void replaceAndSetType (TreeNode tn) {
 	    if (tn instanceof Identifier && tn.getExpressionType () == null) {
 		Identifier i = (Identifier)tn;
-		Scope.FindResult fr = currentScope.find (cip, i.get (), currentScope.isStatic (), diagnostics);
+		Scope.FindResult fr = currentScope.find (cip, i.get (), currentScope.isStatic (), true, diagnostics);
 		if (fr != null) {
 		    i.setActual (new Identifier (i.get (), i.getParsePosition (), fr.fi.getExpressionType ()));
 		}
@@ -485,7 +494,6 @@ public class ClassSetter {
 
 	private void addScopeAndFields (String fqn, FlaggedType ft, TreeNode part) {
 	    addScope (ft, Scope.Type.CLASS, false);
-	    addFields (fqn, part, currentScope);
 	}
 
 	private void addScopeAndParameters (FlaggedType ft, FormalParameterList fpl) {
@@ -499,10 +507,10 @@ public class ClassSetter {
 		if (pl != null) {
 		    List<FormalParameter> ls = pl.getFormalParameters ();
 		    if (ls != null)
-			ls.forEach (fp -> currentScope.tryToAdd (fp, tree, diagnostics));
+			ls.forEach (fp -> currentScope.tryToAdd (cip, fp, tree, diagnostics));
 		    LastFormalParameter lfp = pl.getLastFormalParameter ();
 		    if (lfp != null) {
-			currentScope.tryToAdd (lfp, tree, diagnostics);
+			currentScope.tryToAdd (cip, lfp, tree, diagnostics);
 		    }
 		}
 	    }
@@ -515,30 +523,6 @@ public class ClassSetter {
 	private void addScope (TreeNode tn, Scope.Type type) {
 	    boolean isStatic = currentScope != null && currentScope.isStatic ();
 	    currentScope = new Scope (tn, currentScope, type, isStatic, false);
-	}
-
-	private void addFields (String fqn, TreeNode tn, Scope scope) {
-	    tn.visit (new FieldRegistrator (scope));
-	}
-
-	private class FieldRegistrator extends SiblingVisitor {
-	    private final Scope scope;
-
-	    public FieldRegistrator (Scope scope) {
-		this.scope = scope;
-	    }
-
-	    @Override public boolean visit (FieldDeclaration f) {
-		setType (f.getType (), ScopeSetter.this);
-		f.getVariables ().get ().forEach (v -> scope.tryToAdd (f, v, tree, diagnostics));
-		return false;
-	    }
-
-	    @Override public boolean visit (EnumConstant c) {
-		c.setType (containingTypes.peek ().fqn);
-		scope.tryToAdd (c, tree, diagnostics);
-		return false;
-	    }
 	}
 
 	private void registerMethods (BodyPart bp) {

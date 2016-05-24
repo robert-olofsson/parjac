@@ -58,7 +58,8 @@ public class Compiler {
 	runTimed (() -> setupSourceProvider (sourceProvider), "Setting up sources");
 	if (diagnostics.hasError ())
 	    return;
-
+	if (settings.getReportTime ())
+	    System.out.format ("Found %d source files\n", sourceProvider.getSourcePaths ().size ());
 	List<SyntaxTree> trees = runTimed (() -> parse (sourceProvider), "Parsing");
 	if (diagnostics.hasError ())
 	    return;

@@ -56,31 +56,34 @@ public class Scope {
 
     /** Try to add a variable declaration to the current scope.
      */
-    public void tryToAdd (VariableDeclaration fd, VariableDeclarator vd,
+    public void tryToAdd (ClassInformationProvider cip, VariableDeclaration fd, VariableDeclarator vd,
 			  SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner),
+	tryToAdd (cip, new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner),
 		  FlagsHelper.isStatic (fd.getFlags ()), tree, diagnostics);
     }
 
-    public void tryToAdd (FormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<FormalParameter> (fp.getId (), fp, owner),
+    public void tryToAdd (ClassInformationProvider cip, FormalParameter fp, SyntaxTree tree,
+			  CompilerDiagnosticCollector diagnostics) {
+	tryToAdd (cip, new FieldInformation<FormalParameter> (fp.getId (), fp, owner),
 		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
-    public void tryToAdd (LastFormalParameter fp, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<LastFormalParameter> (fp.getId (), fp, owner),
+    public void tryToAdd (ClassInformationProvider cip, LastFormalParameter fp, SyntaxTree tree,
+			  CompilerDiagnosticCollector diagnostics) {
+	tryToAdd (cip, new FieldInformation<LastFormalParameter> (fp.getId (), fp, owner),
 		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
-    public void tryToAdd (EnumConstant c, SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (new FieldInformation<EnumConstant> (c.getId (), c, owner),
+    public void tryToAdd (ClassInformationProvider cip, EnumConstant c, SyntaxTree tree,
+			  CompilerDiagnosticCollector diagnostics) {
+	tryToAdd (cip, new FieldInformation<EnumConstant> (c.getId (), c, owner),
 		  FlagsHelper.isStatic (c.getFlags ()), tree, diagnostics);
     }
 
-    private void tryToAdd (FieldInformation<?> fi, boolean isStatic,
+    private void tryToAdd (ClassInformationProvider cip, FieldInformation<?> fi, boolean isStatic,
 			   SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
 	String name = fi.getName ();
-	FindResult fr = find (null, name, isStatic, null);
+	FindResult fr = find (cip, name, isStatic, false, null);
 	if (fr != null) {
 	    ParsePosition fpp = fr.fi.getParsePosition ();
 	    if (!fr.passedClassScope || fr.fi.getOwner () == owner) {
@@ -101,18 +104,24 @@ public class Scope {
 
     /** Try to find a variable named id in this and all parent Scopes. */
     public FindResult find (ClassInformationProvider cip, String id,
-			    boolean isStatic, CompilerDiagnosticCollector diagnostics) {
+			    boolean isStatic, boolean checkSuperClasses,
+			    CompilerDiagnosticCollector diagnostics) {
 	boolean passedClassScope = false;
 	Scope s = this;
 	while (s != null) {
-	    passedClassScope |= s.type == Type.CLASS;
-	    FieldInformation<?> fi = s.variables.get (id);
-	    if (fi == null && cip != null && s.type == Type.CLASS) {
-		try {
-		    fi = checkSuperClasses (cip, s.owner, id);
-		} catch (IOException e) {
-		    diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + s.owner, e));
+	    FieldInformation<?> fi;
+	    if (s.type == Type.CLASS) {
+		passedClassScope = true;
+		fi = cip.getFieldInformation (cip.getFullName (s.owner), id);
+		if (fi == null && checkSuperClasses) {
+		    try {
+			fi = checkSuperClasses (cip, s.owner, id);
+		    } catch (IOException e) {
+			diagnostics.report (new NoSourceDiagnostics ("Failed to load class: " + s.owner, e));
+		    }
 		}
+	    } else {
+		fi = s.variables.get (id);
 	    }
 	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic ()))
 		return new FindResult (fi, s.currentClass, passedClassScope);
@@ -137,8 +146,9 @@ public class Scope {
 
     private void addSupers (ClassInformationProvider cip, Deque<String> superClasses, String clz) throws IOException {
 	Optional<List<String>> supers = cip.getSuperTypes (clz, false);
-	if (supers.isPresent ())
+	if (supers.isPresent ()) {
 	    superClasses.addAll (supers.get ());
+	}
     }
 
     private void add (FieldInformation<?> fi) {
