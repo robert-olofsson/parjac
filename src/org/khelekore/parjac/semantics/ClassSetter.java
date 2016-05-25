@@ -529,8 +529,28 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
+	@Override public boolean visit (CatchClause c) {
+	    addScope (c, Scope.Type.LOCAL);
+	    CatchFormalParameter cfp = c.getFormalParameter ();
+	    currentScope.tryToAdd (cip, cfp, tree, diagnostics);
+	    return true;
+	}
+
+	@Override public void endCatchClause (CatchClause c) {
+	    currentScope = currentScope.endScope ();
+	}
+
 	@Override public boolean visit (CatchType c) {
 	    c.getTypes ().forEach (ct -> setType (ct, this));
+
+	    List<ClassType> cts = c.getTypes ();
+	    ExpressionType et = cts.get (0).getExpressionType ();
+	    for (int i = 1, s = cts.size (); i < s; i++) {
+		// TODO: find common super class
+		et = ExpressionType.getObjectType ("java.lang.Exception");
+	    }
+	    c.setExpressionType (et);
+
 	    return true;
 	}
 

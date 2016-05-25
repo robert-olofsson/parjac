@@ -10,6 +10,7 @@ import org.khelekore.parjac.lexer.ParsePosition;
 
 public class CatchType extends PositionNode {
     private List<ClassType> types;
+    private ExpressionType et;
 
     public CatchType (Rule r, Deque<TreeNode> parts, ParsePosition pos) {
 	super (pos);
@@ -31,6 +32,14 @@ public class CatchType extends PositionNode {
 
     @Override public void visit (TreeVisitor visitor) {
 	visitor.visit (this);
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	return et;
+    }
+
+    public void setExpressionType (ExpressionType et) {
+	this.et = et;
     }
 
     public List<ClassType> getTypes () {

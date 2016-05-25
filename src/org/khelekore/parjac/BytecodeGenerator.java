@@ -726,6 +726,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	    opCode = INVOKEINTERFACE;
 	}
 	currentMethod.mv.visitMethodInsn (opCode, owner, m.getId (), m.getDescription (), isInterface);
+	// TODO: we may need to pop this call: currentMethod.mv.visitInsn (POP);
 	currentMethod.removeStack (baseRemove + numberOfArgs);
 	return false;
     }
@@ -895,6 +896,7 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (TryStatement t) {
+	int catchId = currentMethod.nextId;
 	Label start = new Label ();
 	currentMethod.mv.visitLabel (start);
 	ResourceList rl = t.getResources ();
@@ -913,8 +915,11 @@ public class BytecodeGenerator implements TreeVisitor {
 		    Label handler = new Label ();
 		    currentMethod.mv.visitTryCatchBlock (start, end, handler, ct.getSlashName ());
 		    currentMethod.mv.visitLabel (handler);
-		    cc.visit (this);
 		}
+		currentMethod.localVariableIds.put (cc.getFormalParameter ().getId (), catchId);
+		currentMethod.mv.visitVarInsn (ASTORE, catchId);
+		cc.visit (this);
+		currentMethod.localVariableIds.remove (cc.getFormalParameter ().getId ());
 	    }
 	}
 	if (f != null) {

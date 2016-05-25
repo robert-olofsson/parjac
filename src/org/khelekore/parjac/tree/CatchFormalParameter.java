@@ -26,13 +26,21 @@ public class CatchFormalParameter extends FlaggedTypeBase {
 	    "{" + getFlags () + " " +  getAnnotations () + " " + type + " " + vdi + "}";
     }
 
+    public String getId () {
+	return vdi.getId ();
+    }
+
     @Override public void visit (TreeVisitor visitor) {
 	type.visit (visitor);
 	vdi.visit (visitor);
     }
 
-    public Collection<? extends TreeNode> getChildNodes () {
+    @Override public Collection<? extends TreeNode> getChildNodes () {
 	return Arrays.asList (type, vdi);
+    }
+
+    @Override public ExpressionType getExpressionType () {
+	return type.getExpressionType ();
     }
 
     public List<ClassType> getTypes () {

@@ -241,7 +241,11 @@ public interface TreeVisitor {
     default void visit (Finally f) {
     }
 
-    default void visit (CatchClause c) {
+    default boolean visit (CatchClause c) {
+	return true;
+    }
+
+    default void endCatchClause (CatchClause c) {
     }
 
     default boolean visit (CatchType c) {

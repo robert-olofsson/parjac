@@ -22,9 +22,15 @@ public class CatchClause extends PositionNode {
     }
 
     @Override public void visit (TreeVisitor visitor) {
-	visitor.visit (this);
-	cfp.visit (visitor);
-	block.visit (visitor);
+	if (visitor.visit (this)) {
+	    cfp.visit (visitor);
+	    block.visit (visitor);
+	}
+	visitor.endCatchClause (this);
+    }
+
+    public CatchFormalParameter getFormalParameter () {
+	return cfp;
     }
 
     public Collection<? extends TreeNode> getChildNodes () {

@@ -701,6 +701,22 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
+    @Test
+    public void testCatchParameters () throws IOException {
+    	parseAndSetClasses ("class A { void f () { try { int i = 0; } catch (Exception e) { e.printStackTrace (); }}}");
+	assertNoErrors ();
+    	parseAndSetClasses ("class A { void f () { try { int i = 0; } catch (NullPointerException | IllegalArgumentException e) { e.printStackTrace (); }}}");
+	assertNoErrors ();
+    	parseAndSetClasses ("class A { void f () { try { int i = 0; } " +
+			    "catch (IllegalArgumentException e) { e.printStackTrace (); } " +
+			    "catch (NullPointerException r) { r.printStackTrace ();}}}");
+	assertNoErrors ();
+    	parseAndSetClasses ("class A { void f () { try { int i = 0; } " +
+			    "catch (IllegalArgumentException e) { e.printStackTrace (); } " +
+			    "catch (NullPointerException r) { e.printStackTrace ();}}}"); // Intentional typo
+	assert diagnostics.hasError () : "Expected import errors";
+    }
+
     private void checkTypeParameters (TypeParameters tps, int numParams,
 				      String bound1, String additionalBound) {
 	List<TypeParameter> ls = tps.get ();
