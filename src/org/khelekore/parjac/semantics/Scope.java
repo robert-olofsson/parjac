@@ -15,6 +15,7 @@ import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.EnumConstant;
 import org.khelekore.parjac.tree.FormalParameter;
+import org.khelekore.parjac.tree.LambdaParameter;
 import org.khelekore.parjac.tree.LastFormalParameter;
 import org.khelekore.parjac.tree.SyntaxTree;
 import org.khelekore.parjac.tree.TreeNode;
@@ -78,6 +79,12 @@ public class Scope {
 			  CompilerDiagnosticCollector diagnostics) {
 	tryToAdd (cip, new FieldInformation<EnumConstant> (c.getId (), c, owner),
 		  FlagsHelper.isStatic (c.getFlags ()), tree, diagnostics);
+    }
+
+    public void tryToAdd (ClassInformationProvider cip, LambdaParameter lp, SyntaxTree tree,
+			  CompilerDiagnosticCollector diagnostics) {
+	tryToAdd (cip, new FieldInformation<LambdaParameter> (lp.getId (), lp, owner),
+		  FlagsHelper.isStatic (lp.getFlags ()), tree, diagnostics);
     }
 
     private void tryToAdd (ClassInformationProvider cip, FieldInformation<?> fi, boolean isStatic,

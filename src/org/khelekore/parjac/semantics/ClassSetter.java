@@ -346,9 +346,12 @@ public class ClassSetter {
 	    if (params != null) {
 		addScope (l, Scope.Type.LOCAL);
 		if (params instanceof Identifier) {
-		    // qwerty
+		    currentScope.tryToAdd (cip, new LambdaParameter ((Identifier)params), tree, diagnostics);
 		} else if (params instanceof InferredFormalParameterList) {
-		    // qwerty
+		    InferredFormalParameterList ls = (InferredFormalParameterList)params;
+		    for (Identifier i : ls.getIdentifiers ()) {
+			currentScope.tryToAdd (cip, new LambdaParameter (i), tree, diagnostics);
+		    }
 		} else if (params instanceof FormalParameterList) {
 		    addParameterList ((FormalParameterList)params);
 		}

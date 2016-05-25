@@ -22,6 +22,10 @@ public class InferredFormalParameterList extends PositionNode {
 	}
     }
 
+    public List<Identifier> getIdentifiers () {
+	return ids;
+    }
+
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{" + ids + "}";
     }

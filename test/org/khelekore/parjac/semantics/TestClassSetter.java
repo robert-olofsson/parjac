@@ -660,21 +660,17 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
     }
 
-    /*
     @Test
     public void testLambdaScopeIdentifier () throws IOException {
 	parseAndSetClasses ("class A { Comparable<?> c = o -> o.hashCode (); }");
 	assertNoErrors ();
     }
-    */
 
-    /*
     @Test
     public void testLambdaScopeInferred () throws IOException {
 	parseAndSetClasses ("class A { Comparable<?> c = (o) -> o.hashCode (); }");
 	assertNoErrors ();
     }
-    */
 
     @Test
     public void testLambdaScopeFormal () throws IOException {
