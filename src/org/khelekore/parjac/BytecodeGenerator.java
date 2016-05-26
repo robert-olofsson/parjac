@@ -347,7 +347,18 @@ public class BytecodeGenerator implements TreeVisitor {
     }
 
     @Override public boolean visit (Block b) {
-	return true;
+	List<TreeNode> statements = b.getStatements ();
+	if (statements != null) {
+	    for (TreeNode tn : statements) {
+		tn.visit (this);
+		if (tn instanceof MethodInvocation) {
+		    MethodInvocation mi = (MethodInvocation)tn;
+		    if (mi.getExpressionType () != ExpressionType.VOID)
+			currentMethod.mv.visitInsn (POP);
+		}
+	    }
+	}
+	return false;
     }
 
     @Override public void endBlock () {

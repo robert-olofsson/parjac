@@ -126,7 +126,6 @@ public class JavaTreeBuilder {
 	register (g, "EmptyStatement", constructored (EmptyStatement::new));
 	register (g, "LabeledStatement", constructored (LabeledStatement::new));
 	register (g, "LabeledStatementNoShortIf", constructored (LabeledStatement::new));
-	register (g, "ExpressionStatement", constructored (ExpressionStatement::new));
 	register (g, "IfThenStatement", constructored (IfThenStatement::new));
 	register (g, "IfThenElseStatement", constructored (IfThenStatement::new));
 	register (g, "IfThenElseStatementNoShortIf", constructored (IfThenStatement::new));
