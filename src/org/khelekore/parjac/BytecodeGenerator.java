@@ -1413,7 +1413,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		if (ct != null) {
 		    supername = ct.getSlashName ();
 		}
-		flags = ncd.getFlags ();
+		flags = ncd.getFlags () | ACC_SUPER;
 		superInterfaces = getSuperInterfaces (ncd.getSuperInterfaces ());
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
@@ -1423,7 +1423,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		superInterfaces = getSuperInterfaces (ed.getSuperInterfaces ());
 	    } else if (tn instanceof NormalInterfaceDeclaration) {
 		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
-		flags = i.getFlags () | ACC_INTERFACE;
+		flags = i.getFlags () | ACC_INTERFACE | ACC_ABSTRACT;
 		ExtendsInterfaces ei = i.getExtendsInterfaces ();
 		if (ei != null)
 		    superInterfaces = getSuperInterfaces (ei.get ());
