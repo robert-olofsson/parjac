@@ -20,6 +20,10 @@ public class TypeBound extends PositionNode {
 	return getClass ().getSimpleName () + "{" + ct + " " + additionalBounds + "}";
     }
 
+    @Override public ExpressionType getExpressionType () {
+	return ct.getExpressionType ();
+    }
+
     public ClassType getType () {
 	return ct;
     }

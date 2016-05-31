@@ -1,9 +1,13 @@
 package org.khelekore.parjac;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -637,6 +641,55 @@ public class TestBytecodeGeneration {
 		return true;
 	}
 	return false;
+    }
+
+    @Test
+    public void testGenericClass () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo<E, U extends Runnable & java.io.Serializable> {}";
+	Class<?> c = getClass (s, "Foo");
+	TypeVariable<?>[] types = c.getTypeParameters ();
+	Assert.assertNotNull (types);
+	Assert.assertEquals (types.length, 2);
+	Assert.assertTrue (types[1] instanceof TypeVariable);
+	TypeVariable<?> u = (TypeVariable<?>)types[1];
+	Type[] ubounds = u.getBounds ();
+	Assert.assertEquals (ubounds.length, 2);
+	Assert.assertEquals (ubounds[0], Runnable.class);
+	Assert.assertEquals (ubounds[1], Serializable.class);
+    }
+
+    @Test
+    public void testGenericMethod () throws IOException, ReflectiveOperationException {
+	String s =
+	    "public class Foo<E> {" +
+	    "    public <T extends Runnable & AutoCloseable> T foo (E e, T t, int i) throws java.io.IOException" +
+	    "    {return t;}" +
+	    "}";
+	Class<?> c = getClass (s, "Foo");
+	Method[] ms = c.getDeclaredMethods ();
+	Assert.assertEquals (ms.length, 1, "Got wrong number of methods");
+	Method m = ms[0];
+	Type[] mts = m.getGenericParameterTypes ();
+	Assert.assertNotNull (mts);
+	Assert.assertTrue (mts[0] instanceof TypeVariable);
+	Assert.assertEquals (((TypeVariable<?>)mts[0]).getName (), "E");
+	Assert.assertTrue (mts[1] instanceof TypeVariable);
+	Assert.assertEquals (((TypeVariable<?>)mts[1]).getName (), "T");
+    }
+
+    @Test
+    public void testGenericField () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { public java.util.List<String> ls; }";
+	Class<?> c = getClass (s, "Foo");
+	Field f = c.getDeclaredField ("ls");
+	Assert.assertNotNull (f, "expected to find field");
+	Type ft = f.getGenericType ();
+	Assert.assertTrue (ft instanceof ParameterizedType);
+	ParameterizedType pt = (ParameterizedType)ft;
+	Assert.assertEquals (pt.getRawType (), List.class);
+	Type[] ptts = pt.getActualTypeArguments ();
+	Assert.assertEquals (ptts.length, 1);
+	Assert.assertEquals (ptts[0], String.class);
     }
 
     private void checkResult (String s, Class<?> retType, int expected)

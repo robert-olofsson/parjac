@@ -197,8 +197,4 @@ public class ClassInformationProvider {
 	nameToType.put (name, tp);
 	typeToName.put (tp, name);
     }
-
-    public String getGenericName (TypeParameter tp) {
-	return typeToName.get (tp);
-    }
 }

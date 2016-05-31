@@ -442,11 +442,12 @@ public class ClassSetter {
 		    sb.append (".");
 		}
 		sb.append (p);
-		String outerClass = ct == null ? resolve (sb.toString (), pos, eh) : null;
+		ResolvedClass outerClass = ct == null ? resolve (sb.toString (), pos, eh) : null;
 		if (outerClass != null) {
 		    DottedName pdn = new DottedName (parts.subList (0, i + 1), pos);
 		    ct = pdn.toClassType ();
-		    ct.setFullName (outerClass);
+		    ct.setFullName (outerClass.type);
+		    ct.setTypeParameter (outerClass.tp);
 		    current = ct;
 		    continue;
 		}
@@ -731,7 +732,7 @@ public class ClassSetter {
 		return;
 	    // "List" and "java.util.List" are easy to resolve
 	    String id1 = getId (ct, ".");
-	    String fqn = resolve (id1, ct.getParsePosition (), eh);
+	    ResolvedClass fqn = resolve (id1, ct.getParsePosition (), eh);
 	    if (fqn == null && ct.size () > 1) {
 		// ok, someone probably wrote something like "HashMap.Entry" or
 		// "java.util.HashMap.Entry" which is somewhat problematic, but legal
@@ -745,7 +746,8 @@ public class ClassSetter {
 		}
 		return;
 	    }
-	    ct.setFullName (fqn);
+	    ct.setFullName (fqn.type);
+	    ct.setTypeParameter (fqn.tp);
 	    for (SimpleClassType sct : ct.get ()) {
 		TypeArguments tas = sct.getTypeArguments ();
 		if (tas != null)
@@ -777,7 +779,7 @@ public class ClassSetter {
 
     /** Try to find an outer class that has the inner classes for misdirected outer classes.
      */
-    private String tryAllParts (ClassType ct, ErrorHandler eh) {
+    private ResolvedClass tryAllParts (ClassType ct, ErrorHandler eh) {
 	StringBuilder sb = new StringBuilder ();
 	List<SimpleClassType> scts = ct.get ();
 	// group package names to class "java.util.HashMap"
@@ -786,12 +788,12 @@ public class ClassSetter {
 	    if (i > 0)
 		sb.append (".");
 	    sb.append (sct.getId ());
-	    String outerClass = resolve (sb.toString (), ct.getParsePosition (), eh);
+	    ResolvedClass outerClass = resolve (sb.toString (), ct.getParsePosition (), eh);
 	    if (outerClass != null) {
 		// Ok, now check if Entry is an inner class either directly or in super class
-		String fqn = checkForInnerClasses (scts, i + 1, outerClass, eh);
+		String fqn = checkForInnerClasses (scts, i + 1, outerClass.type, eh);
 		if (fqn != null)
-		    return fqn;
+		    return new ResolvedClass (fqn);
 	    }
 	}
 	return null;
@@ -814,20 +816,36 @@ public class ClassSetter {
 	return currentOuterClass;
     }
 
-    private String resolve (String id, ParsePosition pos, ErrorHandler eh) {
+    private ResolvedClass resolve (String id, ParsePosition pos, ErrorHandler eh) {
 	TypeParameter tp = getTypeParameter (id);
 	if (tp != null) {
-	    return cip.getGenericName (tp);
+	    return new ResolvedClass (tp);
 	}
 
 	if (hasVisibleType (id))
-	    return id;
+	    return new ResolvedClass (id);
 
 	String fqn = resolveInnerClass (id, eh);
+	if (fqn == null)
+	    fqn = resolveUsingImports (id, pos);
 	if (fqn != null)
-	    return fqn;
+	    return new ResolvedClass (fqn);
+	return null;
+    }
 
-	return resolveUsingImports (id, pos);
+    private static class ResolvedClass {
+	public final String type;
+	public final TypeParameter tp;
+
+	public ResolvedClass (String type) {
+	    this.type = type;
+	    this.tp = null;
+	}
+
+	public ResolvedClass (TypeParameter tp) {
+	    this.type = tp.getExpressionType ().getClassName ();
+	    this.tp = tp;
+	}
     }
 
     private String resolveInnerClass (String id, ErrorHandler eh) {

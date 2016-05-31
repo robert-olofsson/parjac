@@ -89,7 +89,6 @@ public class BytecodeGenerator implements TreeVisitor {
     private void pushClass (TreeNode tn) {
 	ClassWriterHolder cid = new ClassWriterHolder (tn);
 	addClass (cid);
-	cid.start ();
     }
 
     @Override public void endType () {
@@ -119,6 +118,8 @@ public class BytecodeGenerator implements TreeVisitor {
 	if (currentClass.tn instanceof EnumDeclaration) {
 	    signature = desc;
 	    desc = getEnumConstructorDescription (desc);
+	} else {
+	    signature = currentClass.getMethodSignature (c.getTypeParameters (), c.getParameters (), null);
 	}
 	MethodInfo mi = new MethodInfo (mods, Result.VOID_RESULT,
 					cw.visitMethod (mods, INIT, desc, signature, getExceptions (c.getThrows ())));
@@ -199,8 +200,9 @@ public class BytecodeGenerator implements TreeVisitor {
 	// TODO: handle initializer blocks
 	for (VariableDeclarator vd : f.getVariables ().get ()) {
 	    String id = vd.getId ();
+	    String signature = GenericTypeHelper.getGenericType (f.getType ());
 	    // int access, String name, String desc, String signature, Object value
-	    FieldVisitor fw = cw.visitField (mods, id, getType (f.getType ()), null, null);
+	    FieldVisitor fw = cw.visitField (mods, id, getType (f.getType ()), signature, null);
 	    fw.visitEnd ();
 	    TreeNode tn = vd.getInitializer ();
 	    if (tn != null) {
@@ -280,9 +282,10 @@ public class BytecodeGenerator implements TreeVisitor {
 	ClassWriter cw = currentClass.cw;
         // creates a MethodWriter for the method
 	int mods = m.getFlags ();
+	String signature = currentClass.getMethodSignature (m.getTypeParameters (), m.getParameters (), m.getResult ());
         MethodInfo mi = new MethodInfo (mods, m.getResult (),
 					cw.visitMethod (mods, m.getMethodName (),
-							m.getDescription (), null,
+							m.getDescription (), signature,
 							getExceptions (m.getThrows ())));
 	addMethod (mi);
 	addParameters (m.getParameters ());
@@ -1382,6 +1385,7 @@ public class BytecodeGenerator implements TreeVisitor {
 	private final TreeNode tn;
 	private final String fqn;
 	private final ClassWriter cw;
+	private final SuperAndFlags saf;
 	private MethodInfo staticBlock;
 	private int enumConstantCount = 0;
 
@@ -1389,20 +1393,21 @@ public class BytecodeGenerator implements TreeVisitor {
 	    this.tn = tn;
 	    fqn = cip.getFullName (tn);
 	    cw = new ClassWriter (ClassWriter.COMPUTE_FRAMES);
+	    saf = setSuperAndFlags ();
+	    if (origin != null)
+		cw.visitSource (origin.getFileName ().toString (), null);
+	    cw.visit (V1_8, saf.flags, fqn, saf.signature, saf.supername, saf.implementedInterfaces);
 	}
 
 	@Override public String toString () {
 	    return getClass ().getSimpleName () + "{tn: " + tn + "}";
 	}
 
-	public void start () {
-	    SuperAndFlags saf = getSuperAndFlags ();
-	    if (origin != null)
-		cw.visitSource (origin.getFileName ().toString (), null);
-	    cw.visit (V1_8, saf.flags, fqn, saf.signature, saf.supername, saf.implementedInterfaces);
+	public SuperAndFlags getSuperAndFlags () {
+	    return saf;
 	}
 
-	public SuperAndFlags getSuperAndFlags () {
+	private SuperAndFlags setSuperAndFlags () {
 	    String supername = "java/lang/Object";
 	    String signature = null;
 	    int flags = 0;
@@ -1415,6 +1420,7 @@ public class BytecodeGenerator implements TreeVisitor {
 		}
 		flags = ncd.getFlags () | ACC_SUPER;
 		superInterfaces = getSuperInterfaces (ncd.getSuperInterfaces ());
+		signature = getClassSignature (ncd.getTypeParameters (), ct, ncd.getSuperInterfaces ());
 	    } else if (tn instanceof EnumDeclaration) {
 		EnumDeclaration ed = (EnumDeclaration)tn;
 		supername = "java/lang/Enum";
@@ -1425,11 +1431,72 @@ public class BytecodeGenerator implements TreeVisitor {
 		NormalInterfaceDeclaration i = (NormalInterfaceDeclaration)tn;
 		flags = i.getFlags () | ACC_INTERFACE | ACC_ABSTRACT;
 		ExtendsInterfaces ei = i.getExtendsInterfaces ();
-		if (ei != null)
+		if (ei != null) {
 		    superInterfaces = getSuperInterfaces (ei.get ());
+		    signature = getClassSignature (i.getTypeParameters (), null, ei.get ());
+		} else {
+		    signature = getClassSignature (i.getTypeParameters (), null, null);
+		}
 	    }
 	    // TODO: handle interface flags
 	    return new SuperAndFlags (supername, signature, flags, superInterfaces);
+	}
+
+	private String getClassSignature (TypeParameters tps, ClassType superClass, InterfaceTypeList superInterfaces) {
+	    if (tps == null)
+		return null;
+	    StringBuilder sb = new StringBuilder ();
+	    appendTypeParameters (sb, tps);
+	    if (superClass != null) {
+		sb.append (GenericTypeHelper.getGenericType (superClass));
+	    } else {
+		sb.append ("Ljava/lang/Object;");
+	    }
+	    if (superInterfaces != null) {
+		for (ClassType ct : superInterfaces.get ())
+		    sb.append (ct.getExpressionType ().getDescriptor ());
+	    }
+	    return sb.toString ();
+	}
+
+	private String getMethodSignature (TypeParameters tps, FormalParameterList params, Result result) {
+	    if (tps == null)
+		return null;
+	    StringBuilder sb = new StringBuilder ();
+	    appendTypeParameters (sb, tps);
+	    sb.append ("(");
+	    if (params != null)
+		params.appendGenericDescription (sb);
+	    sb.append (")");
+	    if (result != null) {
+		if (result instanceof Result.TypeResult) {
+		    sb.append (GenericTypeHelper.getGenericType (result.getReturnType ()));
+		} else {
+		    sb.append (result.getExpressionType ().getDescriptor ());
+		}
+	    }
+	    return sb.toString ();
+	}
+
+	private void appendTypeParameters (StringBuilder sb, TypeParameters tps) {
+	    sb.append ("<");
+	    for (TypeParameter tp : tps.get ()) {
+		sb.append (tp.getId ());
+		TypeBound b = tp.getTypeBound ();
+		if (b != null) {
+		    ClassType bt = b.getType ();
+		    sb.append (cip.isInterface (bt.getFullName ()) ? "::" : ":");
+		    sb.append (bt.getExpressionType ().getDescriptor ());
+		    List<AdditionalBound> ls = b.getAdditionalBounds ();
+		    if (ls != null) {
+			for (AdditionalBound ab : ls)
+			    sb.append (":").append (ab.getType ().getExpressionType ().getDescriptor ());
+		    }
+		} else {
+		    sb.append (":Ljava/lang/Object;");
+		}
+	    }
+	    sb.append (">");
 	}
 
 	private List<String>  getSuperInterfaces (InterfaceTypeList superInterfaces) {

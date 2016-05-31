@@ -36,4 +36,10 @@ public class TypeParameter extends PositionNode {
     public TypeBound getTypeBound () {
 	return typeBound;
     }
+
+    @Override public ExpressionType getExpressionType () {
+	if (typeBound != null)
+	    return typeBound.getExpressionType ();
+	return ExpressionType.OBJECT;
+    }
 }
