@@ -1474,6 +1474,8 @@ public class BytecodeGenerator implements TreeVisitor {
 		} else {
 		    sb.append (result.getExpressionType ().getDescriptor ());
 		}
+	    } else {
+		sb.append ("V"); // constructors do not have results
 	    }
 	    return sb.toString ();
 	}

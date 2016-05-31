@@ -692,6 +692,17 @@ public class TestBytecodeGeneration {
 	Assert.assertEquals (ptts[0], String.class);
     }
 
+    @Test
+    public void testGenericConstructor () throws IOException, ReflectiveOperationException {
+	String s = "public class Foo { <T extends Runnable> Foo (T t) {}}";
+	Class<?> c = getClass (s, "Foo");
+	Constructor<?>[] ccs = c.getDeclaredConstructors ();
+	Assert.assertEquals (ccs.length, 1);
+	Constructor<?> cc = ccs[0];
+	TypeVariable<?>[] tvs = cc.getTypeParameters ();
+	Assert.assertEquals (tvs.length, 1);
+    }
+
     private void checkResult (String s, Class<?> retType, int expected)
 	throws IOException, ReflectiveOperationException {
 	Object ret = compileAndRunStatic (s);
