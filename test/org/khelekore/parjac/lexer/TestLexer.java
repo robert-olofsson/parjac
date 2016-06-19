@@ -139,7 +139,7 @@ public class TestLexer {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.CHARACTER_LITERAL);
 	char res = l.getCharValue ();
-	assert value == res : "Wrong string value: " + res;
+	Assert.assertEquals (value, res, "Wrong string value: " + res);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class TestLexer {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.STRING_LITERAL);
 	String res = l.getStringValue ();
-	assert value.equals (res) : "Wrong string value: " + res;
+	Assert.assertEquals (res, value, "Wrong string value: " + res);
     }
 
     @Test
@@ -274,7 +274,7 @@ public class TestLexer {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.LONG_LITERAL);
 	long val = l.getLongValue ();
-	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+	Assert.assertEquals (val, expected, "Wrong string value: " + val + ", expected: " + expected);
     }
 
     @Test public void testDoubleLiterals () {
@@ -304,7 +304,7 @@ public class TestLexer {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.DOUBLE_LITERAL);
 	double val = l.getDoubleValue ();
-	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+	Assert.assertEquals (val, expected, "Wrong string value: " + val + ", expected: " + expected);
     }
 
     @Test
@@ -319,7 +319,7 @@ public class TestLexer {
 	Lexer l = getLexer (toLex);
 	testLexing (l, Token.FLOAT_LITERAL);
 	float val = l.getFloatValue ();
-	assert val == expected : "Wrong string value: " + val + ", expected: " + expected;
+	Assert.assertEquals (val, expected, "Wrong string value: " + val + ", expected: " + expected);
     }
 
     @Test
@@ -370,8 +370,8 @@ public class TestLexer {
 	Lexer l = getLexer (text);
 	for (int i = 0; i < expected.length; i++) {
 	    Token t = l.nextNonWhitespaceToken ();
-	    assert t == expected[i] : i + ": Wrong Token: expected: " + expected[i] + ", got: " + t
-		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
+	    Assert.assertEquals (t, expected[i], i + ": Wrong Token: expected: " + expected[i] + ", got: " + t +
+				 (t == Token.ERROR ? ", error code: " + l.getError () : ""));
 	}
     }
 
@@ -387,16 +387,16 @@ public class TestLexer {
 
     private void testLexing (Lexer l, Token... expected) {
 	for (int i = 0; i < expected.length; i++) {
-	    assert l.hasMoreTokens () : "Too few tokens, expected: " + Arrays.toString (expected);
+	    Assert.assertTrue (l.hasMoreTokens (), "Too few tokens, expected: " + Arrays.toString (expected));
 	    Token t = l.nextToken ();
-	    assert t != null : "Returned token may not be null";
-	    assert t == expected[i] : i + ": Wrong Token: expected: " + expected[i] + ", got: " + t
-		+ (t == Token.ERROR ? ", error code: " + l.getError () : "");
+	    Assert.assertNotNull (t, "Returned token may not be null");
+	    Assert.assertEquals (t, expected[i], i + ": Wrong Token: expected: " + expected[i] + ", got: " + t +
+				 (t == Token.ERROR ? ", error code: " + l.getError () : ""));
 	}
 	if (l.hasMoreTokens ()) {
 	    Token lt = l.nextToken ();
-	    assert lt == Token.END_OF_INPUT : "Lexer has more tokens: " + lt;
+	    Assert.assertEquals (lt, Token.END_OF_INPUT, "Lexer has more tokens: " + lt);
 	}
-	assert !l.hasMoreTokens () : "Lexer has more available tokens than expected";
+	Assert.assertFalse (l.hasMoreTokens (), "Lexer has more available tokens than expected");
     }
 }
