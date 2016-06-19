@@ -692,7 +692,9 @@ public class CharBufferLexer implements Lexer {
 	res.append (start);
 	while (buf.hasRemaining ()) {
 	    char c = nextChar ();
-	    if (Character.isJavaIdentifierPart (c)) {
+	    if (Character.isIdentifierIgnorable (c)) {
+		// skip it
+	    } else if (Character.isJavaIdentifierPart (c)) {
 		res.append (c);
 	    } else {
 		pushBack ();

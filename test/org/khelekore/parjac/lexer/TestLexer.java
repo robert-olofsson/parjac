@@ -2,6 +2,8 @@ package org.khelekore.parjac.lexer;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;
+
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class TestLexer {
@@ -353,6 +355,15 @@ public class TestLexer {
 	testNextNonWhitespace ("package   ", Token.PACKAGE, Token.END_OF_INPUT);
 	testNextNonWhitespace ("package\n", Token.PACKAGE, Token.END_OF_INPUT);
 	testNextNonWhitespace ("  \t  <  >", Token.LT, Token.GT, Token.END_OF_INPUT);
+    }
+
+    @Test
+    public void testIgnorable () {
+	Lexer l = getLexer ("v\u200Bar");
+	Token t = l.nextToken ();
+	Assert.assertEquals (t, Token.IDENTIFIER);
+	String value = l.getIdentifier ();
+	Assert.assertEquals (value, "var");
     }
 
     private void testNextNonWhitespace (String text, Token... expected) {
