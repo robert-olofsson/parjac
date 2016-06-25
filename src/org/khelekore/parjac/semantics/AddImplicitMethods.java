@@ -236,7 +236,7 @@ public class AddImplicitMethods {
 	    EnumBody cb = type.getBody ();
 	    cb.getDeclarations ().add (fd);
 	    String fqn = cip.getFullName (type);
-	    cip.addField (fqn, vdi.getId (), new FieldInformation<FieldDeclaration> ("$VALUES", fd, type));
+	    cip.addField (fqn, vdi.getId (), new FieldInformation<FieldDeclaration> ("$VALUES", fd, type, false));
 	}
 
 	private void addValues () {

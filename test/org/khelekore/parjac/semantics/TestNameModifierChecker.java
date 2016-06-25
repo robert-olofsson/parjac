@@ -34,13 +34,13 @@ public class TestNameModifierChecker extends TestBase {
 	parseAndSetClass ("Foo.java", "public " + type + " Foo {}");
 	assertNoErrors ();
 	parseAndSetClass ("Foo.java", "public " + type + " Bar {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("protected " + type + " Foo {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("private " + type + " Foo {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -71,7 +71,7 @@ public class TestNameModifierChecker extends TestBase {
 	parseAndSetClasses ("class Foo { strictfp void bar () {} }");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { native strictfp void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -81,27 +81,27 @@ public class TestNameModifierChecker extends TestBase {
 	parseAndSetClasses ("class Foo { abstract void bar (); }");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { abstract private void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { abstract static void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { abstract final void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { abstract native void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { abstract strictfp void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { abstract synchronized void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -111,16 +111,16 @@ public class TestNameModifierChecker extends TestBase {
 	parseAndSetClasses ("class Foo { abstract void bar (); }");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { native void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo { abstract void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo { void bar (); }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo { synchronized void bar (); }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -133,15 +133,15 @@ public class TestNameModifierChecker extends TestBase {
 	assertNoErrors ();
 
 	parseAndSetClasses ("interface Foo { static void bar (); }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("interface Foo { default void bar (); }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("interface Foo { void bar () {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -156,7 +156,7 @@ public class TestNameModifierChecker extends TestBase {
 	parseAndSetClasses ("class Foo { volatile int bar = 0; }");
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { final volatile int bar = 0; }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -175,19 +175,19 @@ public class TestNameModifierChecker extends TestBase {
 	assertNoErrors ();
 
 	parseAndSetClasses ("class Foo { public private " + bodyPart + " }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { protected private " + bodyPart + " }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { public protected " + bodyPart + " }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { public protected private " + bodyPart + " }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
@@ -205,39 +205,39 @@ public class TestNameModifierChecker extends TestBase {
 
     private void testClassDups (String flag) throws IOException {
 	parseAndSetClasses (flag + " " + flag + " class Foo { }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
     private void testInnerClassDups (String flag) throws IOException {
 	parseAndSetClasses ("class Foo { " + flag + " " + flag + " class Bar {} }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
     }
 
     @Test
     public void testExtendsFinalExternal () throws IOException {
 	parseAndSetClasses ("class Foo extends String {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
     public void testExtendsFinalInternal () throws IOException {
 	parseAndSetClasses ("final class Foo {}\n" +
 			    "class Bar extends Foo {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
     public void testExtendsInterface () throws IOException {
 	parseAndSetClasses ("class Foo extends Runnable {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
     public void testInnerStatic () throws IOException {
 	parseAndSetClasses ("class Foo { class Bar { static int bar; } }");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
 	parseAndSetClasses ("class Foo { static class Bar { static int bar; } }");
 	assertNoErrors ();

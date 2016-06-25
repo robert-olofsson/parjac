@@ -26,7 +26,7 @@ public class TestClassSetter extends TestBase {
     @Test
     public void testExtendsNonExisting () throws IOException {
 	parseAndSetClasses ("class Bar extends QWER {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -39,7 +39,7 @@ public class TestClassSetter extends TestBase {
     @Test
     public void testImplementsNonExisting () throws IOException {
 	parseAndSetClasses ("class Foo implements QWER {}");
-	assert diagnostics.hasError () : "Expected to find errors";
+	assertErrors ();
     }
 
     @Test
@@ -715,6 +715,72 @@ public class TestClassSetter extends TestBase {
 			    "catch (IllegalArgumentException e) { e.printStackTrace (); } " +
 			    "catch (NullPointerException r) { e.printStackTrace ();}}}"); // Intentional typo
 	assert diagnostics.hasError () : "Expected import errors";
+    }
+
+    @Test
+    public void testAssignFinalField () throws IOException {
+	parseAndSetClasses ("class Foo { final int bar = 4; }");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { final int bar = 4; void foo () { bar = 3; }}");
+	assertErrors ();
+    }
+
+    @Test
+    public void testAssignFinalFieldInConstructor () throws IOException {
+	parseAndSetClasses ("class Foo { final int bar; Foo () { bar = 3; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo () { bar = 3; } Foo (int i) { bar = 5; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo () { bar = 3; bar = 4;}}");
+	assertErrors ();
+    }
+
+    /*
+    @Test
+    public void testAssignFinalFieldInConstructor () throws IOException {
+	parseAndSetClasses ("class Foo { final int bar; Foo () { if (true) bar = 3; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean b) { if (b) bar = 3; else bar = 4; }}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean) { if (b) bar = 3; }}");
+	assertErrors ();
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { bar = 3; } catch (Exception e) {}}}");
+	assertErrors ();
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { bar = 3; } catch (Exception e) { bar = 4; }}}");
+	assertErrors ();
+    }
+    */
+
+    @Test
+    public void testAssignFinalVariable () throws IOException {
+	parseAndSetClasses ("class Foo { void foo () { final int bar = 3; }}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { void foo () { final int bar = 3; bar = 4; }}");
+	assertErrors ();
+    }
+
+    @Test
+    public void testAssignFinalParameter () throws IOException {
+	parseAndSetClasses ("class Foo { void foo (final int bar) { bar = 3; }}");
+	assertErrors ();
+    }
+
+    @Test
+    public void testUnassignedFinalField () throws IOException {
+	parseAndSetClasses ("class Foo { final int bar; }");
+	assertErrors ();
+
+	diagnostics = new CompilerDiagnosticCollector ();
+	parseAndSetClasses ("class Foo { final int bar; Foo () {}}");
+	assertErrors ();
     }
 
     private void checkTypeParameters (TypeParameters tps, int numParams,

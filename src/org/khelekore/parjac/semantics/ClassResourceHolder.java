@@ -128,7 +128,7 @@ public class ClassResourceHolder {
 	if (af == null)
 	    return null;
 	// qwerty, probably need: new ClassType ().setFullName (fqn)?
-	return new FieldInformation<AsmField> (field, af, null);
+	return new FieldInformation<AsmField> (field, af, null, af.value != null);
     }
 
     public ExpressionType getFieldType (String fqn, String field) {

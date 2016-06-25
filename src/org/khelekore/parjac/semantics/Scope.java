@@ -4,16 +4,19 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
 import org.khelekore.parjac.SourceDiagnostics;
 import org.khelekore.parjac.lexer.ParsePosition;
 import org.khelekore.parjac.tree.CatchFormalParameter;
+import org.khelekore.parjac.tree.ConstructorDeclaration;
 import org.khelekore.parjac.tree.EnumConstant;
 import org.khelekore.parjac.tree.FormalParameter;
 import org.khelekore.parjac.tree.LambdaParameter;
@@ -31,6 +34,7 @@ public class Scope {
     private final TreeNode owner;
     private final TreeNode currentClass;
     private Map<String, FieldInformation<?>> variables = Collections.emptyMap ();
+    private Set<FieldInformation<?>> assignedFields = Collections.emptySet ();
 
     public enum Type { CLASS, LOCAL };
 
@@ -56,41 +60,48 @@ public class Scope {
 	return isStatic;
     }
 
+    public boolean isConstructor () {
+	return owner instanceof ConstructorDeclaration;
+    }
+
     /** Try to add a variable declaration to the current scope.
      */
     public void tryToAdd (ClassInformationProvider cip, VariableDeclaration fd, VariableDeclarator vd,
 			  SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner),
+	FieldInformation<?> fi;
+	tryToAdd (cip, fi = new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner, vd.hasInitializer ()),
 		  FlagsHelper.isStatic (fd.getFlags ()), tree, diagnostics);
+	if (vd.getInitializer () != null)
+	    setAssigned (fi);
     }
 
     public void tryToAdd (ClassInformationProvider cip, FormalParameter fp, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<FormalParameter> (fp.getId (), fp, owner),
+	tryToAdd (cip, new FieldInformation<FormalParameter> (fp.getId (), fp, owner, true),
 		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (ClassInformationProvider cip, LastFormalParameter fp, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<LastFormalParameter> (fp.getId (), fp, owner),
+	tryToAdd (cip, new FieldInformation<LastFormalParameter> (fp.getId (), fp, owner, true),
 		  FlagsHelper.isStatic (fp.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (ClassInformationProvider cip, EnumConstant c, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<EnumConstant> (c.getId (), c, owner),
+	tryToAdd (cip, new FieldInformation<EnumConstant> (c.getId (), c, owner, true),
 		  FlagsHelper.isStatic (c.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (ClassInformationProvider cip, LambdaParameter lp, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<LambdaParameter> (lp.getId (), lp, owner),
+	tryToAdd (cip, new FieldInformation<LambdaParameter> (lp.getId (), lp, owner, true),
 		  FlagsHelper.isStatic (lp.getFlags ()), tree, diagnostics);
     }
 
     public void tryToAdd (ClassInformationProvider cip, CatchFormalParameter cfp, SyntaxTree tree,
 			  CompilerDiagnosticCollector diagnostics) {
-	tryToAdd (cip, new FieldInformation<CatchFormalParameter> (cfp.getId (), cfp, owner),
+	tryToAdd (cip, new FieldInformation<CatchFormalParameter> (cfp.getId (), cfp, owner, true),
 		  FlagsHelper.isStatic (cfp.getFlags ()), tree, diagnostics);
     }
 
@@ -138,7 +149,7 @@ public class Scope {
 		fi = s.variables.get (id);
 	    }
 	    if (fi != null && (s.type == Type.LOCAL || !isStatic || fi.isStatic ()))
-		return new FindResult (fi, s.currentClass, passedClassScope);
+		return new FindResult (fi, s.currentClass, passedClassScope, s);
 	    isStatic |= s.isStatic;
 	    s = s.parent;
 	}
@@ -179,15 +190,31 @@ public class Scope {
 	return variables;
     }
 
+    public boolean isAssignedOrInitialized (FieldInformation<?> fi) {
+	return assignedFields.contains (fi) || fi.isInitialized ();
+    }
+
+    public void setAssigned (FieldInformation<?> fi) {
+	if (assignedFields.isEmpty ())
+	    assignedFields = new HashSet<> ();
+	assignedFields.add (fi);
+    }
+
+    public void clearFieldAssignments () {
+	assignedFields.clear ();
+    }
+
     public static class FindResult {
 	public final FieldInformation<?> fi;
 	public final TreeNode containingClass;
-	private final boolean passedClassScope;
+	public final boolean passedClassScope;
+	public final Scope scope;
 
-	public FindResult (FieldInformation<?> fi, TreeNode containingClass, boolean passedClassScope) {
+	public FindResult (FieldInformation<?> fi, TreeNode containingClass, boolean passedClassScope, Scope scope) {
 	    this.fi = fi;
 	    this.containingClass = containingClass;
 	    this.passedClassScope = passedClassScope;
+	    this.scope = scope;
 	}
 
 	@Override public String toString () {

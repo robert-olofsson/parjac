@@ -213,8 +213,12 @@ public class ClassSetter {
 	}
 
 	@Override public void endType () {
-	    if (completed)
-		registerMethods (containingTypes.pop ());
+	    if (completed) {
+		BodyPart bp = containingTypes.pop ();
+		registerMethods (bp);
+		if (!bp.hasConstructor)
+		    checkUnassignedFields (bp.body, bp.fqn);
+	    }
 	    currentScope = currentScope.endScope ();
 	    currentTypes = currentTypes.parent;
 	}
@@ -243,17 +247,29 @@ public class ClassSetter {
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
 
 	@Override public boolean visit (ConstructorDeclaration c) {
+	    containingTypes.peek ().hasConstructor = true;
 	    registerTypeParameters (c, c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
 	    setThrowsTypes (c.getThrows ());
 	    addScopeAndParameters (c, c.getParameters ());
-	    // TODO: store method information
 	    return true;
 	}
 
 	@Override public void endConstructor (ConstructorDeclaration c) {
 	    currentScope = currentScope.endScope ();
 	    currentTypes = currentTypes.parent;
+	    checkUnassignedFields (c, containingTypes.peek ().fqn);
+	}
+
+	private void checkUnassignedFields (TreeNode owner, String fqn) {
+	    for (FieldInformation<?> fi : cip.getFields (fqn)) {
+		if (fi.isFinal () && !currentScope.isAssignedOrInitialized (fi) &&
+		    !(fi.getVariableDeclaration() instanceof EnumConstant)) {
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), owner.getParsePosition (),
+								 "Uninitialized final field: %s", fi.getName ()));
+		}
+	    }
+	    currentScope.clearFieldAssignments ();
 	}
 
 	@Override public boolean visit (FieldDeclaration f) {
@@ -295,6 +311,42 @@ public class ClassSetter {
 
 	@Override public void endBlock () {
 	    currentScope = currentScope.endScope ();
+	}
+
+	@Override public boolean visit (Assignment a) {
+	    TreeNode lhs = a.lhs ();
+	    lhs.visit (this);
+	    a.rhs ().visit (this);
+	    Scope.FindResult fr = getVariable (lhs);
+	    if (fr != null && fr.fi.isFinal ()) {
+		if (fr.scope.isAssignedOrInitialized (fr.fi))
+		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), a.getParsePosition (),
+								 "%s marked as final may not be assigned here",
+								 fr.fi.getVariableDeclaration ().getClass ().getSimpleName ()));
+		fr.scope.setAssigned (fr.fi);
+	    }
+	    return false;
+	}
+
+	private Scope.FindResult getVariable (TreeNode tn) {
+	    if (tn instanceof DottedName) {
+		DottedName dn = (DottedName)tn;
+		TreeNode fn = dn.getFieldAccess ();
+		Scope.FindResult fr = null;
+		if (fn instanceof FieldAccess) {
+		    FieldAccess fa = (FieldAccess)fn;
+		    if (fa.getFrom () instanceof PrimaryNoNewArray.ThisPrimary) {
+			String id = fa.getFieldId ();
+			fr = currentScope.find (cip, id, false, false, diagnostics);
+		    }
+		} else if (fn instanceof Identifier) {
+		    Identifier i = (Identifier)fn;
+		    fr = currentScope.find (cip, i.get (), false, false, diagnostics);
+		}
+		if (fr != null)
+		    return fr;
+	    }
+	    return null;
 	}
 
 	@Override public boolean visit (ClassInstanceCreationExpression c) {
@@ -651,6 +703,7 @@ public class ClassSetter {
     private static class BodyPart {
 	private final String fqn;
 	private final TreeNode body;
+	private boolean hasConstructor = false;
 
 	public BodyPart (String fqn, TreeNode body) {
 	    this.fqn = fqn;

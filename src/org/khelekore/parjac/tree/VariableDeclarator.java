@@ -52,4 +52,8 @@ public class VariableDeclarator extends PositionNode {
     public TreeNode getInitializer () {
 	return initializer;
     }
+
+    public boolean hasInitializer () {
+	return initializer != null;
+    }
 }

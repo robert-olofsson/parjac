@@ -2,6 +2,7 @@ package org.khelekore.parjac.semantics;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +126,10 @@ public class ClassInformationProvider {
     public void addField (String fqn, String id, FieldInformation<?> field) {
 	Map<String, FieldInformation<?>> m = classFields.get (fqn);
 	m.put (id, field);
+    }
+
+    public Collection<FieldInformation<?>> getFields (String fqn) {
+	return classFields.get (fqn).values ();
     }
 
     public void registerMethods (String fqn, Map<String, List<MethodInformation>> methods) {

@@ -112,12 +112,11 @@ public class FieldRegistrator {
 	}
 
 	public void add (Deque<FieldHolder> owners, FieldDeclaration f, VariableDeclarator vd) {
-	    add (owners, new FieldInformation<VariableDeclaration> (vd.getId (), f, owner));
-
+	    add (owners, new FieldInformation<VariableDeclaration> (vd.getId (), f, owner, vd.hasInitializer ()));
 	}
 
 	public void add (Deque<FieldHolder> owners, EnumConstant c) {
-	    add (owners, new FieldInformation<EnumConstant> (c.getId (), c, owner));
+	    add (owners, new FieldInformation<EnumConstant> (c.getId (), c, owner, true));
 	}
 
 	private void add (Deque<FieldHolder> owners, FieldInformation<?> fi) {

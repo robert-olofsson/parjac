@@ -75,6 +75,10 @@ public class TestBase {
 	Assert.assertFalse (diagnostics.hasError (),  "Got errors: " + getDiagnostics ());
     }
 
+    protected void assertErrors () {
+	Assert.assertTrue (diagnostics.hasError (), "Expected to find errors");
+    }
+
     protected void assertNoWarnings () {
 	Assert.assertFalse (diagnostics.hasWarning (), "Got warnings: " + getDiagnostics ());
     }
