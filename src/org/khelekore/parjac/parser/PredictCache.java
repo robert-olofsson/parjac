@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.khelekore.parjac.grammar.Grammar;
 import org.khelekore.parjac.grammar.Rule;
@@ -13,29 +15,29 @@ import org.khelekore.parjac.grammar.SimplePart;
 
 public class PredictCache {
     private final Grammar grammar;
-    private final Map<Object, ListRuleHolder> cache;
+    // Key is either String for plain rules or Set<String> for rule collections
+    private final ConcurrentMap<Object, ListRuleHolder> cache;
 
     public PredictCache (Grammar grammar) {
 	this.grammar = grammar;
-	cache = Collections.synchronizedMap (calculatePredictSets ());
+	cache = calculatePredictSets ();
     }
 
     public ListRuleHolder getPredictedRules (Set<String> rules) {
-	ListRuleHolder predicted = cache.get (rules);
-	if (predicted != null)
-	    return predicted;
+	return cache.computeIfAbsent (rules, rs -> calculate (rules));
+    }
 
-	predicted = new ListRuleHolder (Collections.emptySet ());
+    private ListRuleHolder calculate (Set<String> rules) {
+	ListRuleHolder predicted = new ListRuleHolder (Collections.emptySet ());
 	for (String rule : rules) {
 	    ListRuleHolder pr = cache.get (rule);
 	    if (pr != null)
 		predicted.add (pr);
 	}
-	cache.put (rules, predicted);
 	return predicted;
     }
 
-    private Map<Object, ListRuleHolder> calculatePredictSets () {
+    private ConcurrentMap<Object, ListRuleHolder> calculatePredictSets () {
 	Map<String, Set<Rule>> ruleToPredictRules = new HashMap<> ();
 	for (String rulename : grammar.getUniqueRuleNames ()) {
 	    Set<Rule> rules = new HashSet<> ();
@@ -61,7 +63,7 @@ public class PredictCache {
 		}
 	    }
 	} while (thereWasChange);
-	Map<Object, ListRuleHolder> ret = new HashMap<> ();
+	ConcurrentMap<Object, ListRuleHolder> ret = new ConcurrentHashMap<> ();
 	for (Map.Entry<String, Set<Rule>> me : ruleToPredictRules.entrySet ())
 	    ret.put (me.getKey (), new ListRuleHolder (me.getValue ()));
 	return ret;
