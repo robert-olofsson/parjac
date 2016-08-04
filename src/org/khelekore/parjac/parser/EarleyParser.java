@@ -184,7 +184,7 @@ public class EarleyParser {
     }
 
     private void completeWithNext (State completed, Map<State, State> seen,
-			   List<State> allCompleted, Deque<State> multiComplete, State nextState) {
+				   List<State> allCompleted, Deque<State> multiComplete, State nextState) {
 	State alreadySeen = seen.get (nextState);
 	if (alreadySeen == null) {
 	    seen.put (nextState, nextState);
@@ -207,14 +207,14 @@ public class EarleyParser {
 	// States in current EarleySet to keep, may be many due to completion
 	Set<State> toKeep = new HashSet<> ();
 	int tokenPos = states.size () - 1; // current pos
+	EarleyState es = states.get (tokenPos);
 	while (!toVisit.isEmpty ()) {
-	    EarleyState es = states.get (tokenPos);
-	    State s = toVisit.pop ();
+	    State s = toVisit.removeLast ();
 	    if (!es.hasBeenCleared ())
 		toKeep.add (s);
 	    State previous = s.getPrevious ();
 	    if (previous != null) {
-		toVisit.push (previous);
+		toVisit.addLast (previous);
 		if (previous.getPartAfterDot () instanceof TokenPart) {
 		    if (!es.hasBeenCleared ()) {
 			es.getStates ().retainAll (toKeep);
@@ -222,11 +222,11 @@ public class EarleyParser {
 			es.setCleared ();
 		    }
 		    tokenPos--;
+		    es = states.get (tokenPos);
 		}
 		List<State> completed = s.getCompleted ();
 		if (completed != null)
-		    for (State c : completed)
-			toVisit.push (c);
+		    toVisit.addAll (completed);
 	    }
 	}
     }
