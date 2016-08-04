@@ -1,9 +1,10 @@
 package org.khelekore.parjac.parser;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.khelekore.parjac.grammar.SimplePart;
 import org.khelekore.parjac.lexer.ParsePosition;
@@ -17,7 +18,7 @@ public class EarleyState {
     // Predicted rules
     private ListRuleHolder lrh;
     // States that have been advanced in some way
-    private List<State> states = Collections.emptyList ();
+    private Set<State> states = Collections.emptySet ();
     private boolean cleared = false; // have we removed non-used states?
 
     public EarleyState (TreeNode tokenValue) {
@@ -36,21 +37,19 @@ public class EarleyState {
 	return tokenValue;
     }
 
-    public void addStates (List<State> states) {
-	for (State s : states)
-	    addState (s);
+    public void addStates (Collection<State> states) {
+	if (states.isEmpty ())
+	    states = new LinkedHashSet<> ();
+	this.states.addAll (states);
     }
 
     public void addState (State state) {
 	if (states.isEmpty ())
-	    states = new ArrayList<> ();
-	for (State s : states)
-	    if (s.equals (state))
-		return;
+	    states = new LinkedHashSet<> ();
 	states.add (state);
     }
 
-    public List<State> getStates () {
+    public Set<State> getStates () {
 	return states;
     }
 

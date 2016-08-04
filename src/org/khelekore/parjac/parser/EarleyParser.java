@@ -144,7 +144,7 @@ public class EarleyParser {
 	current.setParsePosition (lexer.getParsePosition ());
 	if (debug)
 	    System.err.println (currentPosition + ": start current: " + current);
-	complete (current);
+	completeState (current);
 	predict (current);
 	EarleyState sms = scan (current, currentPosition, nextToken, currentTokenValue);
 	if (debug)
@@ -153,37 +153,37 @@ public class EarleyParser {
 	    states.add (sms);
     }
 
-    private void complete (EarleyState current) {
+    private void completeState (EarleyState current) {
 	Map<State, State> seen = new HashMap<> ();
 	List<State> completed = new ArrayList<> ();
 	Deque<State> multiComplete = new ArrayDeque<> ();
 	for (State s : current.getStates ()) {
 	    if (s.dotIsLast ())
-		complete (s, seen, completed, multiComplete);
+		completeLast (s, seen, completed, multiComplete);
 	}
 	while (!multiComplete.isEmpty ())
-	    complete (multiComplete.removeFirst (), seen, completed, multiComplete);
+	    completeLast (multiComplete.removeFirst (), seen, completed, multiComplete);
 	current.addStates (completed);
     }
 
-    private void complete (State completed, Map<State, State> seen,
+    private void completeLast (State completed, Map<State, State> seen,
 			   List<State> allCompleted, Deque<State> multiComplete) {
 	EarleyState originStates = states.get (completed.getStartPos ());
 	for (State s : originStates.getStates ()) {
 	    if (!s.dotIsLast () && s.getPartAfterDot ().getId ().equals (completed.getRule ().getName ())) {
-		complete (completed, seen, allCompleted, multiComplete, s.advance (completed));
+		completeWithNext (completed, seen, allCompleted, multiComplete, s.advance (completed));
 	    }
 	}
 	ListRuleHolder lrh = originStates.getListRuleHolder ();
 	if (lrh != null) {
 	    for (Iterator<Rule> i = lrh.getRulesWithRuleNext (completed.getRule ()); i.hasNext (); ) {
 		State previousState = new State (i.next (), 0, completed.getStartPos ());
-		complete (completed, seen, allCompleted, multiComplete, previousState.advance (completed));
+		completeWithNext (completed, seen, allCompleted, multiComplete, previousState.advance (completed));
 	    }
 	}
     }
 
-    private void complete (State completed, Map<State, State> seen,
+    private void completeWithNext (State completed, Map<State, State> seen,
 			   List<State> allCompleted, Deque<State> multiComplete, State nextState) {
 	State alreadySeen = seen.get (nextState);
 	if (alreadySeen == null) {
