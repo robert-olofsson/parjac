@@ -256,8 +256,7 @@ public class JavaTreeBuilder {
 	};
     }
 
-    public TreeNode getTokenValue (Lexer lexer, Token token) {
-	ParsePosition pos = lexer.getParsePosition ();
+    public TreeNode getTokenValue (Lexer lexer, Token token, ParsePosition pos) {
 	if (token.isOperator ())
 	    return new OperatorTokenType (token, pos);
 	else if (token.isPrimitive ())

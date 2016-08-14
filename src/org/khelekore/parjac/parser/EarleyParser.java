@@ -85,14 +85,15 @@ public class EarleyParser {
 	TreeNode currentTokenValue = null;
 	while (lexer.hasMoreTokens ()) {
 	    nextToken = lexer.nextNonWhitespaceToken ();
+	    ParsePosition pos = lexer.getParsePosition ();
 	    if (treeBuilder != null)
-		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken);
+		currentTokenValue = treeBuilder.getTokenValue (lexer, nextToken, pos);
 	    boolean recovery = false;
 	    do {
-		handleToken (currentPosition, nextToken, currentTokenValue);
+		handleToken (currentPosition, nextToken, currentTokenValue, pos);
 		currentPosition++;
 		if (states.size () <= currentPosition) {
-		    addPossibleNextTokens (currentPosition - 1);
+		    addPossibleNextTokens (currentPosition - 1, pos);
 		    attemptedRecoveries++;
 		    recovery = true;
 		} else {
@@ -133,7 +134,8 @@ public class EarleyParser {
 	return sn;
     }
 
-    private void handleToken (int currentPosition, Token nextToken, TreeNode currentTokenValue) {
+    private void handleToken (int currentPosition, Token nextToken,
+			      TreeNode currentTokenValue, ParsePosition pos) {
 	if (debug) {
 	    if (currentTokenValue != null)
 		System.err.println ("nextToken: " + nextToken + ": " + currentTokenValue);
@@ -141,7 +143,7 @@ public class EarleyParser {
 		System.err.println ("nextToken: " + nextToken);
 	}
 	EarleyState current = states.get (currentPosition);
-	current.setParsePosition (lexer.getParsePosition ());
+	current.setParsePosition (pos);
 	if (debug)
 	    System.err.println (currentPosition + ": start current: " + current);
 	completeState (current);
@@ -263,12 +265,12 @@ public class EarleyParser {
 	return ret;
     }
 
-    private void addPossibleNextTokens (int currentPosition) {
+    private void addPossibleNextTokens (int currentPosition, ParsePosition pos) {
 	EarleyState es = states.get (states.size () - 1);
 	EarleyState current = states.get (currentPosition);
 	EarleyState next = null;
 	for (Token t : es.getPossibleNextToken ()) {
-	    EarleyState sms = scan (current, currentPosition, t, new ErrorTreeNode (lexer.getParsePosition ()));
+	    EarleyState sms = scan (current, currentPosition, t, new ErrorTreeNode (pos));
 	    if (sms != null) {
 		if (next == null) {
 		    next = sms;
