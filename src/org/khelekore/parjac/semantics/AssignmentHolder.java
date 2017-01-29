@@ -6,12 +6,29 @@ import java.util.HashSet;
 import java.util.Set;
 
 class AssignmentHolder {
+    private final boolean constructor;
     private Set<FieldInformation<?>> assigned;
     private Deque<Set<FieldInformation<?>>> optionallyAssigned;
+
+    public AssignmentHolder (boolean constructor) {
+	this.constructor = constructor;
+    }
+
+    public AssignmentHolder (AssignmentHolder ah) {
+	this.constructor = ah.constructor;
+    }
 
     @Override public String toString () {
 	return getClass ().getSimpleName () + "{assigned: " + assigned +
 	    ", optionallyAssigned: " + optionallyAssigned + "}";
+    }
+
+    public boolean isConstructor () {
+	return constructor;
+    }
+
+    public boolean isMethod () {
+	return !constructor;
     }
 
     public void startOptionalAssignment () {

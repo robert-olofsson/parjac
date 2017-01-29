@@ -250,7 +250,7 @@ public class ClassSetter {
 
 	@Override public boolean visit (ConstructorDeclaration c) {
 	    containingTypes.peek ().hasConstructor = true;
-	    startAssignmentContext ();
+	    startAssignmentContext (true);
 	    registerTypeParameters (c, c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
 	    setThrowsTypes (c.getThrows ());
@@ -286,7 +286,7 @@ public class ClassSetter {
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
-	    startAssignmentContext ();
+	    startAssignmentContext (false);
 	    registerTypeParameters (m, m.getTypeParameters (), this);
 	    Result r = m.getResult ();
 	    if (r instanceof Result.TypeResult)
@@ -573,7 +573,7 @@ public class ClassSetter {
 	// TODO: move this out of ClassSetter, ought to be in FinalChecker
 	@Override public  boolean visit (IfThenStatement i) {
 	    i.getExpression ().visit (this);
-	    AssignmentHolder ifHolder = new AssignmentHolder ();
+	    AssignmentHolder ifHolder = new AssignmentHolder (assignments.getLast ());
 	    assignments.addLast (ifHolder);
 	    ifHolder.startOptionalAssignment ();
 	    i.getIfStatement ().visit (this);
@@ -633,7 +633,7 @@ public class ClassSetter {
 	    ResourceList rl = t.getResources ();
 	    if (rl != null)
 		rl.visit (this);
-	    AssignmentHolder tryHolder = new AssignmentHolder ();
+	    AssignmentHolder tryHolder = new AssignmentHolder (assignments.getLast ());
 	    assignments.addLast (tryHolder);
 	    tryHolder.startOptionalAssignment ();
 	    t.getBlock ().visit (this);
@@ -785,8 +785,8 @@ public class ClassSetter {
 	    currentScope = currentScope.endScope ();
 	}
 
-	private void startAssignmentContext () {
-	    assignments.add (new AssignmentHolder ());
+	private void startAssignmentContext (boolean constructor) {
+	    assignments.add (new AssignmentHolder (constructor));
 	}
 
 	public void endAssignmentContext () {
@@ -795,6 +795,8 @@ public class ClassSetter {
 
 	private boolean isAssignedOrInitialized (Scope scope, FieldInformation<?> fi) {
 	    if (scope.isInitialized (fi))
+		return true;
+	    if (!assignments.isEmpty () && assignments.getLast ().isMethod ())
 		return true;
 	    return !assignments.isEmpty () && assignments.getLast ().isAssigned (fi);
 	}

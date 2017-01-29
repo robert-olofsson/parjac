@@ -725,6 +725,10 @@ public class TestClassSetter extends TestBase {
 	assertNoErrors ();
 	parseAndSetClasses ("class Foo { final int bar = 4; void foo () { bar = 3; }}");
 	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class A { final int x; A () { x = 3; } void setX () { x = 4; }}");
+	assertErrors ();
     }
 
     @Test
