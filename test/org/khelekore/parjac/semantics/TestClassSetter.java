@@ -705,7 +705,9 @@ public class TestClassSetter extends TestBase {
     public void testCatchParameters () throws IOException {
     	parseAndSetClasses ("class A { void f () { try { int i = 0; } catch (Exception e) { e.printStackTrace (); }}}");
 	assertNoErrors ();
-    	parseAndSetClasses ("class A { void f () { try { int i = 0; } catch (NullPointerException | IllegalArgumentException e) { e.printStackTrace (); }}}");
+    	parseAndSetClasses ("class A { void f () { try { int i = 0; } " +
+			    "catch (NullPointerException | IllegalArgumentException e) { " +
+			    "e.printStackTrace (); }}}");
 	assertNoErrors ();
     	parseAndSetClasses ("class A { void f () { try { int i = 0; } " +
 			    "catch (IllegalArgumentException e) { e.printStackTrace (); } " +
@@ -735,29 +737,64 @@ public class TestClassSetter extends TestBase {
 
 	parseAndSetClasses ("class Foo { final int bar; Foo () { bar = 3; bar = 4;}}");
 	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { final int bar = 5; Foo () { bar = 3;}}");
+	assertErrors ();
     }
 
-    /*
     @Test
-    public void testAssignFinalFieldInConstructor () throws IOException {
+    public void testAssignFinalFieldInConstructorIfs () throws IOException {
 	parseAndSetClasses ("class Foo { final int bar; Foo () { if (true) bar = 3; }}");
 	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean b) { if (b) bar = 3; }}");
+	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
 
 	parseAndSetClasses ("class Foo { final int bar; Foo (boolean b) { if (b) bar = 3; else bar = 4; }}");
 	assertNoErrors ();
 
-	parseAndSetClasses ("class Foo { final int bar; Foo (boolean) { if (b) bar = 3; }}");
-	assertErrors ();
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean a, boolean b) { if (a) { if (b) bar = 1; else bar = 2; } else { bar = 4; }}}");
+	assertNoErrors ();
 
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean a, boolean b) { if (a) { if (b) bar = 1; } else bar = 4; }}");
+	assertErrors ();
 	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo (boolean b) { if (b) bar = 3; bar = 4; }}");
+	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	// Need to figure out that T is true
+	// parseAndSetClasses ("class Foo { final int bar; static final boolean T = true; Foo () { if (T) bar = 3; }}");
+	// assertNoErrors ();
+    }
+
+    @Test
+    public void testAssignFinalFieldInConstructorTry () throws IOException {
+	// javac fails with "bar might not have been initialized after catch block"
 	parseAndSetClasses ("class Foo { final int bar; Foo () { try { bar = 3; } catch (Exception e) {}}}");
 	assertErrors ();
-
 	diagnostics = new CompilerDiagnosticCollector ();
+
+	// javac fails with "bar might already have been assigned" in catch block
 	parseAndSetClasses ("class Foo { final int bar; Foo () { try { bar = 3; } catch (Exception e) { bar = 4; }}}");
 	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { } finally { bar = 4; }}}");
+	assertNoErrors ();
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { } catch (Exception e) { } finally { bar = 4; }}}");
+	assertNoErrors ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { } catch (Exception e) { bar = 3; } finally { bar = 4; }}}");
+	assertErrors ();
+	diagnostics = new CompilerDiagnosticCollector ();
+
+	parseAndSetClasses ("class Foo { final int bar; Foo () { try { bar = 3; } catch (Exception e) { bar = 3; }finally { bar = 4; }}}");
+	assertErrors ();
     }
-    */
 
     @Test
     public void testAssignFinalVariable () throws IOException {

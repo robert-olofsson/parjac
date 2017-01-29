@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.khelekore.parjac.CompilerDiagnosticCollector;
 import org.khelekore.parjac.NoSourceDiagnostics;
@@ -34,7 +32,6 @@ public class Scope {
     private final TreeNode owner;
     private final TreeNode currentClass;
     private Map<String, FieldInformation<?>> variables = Collections.emptyMap ();
-    private Set<FieldInformation<?>> assignedFields = Collections.emptySet ();
 
     public enum Type { CLASS, LOCAL };
 
@@ -56,6 +53,10 @@ public class Scope {
 	    ", currentClass: " + currentClass + ", variables: " + variables + "}";
     }
 
+    public TreeNode getOwner () {
+	return owner;
+    }
+
     public boolean isStatic () {
 	return isStatic;
     }
@@ -68,11 +69,8 @@ public class Scope {
      */
     public void tryToAdd (ClassInformationProvider cip, VariableDeclaration fd, VariableDeclarator vd,
 			  SyntaxTree tree, CompilerDiagnosticCollector diagnostics) {
-	FieldInformation<?> fi;
-	tryToAdd (cip, fi = new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner, vd.hasInitializer ()),
+	tryToAdd (cip, new FieldInformation<VariableDeclaration> (vd.getId (), fd, owner, vd.hasInitializer ()),
 		  FlagsHelper.isStatic (fd.getFlags ()), tree, diagnostics);
-	if (vd.getInitializer () != null)
-	    setAssigned (fi);
     }
 
     public void tryToAdd (ClassInformationProvider cip, FormalParameter fp, SyntaxTree tree,
@@ -156,7 +154,8 @@ public class Scope {
 	return null;
     }
 
-    private FieldInformation<?> checkSuperClasses (ClassInformationProvider cip, TreeNode owner, String id) throws IOException {
+    private FieldInformation<?> checkSuperClasses (ClassInformationProvider cip, TreeNode owner, String id)
+	throws IOException {
 	Deque<String> superClasses = new ArrayDeque<> ();
 	addSupers (cip, superClasses, cip.getFullName (owner));
 	while (!superClasses.isEmpty ()) {
@@ -190,19 +189,39 @@ public class Scope {
 	return variables;
     }
 
-    public boolean isAssignedOrInitialized (FieldInformation<?> fi) {
-	return assignedFields.contains (fi) || fi.isInitialized ();
+    public boolean isInitialized (FieldInformation<?> fi) {
+	return fi.isInitialized ();
     }
 
+    /* qwerty
     public void setAssigned (FieldInformation<?> fi) {
-	if (assignedFields.isEmpty ())
-	    assignedFields = new HashSet<> ();
-	assignedFields.add (fi);
+	System.err.println ("setting assigned: "+ fi+ ", optionallyAssigned: " + optionallyAssigned);
+	if (optionallyAssigned != null) {
+	    optionallyAssigned.getLast ().add (fi);
+	} else {
+	    definatelyAssigned.add (fi);
+	}
     }
 
-    public void clearFieldAssignments () {
-	assignedFields.clear ();
+
+    public void optionalAssignment () {
+	System.err.println ("Starting optional assignment");
+	if (optionallyAssigned == null)
+	    optionallyAssigned = new ArrayDeque<> ();
+	optionallyAssigned.add (new HashSet<> ());
     }
+
+    public void makeDefinate (boolean keepDefined) {
+	System.err.println ("Making definate: " + keepDefined);
+	if (keepDefined) {
+	    Set<FieldInformation<?>> o = optionallyAssigned.removeFirst ();
+	    for (Set<FieldInformation<?>> b : optionallyAssigned)
+		o.retainAll (b);
+	    definatelyAssigned.addAll (o);
+	}
+	optionallyAssigned = null;
+    }
+    */
 
     public static class FindResult {
 	public final FieldInformation<?> fi;

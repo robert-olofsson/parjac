@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -162,6 +163,7 @@ public class ClassSetter {
 	private final int level;
 	private Scope currentScope = null;
 	private boolean completed = true;
+	private Deque<AssignmentHolder> assignments = new ArrayDeque<> ();
 
 	public ScopeSetter (int level) {
 	    this.level = level;
@@ -219,7 +221,7 @@ public class ClassSetter {
 		if (!bp.hasConstructor)
 		    checkUnassignedFields (bp.body, bp.fqn);
 	    }
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	    currentTypes = currentTypes.parent;
 	}
 
@@ -241,13 +243,14 @@ public class ClassSetter {
 		registerMethods (containingTypes.pop ());
 		containingTypes.pop ();
 	    }
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	}
 
 	// TODO: handle InstanceInitializer and StaticInitializer, they need scope
 
 	@Override public boolean visit (ConstructorDeclaration c) {
 	    containingTypes.peek ().hasConstructor = true;
+	    startAssignmentContext ();
 	    registerTypeParameters (c, c.getTypeParameters (), this);
 	    setTypes (c.getParameters (), this);
 	    setThrowsTypes (c.getThrows ());
@@ -256,20 +259,20 @@ public class ClassSetter {
 	}
 
 	@Override public void endConstructor (ConstructorDeclaration c) {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	    currentTypes = currentTypes.parent;
 	    checkUnassignedFields (c, containingTypes.peek ().fqn);
+	    endAssignmentContext ();
 	}
 
 	private void checkUnassignedFields (TreeNode owner, String fqn) {
 	    for (FieldInformation<?> fi : cip.getFields (fqn)) {
-		if (fi.isFinal () && !currentScope.isAssignedOrInitialized (fi) &&
+		if (fi.isFinal () && !isAssignedOrInitialized (currentScope, fi) &&
 		    !(fi.getVariableDeclaration() instanceof EnumConstant)) {
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), owner.getParsePosition (),
 								 "Uninitialized final field: %s", fi.getName ()));
 		}
 	    }
-	    currentScope.clearFieldAssignments ();
 	}
 
 	@Override public boolean visit (FieldDeclaration f) {
@@ -283,6 +286,7 @@ public class ClassSetter {
 	}
 
 	@Override public boolean visit (MethodDeclaration m) {
+	    startAssignmentContext ();
 	    registerTypeParameters (m, m.getTypeParameters (), this);
 	    Result r = m.getResult ();
 	    if (r instanceof Result.TypeResult)
@@ -300,8 +304,9 @@ public class ClassSetter {
 	}
 
 	@Override public void endMethod (MethodDeclaration m) {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	    currentTypes = currentTypes.parent;
+	    endAssignmentContext ();
 	}
 
 	@Override public boolean visit (Block b) {
@@ -310,7 +315,7 @@ public class ClassSetter {
 	}
 
 	@Override public void endBlock () {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	}
 
 	@Override public boolean visit (Assignment a) {
@@ -319,11 +324,12 @@ public class ClassSetter {
 	    a.rhs ().visit (this);
 	    Scope.FindResult fr = getVariable (lhs);
 	    if (fr != null && fr.fi.isFinal ()) {
-		if (fr.scope.isAssignedOrInitialized (fr.fi))
+		if (isAssignedOrInitialized (fr.scope, fr.fi))
 		    diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), a.getParsePosition (),
-								 "%s marked as final may not be assigned here",
-								 fr.fi.getVariableDeclaration ().getClass ().getSimpleName ()));
-		fr.scope.setAssigned (fr.fi);
+								 "final %s '%s' is already initialized",
+								 fr.fi.getVariableDeclaration ().getClass ().getSimpleName (),
+								 fr.fi.getName ()));
+		assignments.getLast ().markAssigned (fr.fi);
 	    }
 	    return false;
 	}
@@ -347,6 +353,11 @@ public class ClassSetter {
 		    return fr;
 	    }
 	    return null;
+	}
+
+	@Override public boolean visit (TernaryExpression t) {
+	    // TODO: assignments left and right
+	    return true;
 	}
 
 	@Override public boolean visit (ClassInstanceCreationExpression c) {
@@ -414,7 +425,7 @@ public class ClassSetter {
 	@Override public void endLambda (LambdaExpression l) {
 	    TreeNode params = l.getParameters ();
 	    if (params != null)
-		currentScope = currentScope.endScope ();
+		endScope ();
 	}
 
 	@Override public boolean visit (LocalVariableDeclaration l) {
@@ -559,18 +570,54 @@ public class ClassSetter {
 	    return new PrimaryNoNewArray.DottedThis (ct, pos);
 	}
 
+	// TODO: move this out of ClassSetter, ought to be in FinalChecker
+	@Override public  boolean visit (IfThenStatement i) {
+	    i.getExpression ().visit (this);
+	    AssignmentHolder ifHolder = new AssignmentHolder ();
+	    assignments.addLast (ifHolder);
+	    ifHolder.startOptionalAssignment ();
+	    i.getIfStatement ().visit (this);
+	    TreeNode elseStatement = i.getElseStatement ();
+	    boolean hasElse = elseStatement != null;
+	    if (hasElse) {
+		ifHolder.otherOptionalAssignment ();
+		elseStatement.visit (this);
+	    }
+	    reportPartiallyAssigned (i, ifHolder.makeDefinate (hasElse || BooleanLiteral.isTrue (i.getExpression())));
+	    assignments.removeLast ();
+	    assignments.getLast ().copyAssignments (ifHolder);
+	    return false;
+	}
+
+	@Override public boolean visit (WhileStatement w) {
+	    // TODO: assignments
+	    return true;
+	}
+
+	@Override public boolean visit (DoStatement d) {
+	    // TODO: assignments
+	    return true;
+	}
+
 	@Override public boolean visit (BasicForStatement f) {
+	    // TODO: assignments
 	    addScope (f, Scope.Type.LOCAL);
 	    return true;
 	}
 
 	@Override public boolean visit (EnhancedForStatement f) {
+	    // TODO: assignments
 	    addScope (f, Scope.Type.LOCAL);
 	    return true;
 	}
 
 	@Override public void endFor () {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
+	}
+
+	@Override public boolean visit (SwitchStatement s) {
+	    // TODO: assignments
+	    return true;
 	}
 
 	@Override public boolean visit (SwitchBlock s) {
@@ -579,7 +626,42 @@ public class ClassSetter {
 	}
 
 	@Override public  void endSwitchBlock () {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
+	}
+
+	@Override public boolean visit (TryStatement t) {
+	    ResourceList rl = t.getResources ();
+	    if (rl != null)
+		rl.visit (this);
+	    AssignmentHolder tryHolder = new AssignmentHolder ();
+	    assignments.addLast (tryHolder);
+	    tryHolder.startOptionalAssignment ();
+	    t.getBlock ().visit (this);
+	    Catches cs = t.getCatches ();
+	    if (cs != null) {
+		for (CatchClause cc : cs.get ()) {
+		    tryHolder.otherOptionalAssignment ();
+		    cc.visit (this);
+		}
+	    }
+	    reportPartiallyAssigned (t, tryHolder.makeDefinate (false));
+	    assignments.removeLast ();
+	    assignments.getLast ().copyAssignments (tryHolder);
+	    Finally f = t.getFinallyBlock ();
+	    if (f != null) {
+		f.visit (this);
+	    }
+	    return false;
+	}
+
+	private void reportPartiallyAssigned (TreeNode tn, Set<FieldInformation<?>> partiallyAssigned) {
+	    for (FieldInformation<?> fi : partiallyAssigned) {
+		diagnostics.report (SourceDiagnostics.error (tree.getOrigin (), tn.getParsePosition (),
+							     "final %s '%s' is only initialized in some branches",
+							     fi.getVariableDeclaration ().getClass ().getSimpleName (),
+							     fi.getName ()));
+		assignments.getLast ().markAssigned (fi); // suppress other warnings
+	    }
 	}
 
 	@Override public boolean visit (CatchClause c) {
@@ -590,7 +672,7 @@ public class ClassSetter {
 	}
 
 	@Override public void endCatchClause (CatchClause c) {
-	    currentScope = currentScope.endScope ();
+	    endScope ();
 	}
 
 	@Override public boolean visit (CatchType c) {
@@ -697,6 +779,24 @@ public class ClassSetter {
 
 	@Override public void visit (PrimaryNoNewArray.ThisPrimary t) {
 	    t.setExpressionType (ExpressionType.getObjectType (containingTypes.peek ().fqn));
+	}
+
+	private void endScope () {
+	    currentScope = currentScope.endScope ();
+	}
+
+	private void startAssignmentContext () {
+	    assignments.add (new AssignmentHolder ());
+	}
+
+	public void endAssignmentContext () {
+	    assignments.removeLast ();
+	}
+
+	private boolean isAssignedOrInitialized (Scope scope, FieldInformation<?> fi) {
+	    if (scope.isInitialized (fi))
+		return true;
+	    return !assignments.isEmpty () && assignments.getLast ().isAssigned (fi);
 	}
     }
 

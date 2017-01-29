@@ -238,7 +238,7 @@ public class ReturnChecker implements TreeVisitor {
 	    Ender elseEnds = null;
 	    TreeNode elseStatement = i.getElseStatement ();
 	    if (elseStatement == null) {
-		if (isTrue (i.getExpression ()))
+		if (BooleanLiteral.isTrue (i.getExpression ()))
 		    ender = statementEnds;
 		else
 		    ender.mayRun ();
@@ -260,7 +260,7 @@ public class ReturnChecker implements TreeVisitor {
 	    ender.isInfiniteLoop &= ender.mayBreak.isEmpty ();
 	    ender.hasBreak.remove (""); // clear for outer levels
 	    ender.mayBreak.remove (""); // clear for outer levels
-	    if (!isTrue (w.getExpression ()))
+	    if (!BooleanLiteral.isTrue (w.getExpression ()))
 		ender.mayRun ();
 	    return false;
 	}
@@ -291,15 +291,9 @@ public class ReturnChecker implements TreeVisitor {
 
 	private Ender checkExpressionStatement (TreeNode exp, TreeNode statement) {
 	    Ender statementEnder = checkStatement (statement);
-	    if (isTrue (exp))
+	    if (BooleanLiteral.isTrue (exp))
 		statementEnder.isInfiniteLoop = true;
 	    return statementEnder;
-	}
-
-	private boolean isTrue (TreeNode t) {
-	    if (t instanceof BooleanLiteral)
-		return ((BooleanLiteral)t).get ();
-	    return false;
 	}
 
 	@Override public boolean visit (SwitchStatement s) {

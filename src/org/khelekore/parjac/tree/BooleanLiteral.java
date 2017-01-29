@@ -25,4 +25,10 @@ public class BooleanLiteral extends PositionNode implements LiteralValue {
     @Override public ExpressionType getExpressionType () {
 	return ExpressionType.BOOLEAN;
     }
+
+    public static boolean isTrue (TreeNode t) {
+	if (t instanceof BooleanLiteral)
+	    return ((BooleanLiteral)t).get ();
+	return false;
+    }
 }
